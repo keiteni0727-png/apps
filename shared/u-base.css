@@ -1,0 +1,95 @@
+/* ===================== 共通の土台（見た目）：おかね手帳・エンタメ管理で同じファイルを使う =====================
+  ・色・書体・角丸。アクセント色（--u-accent / --u-accent2）だけ、アプリ側のCSSで上書きする
+  ・アプリの外枠に class="u-app" を付けると、左メニューなどの共通部品が使える */
+:root{--u-bg:#f2f4f7;--u-surface:#ffffff;--u-ink:#161b26;--u-sub:#5f6877;--u-line:#dde1e8;--u-soft:#eceff3;--u-strong:#c6ccd6;--u-chip:#e9ecf1;--u-accent:#2f6fed;--u-accent2:#e9f0fe;--u-danger:#c8382e;--u-danger2:#fbe9e7;--u-ok:#1f8a52;--u-ok2:#e3f3ea;--u-warn:#a36800;--u-warn2:#f8eed5;--u-on:#ffffff;--u-scrim:rgba(12,16,24,.45);--u-shadow:0 10px 32px rgba(16,24,40,.18);--u-r:10px;--u-rl:14px;--u-f:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;--u-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--u-bg:#0f1218;--u-surface:#181c24;--u-ink:#e8ebf1;--u-sub:#9aa3b2;--u-line:#2b313d;--u-soft:#222833;--u-strong:#3a4150;--u-chip:#242a35;--u-accent:#6f9cff;--u-accent2:#1f2a42;--u-danger:#ff7a6e;--u-danger2:#3a201d;--u-ok:#4cc98a;--u-ok2:#17301f;--u-warn:#e8b44c;--u-warn2:#3a2f15;--u-on:#10131a;--u-scrim:rgba(4,6,10,.6);--u-shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{--u-bg:#0f1218;--u-surface:#181c24;--u-ink:#e8ebf1;--u-sub:#9aa3b2;--u-line:#2b313d;--u-soft:#222833;--u-strong:#3a4150;--u-chip:#242a35;--u-accent:#6f9cff;--u-accent2:#1f2a42;--u-danger:#ff7a6e;--u-danger2:#3a201d;--u-ok:#4cc98a;--u-ok2:#17301f;--u-warn:#e8b44c;--u-warn2:#3a2f15;--u-on:#10131a;--u-scrim:rgba(4,6,10,.6);--u-shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}
+
+/* ===== 土台：ページ全体をスクロールさせる。端を越えて引っ張れないようにする ===== */
+*{box-sizing:border-box}
+html,body{overscroll-behavior:none;overflow-x:clip;max-width:100%}
+body{margin:0;background:var(--u-bg);color:var(--u-ink);-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--u-surface)}
+:focus-visible{outline:2px solid var(--u-accent);outline-offset:2px}
+
+/* ===== PCの左メニュー（折りたためる）。スマホでは出さない ===== */
+.u-app .sb{display:none}
+@media (min-width:900px){
+  :root{--sbw:232px}
+  body.sbc{--sbw:68px}
+  body{padding-left:var(--sbw)}
+  .u-app .sb{position:fixed;left:0;top:0;bottom:0;width:var(--sbw);background:var(--u-surface);border-right:1px solid var(--u-line);display:flex;flex-direction:column;padding:14px 12px;gap:4px;z-index:40;overflow-y:auto;overflow-x:hidden;overscroll-behavior:none}
+  .u-app .sb-top{display:flex;align-items:center;gap:8px;padding:2px 4px 12px;border-bottom:1px solid var(--u-line);margin-bottom:10px}
+  .u-app .sb-lamp{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.1em;line-height:1;color:var(--u-on);background:var(--u-accent);padding:4px 6px 3px;border-radius:4px;white-space:nowrap;flex:none}
+  .u-app .sb-top b{font-size:17px;font-weight:900;white-space:nowrap}
+  .u-app .sb-tog{margin-left:auto;width:30px;height:30px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;color:var(--u-sub);display:grid;place-items:center;font-size:14px;flex:none;padding:0}
+  .u-app .sb-sec{font-size:11px;font-weight:700;color:var(--u-sub);letter-spacing:.08em;padding:8px 8px 4px}
+  .u-app .sb-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:9px 10px;border-radius:10px;font-size:14.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
+  .u-app .sb-it i{width:22px;text-align:center;font-style:normal;flex:none;font-size:16px}
+  .u-app .sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-accent)}
+  .u-app .sb-sub{display:flex;flex-direction:column;gap:2px;margin:2px 0 8px 20px;padding-left:12px;border-left:2px solid var(--u-line)}
+  .u-app .sb-sub .sb-it{font-size:13.5px;padding:7px 10px}
+  .u-app .sb-sub .sb-it[aria-current="page"]{background:var(--u-chip);color:var(--u-ink)}
+  .u-app .sb-foot{margin-top:auto;border-top:1px solid var(--u-line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+  .u-app .sb-st{padding:4px 10px}
+  .u-app #sbgear[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-accent)}
+  body.sbc .u-app .sb .lbl,body.sbc .u-app .sb-sub{display:none}
+  body.sbc .u-app .sb-st{display:flex;justify-content:center;padding:4px 0}
+  body.sbc .u-app .sb-st .savest{font-size:0;gap:0;margin:0}
+  body.sbc .u-app .sb-top{flex-direction:column;gap:10px;padding-inline:0}
+  body.sbc .u-app .sb-tog{margin:0}
+  body.sbc .u-app .sb-lamp{font-size:8px;letter-spacing:.04em;padding:3px 4px 2px}
+  body.sbc .u-app .sb-it{justify-content:center;padding:10px 0}
+}
+@media (min-width:900px) and (hover:hover){
+  .u-app .sb-it:not([aria-current]):hover{background:var(--u-chip);color:var(--u-ink)}
+}
+
+/* ===== ボタン：大きさ・形をアプリ共通にそろえる =====
+  ・class="u-btns" の中の button すべて、または class="u-btn" を付けた button に効く
+  ・塗り＝主な操作（pri / primary）、枠線＝そのほかの操作、小さいもの（sm / btn-s）、文字だけ（u-btns の中の ghost） */
+.u-btns button,.u-btn{font:inherit;font-size:14px;font-weight:700;line-height:1.4;padding:9px 14px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);color:var(--u-ink);cursor:pointer}
+@media (hover:hover){.u-btns button:hover,.u-btn:hover{border-color:var(--u-accent)}}
+.u-btns button:disabled,.u-btn:disabled{opacity:.45;cursor:default}
+.u-btns button.pri,.u-btns button.primary,.u-btn.pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.u-btns button.sm,.u-btns button.btn-s,.u-btn.sm{padding:6px 12px;font-size:13px}
+.u-btns button.ghost{border:0;background:none;color:var(--u-sub);padding:6px 8px}
+
+/* ===== スマホの下部メニュー：.tbwrap の中に .tabbar（画面の切り替え）と .tbgear（設定）。PCでは出さない ===== */
+.u-app .tbwrap{display:none}
+@media (max-width:899px){
+  .u-app .tbwrap{position:fixed;z-index:30;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;justify-content:center;gap:8px;pointer-events:none}
+  .u-app .tbwrap>*{pointer-events:auto;background:var(--u-surface);border:1px solid var(--u-line);border-radius:22px;box-shadow:0 8px 28px rgba(16,24,40,.18)}
+  .u-app .tabbar{flex:0 1 520px;min-width:0;display:flex;gap:2px;padding:4px}
+  .u-app .tabbar button{flex:1;border:0;background:none;color:var(--u-sub);border-radius:18px;height:calc(var(--tbh,58px) - 8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:700;padding:0}
+  .u-app .tabbar svg{width:22px;height:22px;padding:3px 14px;box-sizing:content-box;border-radius:999px}
+  .u-app .tabbar button[aria-current="page"]{color:var(--u-accent)}
+  .u-app .tabbar button[aria-current="page"] svg{background:var(--u-accent2)}
+  .u-app .tbgear{flex:none;width:calc(var(--tbh,58px) + 2px);color:var(--u-sub);display:grid;place-items:center;padding:0}
+  .u-app .tbgear[aria-pressed="true"]{color:var(--u-accent)}
+  .u-app .tbgear svg{width:22px;height:22px}
+}
+
+/* ===== トップへ戻るボタン（.hide で隠す） ===== */
+.u-app .totop{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:32;display:flex;align-items:center;gap:6px;border:0;border-radius:12px;padding:10px 16px 10px 13px;background:var(--u-ink);color:var(--u-surface);font-size:13px;font-weight:700;box-shadow:var(--u-shadow)}
+.u-app .totop span{font-size:15px;line-height:1}
+.u-app .totop.hide{opacity:0;transform:translateY(10px);pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.u-app .totop{transition:opacity .2s,transform .2s}}
+@media (max-width:899px){.u-app .totop{bottom:calc(var(--tbh,58px) + 22px + env(safe-area-inset-bottom,0px))}}
+
+/* ===== 通知（U.toast）。下からの位置は、アプリ側で body に --u-toast-b を指定して変える ===== */
+.u-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--u-toast-b,20px) + env(safe-area-inset-bottom,0px));z-index:70;width:max-content;max-width:min(calc(100% - 32px),520px);background:var(--u-ink);color:var(--u-surface);border-radius:12px;padding:10px 16px;font:13px/1.5 var(--u-f);box-shadow:var(--u-shadow)}
+.u-toast b{font-family:var(--u-num)}
+.u-toast.undo{display:flex;align-items:center;gap:14px;padding:8px 8px 8px 16px}
+.u-toast.undo button{border:0;background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:5px 12px;font:700 12.5px/1.5 var(--u-f);white-space:nowrap;cursor:pointer}
+@media (min-width:900px){.u-toast{font-size:15px}.u-toast.undo button{font-size:14px}}
+
+/* ===== ログイン（Firebaseで動かすときだけ出る） ===== */
+.u-login{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:var(--u-bg);font:15px/1.6 var(--u-f);color:var(--u-ink)}
+.u-login form{width:min(360px,100%);display:flex;flex-direction:column;gap:10px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-rl);padding:20px}
+.u-login h3{margin:0;font-size:18px}
+.u-login p{margin:0;font-size:13px;color:var(--u-sub)}
+.u-login input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--u-strong);border-radius:var(--u-r);background:var(--u-bg);color:var(--u-ink)}
+.u-login button{font:inherit;font-weight:700;padding:11px;border:0;border-radius:var(--u-r);background:var(--u-accent);color:var(--u-on)}
+.u-login button:disabled{opacity:.5}
+.u-login .u-login-err{color:var(--u-danger)}
