@@ -294,8 +294,13 @@ html,body{overscroll-behavior:none}
 .field input.chipin{border:1px dashed var(--u-line);background:transparent;border-radius:999px;padding:6px 12px;width:150px}
 /* collapsible groups */
 .gtog{display:flex;align-items:baseline;gap:6px;border:0;background:transparent;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.gtog .chev{display:inline-block;width:14px;font-size:13px;color:var(--u-sub)}
+.gtog{align-items:center}
+.gtog .chev{display:inline-grid;place-items:center;width:26px;height:26px;flex:none;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;font-size:11px;color:var(--u-ink);box-shadow:0 1px 2px rgba(16,24,40,.08);transition:transform .15s}
+.gtog[aria-expanded="false"] .chev{background:var(--u-chip)}
+.gtog:active .chev{transform:scale(.92)}
+.ghd{align-items:center}
 .gbulk{display:flex;gap:12px;justify-content:flex-end;margin:4px 0 -8px}
+.count .gbulk{margin:0 0 0 auto}
 .gbulk button{border:0;background:transparent;color:var(--accent);font-size:12.5px;font-weight:700;padding:2px 0}
 /* back to top */
 /* youtube status picker */
@@ -2170,7 +2175,15 @@ function render() {
   renderSidebar();
   if (!loaded) return;
   const y = lockY ?? scrollY;
-  const body = yt ? renderYt() : state.view === "week" && state.mode !== "m" ? renderWeek() : renderList();
+  let body = yt ? renderYt() : state.view === "week" && state.mode !== "m" ? renderWeek() : renderList();
+  /* 「すべて開く／閉じる」は件数と同じ行の右端に置く */
+  const gb = /<span class="gbulk">[\s\S]*?<\/span>/.exec(body);
+  const ci = body.indexOf('<p class="count">');
+  if (gb && ci >= 0 && gb.index > ci) {
+    body = body.slice(0, gb.index) + body.slice(gb.index + gb[0].length);
+    const ce = body.indexOf("</p>", ci);
+    body = body.slice(0, ce) + gb[0] + body.slice(ce);
+  }
   setMain(body + `<p class="note savenote" id="saveNote">${saveNoteHtml()}</p>`);
   if (lockY === null) scrollTo(0, y);
   saveUI();
