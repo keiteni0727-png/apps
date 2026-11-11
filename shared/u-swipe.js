@@ -1,0 +1,118 @@
+/* スマホのスワイプ（エンタメ管理・おかね手帳で共通）
+   ・メニュー：開いているときは指に合わせて左へ引いて閉じる。左端から（またはページ送りの先頭で）右へ引くと開く
+   ・ページ送り（任意）：画面を指に合わせて横に動かし、離すと隣の画面へ切り替える
+   uSwipe({ sb, scrim, setDrawer(on), edge, blocked(), pager: { el, block, can(dir), go(dir) } }) */
+(function () {
+  window.uSwipe = function (o) {
+    const mq = matchMedia("(max-width:899px)");
+    const q = s => document.querySelector(s);
+    const isOpen = () => document.body.classList.contains("drawer");
+    const W = () => (q(o.sb) && q(o.sb).getBoundingClientRect().width) || 280;
+    let g = null;
+
+    /* メニューを指の位置に置く（x：0＝全開、-W＝閉） */
+    function drag(x) {
+      const s = q(o.sb),
+        c = q(o.scrim),
+        w = W();
+      x = Math.max(-w, Math.min(0, x));
+      s.style.transition = c.style.transition = "none";
+      s.style.visibility = "visible";
+      s.style.transform = `translateX(${x}px)`;
+      c.style.opacity = String(1 + x / w);
+    }
+    /* 指を離したら、開く／閉じるの位置まで動かして、手で付けた位置を外す */
+    function settle(open) {
+      const s = q(o.sb),
+        c = q(o.scrim);
+      o.setDrawer(open);
+      requestAnimationFrame(() => {
+        s.style.transition = c.style.transition = "";
+        s.style.transform = s.style.visibility = c.style.opacity = "";
+      });
+    }
+    function page(x, anim) {
+      const m = q(o.pager.el);
+      if (!m) return;
+      m.style.transition = anim ? "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s ease" : "none";
+      m.style.transform = x ? `translateX(${x}px)` : "";
+      m.style.opacity = x ? String(Math.max(0.35, 1 - Math.abs(x) / 420)) : "";
+    }
+    function pageClear() {
+      const m = q(o.pager.el);
+      if (m) m.style.transition = m.style.transform = m.style.opacity = "";
+    }
+    function flip(dir) {
+      page(dir > 0 ? -70 : 70, true);
+      setTimeout(() => {
+        o.pager.go(dir);
+        page(dir > 0 ? 70 : -70, false);
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            page(0, true);
+            setTimeout(pageClear, 200);
+          }),
+        );
+      }, 120);
+    }
+
+    document.addEventListener(
+      "touchstart",
+      e => {
+        g = null;
+        if (!mq.matches || e.touches.length !== 1) return;
+        const t = e.touches[0],
+          el = e.target;
+        let mode = null;
+        if (isOpen()) mode = "close";
+        else if (o.blocked && o.blocked()) return;
+        else if (t.clientX < (o.edge || 24)) mode = "open";
+        else if (o.pager && !(el.closest && el.closest(o.pager.block))) mode = "page";
+        if (mode) g = { mode, x: t.clientX, y: t.clientY, at: Date.now(), lock: false, dx: 0 };
+      },
+      { passive: true },
+    );
+    document.addEventListener(
+      "touchmove",
+      e => {
+        if (!g) return;
+        const t = e.touches[0],
+          dx = t.clientX - g.x,
+          dy = t.clientY - g.y;
+        if (!g.lock) {
+          if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+            g.lock = true;
+            g.x = t.clientX - Math.sign(dx) * 2; // 動き出しで跳ねないように
+            if (g.mode === "page" && dx > 0 && !o.pager.can(-1)) g.mode = "open";
+          } else if (Math.abs(dy) > 10) return (g = null);
+          else return;
+        }
+        g.dx = t.clientX - g.x;
+        if (g.mode === "close") drag(Math.min(0, g.dx));
+        else if (g.mode === "open") drag(-W() + Math.max(0, g.dx));
+        else page(o.pager.can(g.dx < 0 ? 1 : -1) ? g.dx * 0.7 : g.dx * 0.15, false);
+      },
+      { passive: true },
+    );
+    function end(cancel) {
+      if (!g) return;
+      const { mode, dx, lock } = g,
+        fast = Math.abs(dx) > 35 && Date.now() - g.at < 280,
+        w = W();
+      g = null;
+      if (!lock) return;
+      if (mode === "close") settle(cancel ? true : !(dx < -w * 0.3 || (fast && dx < 0)));
+      else if (mode === "open") settle(cancel ? false : dx > w * 0.3 || (fast && dx > 0));
+      else {
+        const dir = dx < 0 ? 1 : -1;
+        if (!cancel && (Math.abs(dx) > 70 || fast) && o.pager.can(dir)) flip(dir);
+        else {
+          page(0, true);
+          setTimeout(pageClear, 200);
+        }
+      }
+    }
+    document.addEventListener("touchend", () => end(false), { passive: true });
+    document.addEventListener("touchcancel", () => end(true), { passive: true });
+  };
+})();

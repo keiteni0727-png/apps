@@ -1996,26 +1996,9 @@ document.addEventListener("click", e => {
   }
   if (document.body.classList.contains("drawer") && e.target.closest(".sb [data-tab], .sb #sbgear")) setDrawer(false);
 });
-/* スワイプ：メニューが開いていれば、どこで左にスワイプしても閉じる。画面の左端から右へスワイプすると開く（それ以外の横スワイプでは何もしない） */
-(() => {
-  let s0 = null;
-  document.addEventListener("touchstart", e => {
-    if (e.touches.length !== 1 || !matchMedia("(max-width:899px)").matches) return (s0 = null);
-    const t = e.touches[0];
-    s0 = { x: t.clientX, y: t.clientY, at: Date.now() };
-  }, { passive: true });
-  document.addEventListener("touchend", e => {
-    if (!s0) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - s0.x, dy = t.clientY - s0.y, x = s0.x, quick = Date.now() - s0.at < 700;
-    s0 = null;
-    if (!quick || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
-    const open = document.body.classList.contains("drawer");
-    if (open && dx < 0) setDrawer(false);
-    else if (!open && dx > 0 && x < 28) setDrawer(true);
-  }, { passive: true });
-  matchMedia("(max-width:899px)").addEventListener("change", () => setDrawer(false));
-})();
+/* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉。開いているときは左へ引いて閉じ、画面の左端から右へ引くと開く */
+uSwipe({ sb: ".sb", scrim: ".dscrim", setDrawer, edge: 28 });
+matchMedia("(max-width:899px)").addEventListener("change", () => setDrawer(false));
 document.addEventListener("click", e => {
   if (e.target.closest(".pay, #st-pay")) return; // 支払いの部品は pay.js が受け持つ
   if (clickListCheck(e)) return;
