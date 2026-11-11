@@ -938,7 +938,7 @@ function renderSummary(mi, pi) {
     (sum
       ? `<div class="stack" role="img" aria-label="分類の内訳">${top.map(([c, v]) => `<span title="${esc(c)} ${yen(v)}（${Math.round((v / sum) * 100)}%）" style="flex:${v};background:${bcol(c)}"></span>`).join("")}</div>
     <div class="legend">${top.map(([c, v]) => `<span><i style="background:${bcol(c)}"></i>${emo(c)} ${esc(c)} <b class="num">${Math.round((v / sum) * 100)}%</b></span>`).join("")}</div>`
-      : `<div class="mu mt10">この月度の明細はまだありません。「＋ 手入力」から追加してください。</div>`) +
+      : `<div class="mu mt10">この月度の明細はまだありません。${document.documentElement.classList.contains("noai") ? "「＋ 明細を追加」" : "「＋ 手入力」"}から追加してください。</div>`) +
     `<div class="kpis"><div><span>件数</span><b>${mi.length}件</b></div><div><span>1日平均</span><b>${yen(Math.round(sum / days))}</b></div><div><span>前月</span><b>${yen(psum)}</b></div></div>` +
     (meths.length
       ? `<div class="meths">${meths.map(([k, v]) => `<span class="chip out" style="${hs(k)}">${emo(k)} ${esc(k)} <b class="num">${yen(v)}</b></span>`).join("")}</div>`

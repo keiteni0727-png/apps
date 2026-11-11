@@ -11,7 +11,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="robots" content="noindex,nofollow">
 <script>document.documentElement.classList.add("noai");try{["okane.an","kakeibo.tab"].forEach(function(k){if(localStorage.getItem(k)==="ai")localStorage.setItem(k,"graph")})}catch(e){}</script>
-<style>/* 単独版ではClaudeのAI機能（スクショ読み取り・AI分析）を使えないので隠す */html.noai [data-tab="ai"],html.noai #shot,html.noai #file+.mu,html.noai #aiBox,html.noai #v-ai{display:none!important}</style>
+<style>/* 単独版ではClaudeのAI機能（スクショ読み取り・AI分析）を使えないので隠す */html.noai [data-tab="ai"],html.noai #shot,html.noai #file+.mu,html.noai #aiBox,html.noai #v-ai{display:none!important}
+/* 単独版：追加ボタンだけになるので、枠をなくして横いっぱいのボタンにする */
+.noai-only{display:none}html.noai .ai-only{display:none}html.noai .noai-only{display:inline}
+html.noai .kb .addcard{background:none;border:0;box-shadow:none;padding:0}
+html.noai .kb .addcard #manual{width:100%;height:46px;background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on);font-size:15px;font-weight:700}
+html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:none}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="../shared/u-base.css">
@@ -38,10 +43,10 @@
 <div class="wrap layout">
   <section class="view" id="v-list">
     <div class="card sum" id="summary"></div>
-    <div class="card">
+    <div class="card addcard">
       <div class="row">
         <button class="pri grow" id="shot">📷 スクショから追加</button>
-        <button id="manual">＋ 手入力</button>
+        <button id="manual"><span class="ai-only">＋ 手入力</span><span class="noai-only">＋ 明細を追加</span></button>
       </div>
       <input type="file" id="file" accept="image/*" multiple hidden>
       <div class="mu mt8">カード明細・決済アプリ・レシートのスクショを複数枚まとめて選べます。</div>
