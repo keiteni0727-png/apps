@@ -1225,8 +1225,8 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .pay .after>.note{font-size:12.5px}
 }
 
-/* ===== スマホ：左上の☰から開くメニュー・右下の＋（エンタメ管理と同じ形） ===== */
-.kb .hmenu,.kb .hcur,.kb .fab,.kb .sb-x,.kb .dscrim{display:none}
+/* ===== スマホ：左上の☰から開くメニュー・エンタメ管理と同じ形 ===== */
+.kb .hmenu,.kb .hcur,.kb .sb-x,.kb .dscrim{display:none}
 .kb .mic{display:inline-grid;place-items:center;line-height:0}
 .kb .mic svg{width:20px;height:20px}
 .kb .sb-it i.mic{width:22px}
@@ -1241,8 +1241,6 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .hmenu svg{width:20px;height:20px}
   .kb .hcur{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;color:var(--u-accent);margin-right:auto}
   .kb .hcur svg{width:24px;height:24px}
-  .kb button.fab{display:grid;place-items:center;position:fixed;z-index:12;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border:0;border-radius:50%;background:var(--u-accent);color:var(--u-on);font-size:30px;font-weight:400;line-height:1;padding:0;box-shadow:0 8px 24px rgba(16,24,40,.28)}
-  body[data-tab="graph"] .kb .fab,body[data-tab="ai"] .kb .fab,body[data-tab="rules"] .kb .fab,body.sel .kb .fab{display:none}
   .kb .totop{right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
   body.drawer{overflow:hidden}
   body.drawer .kb .dscrim{display:block;position:fixed;inset:0;z-index:59;background:var(--u-scrim)}

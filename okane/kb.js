@@ -1995,12 +1995,6 @@ document.addEventListener("click", e => {
     return;
   }
   if (document.body.classList.contains("drawer") && e.target.closest(".sb [data-tab], .sb #sbgear")) setDrawer(false);
-  if (e.target.closest("#fab")) {
-    /* 今の画面の「追加」を押したのと同じにする */
-    const id = { list: "manual", home: "cAdd", balance: "mAdd" }[view.tab];
-    const b = id && $(id);
-    if (b) b.click();
-  }
 });
 /* スワイプ：メニューが開いていれば、どこで左にスワイプしても閉じる。画面の左端から右へスワイプすると開く（それ以外の横スワイプでは何もしない） */
 (() => {
