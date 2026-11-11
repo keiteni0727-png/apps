@@ -252,8 +252,13 @@ const AUTH_ERR = {
   "auth/user-not-found":"メールアドレスかパスワードがちがうみたい",
   "auth/too-many-requests":"何度も失敗したので、少し時間をおいてね",
   "auth/network-request-failed":"ネットにつながっていないみたい",
-  "auth/operation-not-allowed":"Firebaseで「メール/パスワード」のログインがまだオンになっていないみたい",
-  "auth/unauthorized-domain":"このURLがFirebaseの「承認済みドメイン」に入っていないみたい"
+  "auth/operation-not-allowed":"Firebaseで、このログイン方法がまだオンになっていないみたい",
+  "auth/unauthorized-domain":"このURLがFirebaseの「承認済みドメイン」に入っていないみたい",
+  "auth/unauthorized-continue-uri":"このURLがFirebaseの「承認済みドメイン」に入っていないみたい",
+  "auth/invalid-action-code":"このリンクは使えません（期限切れか使用ずみ）。もう一度メールを送ってね",
+  "auth/expired-action-code":"リンクの期限が切れています。もう一度メールを送ってね",
+  "auth/quota-exceeded":"今日はメールを送れる回数の上限です。明日また試すか、Googleでログインしてね",
+  "auth/account-exists-with-different-credential":"このメールアドレスは別の方法で登録ずみです。メールのリンクでログインしてね"
 };
 const authMsg = e => AUTH_ERR[e?.code] || ("うまくいかなかったよ（" + (e?.code || e?.message || "不明") + "）");
 
@@ -268,12 +273,26 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
 }
 
 const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
-const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
 const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp, arrayUnion, deleteField, writeBatch } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 auth.languageCode = "ja";
+
+/* メールのリンクから開かれたとき：リンクを覚えておき、送ったアドレスが分かればそのままログイン */
+const LOGIN = { link: null, sent: false };
+if (isSignInWithEmailLink(auth, location.href)) {
+  LOGIN.link = location.href;
+  const saved = localStorage.getItem("futari_email");
+  if (saved) finishEmailLink(saved, LOGIN.link).catch(e => { toast(authMsg(e)); renderLogin(); });
+}
+async function finishEmailLink(email, link){
+  await signInWithEmailLink(auth, normEmail(email), link);
+  localStorage.removeItem("futari_email");
+  LOGIN.link = null; LOGIN.sent = false;
+  history.replaceState(null, "", appUrl());
+}
 const db = getFirestore(fbApp);
 
 /* ---------- 状態 ---------- */
@@ -303,7 +322,7 @@ onAuthStateChanged(auth, async user => {
   try {
     const snap = await getDoc(doc(db, "users", user.uid));
     S.profile = snap.exists() ? snap.data() : {};
-  } catch (e) { return renderFatal(e); }
+  } catch (e) { return renderFatal(e, "プロフィールの読みこみ"); }
   route();
 });
 
@@ -325,38 +344,90 @@ async function route(){
   openRoom(S.profile.roomId);
 }
 
-function renderFatal(e){
+function renderFatal(e, where){
   $nav.innerHTML = "";
   $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1></div>
-  <div class="card"><h2>うまく読みこめませんでした</h2><p class="muted">${esc(e?.code || e?.message || e)}</p>
+  <div class="card"><h2>うまく読みこめませんでした</h2><p class="muted">${where ? esc(where) + "：" : ""}${esc(e?.code || e?.message || e)}</p>
   <button class="btn block" data-a="reload">もう一度ためす</button><div class="gap"></div><button class="btn ghost block" data-a="logout">ログアウト</button></div>`;
 }
 
 /* =============== ログイン画面 =============== */
 function renderLogin(){
   $nav.innerHTML = "";
+  const saved = localStorage.getItem("futari_email") || "";
   const reg = S.authMode === "signup";
+  let mail;
+  if (LOGIN.link) {
+    mail = `<form id="finf">
+      <h2>✉️ ログインを完了する</h2>
+      <p class="muted" style="margin-top:0">リンクを送ったメールアドレスを入れてね</p>
+      <label class="f"><input class="in" type="email" name="email" required value="${esc(saved)}" autocomplete="email"></label>
+      <div class="err" id="merr"></div>
+      <button class="btn block">ログイン</button></form>`;
+  } else if (LOGIN.sent) {
+    mail = `<h2>✉️ メールを送りました</h2>
+      <p class="muted" style="margin-top:0"><b>${esc(saved)}</b> に届いたメールのリンクを押すとログインできます。届かないときは迷惑メールフォルダも見てね。</p>
+      <details style="margin:4px 0 10px"><summary class="muted" style="cursor:pointer">ホーム画面のアプリから使っている場合</summary>
+        <p class="muted">メールのリンクを押すとSafariが開きます。アプリのほうでログインしたいときは、メールのリンクを長押しして「リンクをコピー」し、下に貼り付けてね。</p>
+        <form id="pastef"><input class="in" name="link" required placeholder="https://..." autocomplete="off"><div class="err" id="perr2"></div><button class="btn block">貼り付けてログイン</button></form>
+      </details>
+      <button class="btn ghost sm" data-a="resend">アドレスを入れ直す</button>`;
+  } else {
+    mail = `<form id="sendf">
+      <h2>✉️ メールでログイン（パスワードなし）</h2>
+      <p class="muted" style="margin-top:0">メールアドレスを入れると、ログイン用のリンクが届きます。はじめての人もここから登録できます。</p>
+      <label class="f"><input class="in" type="email" name="email" required value="${esc(saved)}" placeholder="example@gmail.com" autocomplete="email"></label>
+      <div class="err" id="merr"></div>
+      <button class="btn block">ログイン用のメールを送る</button></form>`;
+  }
   $app.innerHTML = `
   <div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>ふたりで行きたい場所を、いっしょに決めよう</p></div>
-  <div class="card">
+  <div class="card"><button class="btn lav block" data-a="google">Googleでログイン</button></div>
+  <div class="card">${mail}</div>
+  <details class="card"><summary class="muted" style="cursor:pointer">パスワードでログイン・登録する</summary>
+    <div class="gap"></div>
     <div class="seg"><button class="${reg ? "" : "on"}" data-a="mode" data-v="login">ログイン</button><button class="${reg ? "on" : ""}" data-a="mode" data-v="signup">新しく登録</button></div>
     <form id="authf">
       <label class="f"><span>メールアドレス</span><input class="in" type="email" name="email" autocomplete="email" required></label>
       <label class="f"><span>パスワード${reg ? "（6文字以上）" : ""}</span><input class="in" type="password" name="pw" autocomplete="${reg ? "new-password" : "current-password"}" required minlength="6"></label>
       <div class="err" id="aerr"></div>
-      <button class="btn block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
+      <button class="btn sub block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
     </form>
     ${reg ? "" : `<div style="text-align:center;margin-top:8px"><button class="linkbtn" data-a="forgot">パスワードを忘れたとき</button></div>`}
-  </div>
-  <p class="muted" style="text-align:center;padding:0 12px">💌 恋人に招待された人は、恋人が登録したメールアドレスで「新しく登録」してね</p>`;
+  </details>
+  <p class="muted" style="text-align:center;padding:0 12px">💌 恋人に招待された人は、恋人が登録したメールアドレス（またはそのGoogleアカウント）でログインしてね</p>`;
+  if (S.authMode === "signup" || S.openPw) document.querySelector("details.card").open = true;
+
   document.getElementById("authf").onsubmit = async ev => {
     ev.preventDefault();
     const f = new FormData(ev.target), email = String(f.get("email")).trim(), pw = String(f.get("pw"));
-    const b = ev.target.querySelector("button"); b.disabled = true;
+    const b = ev.target.querySelector("button[type=submit]"); b.disabled = true;
     try {
       if (reg) await createUserWithEmailAndPassword(auth, email, pw);
       else await signInWithEmailAndPassword(auth, email, pw);
     } catch (e) { document.getElementById("aerr").textContent = authMsg(e); b.disabled = false; }
+  };
+  const sendf = document.getElementById("sendf");
+  if (sendf) sendf.onsubmit = async ev => {
+    ev.preventDefault();
+    const email = normEmail(new FormData(sendf).get("email")), b = sendf.querySelector("button"); b.disabled = true;
+    try {
+      await sendSignInLinkToEmail(auth, email, { url: appUrl(), handleCodeInApp: true });
+      localStorage.setItem("futari_email", email);
+      LOGIN.sent = true; renderLogin();
+    } catch (e) { document.getElementById("merr").textContent = authMsg(e); b.disabled = false; }
+  };
+  const finf = document.getElementById("finf");
+  if (finf) finf.onsubmit = async ev => {
+    ev.preventDefault(); const b = finf.querySelector("button"); b.disabled = true;
+    try { await finishEmailLink(new FormData(finf).get("email"), LOGIN.link); }
+    catch (e) { document.getElementById("merr").textContent = authMsg(e); b.disabled = false; }
+  };
+  const pastef = document.getElementById("pastef");
+  if (pastef) pastef.onsubmit = async ev => {
+    ev.preventDefault(); const link = String(new FormData(pastef).get("link")).trim(), er = document.getElementById("perr2");
+    if (!isSignInWithEmailLink(auth, link)) return er.textContent = "メールのリンクではないみたい。もう一度コピーしてね";
+    try { await finishEmailLink(saved, link); } catch (e) { er.textContent = authMsg(e); }
   };
 }
 
@@ -469,12 +540,12 @@ function openRoom(roomId, fresh){
     S.room = snap.data(); gotRoom = true;
     if (gotPlaces) render();
     if (fresh) { fresh = false; setTimeout(openInvite, 300); }
-  }, e => e.code === "permission-denied" ? lostRoom() : renderFatal(e)));
+  }, e => e.code === "permission-denied" ? lostRoom() : renderFatal(e, "ルームの読みこみ")));
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "places"), snap => {
     S.places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     gotPlaces = true;
     if (gotRoom) render();
-  }, e => { if (e.code !== "permission-denied") renderFatal(e); }));
+  }, e => setTimeout(() => { if (S.roomId === roomId) renderFatal(e, "候補の読みこみ"); }, 800)));
 }
 
 async function lostRoom(){
@@ -816,7 +887,17 @@ document.addEventListener("click", async ev => {
   switch (a) {
     case "close": closeSheet(); break;
     case "reload": location.reload(); break;
-    case "mode": S.authMode = el.dataset.v; renderLogin(); break;
+    case "mode": S.authMode = el.dataset.v; S.openPw = true; renderLogin(); break;
+    case "resend": LOGIN.sent = false; renderLogin(); break;
+    case "google": {
+      const pv = new GoogleAuthProvider(); pv.setCustomParameters({ prompt: "select_account" });
+      try { await signInWithPopup(auth, pv); }
+      catch (e) {
+        if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) await signInWithRedirect(auth, pv);
+        else if (!["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) toast(authMsg(e));
+      }
+      break;
+    }
     case "forgot": {
       const email = document.querySelector("#authf [name=email]").value.trim();
       if (!email) { document.getElementById("aerr").textContent = "上にメールアドレスを入れてから押してね"; break; }
