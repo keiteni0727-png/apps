@@ -727,8 +727,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fb.srt{padding:0}
 .count{display:flex;align-items:center;gap:10px}
 .count .clear{border:0;background:transparent;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;padding:2px 0}
-.fpop-scrim{position:fixed;inset:0;z-index:50;background:var(--u-scrim)}
-.fsdrop.fpop{position:fixed;left:0;right:0;bottom:0;z-index:51;margin:0;border:0;border-radius:18px 18px 0 0;max-height:72vh;overflow:auto;overscroll-behavior:contain;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+/* 選択肢はボタンの列のすぐ下に、上から垂れ下がる形で出す */
+.fwrap{position:relative}
+.fpop-scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.18)}
+.fsdrop.fpop{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:51;margin:0;border:1px solid var(--u-line);border-radius:14px;max-height:62vh;overflow:auto;overscroll-behavior:contain;padding:12px 14px 14px;box-shadow:0 12px 32px rgba(16,24,40,.22);transform-origin:top center;animation:fdrop .16s ease-out}
+@keyframes fdrop{from{opacity:0;transform:translateY(-6px) scaleY(.97)}to{opacity:1;transform:none}}
 .fsdrop.fpop .fgroup:last-child{display:grid}
 .fsdrop.fpop .fgroup:nth-child(2):last-child{display:block}
 .fsdrop.fpop .fgroup:nth-child(2):last-child>h5{display:none}
@@ -744,7 +747,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop.fpop .sortlist button{padding:10px;font-size:14px}
 @media (min-width:900px){
   .frow{grid-template-columns:repeat(4,minmax(0,170px)) 42px}
-  .fsdrop.fpop{left:calc(50% + var(--sbw,0px) / 2);right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(560px,90vw);border-radius:18px;padding-bottom:18px}
+  .fsdrop.fpop{right:auto;width:min(560px,100%)}
 }
 /* メニューのアイコン */
 .mic{display:inline-grid;place-items:center;width:22px;height:22px;line-height:0}
@@ -1908,7 +1911,7 @@ function isFinOn(i, day) {
 }
 function renderWeek() {
   const pool = items.filter(i => ofKind(i) && vodOk(i) && i.s === "視聴中");
-  let h = `${fRowHtml(["vod"])}${fPopHtml({ vod: vodPanelHtml() })}<div class="clock" id="clock">${clockHtml()}</div>`;
+  let h = `<div class="fwrap">${fRowHtml(["vod"])}${fPopHtml({ vod: vodPanelHtml() })}</div><div class="clock" id="clock">${clockHtml()}</div>`;
   const now = new Date();
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const by = new Map();
@@ -2129,9 +2132,8 @@ function renderList() {
     sort: sortHtml,
   };
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
-    ${fRowHtml(FKEYS)}
+    <div class="fwrap">${fRowHtml(FKEYS)}${fPopHtml(panels)}</div>
     <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}</p>
-    ${fPopHtml(panels)}
     ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
 }
 let loaded = false;
