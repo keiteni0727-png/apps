@@ -15,11 +15,11 @@
 <link rel="stylesheet" href="../shared/u-base.css">
 <style>
 /* 色・書体・角丸・土台・左メニューは u-base.css（アプリ共通）。ここはアクセント色と、このアプリだけの色 */
-:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090}
+:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090}
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
+  :root:not([data-theme="light"]){--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
 }
-:root[data-theme="dark"]{--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
+:root[data-theme="dark"]{--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
 /* Layout: 番組表（TV guide）— sticky channel bar, weekday rows of program slots, bottom sheet detail */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){color-scheme:dark}
@@ -334,6 +334,7 @@ h3 input.inl{font-size:18px;font-weight:800}
 .mdot{display:inline-block;width:9px;height:9px;border-radius:50%}
 .mdot.a{background:var(--anime)}
 .mdot.d{background:var(--drama)}
+.mdot.m{background:var(--movie)}
 .eped.nosub .er{grid-template-columns:72px 1fr 30px}
 @media (max-width:520px){
   .eped.nosub .er{grid-template-columns:64px 1fr 30px}
@@ -499,6 +500,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop .fgroup .chips button,.fsdrop .fgroup .chips select{flex:none;white-space:nowrap}
 .fsdrop #serSug:empty{display:none}
 /* 保存したフィルタ */
+.vodbar{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.vodbar::-webkit-scrollbar{display:none}
+.vodbar button{flex:0 0 auto;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-sub);padding:5px 12px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.vodbar button[aria-pressed="true"]{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
 .svbar{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .svbar::-webkit-scrollbar{display:none}
 .svbar button{flex:none;white-space:nowrap;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:4px 11px;font:inherit;font-size:12.5px;font-weight:700}
@@ -684,6 +689,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
       <div class="modes" role="tablist" aria-label="管理するもの">
         <button type="button" role="tab" data-mode="a" aria-selected="true"><i class="mdot a" aria-hidden="true"></i>アニメ</button>
         <button type="button" role="tab" data-mode="d" aria-selected="false"><i class="mdot d" aria-hidden="true"></i>ドラマ</button>
+        <button type="button" role="tab" data-mode="m" aria-selected="false"><i class="mdot m" aria-hidden="true"></i>映画</button>
         <button type="button" role="tab" data-mode="yt" aria-selected="false"><span class="ytmark" aria-hidden="true">▶</span><span class="ytl">YouTube</span></button>
       </div>
       <span class="hsp"></span>
@@ -787,13 +793,18 @@ const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
 if (typeof state.fOpen !== "string") state.fOpen = "";
-if (!["a", "d", "yt"].includes(state.mode)) state.mode = "a";
-if (state.mode !== "yt") state.kind = state.mode;
+if (!["a", "d", "m", "yt"].includes(state.mode)) state.mode = "a";
+if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
+if (typeof state.vod !== "string") state.vod = "";
+if (state.mode === "m") state.kind = state.mk;
+else if (state.mode !== "yt") state.kind = state.mode;
 const saveUI = () =>
   ls.set(K_UI, {
     fOpen: state.fOpen || "",
     mode: state.mode,
     kind: state.kind,
+    mk: state.mk,
+    vod: state.vod,
     view: state.view,
     sf: state.sf,
     era: state.era,
@@ -805,12 +816,13 @@ const saveUI = () =>
   });
 /* ---------- 保存したフィルタ（アニメ・ドラマで別々。マスタに保存するので端末をまたいで同じ） ---------- */
 const SVK = ["sf", "era", "type", "cour", "series"];
+const svKey = () => (state.mode === "m" ? "m" : state.kind);
 const svList = () => {
   const all = master.savedFilters || {};
-  return Array.isArray(all[state.kind]) ? all[state.kind] : [];
+  return Array.isArray(all[svKey()]) ? all[svKey()] : [];
 };
 function setSv(l) {
-  master = { ...master, savedFilters: { ...(master.savedFilters || {}), [state.kind]: l } };
+  master = { ...master, savedFilters: { ...(master.savedFilters || {}), [svKey()]: l } };
   saveMaster();
 }
 const sameSet = (a, b) => {
@@ -1503,7 +1515,13 @@ function renderSidebar() {
   const subOf = m =>
     m === "yt"
       ? ["すべて", ...ytAuthors()].map(a => [a, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a])
-      : [
+      : m === "m"
+        ? [
+          ["all", "すべて", state.kind === "all"],
+          ["a", "アニメ映画", state.kind === "a"],
+          ["d", "ドラマ・実写", state.kind === "d"],
+        ]
+        : [
           ["week", "番組表", state.view === "week"],
           ["list", "ライブラリ", state.view === "list"],
         ];
@@ -1517,7 +1535,7 @@ function renderSidebar() {
   sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b><button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button></div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
-    ${mode("a", "📺", "アニメ")}${mode("d", "🎬", "ドラマ")}${mode("yt", "▶️", "YouTube")}
+    ${mode("a", "📺", "アニメ")}${mode("d", "🎬", "ドラマ")}${mode("m", "🎞️", "映画")}${mode("yt", "▶️", "YouTube")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
 function renderVbar() {
@@ -1526,7 +1544,13 @@ function renderVbar() {
   const yt = state.mode === "yt";
   const opts = yt
     ? ["すべて", ...ytAuthors()].map(a => [a, a, yst.author === a])
-    : [
+    : state.mode === "m"
+      ? [
+          ["all", "すべて", state.kind === "all"],
+          ["a", "アニメ映画", state.kind === "a"],
+          ["d", "ドラマ・実写", state.kind === "d"],
+        ]
+      : [
         ["week", "番組表", state.view === "week"],
         ["list", "ライブラリ", state.view === "list"],
       ];
@@ -1544,7 +1568,13 @@ function renderTabbar() {
         a === "すべて" ? TB_ICON.all : EMO[a] ? `<i class="temo" aria-hidden="true">${EMO[a]}</i>` : TB_ICON.user,
         yst.author === a,
       ])
-    : [
+    : state.mode === "m"
+      ? [
+          ["all", "すべて", TB_ICON.all, state.kind === "all"],
+          ["a", "アニメ映画", '<i class="temo" aria-hidden="true">📺</i>', state.kind === "a"],
+          ["d", "ドラマ・実写", '<i class="temo" aria-hidden="true">🎬</i>', state.kind === "d"],
+        ]
+      : [
         ["week", "番組表", TB_ICON.week, state.view === "week"],
         ["list", "ライブラリ", TB_ICON.list, state.view === "list"],
       ];
@@ -1558,7 +1588,21 @@ function renderTabbar() {
     )
     .join("");
 }
-const ofKind = i => state.kind === "all" || i.k === state.kind;
+/* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
+const ofKind = i =>
+  (state.kind === "all" || i.k === state.kind) && (state.mode !== "m" || mediaOf(i).media === "movie");
+/* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
+const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
+const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
+function vodBarHtml() {
+  const used = new Set(items.filter(ofKind).flatMap(vodsOf));
+  const order = [...new Set([...M("vods"), ...used])];
+  const l = order.filter(v => used.has(v) || v === state.vod);
+  if (!l.length) return "";
+  const b = (v, lab) =>
+    `<button type="button" data-vod="${esc(v)}" aria-pressed="${state.vod === v}">${esc(lab)}</button>`;
+  return `<div class="vodbar" role="group" aria-label="配信サイトで絞り込み">${b("", "すべて")}${l.map(v => b(v, v)).join("")}</div>`;
+}
 const kindTag = i => `<span class="kind ${i.k}">${i.k === "a" ? "アニメ" : "ドラマ"}</span>`;
 /* 番組表の時刻の下に出す放送局（配信なら配信サイト） */
 function stationTxt(i) {
@@ -1627,7 +1671,7 @@ setInterval(() => {
   const c = $("#clock");
   if (c) c.innerHTML = clockHtml();
   /* 放送開始から1時間たった番組を翌週へ移すため、並びが変わるときだけ描き直す */
-  if (c && state.mode !== "yt" && state.view === "week" && !$("#layer").innerHTML) {
+  if (c && state.mode !== "yt" && state.mode !== "m" && state.view === "week" && !$("#layer").innerHTML) {
     const old = weekSig;
     renderWeek();
     if (weekSig !== old) render();
@@ -1746,8 +1790,8 @@ function isFinOn(i, day) {
   return !!j && j.day === day;
 }
 function renderWeek() {
-  const pool = items.filter(i => ofKind(i) && i.s === "視聴中");
-  let h = `<div class="clock" id="clock">${clockHtml()}</div>`;
+  const pool = items.filter(i => ofKind(i) && vodOk(i) && i.s === "視聴中");
+  let h = `${vodBarHtml()}<div class="clock" id="clock">${clockHtml()}</div>`;
   const now = new Date();
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const by = new Map();
@@ -1785,7 +1829,7 @@ function renderWeek() {
   return h;
 }
 function filtered() {
-  let list = items.filter(i => ofKind(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i));
+  let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i));
   if (state.q) {
     const qq = state.q.toLowerCase();
     list = list.filter(i =>
@@ -1920,6 +1964,7 @@ function renderList() {
     .join("")}</div></div>`;
   const sortHtml = `<div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div>`;
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
+    ${vodBarHtml()}
     ${svBarHtml()}
     ${fsBar(state.fOpen, act.length, SORTS.find(x => x[0] === state.sort)[1], svPanelHtml() + sfHtml + filterHtml(), sortHtml)}
     ${act.length ? `<div class="active">${act.map(([k, v]) => `<button type="button" class="tag" data-unset="${k}" aria-label="${esc(v)}の条件を外す">${esc(v)}</button>`).join("")}<button type="button" class="clear" data-unset="all">すべて解除</button></div>` : ""}
@@ -1951,7 +1996,7 @@ function render() {
   renderSidebar();
   if (!loaded) return;
   const y = lockY ?? scrollY;
-  const body = yt ? renderYt() : state.view === "week" ? renderWeek() : renderList();
+  const body = yt ? renderYt() : state.view === "week" && state.mode !== "m" ? renderWeek() : renderList();
   setMain(body + `<p class="note savenote" id="saveNote">${saveNoteHtml()}</p>`);
   if (lockY === null) scrollTo(0, y);
   saveUI();
@@ -2011,7 +2056,7 @@ function filterHtml() {
       <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
       <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`
   }
-    <div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>
+    ${state.mode === "m" ? "" : `<div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>`}
     <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">複数選べます</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
       .map(e => {
         const n = tb.filter(e.test).length;
@@ -2683,7 +2728,7 @@ function openForm(it, target) {
       dow: -1,
       time: "",
       from: "",
-      media: "tv",
+      media: state.mode === "m" ? "movie" : "tv",
       irregular: false,
       stations: [],
       plat: [],
@@ -3778,7 +3823,12 @@ function onSettingsClick(e) {
 function setMode(m) {
   if (state.mode === m) return;
   state.mode = m;
-  if (m !== "yt") {
+  if (m === "m") {
+    state.kind = state.mk;
+    state.type = [];
+    state.limit = 200;
+    state.series = [];
+  } else if (m !== "yt") {
     state.kind = m;
     state.limit = 200;
     state.series = [];
@@ -3792,9 +3842,19 @@ function onNavClick(e) {
     if (state.mode === "yt") {
       yst.author = v;
       saveYtUI();
+    } else if (state.mode === "m") {
+      state.mk = state.kind = v;
+      state.limit = 200;
     } else state.view = v;
     render();
     scrollTo(0, 0);
+    return true;
+  }
+  const vb = e.target.closest("[data-vod]");
+  if (vb) {
+    state.vod = state.vod === vb.dataset.vod ? "" : vb.dataset.vod;
+    state.limit = 200;
+    render();
     return true;
   }
   const md = e.target.closest("[data-mode]");
