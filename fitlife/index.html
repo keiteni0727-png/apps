@@ -109,7 +109,7 @@ svg.chart{width:100%;height:auto;display:block}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
@@ -188,6 +188,12 @@ if(!configured){
   auth = getAuth(fbApp);
   db = getFirestore(fbApp);
   onAuthStateChanged(auth, onUser);
+  // メールのリンクから開かれたとき
+  if(isSignInWithEmailLink(auth, location.href)){
+    LOGIN.link = location.href;
+    const saved = localStorage.getItem('fitlife_email');
+    if(saved){ finishEmailLink(saved, LOGIN.link).catch(()=>{}); }
+  }
 }
 
 async function onUser(user){
@@ -322,19 +328,64 @@ async function compress(file, max, q, maxLen){
 }
 
 /* ===== 画面 ===== */
+/* ===== ログイン（Google／メールのリンク） ===== */
+const LOGIN = { link:null, sent:false, busy:false };
+const appUrl = () => location.origin + location.pathname;
+function authErr(err){
+  return ({
+    'auth/invalid-email':'メールアドレスの形がちがうみたい',
+    'auth/invalid-action-code':'このリンクは使えません（期限切れか使用済み）。もう一度送ってね',
+    'auth/expired-action-code':'リンクの期限が切れています。もう一度送ってね',
+    'auth/quota-exceeded':'今日はメールを送れる回数の上限です。明日また試してね',
+    'auth/operation-not-allowed':'Firebaseでメールリンクのログインがまだ有効になっていません',
+    'auth/unauthorized-continue-uri':'Firebaseの承認済みドメインにこのサイトが入っていません',
+  })[err.code] || 'ログインできませんでした';
+}
+async function finishEmailLink(email, link){
+  await signInWithEmailLink(auth, email.trim().toLowerCase(), link);
+  localStorage.removeItem('fitlife_email');
+  LOGIN.link = null; LOGIN.sent = false;
+  if(location.search || location.hash) history.replaceState(null, '', appUrl());
+}
 function renderLogin(){
+  const saved = localStorage.getItem('fitlife_email') || '';
+  let mail;
+  if(LOGIN.link){
+    mail = `<form data-form="finishlink" class="card" style="text-align:left;width:100%;max-width:340px">
+      <p style="margin:0 0 6px;font-weight:700">ログインを完了する</p>
+      <p class="muted" style="margin:0">リンクを送ったメールアドレスを入れてね</p>
+      <input class="in" type="email" name="email" required value="${esc(saved)}" style="margin-top:8px" autocomplete="email">
+      <button class="btn block" style="margin-top:10px">ログイン</button></form>`;
+  } else if(LOGIN.sent){
+    mail = `<div class="card" style="text-align:left;width:100%;max-width:340px">
+      <p style="margin:0 0 4px;font-weight:700">メールを送りました ✉️</p>
+      <p class="muted" style="margin:0"><b>${esc(saved)}</b> に届いたメールのリンクを押すとログインできます。届かないときは迷惑メールフォルダも見てね。</p>
+      <details style="margin-top:10px"><summary class="muted" style="cursor:pointer">ホーム画面のアプリから使っている場合</summary>
+        <p class="muted">メールのリンクを長押しして「リンクをコピー」し、下に貼り付けてね。</p>
+        <form data-form="pastelink"><input class="in" name="link" required placeholder="https://..." autocomplete="off"><button class="btn block" style="margin-top:8px">貼り付けてログイン</button></form>
+      </details>
+      <button class="btn ghost sm" data-a="resend" style="margin-top:10px">アドレスを入れ直す</button></div>`;
+  } else {
+    mail = `<form data-form="sendlink" class="card" style="text-align:left;width:100%;max-width:340px">
+      <p style="margin:0 0 6px;font-weight:700">メールでログイン</p>
+      <p class="muted" style="margin:0">招待されたメールアドレスを入れると、ログイン用のリンクが届きます</p>
+      <input class="in" type="email" name="email" required value="${esc(saved)}" placeholder="example@icloud.com" style="margin-top:8px" autocomplete="email">
+      <button class="btn block" style="margin-top:10px">ログインリンクを送る</button></form>`;
+  }
   $app.innerHTML = `<div class="center">
     ${IC.heart.replace('<svg','<svg class="big-heart"')}
     <div class="logo" style="font-size:28px">FitLife ♡</div>
-    <p class="muted">ふたりだけの健康管理アプリ</p>
-    <button class="btn" data-a="login" style="min-width:240px">Googleでログイン</button>
+    <p class="muted" style="margin:0">ふたりだけの健康管理アプリ</p>
+    ${mail}
+    <p class="muted" style="margin:0">または</p>
+    <button class="btn sub" data-a="login" style="min-width:240px">Googleでログイン</button>
   </div>`;
 }
 function renderDenied(){
   $app.innerHTML = `<div class="center">
     ${IC.heart.replace('<svg','<svg class="big-heart"')}
     <h2 style="margin:0">招待されていないアカウントです</h2>
-    <p class="muted">${esc(S.user?.email)} ではログインできません。<br>招待されたメールアドレスのGoogleアカウントでログインしてね。</p>
+    <p class="muted">${esc(S.user?.email)} ではログインできません。<br>招待されたメールアドレスでログインしてね。</p>
     <button class="btn sub" data-a="logout">ログアウト</button>
   </div>`;
 }
@@ -562,14 +613,14 @@ function viewSettings(){
   let html = '';
   if(!isM){
     const m = S.cfg.memberEmail;
-    const msg = `FitLife に招待しました♡\n${url}\n${m || ''} のGoogleアカウントでログインしてね`;
+    const msg = `FitLife に招待しました♡\n${url}\nこのURLを開いて「メールでログイン」に ${m || ''} を入れてね。届いたメールのリンクを押すとログインできるよ`;
     html += `<div class="card"><h2>招待</h2>
       ${m ? `<p>招待中：<b>${esc(m)}</b></p>
         <div class="row"><a class="btn" style="text-decoration:none" href="https://line.me/R/share?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">LINEで送る</a>
         <button class="btn sub" data-a="copy" data-v="${esc(msg)}">メッセージをコピー</button></div>
-        <p class="muted" style="margin-top:10px">このメールアドレスのGoogleアカウント以外はログインできません。利用できるのはあなたと招待した1人だけです。</p>
+        <p class="muted" style="margin-top:10px">このメールアドレス以外ではログインできません（メールのリンクでもGoogleでも可）。利用できるのはあなたと招待した1人だけです。</p>
         <button class="btn ghost sm" data-a="uninvite" style="margin-top:6px">招待を取り消す</button>`
-      : `<p class="muted">招待する人のGoogleアカウント（Gmailなど）のメールアドレスを入れてください。</p>
+      : `<p class="muted">招待する人のメールアドレスを入れてください（Gmail以外のiCloudなどでもOK）。</p>
         <form data-form="invite"><input class="in" type="email" name="email" required placeholder="example@gmail.com" autocomplete="off"><button class="btn block" style="margin-top:10px">招待する</button></form>`}
     </div>
     <div class="card"><h2>共有されている記録</h2>
@@ -675,6 +726,21 @@ async function handleForm(kind, f){
       if(v.p1 !== v.p2) throw new Error('合言葉が一致しません');
       await setupPass(v.p1); await idbSet('key_' + S.user.uid, S.key).catch(()=>{}); startPrivListeners();
       break;
+    case 'sendlink': {
+      const email = v.email.trim().toLowerCase();
+      await sendSignInLinkToEmail(auth, email, { url: appUrl(), handleCodeInApp: true });
+      localStorage.setItem('fitlife_email', email);
+      LOGIN.sent = true; renderLogin();
+      return;
+    }
+    case 'finishlink': await finishEmailLink(v.email, LOGIN.link); return;
+    case 'pastelink': {
+      const link = v.link.trim();
+      if(!isSignInWithEmailLink(auth, link)) throw new Error('メールのリンクではないみたい。もう一度コピーしてね');
+      const email = localStorage.getItem('fitlife_email');
+      if(!email) throw new Error('先にメールアドレスを入れてリンクを送ってね');
+      await finishEmailLink(email, link); return;
+    }
     case 'unlock':
       if(!(await unlock(v.p, !!v.remember))) throw new Error('合言葉がちがいます');
       break;
@@ -689,11 +755,11 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ setup:'合言葉を設定しました', unlock:'ひらきました', invite:'招待しました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', invite:'招待しました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
-    toast(err.code === 'permission-denied' ? '権限がありません' : (err.message || '保存できませんでした'));
+    toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : (err.message || '保存できませんでした')));
   }finally{ if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = btn.dataset.t; } }
 });
 
@@ -718,6 +784,7 @@ document.addEventListener('click', async e => {
         break;
       }
       case 'logout': await signOut(auth); break;
+      case 'resend': LOGIN.sent = false; renderLogin(); break;
       case 'tab': S.tab = v; window.scrollTo(0,0); render(); break;
       case 'open': openSheet(v); break;
       case 'close': case 'close-bg': closeSheet(); break;
