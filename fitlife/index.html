@@ -179,6 +179,17 @@ let subs = [], colSubs = [], privSubs = [];
 const unsub = arr => { arr.forEach(f=>{ try{f()}catch(e){} }); arr.length = 0; };
 
 /* ===== 起動 ===== */
+const LOGIN = { link:null, sent:false, busy:false };
+const appUrl = () => location.origin + location.pathname;
+// 予期しないエラーが起きたら、真っ白（ピンク）にせず画面に出す
+function showFatal(msg){
+  if($app.querySelector('.fatal')) return;
+  $app.insertAdjacentHTML('afterbegin', `<div class="card fatal note warn" style="margin-top:12px">うまく動きませんでした。この画面のスクショを送ってね。<br><small>${esc(msg)}</small></div>`);
+}
+window.addEventListener('error', e => showFatal(e.message || 'error'));
+window.addEventListener('unhandledrejection', e => showFatal(String(e.reason?.code || e.reason?.message || e.reason)));
+$app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<p class="muted">読み込み中…</p></div>`;
+setTimeout(() => { if(!S.user && $app.textContent.includes('読み込み中')) $app.insertAdjacentHTML('beforeend', `<p class="muted" style="text-align:center">時間がかかっています。LINEやメールアプリの中で開いている場合は、右上のメニューから「Safariで開く」を選んでね。</p>`); }, 8000);
 const configured = firebaseConfig.apiKey && firebaseConfig.apiKey !== 'PASTE_HERE';
 let auth, db;
 if(!configured){
@@ -188,14 +199,15 @@ if(!configured){
   auth = getAuth(fbApp);
   db = getFirestore(fbApp);
   // 招待リンク（#invite=...）で開かれたら、ログインが終わるまで覚えておく
-  const m = location.hash.match(/invite=([0-9a-f]{64})/);
-  if(m){ localStorage.setItem('fitlife_invite', m[1]); history.replaceState(null, '', location.pathname + location.search); }
+  const m = (location.hash + location.search).match(/invite=([0-9a-f]{64})/);
+  if(m) localStorage.setItem('fitlife_invite', m[1]);
+  if(location.hash.includes('invite=')) history.replaceState(null, '', location.pathname + location.search);
   onAuthStateChanged(auth, onUser);
   // メールのリンクから開かれたとき
   if(isSignInWithEmailLink(auth, location.href)){
     LOGIN.link = location.href;
     const saved = localStorage.getItem('fitlife_email');
-    if(saved){ finishEmailLink(saved, LOGIN.link).catch(()=>{}); }
+    if(saved){ finishEmailLink(saved, LOGIN.link).catch(err => { console.error(err); toast(authErr(err)); }); }
   }
 }
 
@@ -351,8 +363,6 @@ async function compress(file, max, q, maxLen){
 
 /* ===== 画面 ===== */
 /* ===== ログイン（Google／メールのリンク） ===== */
-const LOGIN = { link:null, sent:false, busy:false };
-const appUrl = () => location.origin + location.pathname;
 function authErr(err){
   return ({
     'auth/invalid-email':'メールアドレスの形がちがうみたい',
@@ -642,7 +652,7 @@ function viewSettings(){
         <p class="muted">これ以上は誰も参加できません。</p>
         <button class="btn ghost sm" data-a="uninvite">参加を取り消す</button>`;
     } else if(inv){
-      const link = `${url}#invite=${inv.id}`;
+      const link = `${url}?openExternalBrowser=1#invite=${inv.id}`;
       const msg = `FitLife に招待しました♡\n${link}\nこのリンクを開いて、Googleかメールでログインしてね（24時間・1回だけ使えます）`;
       const ex = inv.expiresAt.toDate();
       body = `<p class="muted">このリンクを送ってください。<b>${ex.getMonth()+1}/${ex.getDate()} ${z(ex.getHours())}:${z(ex.getMinutes())}まで・1回だけ</b>使えます。</p>
@@ -753,7 +763,8 @@ async function handleForm(kind, f){
       break;
     case 'sendlink': {
       const email = v.email.trim().toLowerCase();
-      await sendSignInLinkToEmail(auth, email, { url: appUrl(), handleCodeInApp: true });
+      const inv = localStorage.getItem('fitlife_invite');
+      await sendSignInLinkToEmail(auth, email, { url: appUrl() + (inv ? '?invite=' + inv : ''), handleCodeInApp: true });
       localStorage.setItem('fitlife_email', email);
       LOGIN.sent = true; renderLogin();
       return;
