@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FitLife">
+<meta name="theme-color" content="#fff5f8">
+<title>FitLife ♡</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff5f8; --card:#ffffff; --pink:#f48fb1; --pink-d:#e46f98; --pink-l:#fde4ec; --pink-xl:#fff0f5;
+  --text:#5b3b47; --muted:#a8899a; --line:#f6d6e1; --ok:#7cc7a8; --warn:#f2a65a;
+  --r:22px; --shadow:0 6px 20px rgba(228,111,152,.12);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",system-ui,sans-serif;font-size:15px;line-height:1.55}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 96px)}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:8px 2px 14px}
+.logo{font-weight:700;font-size:22px;color:var(--pink-d);display:flex;align-items:center;gap:6px;letter-spacing:.02em}
+.logo svg{width:22px;height:22px}
+.badge{font-size:11px;background:var(--pink-l);color:var(--pink-d);padding:3px 9px;border-radius:99px;margin-left:6px;font-weight:500}
+.iconbtn{border:0;background:var(--card);width:40px;height:40px;border-radius:50%;box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:20px;height:20px;stroke:var(--pink-d)}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:6px;color:var(--pink-d)}
+.card h2 .sub{margin-left:auto;font-size:12px;color:var(--muted);font-weight:400}
+.cheer{background:linear-gradient(135deg,#ffd6e5,#ffeef4 60%,#fff);position:relative;overflow:hidden}
+.cheer p{margin:4px 0 0;font-size:15px}
+.cheer .hello{font-weight:700;font-size:17px}
+.cheer .deco{position:absolute;right:-6px;top:-8px;width:84px;opacity:.35}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2 .card{margin:0}
+.stat .label{font-size:12px;color:var(--muted)}
+.stat .val{font-size:24px;font-weight:700}
+.stat .val small{font-size:13px;font-weight:500;color:var(--muted);margin-left:2px}
+.bar{height:9px;background:var(--pink-l);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#f8a9c6,var(--pink-d));border-radius:99px}
+.muted{color:var(--muted);font-size:13px}
+.btn{border:0;background:var(--pink-d);color:#fff;border-radius:99px;padding:11px 18px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(228,111,152,.3)}
+.btn.sub{background:var(--pink-l);color:var(--pink-d);box-shadow:none}
+.btn.ghost{background:transparent;color:var(--pink-d);box-shadow:none;border:1.5px solid var(--line)}
+.btn.block{width:100%}
+.btn.sm{padding:7px 13px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.list li:first-child{border-top:0}
+.list .main{flex:1;min-width:0}
+.list .t{font-weight:500}
+.list .s{font-size:12px;color:var(--muted)}
+.thumb{width:52px;height:52px;border-radius:14px;object-fit:cover;background:var(--pink-xl);flex:none}
+.del{border:0;background:none;color:#d7b3c1;font-size:18px;cursor:pointer;padding:4px 6px}
+.dayhead{font-size:13px;color:var(--pink-d);font-weight:700;margin:4px 0 2px;display:flex;justify-content:space-between}
+.chip{display:inline-block;font-size:12px;background:var(--pink-xl);color:var(--pink-d);border-radius:99px;padding:2px 9px;margin:2px 3px 0 0}
+.fab{position:fixed;right:max(18px,calc(50% - 262px));bottom:calc(env(safe-area-inset-bottom) + 86px);border:0;background:var(--pink-d);color:#fff;width:58px;height:58px;border-radius:50%;font-size:30px;box-shadow:0 8px 20px rgba(228,111,152,.45);cursor:pointer;z-index:5}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 0 calc(env(safe-area-inset-bottom) + 6px);z-index:6}
+nav.tabs .in{display:flex;width:100%;max-width:560px}
+nav.tabs button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);cursor:pointer;padding:4px 0}
+nav.tabs button svg{width:24px;height:24px;stroke:currentColor}
+nav.tabs button.on{color:var(--pink-d);font-weight:700}
+.sheet-bg{position:fixed;inset:0;background:rgba(91,59,71,.35);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 20px);max-height:88vh;overflow:auto;animation:up .22s ease}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.sheet h3{margin:0 0 12px;color:var(--pink-d);font-size:17px;display:flex;justify-content:space-between;align-items:center}
+label.f{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+input.in,select.in,textarea.in{width:100%;border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--pink-xl);outline:none;font-size:16px}
+input.in:focus,select.in:focus,textarea.in:focus{border-color:var(--pink)}
+.f3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.checks{display:flex;flex-wrap:wrap;gap:6px}
+.checks label{font-size:13px;border:1.5px solid var(--line);border-radius:99px;padding:5px 11px;cursor:pointer}
+.checks input{display:none}
+.checks label:has(input:checked){background:var(--pink-d);border-color:var(--pink-d);color:#fff}
+.switch{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.switch:first-of-type{border-top:0}
+.switch input{width:46px;height:26px;appearance:none;background:#ead3dc;border-radius:99px;position:relative;cursor:pointer;transition:.2s}
+.switch input::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;transition:.2s}
+.switch input:checked{background:var(--pink-d)}
+.switch input:checked::after{left:22px}
+.center{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px}
+.big-heart{width:86px;height:86px;animation:beat 1.6s infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.08)}30%{transform:scale(.98)}}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.photos figure{margin:0;position:relative}
+.photos img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:14px;display:block}
+.photos figcaption{font-size:11px;color:var(--muted);text-align:center}
+.photos .del{position:absolute;top:2px;right:2px;background:rgba(255,255,255,.85);border-radius:50%;width:26px;height:26px;padding:0;font-size:14px}
+.water-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.note{background:var(--pink-xl);border-radius:14px;padding:10px 12px;font-size:13px}
+.note.warn{background:#fff4e8;color:#9a6233}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 100px);transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:30;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:.92}
+svg.chart{width:100%;height:auto;display:block}
+.empty{text-align:center;color:var(--muted);font-size:13px;padding:18px 0}
+.lockbox{text-align:center}
+.lockbox svg{width:46px;height:46px;stroke:var(--pink-d)}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"></div>
+<div id="sheet"></div>
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDy86SEv4lrdO6pWwfaG43qr7kqVd7eHJ8",
+  authDomain: "fitlife-215e0.firebaseapp.com",
+  projectId: "fitlife-215e0",
+  storageBucket: "fitlife-215e0.firebasestorage.app",
+  messagingSenderId: "1059021335567",
+  appId: "1:1059021335567:web:3440eec52303d59d36c77a"
+};
+
+/* ===== 共通 ===== */
+const $app = document.getElementById('app');
+const $sheet = document.getElementById('sheet');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const z = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+const today = () => ymd(new Date());
+const daysAgo = n => { const d = new Date(); d.setDate(d.getDate()-n); return ymd(d); };
+const fmtDate = s => { if(!s) return ''; const [y,m,d] = s.split('-').map(Number); return `${m}/${d}(${'日月火水木金土'[new Date(y,m-1,d).getDay()]})`; };
+const dayDiff = (a,b) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000);
+const num = v => (v === '' || v == null || isNaN(Number(v))) ? null : Number(v);
+const hm = min => `${Math.floor(min/60)}時間${min%60 ? (min%60)+'分' : ''}`;
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 2000); }
+
+const IC = {
+  heart: '<svg viewBox="0 0 24 24"><path fill="#f48fb1" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.5 3 4.8 6.6 4.5c2-.2 3.6.9 5.4 2.9 1.8-2 3.4-3.1 5.4-2.9 3.6.3 5.7 4 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>',
+  meal: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2.5 1-4 3.5-4 7v3h4"/></svg>',
+  gym: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/></svg>',
+  body: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M4 18 9 12l4 3 7-8"/><path d="M15 7h5v5"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+};
+
+const CHEERS = [
+  '今日も自分の体をいたわってあげてね。',
+  '小さな積み重ねが、いちばん大きな力になるよ。',
+  '体重は毎日ゆらぐもの。数字より「続けてること」がえらい！',
+  'お水、こまめに飲めてる？',
+  'しっかり食べて、しっかり眠る。それが一番の近道。',
+  'ジムに行けた日も、休んだ日も、どっちも大事な一日。',
+  'ムリしないのがいちばん。ゆっくりいこうね。',
+  '昨日より今日、ちょっとだけ自分にやさしく。',
+  '記録できてるだけで、もう一歩前に進んでるよ。',
+  '疲れた日は早めに寝ちゃおう。睡眠も立派なトレーニング。',
+  'たんぱく質、とれてるかな？筋肉が喜ぶよ。',
+  '頑張りすぎた日は、ちゃんと休む日にしよう。',
+  '今日のあなたも素敵だよ。',
+  '焦らなくて大丈夫。健康がいちばん。',
+];
+const SLOTS = ['朝ごはん','昼ごはん','夜ごはん','間食'];
+const CONDS = ['腹痛','腰痛','頭痛','むくみ','だるい','眠い','肌あれ','イライラ','気分↓','元気'];
+const LOG_TYPES = ['生理開始','生理中','生理終了','体調メモ'];
+const COLS = ['meals','gym','weights','water','sleep'];
+const COL_LABEL = { meals:'食事', gym:'ジム', weights:'体重', water:'水分', sleep:'睡眠', profile:'目標・プロフィール' };
+
+/* ===== 状態 ===== */
+const S = {
+  user:null, role:null, cfg:{}, share:{}, profile:{},
+  data:{ meals:[], gym:[], weights:[], water:[], sleep:[] }, denied:{},
+  privMeta:undefined, key:null, priv:{ logs:[], photos:[] },
+  tab:'home',
+};
+let subs = [], colSubs = [], privSubs = [];
+const unsub = arr => { arr.forEach(f=>{ try{f()}catch(e){} }); arr.length = 0; };
+
+/* ===== 起動 ===== */
+const configured = firebaseConfig.apiKey && firebaseConfig.apiKey !== 'PASTE_HERE';
+let auth, db;
+if(!configured){
+  $app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<h2>FitLife ♡</h2><p class="muted">Firebaseの設定がまだ入っていません。<br>index.html の firebaseConfig を設定してください。</p></div>`;
+} else {
+  const fbApp = initializeApp(firebaseConfig);
+  auth = getAuth(fbApp);
+  db = getFirestore(fbApp);
+  onAuthStateChanged(auth, onUser);
+}
+
+async function onUser(user){
+  unsub(subs); unsub(colSubs); unsub(privSubs);
+  Object.assign(S, { user, role:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, tab:'home' });
+  S.data = { meals:[], gym:[], weights:[], water:[], sleep:[] };
+  if(!user){ renderLogin(); return; }
+  $app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<p class="muted">読み込み中…</p></div>`;
+  try{
+    const snap = await getDoc(doc(db,'config','app'));
+    S.cfg = snap.exists() ? snap.data() : {};
+  }catch(e){
+    renderDenied(); return;
+  }
+  const email = (user.email||'').toLowerCase();
+  S.role = (S.cfg.memberEmail && email === S.cfg.memberEmail) ? 'member' : 'owner';
+  startListeners();
+  if(S.role === 'member') await loadPrivMeta();
+  render();
+}
+
+function startListeners(){
+  subs.push(onSnapshot(doc(db,'config','app'), s => { S.cfg = s.data()||{}; render(); }, ()=>{}));
+  subs.push(onSnapshot(doc(db,'config','share'), s => {
+    S.share = s.data()||{};
+    if(S.role === 'owner' || colSubs.length === 0) startColListeners();
+    render();
+  }, () => { if(colSubs.length === 0) startColListeners(); }));
+}
+
+function startColListeners(){
+  unsub(colSubs);
+  for(const col of COLS){
+    if(S.role === 'owner' && !S.share[col]){ S.denied[col] = true; S.data[col] = []; continue; }
+    S.denied[col] = false;
+    const q = query(collection(db,col), orderBy('date','desc'), limit(400));
+    colSubs.push(onSnapshot(q, s => {
+      S.data[col] = s.docs.map(d => ({ id:d.id, ...d.data() }))
+        .sort((a,b) => a.date === b.date ? ((b.ts?.seconds||9e9) - (a.ts?.seconds||9e9)) : (a.date < b.date ? 1 : -1));
+      render();
+    }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
+  }
+  if(S.role === 'member' || S.share.profile){
+    colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
+  } else { S.profile = {}; }
+}
+
+/* ===== 暗号化（センシティブな記録用） ===== */
+const TE = new TextEncoder(), TD = new TextDecoder();
+const ITER = 310000;
+const b64 = buf => { const b = new Uint8Array(buf); let s = ''; for(let i=0;i<b.length;i+=0x8000) s += String.fromCharCode.apply(null, b.subarray(i,i+0x8000)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function deriveKey(pass, salt, iter){
+  const base = await crypto.subtle.importKey('raw', TE.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name:'PBKDF2', salt, iterations:iter, hash:'SHA-256' }, base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+}
+async function encObj(obj, key = S.key){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, TE.encode(JSON.stringify(obj)));
+  return { iv:b64(iv), ct:b64(ct) };
+}
+async function decObj(d, key = S.key){
+  const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv:unb64(d.iv) }, key, unb64(d.ct));
+  return JSON.parse(TD.decode(pt));
+}
+function idbOpen(){ return new Promise((res,rej) => { const r = indexedDB.open('fitlife',1); r.onupgradeneeded = () => r.result.createObjectStore('keys'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function idbSet(k,v){ const d = await idbOpen(); return new Promise((res,rej) => { const t = d.transaction('keys','readwrite'); const st = t.objectStore('keys'); v === undefined ? st.delete(k) : st.put(v,k); t.oncomplete = res; t.onerror = () => rej(t.error); }); }
+async function idbGet(k){ const d = await idbOpen(); return new Promise((res,rej) => { const r = d.transaction('keys').objectStore('keys').get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+
+async function loadPrivMeta(){
+  try{
+    const s = await getDoc(doc(db,'privateMeta','key'));
+    S.privMeta = s.exists() ? s.data() : null;
+    if(S.privMeta){
+      const saved = await idbGet('key_' + S.user.uid).catch(()=>null);
+      if(saved){
+        try{ const v = await decObj(S.privMeta.verifier, saved); if(v === 'fitlife-ok'){ S.key = saved; startPrivListeners(); } }catch(e){ await idbSet('key_' + S.user.uid, undefined).catch(()=>{}); }
+      }
+    }
+  }catch(e){ S.privMeta = null; }
+}
+function startPrivListeners(){
+  unsub(privSubs);
+  for(const [col, field] of [['privateLogs','logs'],['privatePhotos','photos']]){
+    privSubs.push(onSnapshot(query(collection(db,col), orderBy('ts','desc'), limit(300)), async s => {
+      const out = [];
+      for(const d of s.docs){ try{ out.push({ id:d.id, ...(await decObj(d.data())) }); }catch(e){} }
+      out.sort((a,b) => a.date < b.date ? 1 : -1);
+      S.priv[field] = out; render();
+    }, ()=>{}));
+  }
+}
+async function setupPass(pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await deriveKey(pass, salt, ITER);
+  const meta = { salt:b64(salt), iter:ITER, verifier: await encObj('fitlife-ok', key) };
+  await setDoc(doc(db,'privateMeta','key'), meta);
+  S.privMeta = meta; S.key = key;
+}
+async function unlock(pass, remember){
+  const key = await deriveKey(pass, unb64(S.privMeta.salt), S.privMeta.iter);
+  try{ if(await decObj(S.privMeta.verifier, key) !== 'fitlife-ok') throw 0; }catch(e){ return false; }
+  S.key = key;
+  if(remember) await idbSet('key_' + S.user.uid, key).catch(()=>{});
+  startPrivListeners();
+  return true;
+}
+async function lockNow(){
+  S.key = null; S.priv = { logs:[], photos:[] }; unsub(privSubs);
+  await idbSet('key_' + S.user.uid, undefined).catch(()=>{});
+  render();
+}
+
+/* ===== 画像の圧縮 ===== */
+function fileToDataURL(file, max, q){
+  return new Promise((res,rej) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const r = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width*r); c.height = Math.round(img.height*r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('画像を読み込めませんでした')); };
+    img.src = url;
+  });
+}
+async function compress(file, max, q, maxLen){
+  let d = await fileToDataURL(file, max, q);
+  while(d.length > maxLen && max > 320){ max = Math.round(max*0.8); q = Math.max(0.45, q-0.08); d = await fileToDataURL(file, max, q); }
+  return d;
+}
+
+/* ===== 画面 ===== */
+function renderLogin(){
+  $app.innerHTML = `<div class="center">
+    ${IC.heart.replace('<svg','<svg class="big-heart"')}
+    <div class="logo" style="font-size:28px">FitLife ♡</div>
+    <p class="muted">ふたりだけの健康管理アプリ</p>
+    <button class="btn" data-a="login" style="min-width:240px">Googleでログイン</button>
+  </div>`;
+}
+function renderDenied(){
+  $app.innerHTML = `<div class="center">
+    ${IC.heart.replace('<svg','<svg class="big-heart"')}
+    <h2 style="margin:0">招待されていないアカウントです</h2>
+    <p class="muted">${esc(S.user?.email)} ではログインできません。<br>招待されたメールアドレスのGoogleアカウントでログインしてね。</p>
+    <button class="btn sub" data-a="logout">ログアウト</button>
+  </div>`;
+}
+
+function render(){
+  if(!S.user || !S.role) return;
+  const isM = S.role === 'member';
+  const tabs = isM ? [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body],['secret','ひみつ',IC.lock]]
+                   : [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body]];
+  const views = { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, secret:viewSecret, settings:viewSettings };
+  const fabTarget = isM ? ({ meals:'meal', gym:'gym', secret: S.key ? 'log' : null })[S.tab] : null;
+  const y = window.scrollY;
+  $app.innerHTML = `
+    <header class="top">
+      <div class="logo">${IC.heart} FitLife<span class="badge">${isM ? 'わたし' : 'オーナー'}</span></div>
+      <button class="iconbtn" data-a="tab" data-v="settings" aria-label="設定">${IC.gear}</button>
+    </header>
+    ${(views[S.tab] || viewHome)()}
+    ${fabTarget ? `<button class="fab" data-a="open" data-v="${fabTarget}" aria-label="記録する">＋</button>` : ''}
+    <nav class="tabs"><div class="in">${tabs.map(([k,l,ic]) => `<button class="${S.tab===k?'on':''}" data-a="tab" data-v="${k}">${ic}<span>${l}</span></button>`).join('')}</div></nav>`;
+  window.scrollTo(0, y);
+}
+
+const deniedCard = col => `<div class="card"><p class="empty">${COL_LABEL[col]}は共有されていません ${IC.heart.replace('<svg','<svg style="width:14px;vertical-align:-2px"')}</p></div>`;
+const canEdit = () => S.role === 'member';
+const delBtn = (col,id) => canEdit() ? `<button class="del" data-a="del" data-col="${col}" data-id="${id}" aria-label="削除">×</button>` : '';
+const groupByDate = list => { const m = new Map(); for(const r of list){ if(!m.has(r.date)) m.set(r.date, []); m.get(r.date).push(r); } return [...m.entries()]; };
+
+function viewHome(){
+  const isM = S.role === 'member';
+  const p = S.profile, t = today();
+  const name = isM ? (p.name || '') : '';
+  const cheer = CHEERS[Math.floor(Date.now()/86400000) % CHEERS.length];
+  let html = `<div class="card cheer">${IC.heart.replace('<svg','<svg class="deco"')}
+    <div class="hello">${isM ? `${name ? esc(name)+'、' : ''}${greet()}♡` : '今日のようす'}</div>
+    <p>${isM ? cheer : 'シェアされた記録を見られます（閲覧だけ）。'}</p></div>`;
+
+  if(!isM && !S.cfg.memberEmail){
+    html += `<div class="card"><h2>${IC.heart.replace('<svg','<svg style="width:16px"')} はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
+  }
+
+  // 体重
+  const w = S.data.weights;
+  if(S.denied.weights){ html += deniedCard('weights'); }
+  else {
+    const latest = w[0];
+    const goal = num(p.goalWeight), start = num(p.startWeight);
+    let prog = '';
+    if(latest && goal != null && start != null && start !== goal){
+      const pct = Math.max(0, Math.min(100, (start - latest.kg) / (start - goal) * 100));
+      prog = `<div class="bar"><i style="width:${pct}%"></i></div><div class="muted" style="margin-top:4px">スタート ${start}kg → 目標 ${goal}kg（あと ${Math.max(0, latest.kg - goal).toFixed(1)}kg）</div>`;
+    }
+    html += `<div class="card stat"><h2>体重<span class="sub">${latest ? fmtDate(latest.date) : ''}</span></h2>
+      <div class="val">${latest ? latest.kg.toFixed(1) : '--'}<small>kg</small></div>${prog}
+      ${isM ? `<div class="row" style="margin-top:10px"><button class="btn sub sm" data-a="open" data-v="weight">体重を記録</button></div>` : ''}</div>`;
+  }
+
+  // 今日のまとめ
+  const kcal = S.data.meals.filter(m => m.date === t).reduce((a,m) => a + (m.kcal||0), 0);
+  const water = S.data.water.filter(x => x.date === t).reduce((a,x) => a + (x.ml||0), 0);
+  const wGoal = num(p.waterGoal) || 1500, kGoal = num(p.kcalGoal);
+  const sl = S.data.sleep[0];
+  const weekGym = new Set(S.data.gym.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
+  const cell = (col, label, val, unit, extra='') => S.denied[col]
+    ? `<div class="card stat"><div class="label">${label}</div><div class="muted" style="margin-top:6px">共有されていません</div></div>`
+    : `<div class="card stat"><div class="label">${label}</div><div class="val">${val}<small>${unit}</small></div>${extra}</div>`;
+  html += `<div class="grid2" style="margin-bottom:14px">
+    ${cell('meals','今日のカロリー', kcal, kGoal ? ` / ${kGoal}kcal` : 'kcal', kGoal ? `<div class="bar"><i style="width:${Math.min(100,kcal/kGoal*100)}%"></i></div>` : '')}
+    ${cell('water','今日のお水', water, ` / ${wGoal}ml`, `<div class="bar"><i style="width:${Math.min(100,water/wGoal*100)}%"></i></div>`)}
+    ${cell('sleep','最近の睡眠', sl ? hm(sl.minutes) : '--', '', sl ? `<div class="muted">${fmtDate(sl.date)} ${esc(sl.bed)}→${esc(sl.wake)}</div>` : '')}
+    ${cell('gym','今週のジム', weekGym, '回', `<div class="muted">目安：週2回</div>`)}
+  </div>`;
+
+  if(isM){
+    html += `<div class="card"><h2>お水をのむ</h2><div class="water-btns">
+      <button class="btn sub" data-a="water" data-v="150">＋150ml</button>
+      <button class="btn sub" data-a="water" data-v="200">＋200ml</button>
+      <button class="btn sub" data-a="water" data-v="500">＋500ml</button></div></div>
+      <div class="row"><button class="btn sub" data-a="open" data-v="meal">食事を記録</button><button class="btn sub" data-a="open" data-v="sleep">睡眠を記録</button><button class="btn sub" data-a="open" data-v="gym">ジムを記録</button></div>`;
+  }
+  return html;
+}
+function greet(){ const h = new Date().getHours(); return h < 11 ? 'おはよう' : h < 18 ? 'こんにちは' : 'おつかれさま'; }
+
+function viewMeals(){
+  if(S.denied.meals) return deniedCard('meals');
+  const list = S.data.meals;
+  if(!list.length) return `<div class="card"><p class="empty">まだ食事の記録がありません${canEdit() ? '<br>右下の＋から記録してね' : ''}</p></div>`;
+  return groupByDate(list).slice(0,30).map(([date, items]) => {
+    const sum = items.reduce((a,m) => a + (m.kcal||0), 0);
+    const ordered = [...items].sort((a,b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+    return `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${sum} kcal</span></div><ul class="list">
+      ${ordered.map(m => `<li>${m.photo ? `<img class="thumb" src="${m.photo}" alt="" data-a="zoom">` : `<div class="thumb" style="display:grid;place-items:center">${IC.meal.replace('<svg','<svg style="width:24px;stroke:#f48fb1"')}</div>`}
+        <div class="main"><div class="t">${esc(m.name || m.slot)}</div>
+        <div class="s">${esc(m.slot)}${m.kcal != null ? ` ・ ${m.kcal}kcal` : ''}${m.p != null || m.f != null || m.c != null ? ` ・ P${m.p ?? '-'} F${m.f ?? '-'} C${m.c ?? '-'}` : ''}</div>
+        ${m.memo ? `<div class="s">${esc(m.memo)}</div>` : ''}</div>${delBtn('meals', m.id)}</li>`).join('')}
+    </ul></div>`;
+  }).join('');
+}
+
+function viewGym(){
+  if(S.denied.gym) return deniedCard('gym');
+  const list = S.data.gym;
+  if(!list.length) return `<div class="card"><p class="empty">まだジムの記録がありません${canEdit() ? '<br>右下の＋から記録してね' : ''}</p></div>`;
+  const weekGym = new Set(list.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
+  return `<div class="card stat"><div class="label">この7日間</div><div class="val">${weekGym}<small>回 / 目安 週2回</small></div></div>` +
+    groupByDate(list).slice(0,30).map(([date, items]) => `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${items.length}種目</span></div><ul class="list">
+      ${items.map(g => `<li><div class="main"><div class="t">${esc(g.exercise)}</div>
+        <div class="s">${g.kg != null ? g.kg + 'kg × ' : ''}${g.reps ?? '-'}回 × ${g.sets ?? '-'}セット</div>${g.memo ? `<div class="s">${esc(g.memo)}</div>` : ''}</div>${delBtn('gym', g.id)}</li>`).join('')}
+    </ul></div>`).join('');
+}
+
+function viewBody(){
+  let html = '';
+  // 体重
+  if(S.denied.weights) html += deniedCard('weights');
+  else {
+    const w = S.data.weights;
+    html += `<div class="card"><h2>体重の推移${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="weight">＋記録</button></span>` : ''}</h2>
+      ${weightChart(w, num(S.profile.goalWeight))}
+      ${w.length ? `<ul class="list" style="margin-top:8px">${w.slice(0,10).map(r => `<li><div class="main"><span class="t">${r.kg.toFixed(1)}kg</span> <span class="s">${fmtDate(r.date)}</span></div>${delBtn('weights', r.id)}</li>`).join('')}</ul>` : ''}</div>`;
+  }
+  // 水分
+  if(S.denied.water) html += deniedCard('water');
+  else {
+    const goal = num(S.profile.waterGoal) || 1500;
+    const days = [...Array(7)].map((_,i) => daysAgo(6-i));
+    const tot = days.map(d => S.data.water.filter(x => x.date === d).reduce((a,x) => a + (x.ml||0), 0));
+    const mx = Math.max(goal, ...tot);
+    html += `<div class="card"><h2>お水（7日間）${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="water">＋入力</button></span>` : ''}</h2>
+      <svg class="chart" viewBox="0 0 320 130">
+        <line x1="10" x2="310" y1="${110 - goal/mx*95}" y2="${110 - goal/mx*95}" stroke="#f48fb1" stroke-dasharray="4 4"/>
+        ${tot.map((v,i) => `<rect x="${18+i*42}" y="${110 - v/mx*95}" width="26" height="${Math.max(0,v/mx*95)}" rx="8" fill="${v >= goal ? '#e46f98' : '#f8bcd2'}"/>
+          <text x="${31+i*42}" y="125" font-size="10" text-anchor="middle" fill="#a8899a">${fmtDate(days[i]).replace(/\(.\)/,'')}</text>`).join('')}
+      </svg><div class="muted">点線：目標 ${goal}ml</div>
+      ${canEdit() ? `<div class="water-btns"><button class="btn sub sm" data-a="water" data-v="150">＋150ml</button><button class="btn sub sm" data-a="water" data-v="200">＋200ml</button><button class="btn sub sm" data-a="water" data-v="500">＋500ml</button></div>` : ''}
+      ${S.data.water.filter(x => x.date === today()).length && canEdit() ? `<ul class="list" style="margin-top:8px">${S.data.water.filter(x => x.date === today()).map(x => `<li><div class="main"><span class="t">${x.ml}ml</span> <span class="s">今日</span></div>${delBtn('water', x.id)}</li>`).join('')}</ul>` : ''}
+    </div>`;
+  }
+  // 睡眠
+  if(S.denied.sleep) html += deniedCard('sleep');
+  else {
+    const sl = S.data.sleep;
+    const recent = sl.filter(s => s.date >= daysAgo(6));
+    const avg = recent.length ? Math.round(recent.reduce((a,s) => a + s.minutes, 0) / recent.length) : null;
+    html += `<div class="card"><h2>睡眠${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="sleep">＋記録</button></span>` : ''}</h2>
+      ${avg != null ? `<div class="stat"><div class="label">7日間の平均</div><div class="val" style="font-size:20px">${hm(avg)}</div></div>` : ''}
+      ${sl.length ? `<ul class="list">${sl.slice(0,10).map(s => `<li><div class="main"><div class="t">${hm(s.minutes)}</div><div class="s">${fmtDate(s.date)} ・ ${esc(s.bed)} → ${esc(s.wake)}</div></div>${delBtn('sleep', s.id)}</li>`).join('')}</ul>` : '<p class="empty">まだ記録がありません</p>'}</div>`;
+  }
+  return html;
+}
+
+function weightChart(list, goal){
+  const pts = [...list].sort((a,b) => a.date < b.date ? -1 : 1).slice(-60);
+  if(pts.length < 2) return '<p class="empty">2回以上記録するとグラフが出ます</p>';
+  const W = 320, H = 170, L = 34, R = 10, T = 12, B = 22;
+  const ys = pts.map(p => p.kg); if(goal != null) ys.push(goal);
+  const mn = Math.floor(Math.min(...ys) - 0.5), mx = Math.ceil(Math.max(...ys) + 0.5);
+  const t0 = Date.parse(pts[0].date), t1 = Date.parse(pts.at(-1).date);
+  const x = p => L + (t1 === t0 ? 0.5 : (Date.parse(p.date) - t0) / (t1 - t0)) * (W - L - R);
+  const y = v => T + (mx - v) / (mx - mn || 1) * (H - T - B);
+  const line = pts.map((p,i) => `${i ? 'L' : 'M'}${x(p).toFixed(1)},${y(p.kg).toFixed(1)}`).join('');
+  const area = `${line}L${x(pts.at(-1)).toFixed(1)},${H-B}L${x(pts[0]).toFixed(1)},${H-B}Z`;
+  const ticks = [mn, (mn+mx)/2, mx];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}">
+    <defs><linearGradient id="wg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f48fb1" stop-opacity=".35"/><stop offset="1" stop-color="#f48fb1" stop-opacity="0"/></linearGradient></defs>
+    ${ticks.map(v => `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#f6d6e1"/><text x="${L-6}" y="${y(v)+4}" font-size="10" text-anchor="end" fill="#a8899a">${(+v).toFixed(1)}</text>`).join('')}
+    ${goal != null ? `<line x1="${L}" x2="${W-R}" y1="${y(goal)}" y2="${y(goal)}" stroke="#7cc7a8" stroke-dasharray="5 4" stroke-width="1.5"/><text x="${W-R}" y="${y(goal)-4}" font-size="10" text-anchor="end" fill="#5aa886">目標 ${goal}kg</text>` : ''}
+    <path d="${area}" fill="url(#wg)"/>
+    <path d="${line}" fill="none" stroke="#e46f98" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map(p => `<circle cx="${x(p)}" cy="${y(p.kg)}" r="3" fill="#fff" stroke="#e46f98" stroke-width="1.8"/>`).join('')}
+    <text x="${L}" y="${H-6}" font-size="10" fill="#a8899a">${fmtDate(pts[0].date)}</text>
+    <text x="${W-R}" y="${H-6}" font-size="10" text-anchor="end" fill="#a8899a">${fmtDate(pts.at(-1).date)}</text>
+  </svg>`;
+}
+
+function viewSecret(){
+  if(S.role !== 'member') return viewHome();
+  if(S.privMeta === undefined) return `<div class="card"><p class="empty">読み込み中…</p></div>`;
+  if(S.privMeta === null) return `<div class="card lockbox">${IC.lock}
+    <h2 style="justify-content:center">ひみつの記録をはじめる</h2>
+    <p class="muted" style="text-align:left">生理・体調メモ・体型写真は、<b>あなただけが知っている合言葉</b>で暗号化して保存します。オーナーを含め、ほかの誰にも中身は見えません。</p>
+    <div class="note warn" style="text-align:left">合言葉を忘れると、記録は誰にも（あなた自身も）復元できません。忘れないものにしてね。</div>
+    <form data-form="setup" style="text-align:left">
+      <label class="f">合言葉（8文字以上）</label><input class="in" type="password" name="p1" minlength="8" required autocomplete="new-password">
+      <label class="f">もう一度</label><input class="in" type="password" name="p2" minlength="8" required autocomplete="new-password">
+      <button class="btn block" style="margin-top:14px">合言葉を設定する</button>
+    </form></div>`;
+  if(!S.key) return `<div class="card lockbox">${IC.lock}
+    <h2 style="justify-content:center">ひみつの記録</h2>
+    <form data-form="unlock" style="text-align:left">
+      <label class="f">合言葉</label><input class="in" type="password" name="p" required autocomplete="current-password">
+      <label class="row" style="margin-top:10px;font-size:13px"><input type="checkbox" name="remember" checked> この端末では次回から入力を省略する</label>
+      <button class="btn block" style="margin-top:14px">ひらく</button>
+    </form></div>`;
+
+  const logs = S.priv.logs, photos = S.priv.photos;
+  const starts = logs.filter(l => l.type === '生理開始').map(l => l.date).sort();
+  let predict = '';
+  if(starts.length){
+    const gaps = []; for(let i=1;i<starts.length;i++){ const g = dayDiff(starts[i-1], starts[i]); if(g >= 15 && g <= 60) gaps.push(g); }
+    const last = starts.at(-1);
+    if(gaps.length){
+      const avg = Math.round(gaps.slice(-6).reduce((a,b) => a+b, 0) / gaps.slice(-6).length);
+      const d = new Date(Date.parse(last)); d.setUTCDate(d.getUTCDate() + avg);
+      const next = `${d.getUTCFullYear()}-${z(d.getUTCMonth()+1)}-${z(d.getUTCDate())}`;
+      predict = `<div class="muted">平均周期 ${avg}日 ・ 次回の目安 <b style="color:var(--pink-d)">${fmtDate(next)}</b>ごろ</div>`;
+    }
+    predict = `<div class="stat"><div class="label">前回の生理開始</div><div class="val" style="font-size:20px">${fmtDate(last)} <small>（${dayDiff(last, today())}日前）</small></div>${predict}</div>`;
+  }
+  return `<div class="card"><h2>${IC.lock.replace('<svg','<svg style="width:16px;stroke:#e46f98"')} 生理・体調<span class="sub"><button class="btn ghost sm" data-a="lock">ロック</button></span></h2>
+      ${predict || '<p class="muted">「生理開始」を記録すると、次回の目安が出ます。</p>'}
+      ${logs.length ? `<ul class="list" style="margin-top:8px">${logs.slice(0,40).map(l => `<li><div class="main"><div class="t">${esc(l.type)} <span class="s">${fmtDate(l.date)}</span></div>
+        ${(l.conds||[]).map(c => `<span class="chip">${esc(c)}</span>`).join('')}${l.memo ? `<div class="s">${esc(l.memo)}</div>` : ''}</div>${delBtn('privateLogs', l.id)}</li>`).join('')}</ul>` : '<p class="empty">右下の＋から記録してね</p>'}
+    </div>
+    <div class="card"><h2>体型写真<span class="sub"><button class="btn sub sm" data-a="open" data-v="photo">＋追加</button></span></h2>
+      ${photos.length ? `<div class="photos">${photos.map(ph => `<figure><img src="${ph.img}" alt="" data-a="zoom"><figcaption>${fmtDate(ph.date)}${ph.memo ? ' ' + esc(ph.memo) : ''}</figcaption>${delBtn('privatePhotos', ph.id)}</figure>`).join('')}</div>` : '<p class="empty">まだ写真がありません</p>'}
+      <p class="muted" style="margin-top:8px">写真も暗号化して保存しています。</p>
+    </div>`;
+}
+
+function viewSettings(){
+  const isM = S.role === 'member';
+  const url = location.origin + location.pathname;
+  let html = '';
+  if(!isM){
+    const m = S.cfg.memberEmail;
+    const msg = `FitLife に招待しました♡\n${url}\n${m || ''} のGoogleアカウントでログインしてね`;
+    html += `<div class="card"><h2>招待</h2>
+      ${m ? `<p>招待中：<b>${esc(m)}</b></p>
+        <div class="row"><a class="btn" style="text-decoration:none" href="https://line.me/R/share?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">LINEで送る</a>
+        <button class="btn sub" data-a="copy" data-v="${esc(msg)}">メッセージをコピー</button></div>
+        <p class="muted" style="margin-top:10px">このメールアドレスのGoogleアカウント以外はログインできません。利用できるのはあなたと招待した1人だけです。</p>
+        <button class="btn ghost sm" data-a="uninvite" style="margin-top:6px">招待を取り消す</button>`
+      : `<p class="muted">招待する人のGoogleアカウント（Gmailなど）のメールアドレスを入れてください。</p>
+        <form data-form="invite"><input class="in" type="email" name="email" required placeholder="example@gmail.com" autocomplete="off"><button class="btn block" style="margin-top:10px">招待する</button></form>`}
+    </div>
+    <div class="card"><h2>共有されている記録</h2>
+      ${['profile',...COLS].map(c => `<div class="switch"><span>${COL_LABEL[c]}</span><span class="${S.share[c] ? '' : 'muted'}">${S.share[c] ? '見られる' : '非公開'}</span></div>`).join('')}
+      <p class="muted">共有の設定は招待した人が決めます。生理・体調・体型写真はいつでも非公開です。</p></div>`;
+  } else {
+    const p = S.profile;
+    html += `<div class="card"><h2>プロフィール・目標</h2><form data-form="profile">
+      <label class="f">呼び名</label><input class="in" name="name" value="${esc(p.name)}" placeholder="例：さき">
+      <div class="f3"><div><label class="f">身長(cm)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="height" value="${esc(p.height ?? 160)}"></div>
+        <div><label class="f">開始体重(kg)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="startWeight" value="${esc(p.startWeight ?? 55)}"></div>
+        <div><label class="f">目標体重(kg)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="goalWeight" value="${esc(p.goalWeight ?? 50)}"></div></div>
+      <div class="f2"><div><label class="f">1日のカロリー目安(kcal)</label><input class="in" type="number" inputmode="numeric" name="kcalGoal" value="${esc(p.kcalGoal ?? '')}" placeholder="空欄でもOK"></div>
+        <div><label class="f">お水の目標(ml)</label><input class="in" type="number" inputmode="numeric" name="waterGoal" value="${esc(p.waterGoal ?? 1500)}"></div></div>
+      <button class="btn block" style="margin-top:14px">保存</button></form>
+      <p class="muted" style="margin-top:8px">急に減らすより、ゆっくり続けるのがいちばん。健康第一でいこうね。</p></div>
+    <div class="card"><h2>オーナーに見せる記録</h2>
+      ${['profile',...COLS].map(c => `<label class="switch"><span>${COL_LABEL[c]}</span><input type="checkbox" data-a="share" data-v="${c}" ${S.share[c] ? 'checked' : ''}></label>`).join('')}
+      <p class="muted">オフにした記録はオーナーには見えません（データベース側でブロック）。生理・体調・体型写真はこの設定に関係なく、いつもあなただけのものです。</p></div>`;
+  }
+  html += `<div class="card"><h2>アカウント</h2><p class="muted">${esc(S.user.email)}</p><button class="btn ghost" data-a="logout">ログアウト</button></div>`;
+  return html;
+}
+
+/* ===== 入力シート ===== */
+function openSheet(kind){
+  const t = today();
+  const dateField = `<label class="f">日付</label><input class="in" type="date" name="date" value="${t}" required>`;
+  const forms = {
+    meal: ['食事を記録', `${dateField}
+      <label class="f">いつ</label><select class="in" name="slot">${SLOTS.map(s => `<option ${s === autoSlot() ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <label class="f">料理名</label><input class="in" name="name" placeholder="例：鮭定食">
+      <label class="f">写真（任意）</label><input class="in" type="file" name="photo" accept="image/*">
+      <div class="f2"><div><label class="f">カロリー(kcal)</label><input class="in" type="number" inputmode="numeric" name="kcal"></div><div></div></div>
+      <div class="f3"><div><label class="f">たんぱく質(g)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="p"></div>
+      <div><label class="f">脂質(g)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="f"></div>
+      <div><label class="f">炭水化物(g)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="c"></div></div>
+      <label class="f">メモ</label><input class="in" name="memo">
+      <p class="muted">AIで写真からカロリーを出す機能は、あとで追加予定です。</p>`],
+    gym: ['ジムを記録', `${dateField}
+      <label class="f">種目</label><input class="in" name="exercise" list="exlist" required placeholder="例：スクワット">
+      <datalist id="exlist">${[...new Set(S.data.gym.map(g => g.exercise))].slice(0,30).map(e => `<option value="${esc(e)}">`).join('')}</datalist>
+      <div class="f3"><div><label class="f">重さ(kg)</label><input class="in" type="number" step="0.5" inputmode="decimal" name="kg"></div>
+      <div><label class="f">回数</label><input class="in" type="number" inputmode="numeric" name="reps"></div>
+      <div><label class="f">セット</label><input class="in" type="number" inputmode="numeric" name="sets"></div></div>
+      <label class="f">メモ</label><input class="in" name="memo">`],
+    weight: ['体重を記録', `${dateField}<label class="f">体重(kg)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="kg" required value="${S.data.weights[0]?.kg ?? ''}">`],
+    water: ['お水を記録', `${dateField}<label class="f">量(ml)</label><input class="in" type="number" inputmode="numeric" name="ml" required>`],
+    sleep: ['睡眠を記録', `<label class="f">起きた日</label><input class="in" type="date" name="date" value="${t}" required>
+      <div class="f2"><div><label class="f">寝た時間</label><input class="in" type="time" name="bed" value="23:30" required></div><div><label class="f">起きた時間</label><input class="in" type="time" name="wake" value="07:00" required></div></div>`],
+    log: ['生理・体調を記録', `${dateField}
+      <label class="f">種類</label><select class="in" name="type">${LOG_TYPES.map(s => `<option>${s}</option>`).join('')}</select>
+      <label class="f">体調</label><div class="checks">${CONDS.map(c => `<label><input type="checkbox" name="conds" value="${c}">${c}</label>`).join('')}</div>
+      <label class="f">メモ</label><textarea class="in" name="memo" rows="3"></textarea>
+      <p class="muted">暗号化して保存します。</p>`],
+    photo: ['体型写真を追加', `${dateField}<label class="f">写真</label><input class="in" type="file" name="photo" accept="image/*" required>
+      <label class="f">メモ</label><input class="in" name="memo"><p class="muted">暗号化して保存します。</p>`],
+  };
+  const [title, body] = forms[kind];
+  $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>${title}<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+    <form data-form="${kind}">${body}<button class="btn block" style="margin-top:16px">保存</button></form></div></div>`;
+}
+const closeSheet = () => { $sheet.innerHTML = ''; };
+function autoSlot(){ const h = new Date().getHours(); return h < 10 ? '朝ごはん' : h < 15 ? '昼ごはん' : h < 21 ? '夜ごはん' : '間食'; }
+
+async function addRec(col, data){ await addDoc(collection(db,col), { ...data, ts: serverTimestamp() }); }
+async function addPriv(col, data){ await addDoc(collection(db,col), { ...(await encObj(data)), ts: serverTimestamp() }); }
+
+async function handleForm(kind, f){
+  const v = Object.fromEntries(new FormData(f));
+  switch(kind){
+    case 'meal': {
+      const file = f.photo.files[0];
+      const photo = file ? await compress(file, 800, 0.7, 250000) : null;
+      await addRec('meals', { date:v.date, slot:v.slot, name:v.name.trim(), kcal:num(v.kcal), p:num(v.p), f:num(v.f), c:num(v.c), memo:v.memo.trim(), photo });
+      break;
+    }
+    case 'gym': await addRec('gym', { date:v.date, exercise:v.exercise.trim(), kg:num(v.kg), reps:num(v.reps), sets:num(v.sets), memo:v.memo.trim() }); break;
+    case 'weight': await addRec('weights', { date:v.date, kg:num(v.kg) }); break;
+    case 'water': await addRec('water', { date:v.date, ml:num(v.ml) }); break;
+    case 'sleep': {
+      const [bh,bm] = v.bed.split(':').map(Number), [wh,wm] = v.wake.split(':').map(Number);
+      const minutes = ((wh*60+wm) - (bh*60+bm) + 1440) % 1440;
+      await addRec('sleep', { date:v.date, bed:v.bed, wake:v.wake, minutes });
+      break;
+    }
+    case 'log': await addPriv('privateLogs', { date:v.date, type:v.type, conds:new FormData(f).getAll('conds'), memo:v.memo.trim() }); break;
+    case 'photo': {
+      const img = await compress(f.photo.files[0], 1100, 0.72, 600000);
+      await addPriv('privatePhotos', { date:v.date, img, memo:v.memo.trim() });
+      break;
+    }
+    case 'profile':
+      await setDoc(doc(db,'profile','main'), { name:v.name.trim(), height:num(v.height), startWeight:num(v.startWeight), goalWeight:num(v.goalWeight), kcalGoal:num(v.kcalGoal), waterGoal:num(v.waterGoal) });
+      break;
+    case 'invite': {
+      const email = v.email.trim().toLowerCase();
+      if(email === (S.user.email||'').toLowerCase()) throw new Error('自分のアドレスは招待できません');
+      await setDoc(doc(db,'config','app'), { memberEmail: email }, { merge:true });
+      break;
+    }
+    case 'setup':
+      if(v.p1 !== v.p2) throw new Error('合言葉が一致しません');
+      await setupPass(v.p1); await idbSet('key_' + S.user.uid, S.key).catch(()=>{}); startPrivListeners();
+      break;
+    case 'unlock':
+      if(!(await unlock(v.p, !!v.remember))) throw new Error('合言葉がちがいます');
+      break;
+  }
+}
+
+/* ===== イベント ===== */
+document.addEventListener('submit', async e => {
+  const f = e.target.closest('form[data-form]'); if(!f) return;
+  e.preventDefault();
+  const btn = f.querySelector('button:not([type=button]):last-of-type'); if(btn){ btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = '保存中…'; }
+  try{
+    await handleForm(f.dataset.form, f);
+    if(f.closest('.sheet')) closeSheet();
+    toast({ setup:'合言葉を設定しました', unlock:'ひらきました', invite:'招待しました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    render();
+  }catch(err){
+    console.error(err);
+    toast(err.code === 'permission-denied' ? '権限がありません' : (err.message || '保存できませんでした'));
+  }finally{ if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = btn.dataset.t; } }
+});
+
+document.addEventListener('change', async e => {
+  const el = e.target;
+  if(el.dataset.a === 'share'){
+    try{ await setDoc(doc(db,'config','share'), { [el.dataset.v]: el.checked }, { merge:true }); }
+    catch(err){ el.checked = !el.checked; toast('変更できませんでした'); }
+  }
+});
+
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-a]'); if(!el) return;
+  const a = el.dataset.a, v = el.dataset.v;
+  if(a === 'close-bg' && e.target !== el) return;
+  try{
+    switch(a){
+      case 'login': {
+        const pv = new GoogleAuthProvider(); pv.setCustomParameters({ prompt:'select_account' });
+        try{ await signInWithPopup(auth, pv); }
+        catch(err){ if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(err.code)) await signInWithRedirect(auth, pv); else if(err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') toast('ログインできませんでした'); }
+        break;
+      }
+      case 'logout': await signOut(auth); break;
+      case 'tab': S.tab = v; window.scrollTo(0,0); render(); break;
+      case 'open': openSheet(v); break;
+      case 'close': case 'close-bg': closeSheet(); break;
+      case 'water': await addRec('water', { date:today(), ml:Number(v) }); toast(`お水 ${v}ml ♡`); break;
+      case 'del':
+        if(!confirm('この記録を削除しますか？')) return;
+        await deleteDoc(doc(db, el.dataset.col, el.dataset.id)); toast('削除しました'); break;
+      case 'lock': await lockNow(); toast('ロックしました'); break;
+      case 'copy': await navigator.clipboard.writeText(v); toast('コピーしました'); break;
+      case 'uninvite':
+        if(!confirm('招待を取り消しますか？（相手はログインできなくなります）')) return;
+        await setDoc(doc(db,'config','app'), { memberEmail:'' }, { merge:true }); toast('取り消しました'); break;
+      case 'zoom':
+        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg" style="align-items:center"><img src="${el.src}" style="max-width:94vw;max-height:86vh;border-radius:18px" data-a="close"></div>`; break;
+    }
+  }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? '権限がありません' : 'うまくいきませんでした'); }
+});
+</script>
+</body>
+</html>

@@ -4,4 +4,5 @@
 
 - `entame/` … エンタメ管理
 - `okane/` … おかね手帳
+- `fitlife/` … FitLife（ふたり用の健康管理。別のFirebaseプロジェクトを使用）
 - `shared/` … アプリ共通の土台（見た目と保存の仕組み）
