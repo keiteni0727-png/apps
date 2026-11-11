@@ -239,7 +239,6 @@ const catOf = id => CATS.find(c => c.id === id) || CATS[CATS.length - 1];
 function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2300); }
 function openSheet(html){ $layer.innerHTML = `<div class="ov" data-a="ovclose"><div class="sheet" role="dialog"><div class="grab"></div>${html}</div></div>`; }
 function closeSheet(){ $layer.innerHTML = ""; }
-function randKey(n = 24){ const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join(""); }
 function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function fmtDate(s){ if(!s) return ""; const [y,m,d] = String(s).split("-"); return `${y}年${+m}月${+d}日`; }
 function ms(t){ return t && t.toMillis ? t.toMillis() : (typeof t === "number" ? t : Date.now()); }
@@ -258,12 +257,9 @@ const AUTH_ERR = {
 };
 const authMsg = e => AUTH_ERR[e?.code] || ("うまくいかなかったよ（" + (e?.code || e?.message || "不明") + "）");
 
-/* ---------- 招待URLで開かれたら覚えておく（ログインが終わるまで） ---------- */
-{
-  const m = location.hash.match(/join=([A-Za-z0-9]{10,40})\.([a-z0-9]{16,40})/);
-  if (m) { localStorage.setItem("futari_join", JSON.stringify({ room: m[1], key: m[2] })); history.replaceState(null, "", location.pathname + location.search); }
-}
-const pendingJoin = () => { try { return JSON.parse(localStorage.getItem("futari_join") || "null"); } catch { return null; } };
+const appUrl = () => location.origin + location.pathname;
+const normEmail = s => String(s || "").trim().toLowerCase();
+const emailOk = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 /* ---------- Firebaseの設定がまだのとき ---------- */
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
@@ -273,7 +269,7 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
 
 const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
 const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
-const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp, arrayUnion, deleteField } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp, arrayUnion, deleteField, writeBatch } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
@@ -293,7 +289,8 @@ const nameOf = uid => (S.room?.names || {})[uid] || (uid === me() ? (S.profile?.
 const isPaired = () => (S.room?.members || []).length >= 2;
 const votesOf = p => Object.keys(p.votes || {}).filter(u => p.votes[u] && (S.room?.members || []).includes(u));
 const isBoth = p => isPaired() && votesOf(p).length >= 2;
-const inviteUrl = () => `${location.origin}${location.pathname}#join=${S.roomId}.${S.room?.inviteKey || ""}`;
+const myEmail = () => normEmail(S.user?.email);
+const inviteText = email => `ふたり日和を使おう♡\nこのURLをひらいて「新しく登録」から、${email} で登録してね。\n${appUrl()}`;
 
 function stopSubs(){ S.subs.forEach(f => { try { f(); } catch {} }); S.subs = []; }
 
@@ -310,11 +307,20 @@ onAuthStateChanged(auth, async user => {
   route();
 });
 
+/* 自分のメールアドレス宛ての招待があるか調べる */
+async function findInvite(){
+  if (!myEmail()) return null;
+  try {
+    const s = await getDoc(doc(db, "invites", myEmail()));
+    return s.exists() ? s.data() : null;
+  } catch { return null; }
+}
+
 async function route(){
   if (!S.profile?.name) return renderName();
-  const j = pendingJoin();
-  if (j && j.room !== S.profile.roomId) return renderJoin(j);
-  if (j) localStorage.removeItem("futari_join");
+  S.skipInvite = S.skipInvite || null;
+  const inv = await findInvite();
+  if (inv && inv.roomId && inv.roomId !== S.profile.roomId && S.skipInvite !== inv.roomId) return renderJoin(inv);
   if (!S.profile.roomId) return renderNoRoom();
   openRoom(S.profile.roomId);
 }
@@ -330,10 +336,8 @@ function renderFatal(e){
 function renderLogin(){
   $nav.innerHTML = "";
   const reg = S.authMode === "signup";
-  const j = pendingJoin();
   $app.innerHTML = `
   <div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>ふたりで行きたい場所を、いっしょに決めよう</p></div>
-  ${j ? `<div class="card invite"><span class="deco">💌</span><h2>招待が届いています</h2><p class="muted" style="margin:0">${reg ? "登録" : "ログイン"}すると、ふたりのルームに参加できます。はじめての人は「新しく登録」を選んでね。</p></div>` : ""}
   <div class="card">
     <div class="seg"><button class="${reg ? "" : "on"}" data-a="mode" data-v="login">ログイン</button><button class="${reg ? "on" : ""}" data-a="mode" data-v="signup">新しく登録</button></div>
     <form id="authf">
@@ -343,7 +347,8 @@ function renderLogin(){
       <button class="btn block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
     </form>
     ${reg ? "" : `<div style="text-align:center;margin-top:8px"><button class="linkbtn" data-a="forgot">パスワードを忘れたとき</button></div>`}
-  </div>`;
+  </div>
+  <p class="muted" style="text-align:center;padding:0 12px">💌 恋人に招待された人は、恋人が登録したメールアドレスで「新しく登録」してね</p>`;
   document.getElementById("authf").onsubmit = async ev => {
     ev.preventDefault();
     const f = new FormData(ev.target), email = String(f.get("email")).trim(), pw = String(f.get("pw"));
@@ -385,12 +390,13 @@ function renderNoRoom(){
   <div class="hero"><div class="mark">${IC.logo}</div><h1 style="font-size:22px">${esc(S.profile.name)}さん、こんにちは</h1><p>ふたりの場所をつくろう</p></div>
   <div class="card">
     <h2>🏠 ふたりのルームを作る</h2>
-    <p class="muted" style="margin-top:0">作ったあとに招待URLを恋人に送ると、ふたりで同じリストを使えます。</p>
+    <p class="muted" style="margin-top:0">作ったあとに恋人のメールアドレスを登録すると、ふたりで同じリストを使えます。</p>
     <button class="btn block" data-a="createRoom">ルームを作る</button>
   </div>
   <div class="card">
-    <h2>💌 招待URLをもらった人は</h2>
-    <p class="muted" style="margin:0">恋人から届いたURLを、もう一度ひらいてね。自動で参加できます。</p>
+    <h2>💌 恋人に招待してもらう人は</h2>
+    <p class="muted" style="margin-top:0">恋人に、あなたのメールアドレス（${esc(myEmail())}）をアプリに登録してもらってね。登録してもらったら、下のボタンを押してください。</p>
+    <button class="btn ghost block" data-a="recheck">招待が届いたか確認する</button>
   </div>
   <div style="text-align:center"><button class="linkbtn" data-a="logout">ログアウト</button></div>`;
 }
@@ -401,7 +407,7 @@ async function createRoom(){
     const ref = doc(collection(db, "rooms"));
     await setDoc(ref, {
       name: "ふたり日和", ownerUid: me(), members: [me()], names: { [me()]: S.profile.name },
-      inviteKey: randKey(), createdAt: serverTimestamp()
+      partnerEmail: "", createdAt: serverTimestamp()
     });
     await setDoc(doc(db, "users", me()), { roomId: ref.id }, { merge: true });
     S.profile.roomId = ref.id;
@@ -410,36 +416,37 @@ async function createRoom(){
   S.busy = false;
 }
 
-/* =============== 招待URLから参加する =============== */
-function renderJoin(j){
+/* =============== メールアドレス宛ての招待から参加する =============== */
+function renderJoin(inv){
+  S.invite = inv;
   $nav.innerHTML = "";
   const hasRoom = !!S.profile.roomId;
   $app.innerHTML = `
-  <div class="hero"><div class="mark">${IC.logo}</div><h1>💌 招待が届いています</h1><p>ふたりのルームに参加しよう</p></div>
+  <div class="hero"><div class="mark">${IC.logo}</div><h1>💌 招待が届いています</h1><p>${esc(inv.fromName || "恋人")}さんから、ふたりのルームへの招待です</p></div>
   <div class="card">
-    ${hasRoom ? `<p class="muted" style="margin-top:0">いまのルームから移って参加します。いまのルームのリストは見られなくなります。</p>` : `<p class="muted" style="margin-top:0">参加すると、恋人と同じおでかけリストが使えるようになります。</p>`}
+    ${hasRoom ? `<p class="muted" style="margin-top:0">いまのルームから移って参加します。いまのルームのリストは見られなくなります。</p>` : `<p class="muted" style="margin-top:0">参加すると、${esc(inv.fromName || "恋人")}さんと同じおでかけリストが使えるようになります。</p>`}
     <div class="err" id="jerr"></div>
     <button class="btn block" data-a="join">参加する</button>
     <div class="gap"></div>
-    <button class="btn ghost block" data-a="joinCancel">やめておく</button>
+    <button class="btn ghost block" data-a="joinCancel">あとで</button>
   </div>`;
 }
 
 async function joinRoom(){
-  const j = pendingJoin(); if (!j || S.busy) return; S.busy = true;
+  const inv = S.invite; if (!inv || S.busy) return; S.busy = true;
   const err = document.getElementById("jerr");
   try {
-    await updateDoc(doc(db, "rooms", j.room), { members: arrayUnion(me()), ["names." + me()]: S.profile.name, joinKey: j.key });
+    await updateDoc(doc(db, "rooms", inv.roomId), { members: arrayUnion(me()), ["names." + me()]: S.profile.name });
     const old = S.profile.roomId;
-    await setDoc(doc(db, "users", me()), { roomId: j.room }, { merge: true });
-    if (old && old !== j.room) { try { await leaveRoomDoc(old); } catch {} }
-    localStorage.removeItem("futari_join");
-    S.profile.roomId = j.room;
+    await setDoc(doc(db, "users", me()), { roomId: inv.roomId }, { merge: true });
+    try { await deleteDoc(doc(db, "invites", myEmail())); } catch {}
+    if (old && old !== inv.roomId) { try { await leaveRoomDoc(old); } catch {} }
+    S.profile.roomId = inv.roomId; S.invite = null;
     toast("参加しました♡");
-    openRoom(j.room);
+    openRoom(inv.roomId);
   } catch (e) {
     err.textContent = e.code === "permission-denied"
-      ? "参加できませんでした。招待URLが古いか、ルームがすでにふたりでいっぱいかもしれません。恋人に新しい招待URLを送ってもらってね。"
+      ? "参加できませんでした。招待が取り消されたか、ルームがすでにふたりでいっぱいかもしれません。"
       : "参加できませんでした（" + (e.code || e.message) + "）";
   }
   S.busy = false;
@@ -489,7 +496,7 @@ function render(){
     <span class="status ${paired ? "" : "wait"}">${paired ? `${esc(nameOf(me()))} ♡ ${esc(nameOf(partnerUid()))}` : "招待待ち"}</span>
     <button class="iconbtn" data-a="settings" aria-label="設定">${IC.gear}</button>
   </header>
-  ${paired ? "" : `<div class="card invite"><span class="deco">💌</span><h2>恋人を招待しよう</h2><p>招待URLを送ると、ふたりで同じリストが使えます。</p><button class="btn sm" data-a="invite">招待URLを送る</button></div>`}
+  ${paired ? "" : `<div class="card invite"><span class="deco">💌</span><h2>恋人を招待しよう</h2><p>${S.room.partnerEmail ? `${esc(S.room.partnerEmail)} の登録を待っています。` : "恋人のメールアドレスを登録すると、ふたりで同じリストが使えます。"}</p><button class="btn sm" data-a="invite">${S.room.partnerEmail ? "招待の確認・送り直し" : "恋人のメールアドレスを登録"}</button></div>`}
   <div id="view">${view()}</div>`;
   const tabs = [
     ["list", IC.list, "行きたい"],
@@ -710,18 +717,48 @@ function openVisit(id){
   };
 }
 
-/* =============== シート：招待 =============== */
+/* =============== シート：招待（恋人のメールアドレスを登録） =============== */
 function openInvite(){
   if (!S.room) return;
   if (isPaired()) { openSheet(`<h3>💞 ふたりで参加中<button class="x" data-a="close">×</button></h3><p>${esc(nameOf(me()))} と ${esc(nameOf(partnerUid()))} のルームです。このルームはふたりでいっぱいなので、ほかの人は参加できません。</p>`); return; }
+  const pe = S.room.partnerEmail || "";
   openSheet(`
   <h3>💌 恋人を招待<button class="x" data-a="close">×</button></h3>
-  <p class="muted" style="margin-top:-4px">このURLを恋人に送ってね。ひらいて登録すると、ふたりのルームに参加できます。参加できるのは1人だけです。</p>
-  <div class="linkbox">${esc(inviteUrl())}</div>
-  ${navigator.share ? `<button class="btn block" data-a="share">LINEなどで送る</button><div class="gap"></div>` : ""}
-  <button class="btn ${navigator.share ? "ghost" : ""} block" data-a="copy">URLをコピー</button>
-  <div class="gap"></div>
-  <button class="linkbtn" data-a="rekey">URLを作り直す（前のURLは使えなくなります）</button>`);
+  <p class="muted" style="margin-top:-4px">恋人のメールアドレスを登録してね。恋人がそのメールアドレスでアプリに登録すると、このルームに参加できます。参加できるのは1人だけです。</p>
+  <form id="ivf">
+    <label class="f"><span>恋人のメールアドレス</span><input class="in" type="email" name="email" autocomplete="off" value="${esc(pe)}" placeholder="example@gmail.com" required></label>
+    <div class="err" id="iverr"></div>
+    <button class="btn ${pe ? "ghost" : ""} block">${pe ? "このメールアドレスに変更する" : "登録する"}</button>
+  </form>
+  ${pe ? `<div class="gap"></div>
+  <div class="card" style="background:var(--mint-l);box-shadow:none;margin-bottom:10px">
+    <h2 style="color:var(--mint-d)">✅ ${esc(pe)} を登録ずみ</h2>
+    <p class="muted" style="margin:0">恋人に下のメッセージを送ってね。登録すると自動で招待が届きます。</p>
+    <div class="linkbox" style="white-space:pre-wrap">${esc(inviteText(pe))}</div>
+    ${navigator.share ? `<button class="btn block" data-a="share">LINEなどで送る</button><div class="gap"></div>` : ""}
+    <button class="btn ${navigator.share ? "ghost" : ""} block" data-a="copy">メッセージをコピー</button>
+  </div>
+  <div style="text-align:center"><button class="linkbtn" data-a="uninvite">招待を取り消す</button></div>` : ""}`);
+  document.getElementById("ivf").onsubmit = async ev => {
+    ev.preventDefault();
+    const email = normEmail(new FormData(ev.target).get("email"));
+    const er = document.getElementById("iverr");
+    if (!emailOk(email)) return er.textContent = "メールアドレスの形がちがうみたい";
+    if (email === myEmail()) return er.textContent = "自分のメールアドレスは登録できないよ。恋人のメールアドレスを入れてね";
+    ev.target.querySelector("button").disabled = true;
+    try { await setPartnerEmail(email); toast("登録しました💌"); setTimeout(openInvite, 250); }
+    catch (e) { er.textContent = "登録できませんでした（" + (e.code || e.message) + "）"; ev.target.querySelector("button").disabled = false; }
+  };
+}
+
+/* 恋人のメールアドレスを登録・変更・取り消し（ルームと招待状を同時に書く） */
+async function setPartnerEmail(email){
+  const old = S.room.partnerEmail || "";
+  const b = writeBatch(db);
+  b.update(doc(db, "rooms", S.roomId), { partnerEmail: email });
+  if (old && old !== email) b.delete(doc(db, "invites", old));
+  if (email) b.set(doc(db, "invites", email), { roomId: S.roomId, fromName: S.profile.name, createdAt: serverTimestamp() });
+  await b.commit();
 }
 
 /* =============== シート：設定 =============== */
@@ -732,7 +769,7 @@ function openSettings(){
   <div class="sec">ふたりのルーム</div>
   <div class="menu">
     <div class="itm">💞 メンバー<span class="r">${esc(nameOf(me()))}${paired ? " ・ " + esc(nameOf(partnerUid())) : "（招待待ち）"}</span></div>
-    <button data-a="invite">💌 ${paired ? "招待の状態" : "恋人を招待する"}<span class="r">›</span></button>
+    <button data-a="invite">💌 ${paired ? "招待の状態" : "恋人を招待する"}<span class="r">${paired ? "" : esc(S.room.partnerEmail || "")} ›</span></button>
   </div>
   <div class="sec">わたし</div>
   <div class="menu">
@@ -790,7 +827,8 @@ document.addEventListener("click", async ev => {
     case "logout": stopSubs(); closeSheet(); await signOut(auth); break;
     case "createRoom": createRoom(); break;
     case "join": joinRoom(); break;
-    case "joinCancel": localStorage.removeItem("futari_join"); route(); break;
+    case "joinCancel": S.skipInvite = S.invite?.roomId; S.invite = null; route(); break;
+    case "recheck": { el.disabled = true; const inv = await findInvite(); if (inv && inv.roomId) renderJoin(inv); else { el.disabled = false; toast("まだ招待は届いていないみたい"); } break; }
     case "tab": S.tab = el.dataset.v; if (S.tab !== "rand") S.rResult = null; render(); window.scrollTo(0, 0); break;
     case "cat": S.cat = el.dataset.v; render(); break;
     case "rmode": S.rMode = el.dataset.v; S.rResult = null; document.getElementById("view").innerHTML = viewRand(); break;
@@ -826,19 +864,19 @@ document.addEventListener("click", async ev => {
     case "settings": openSettings(); break;
     case "invite": openInvite(); break;
     case "share":
-      try { await navigator.share({ title: "ふたり日和", text: "ふたり日和に招待したよ♡ このURLをひらいて登録してね", url: inviteUrl() }); } catch {}
+      try { await navigator.share({ title: "ふたり日和", text: inviteText(S.room.partnerEmail) }); } catch {}
       break;
     case "copy":
-      try { await navigator.clipboard.writeText(inviteUrl()); toast("コピーしました"); }
-      catch { toast("コピーできませんでした。URLを長押ししてコピーしてね"); }
+      try { await navigator.clipboard.writeText(inviteText(S.room.partnerEmail)); toast("コピーしました"); }
+      catch { toast("コピーできませんでした。長押ししてコピーしてね"); }
       break;
-    case "rekey":
-      try { await updateDoc(doc(db, "rooms", S.roomId), { inviteKey: randKey() }); toast("新しいURLにしました"); setTimeout(openInvite, 200); }
-      catch (e) { toast("作り直せませんでした（" + (e.code || e.message) + "）"); }
+    case "uninvite":
+      try { await setPartnerEmail(""); toast("招待を取り消しました"); setTimeout(openInvite, 250); }
+      catch (e) { toast("取り消せませんでした（" + (e.code || e.message) + "）"); }
       break;
     case "rename": openRename(); break;
     case "leave":
-      confirmSheet("ルームから抜けますか？", isPaired() ? "抜けると、ふたりのリストが見られなくなります。もう一度入るには、恋人から新しい招待URLをもらう必要があります。" : "抜けると、このルームのリストは見られなくなります。", "抜ける", "leaveOk");
+      confirmSheet("ルームから抜けますか？", isPaired() ? "抜けると、ふたりのリストが見られなくなります。もう一度入るには、恋人にもう一度メールアドレスを登録してもらう必要があります。" : "抜けると、このルームのリストは見られなくなります。", "抜ける", "leaveOk");
       break;
     case "leaveOk":
       try {

@@ -2,17 +2,33 @@ rules_version = '2';
 // ふたり日和：Firestoreのセキュリティルール
 // ・自分のプロフィールは本人だけ
 // ・ルームとおでかけ候補は、ルームのメンバー（最大2人）だけ
-// ・参加は「招待URLの鍵」を知っている人だけ、1人まで
+// ・参加できるのは、メンバーが登録した「恋人のメールアドレス」でログインした人だけ（1人まで）
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function uid() { return request.auth.uid; }
+    function myEmail() { return request.auth.token.email; }
     function isMember(roomId) {
       return signedIn() && uid() in get(/databases/$(database)/documents/rooms/$(roomId)).data.members;
     }
 
     match /users/{userId} {
       allow read, write: if signedIn() && uid() == userId;
+    }
+
+    // 招待状：ドキュメント名は招待された人のメールアドレス
+    match /invites/{email} {
+      allow get: if signedIn() && myEmail() == email;
+      allow list: if false;
+      allow delete: if signedIn() && (myEmail() == email || isMember(resource.data.roomId));
+      allow create: if signedIn()
+        && request.resource.data.roomId is string
+        && isMember(request.resource.data.roomId)
+        && getAfter(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.partnerEmail == email;
+      allow update: if signedIn()
+        && isMember(resource.data.roomId)
+        && request.resource.data.roomId == resource.data.roomId
+        && getAfter(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.partnerEmail == email;
     }
 
     match /rooms/{roomId} {
@@ -22,28 +38,24 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.ownerUid == uid()
         && request.resource.data.members == [uid()]
-        && request.resource.data.names.keys().hasOnly([uid()])
-        && request.resource.data.inviteKey is string
-        && request.resource.data.inviteKey.size() >= 16;
+        && request.resource.data.names.keys().hasOnly([uid()]);
 
       allow update: if signedIn() && (
-        // メンバーの変更（名前・招待URLの作り直し・自分が抜ける）
+        // メンバーの変更（名前・恋人のメールアドレス・自分が抜ける）
         (uid() in resource.data.members
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'names', 'inviteKey', 'members'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'names', 'partnerEmail', 'members'])
           && (request.resource.data.members == resource.data.members
               || request.resource.data.members == resource.data.members.removeAll([uid()]))
-          && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()])
-          && request.resource.data.inviteKey is string
-          && request.resource.data.inviteKey.size() >= 16)
+          && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()]))
         ||
-        // 招待URLで参加（ルームが1人のときだけ、自分を1人追加）
+        // 登録されたメールアドレスの人が参加（ルームが1人のときだけ、自分を1人追加）
         (!(uid() in resource.data.members)
           && resource.data.members.size() == 1
-          && resource.data.inviteKey is string
-          && resource.data.inviteKey.size() >= 16
-          && request.resource.data.joinKey == resource.data.inviteKey
+          && resource.data.partnerEmail is string
+          && resource.data.partnerEmail.size() > 3
+          && myEmail() == resource.data.partnerEmail
           && request.resource.data.members == resource.data.members.concat([uid()])
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'names', 'joinKey'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'names'])
           && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()]))
       );
 
