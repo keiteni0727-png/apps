@@ -43,7 +43,7 @@ service cloud.firestore {
       allow update: if signedIn() && (
         // メンバーの変更（名前・恋人のメールアドレス・自分が抜ける）
         (uid() in resource.data.members
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'names', 'partnerEmail', 'members'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'names', 'partnerEmail', 'members', 'since'])
           && (request.resource.data.members == resource.data.members
               || request.resource.data.members == resource.data.members.removeAll([uid()]))
           && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()]))
@@ -58,6 +58,14 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'names'])
           && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()]))
       );
+
+      // 思い出の写真（大きいほう）。候補と同じく、ふたりだけ
+      match /photos/{placeId} {
+        allow read, delete: if isMember(roomId);
+        allow create, update: if isMember(roomId)
+          && request.resource.data.img is string
+          && request.resource.data.img.size() < 1000000;
+      }
 
       match /places/{placeId} {
         allow read, delete: if isMember(roomId);
