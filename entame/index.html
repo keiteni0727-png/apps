@@ -714,6 +714,12 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .clock .soon .lbl{font-size:13px}
   .row.lst .pwide .pill,.row.yrow.lst .pwide .pill{font-size:13px}
 }
+/* メニューのアイコン */
+.mic{display:inline-grid;place-items:center;width:22px;height:22px;line-height:0}
+.mic svg{width:20px;height:20px}
+.mic.a{color:var(--anime)}.mic.d{color:var(--drama)}.mic.m{color:var(--movie)}.mic.s{color:var(--stream)}.mic.yt{color:var(--yt)}
+.hcur .mic{width:26px;height:26px}
+.hcur .mic svg{width:24px;height:24px}
 /* ===== スマホ：上の帯に ☰・切り替え・設定、追加は右下の丸ボタン ===== */
 .fab{display:none}
 @media (max-width:899px){
@@ -1559,6 +1565,15 @@ const TB_ICON = {
 /* PC：検索窓の上の切り替え（番組表／ライブラリ、YouTubeは投稿者）と設定の歯車 */
 const GEAR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
+/* メニューのアイコン（線のアイコンで統一。色はそれぞれのメニューの色） */
+const MODE_IC = {
+  a: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 3l4 4 4-4"/></svg>',
+  d: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8z"/><path d="M4 11l-.6-3.4a1 1 0 0 1 .8-1.2l13.6-2.4a1 1 0 0 1 1.2.8L19.6 7z"/><path d="M8.5 5.8l2.4 3.6M13.5 4.9l2.4 3.6"/></svg>',
+  m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 12h4M3 16h4M17 8h4M17 12h4M17 16h4"/></svg>',
+  s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13M8.2 15.3a5.5 5.5 0 0 1 0-6.6M15.8 8.7a5.5 5.5 0 0 1 0 6.6"/><path d="M10.6 9.8v4.4l3.6-2.2z" fill="currentColor"/></svg>',
+  yt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
+};
+const MODE_NAME = { a: "アニメ", d: "ドラマ", m: "映画", s: "配信", yt: "YouTube" };
 /* PC：左の折りたためるメニュー */
 let sbCollapsed = !!ls.get("adb.v3.sbc");
 function renderSidebar() {
@@ -1590,7 +1605,7 @@ function renderSidebar() {
   sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${matchMedia("(max-width:899px)").matches ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : `<button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button>`}</div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
-    ${mode("a", "📺", "アニメ")}${mode("d", "🎬", "ドラマ")}${mode("m", "🎞️", "映画")}${mode("s", "📡", "配信")}${mode("yt", "▶️", "YouTube")}
+    ${["a", "d", "m", "s", "yt"].map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
 function renderVbar() {
@@ -2066,9 +2081,7 @@ function render() {
   const hc = $("#hcur");
   if (hc)
     hc.innerHTML =
-      state.mode === "yt"
-        ? '<span class="ytmark" aria-hidden="true">▶</span><span class="hname">YouTube</span>'
-        : `<i class="mdot ${state.mode}" aria-hidden="true"></i><span class="hname">${{ a: "アニメ", d: "ドラマ", m: "映画", s: "配信" }[state.mode]}</span>`;
+      `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>`;
   renderTabbar();
   renderVbar();
   renderSidebar();
