@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ふたり日和">
+<meta name="theme-color" content="#fdf8f4">
+<title>ふたり日和</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fdf8f4; --card:#fff;
+  --pink:#f4a3b8; --pink-d:#e2809c; --pink-l:#fde8ee;
+  --lav:#b8a6e6; --lav-d:#9580d0; --lav-l:#f0ebfb;
+  --peach:#ffbfa8; --peach-l:#fff0ea;
+  --mint:#a6d9c4; --mint-d:#6fbb9c; --mint-l:#e7f6ef;
+  --butter:#ffe6a6; --butter-l:#fff8e3;
+  --text:#5d4e60; --muted:#a898aa; --line:#f1e6ea;
+  --r:22px; --shadow:0 6px 22px rgba(176,128,160,.13);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans",system-ui,sans-serif;font-size:15px;line-height:1.6}
+body{background-image:radial-gradient(circle at 12% 8%,#fde8ee 0,transparent 32%),radial-gradient(circle at 92% 22%,#f0ebfb 0,transparent 30%),radial-gradient(circle at 20% 90%,#e7f6ef 0,transparent 30%);background-attachment:fixed;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--lav-d)}
+.wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(env(safe-area-inset-bottom) + 104px)}
+.hide{display:none!important}
+
+/* ヘッダー */
+header.top{display:flex;align-items:center;gap:10px;padding:10px 2px 12px}
+.logo{font-weight:700;font-size:22px;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
+.logo .h{color:var(--pink-d)}
+.logo .b{color:var(--lav-d)}
+.logo svg{width:22px;height:22px}
+.status{font-size:11px;padding:3px 10px;border-radius:99px;background:var(--mint-l);color:var(--mint-d);font-weight:500;white-space:nowrap}
+.status.wait{background:var(--butter-l);color:#c79a2c}
+.iconbtn{margin-left:auto;border:0;background:var(--card);width:40px;height:40px;border-radius:50%;box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn svg{width:20px;height:20px;stroke:var(--lav-d)}
+
+/* カード・ボタン */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 8px;color:var(--pink-d);display:flex;align-items:center;gap:6px}
+.muted{color:var(--muted);font-size:13px}
+.btn{border:0;background:linear-gradient(135deg,#f4a3b8,#e2809c);color:#fff;border-radius:99px;padding:12px 20px;font-weight:700;cursor:pointer;box-shadow:0 5px 14px rgba(226,128,156,.32);letter-spacing:.03em}
+.btn:disabled{opacity:.55}
+.btn.lav{background:linear-gradient(135deg,#c7b8ef,#9580d0);box-shadow:0 5px 14px rgba(149,128,208,.3)}
+.btn.mint{background:linear-gradient(135deg,#bfe5d4,#6fbb9c);box-shadow:0 5px 14px rgba(111,187,156,.3)}
+.btn.sub{background:var(--pink-l);color:var(--pink-d);box-shadow:none}
+.btn.ghost{background:#fff;color:var(--text);box-shadow:none;border:1.5px solid var(--line)}
+.btn.danger{background:#fff;color:#d46a7e;box-shadow:none;border:1.5px solid #f6d3da}
+.btn.block{width:100%}
+.btn.sm{padding:7px 14px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.end{justify-content:flex-end}
+.gap{height:10px}
+
+/* 入力 */
+label.f{display:block;margin:0 0 12px}
+label.f>span{display:block;font-size:12px;color:var(--muted);margin:0 0 4px 4px}
+.in{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:11px 14px;outline:none;font-size:16px}
+.in:focus{border-color:var(--pink)}
+textarea.in{min-height:76px;resize:vertical}
+.err{color:#d46a7e;font-size:13px;margin:4px 4px 10px;min-height:1em}
+
+/* ログイン */
+.hero{text-align:center;padding:42px 8px 18px}
+.hero .mark{width:86px;height:86px;margin:0 auto 10px;border-radius:30px;background:linear-gradient(135deg,#fde8ee,#f0ebfb);display:grid;place-items:center;box-shadow:var(--shadow)}
+.hero .mark svg{width:46px;height:46px}
+.hero h1{font-size:28px;margin:6px 0 2px;letter-spacing:.06em}
+.hero p{margin:0;color:var(--muted);font-size:13px}
+.seg{display:flex;background:var(--pink-l);border-radius:99px;padding:4px;margin-bottom:16px}
+.seg button{flex:1;border:0;background:transparent;border-radius:99px;padding:8px;cursor:pointer;color:var(--pink-d);font-weight:500}
+.seg button.on{background:#fff;box-shadow:0 2px 8px rgba(226,128,156,.18);font-weight:700}
+.linkbtn{border:0;background:none;color:var(--lav-d);font-size:13px;cursor:pointer;padding:6px;text-decoration:underline}
+
+/* 招待バナー */
+.invite{background:linear-gradient(135deg,#fff0ea,#fde8ee 55%,#f0ebfb);position:relative;overflow:hidden}
+.invite p{margin:2px 0 12px;font-size:13px}
+.invite .deco{position:absolute;right:-8px;top:-10px;font-size:62px;opacity:.25;transform:rotate(12deg)}
+
+/* 絞り込み */
+.search{position:relative;margin-bottom:10px}
+.search input{padding-left:38px}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;stroke:var(--muted)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--lav-l);border-color:var(--lav);color:var(--lav-d);font-weight:700}
+.bar{display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px}
+.bar .count{font-size:12px;color:var(--muted)}
+.bar select{border:0;background:transparent;color:var(--lav-d);font-size:13px;cursor:pointer}
+
+/* 候補カード */
+.place{display:flex;gap:12px;align-items:center;background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:12px 12px 12px 12px;margin-bottom:10px;cursor:pointer;position:relative}
+.place.both{box-shadow:0 0 0 2px #f7c6d3,var(--shadow)}
+.cat{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:24px;flex:none}
+.place .main{flex:1;min-width:0}
+.place .t{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.place .s{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.place .who{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.tag{font-size:11px;border-radius:99px;padding:1px 8px;background:var(--pink-l);color:var(--pink-d)}
+.tag.lav{background:var(--lav-l);color:var(--lav-d)}
+.tag.gray{background:#f5f0f3;color:var(--muted)}
+.heart{border:0;background:var(--pink-l);width:46px;height:46px;border-radius:50%;display:grid;place-items:center;cursor:pointer;flex:none;transition:transform .15s}
+.heart svg{width:22px;height:22px;fill:none;stroke:var(--pink-d);stroke-width:2}
+.heart.on{background:linear-gradient(135deg,#f9b6c7,#e2809c)}
+.heart.on svg{fill:#fff;stroke:#fff}
+.heart:active{transform:scale(.88)}
+.ribbon{position:absolute;top:-7px;left:14px;font-size:11px;background:linear-gradient(135deg,#f9b6c7,#e2809c);color:#fff;border-radius:99px;padding:1px 9px;font-weight:700}
+
+.empty{text-align:center;padding:40px 16px;color:var(--muted)}
+.empty .big{font-size:46px;margin-bottom:6px}
+.empty p{margin:4px 0}
+
+/* 思い出 */
+.memo{background:#fff;border-radius:6px 6px 20px 20px;box-shadow:var(--shadow);padding:10px 10px 14px;margin-bottom:14px;cursor:pointer}
+.memo .ph{height:84px;border-radius:4px;display:grid;place-items:center;font-size:40px}
+.memo .t{font-weight:700;margin:8px 4px 0}
+.memo .d{font-size:12px;color:var(--muted);margin:0 4px}
+.memo .n{font-size:13px;margin:6px 4px 0;white-space:pre-wrap}
+.memos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.memos .memo{margin:0}
+.memos .memo:nth-child(odd){transform:rotate(-1.2deg)}
+.memos .memo:nth-child(even){transform:rotate(1.2deg)}
+
+/* ランダム */
+.dice{text-align:center;padding:22px 16px}
+.slot{height:118px;border-radius:24px;background:linear-gradient(135deg,#fde8ee,#f0ebfb);display:grid;place-items:center;margin:8px 0 14px;padding:10px;position:relative;overflow:hidden}
+.slot .name{font-size:22px;font-weight:700}
+.slot .sub{font-size:12px;color:var(--muted)}
+.slot.spin .name{animation:blink .1s linear infinite}
+.slot.done{animation:pop .45s ease}
+@keyframes blink{50%{opacity:.55}}
+@keyframes pop{0%{transform:scale(.92)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+.opt{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px}
+
+/* 下のメニュー */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 12px calc(env(safe-area-inset-bottom) + 10px)}
+nav.tabs .in2{max-width:520px;margin:0 auto;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:26px;box-shadow:0 8px 28px rgba(176,128,160,.2);display:flex;padding:6px}
+nav.tabs button{flex:1;border:0;background:transparent;border-radius:20px;padding:6px 2px 4px;cursor:pointer;color:var(--muted);font-size:11px;display:flex;flex-direction:column;align-items:center;gap:1px}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
+nav.tabs button.on{color:var(--pink-d);background:var(--pink-l);font-weight:700}
+nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99px;padding:0 5px;margin-left:2px}
+.fab{position:fixed;right:max(18px,calc(50% - 262px));bottom:calc(env(safe-area-inset-bottom) + 88px);z-index:21;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,#c7b8ef,#9580d0);box-shadow:0 8px 20px rgba(149,128,208,.4);display:grid;place-items:center;cursor:pointer}
+.fab svg{width:26px;height:26px;stroke:#fff;stroke-width:2.4}
+
+/* シート（下から出る画面） */
+.ov{position:fixed;inset:0;background:rgba(93,78,96,.32);z-index:40;display:flex;align-items:flex-end;justify-content:center;animation:fade .18s}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:28px 28px 0 0;padding:10px 18px calc(env(safe-area-inset-bottom) + 20px);animation:up .22s ease}
+.sheet .grab{width:42px;height:5px;border-radius:9px;background:#e8dbe2;margin:2px auto 12px}
+.sheet h3{margin:0 0 14px;font-size:18px;display:flex;align-items:center;gap:8px}
+.sheet h3 .x{margin-left:auto;border:0;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;color:var(--muted);font-size:18px;box-shadow:var(--shadow)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@keyframes fade{from{opacity:0}}
+.catpick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.catpick button{border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 2px;cursor:pointer;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.catpick button b{font-size:22px;font-weight:400}
+.catpick button.on{border-color:var(--pink);background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.detail .head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.detail .head .cat{width:58px;height:58px;font-size:30px;border-radius:20px}
+.detail .ttl{font-size:19px;font-weight:700;line-height:1.35}
+.kv{background:#fff;border-radius:18px;padding:4px 14px;margin-bottom:12px}
+.kv div{display:flex;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:14px}
+.kv div:first-child{border-top:0}
+.kv b{flex:none;width:74px;color:var(--muted);font-weight:500;font-size:13px}
+.kv span{flex:1;min-width:0;white-space:pre-wrap;word-break:break-all}
+.votes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.vote{background:#fff;border-radius:18px;padding:10px;text-align:center;font-size:13px}
+.vote .ic{font-size:22px}
+.vote.on{background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.linkbox{display:flex;gap:6px;align-items:center;background:#fff;border:1.5px dashed var(--lav);border-radius:16px;padding:10px 12px;font-size:12px;word-break:break-all;margin:6px 0 10px}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 100px);transform:translateX(-50%);background:rgba(93,78,96,.92);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:60;animation:fade .2s;max-width:90vw;text-align:center}
+.center{text-align:center;padding:80px 20px;color:var(--muted)}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--pink-l);border-top-color:var(--pink-d);animation:rot 1s linear infinite;margin:0 auto 12px}
+@keyframes rot{to{transform:rotate(360deg)}}
+.sec{font-size:12px;color:var(--muted);margin:16px 6px 6px}
+.menu{background:#fff;border-radius:20px;overflow:hidden;margin-bottom:12px}
+.menu button,.menu .itm{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:13px 16px;cursor:pointer;text-align:left;border-top:1px solid var(--line);font-size:14px}
+.menu>*:first-child{border-top:0}
+.menu .r{margin-left:auto;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="center"><div class="spinner"></div>よみこみ中…</div></div>
+<div id="nav"></div>
+<div id="layer"></div>
+
+<script type="module">
+/* =============== Firebaseの設定（Firebaseの画面からコピーしたものを入れる） =============== */
+const firebaseConfig = {
+  apiKey: "PASTE_HERE",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+
+const V = "12.15.0";
+const $app = document.getElementById("app"), $nav = document.getElementById("nav"), $layer = document.getElementById("layer");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c]);
+
+/* ---------- アイコン ---------- */
+const IC = {
+  heart: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3.1 1.6-1.9 3.1-3.1 5.2-3.1 3.5 0 5.4 3.5 4.1 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" stroke-linejoin="round"/></svg>',
+  logo: '<svg viewBox="0 0 24 24"><path d="M9 18.5s-6-3.7-7.4-7.3C.6 8.6 2.1 5.8 4.9 5.8c1.7 0 2.9 1 4.1 2.5 1.3-1.5 2.5-2.5 4.1-2.5 2.8 0 4.3 2.8 3.3 5.4C15 14.8 9 18.5 9 18.5z" fill="#f4a3b8"/><path d="M16.5 20.5s-4.5-2.8-5.6-5.5c-.8-2 .4-4.1 2.5-4.1 1.3 0 2.2.7 3.1 1.9 1-1.2 1.9-1.9 3.1-1.9 2.1 0 3.3 2.1 2.5 4.1-1.1 2.7-5.6 5.5-5.6 5.5z" fill="#b8a6e6" stroke="#fff" stroke-width="1.2"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  list: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
+  both: '<svg viewBox="0 0 24 24" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3.1 1.6-1.9 3.1-3.1 5.2-3.1 3.5 0 5.4 3.5 4.1 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/><path d="M9 11.5l2 2 4-4" stroke-linecap="round"/></svg>',
+  dice: '<svg viewBox="0 0 24 24" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.1" fill="currentColor"/></svg>',
+  memo: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M4 15.5l4.5-4 3.5 3 2.5-2 5.5 4.5"/><circle cx="15" cy="8" r="1.6"/></svg>'
+};
+
+/* ---------- カテゴリ ---------- */
+const CATS = [
+  { id:"cafe",   e:"☕", n:"カフェ",     c:"var(--peach-l)" },
+  { id:"food",   e:"🍝", n:"ごはん",     c:"var(--butter-l)" },
+  { id:"play",   e:"🎡", n:"あそび",     c:"var(--lav-l)" },
+  { id:"nature", e:"🌿", n:"しぜん",     c:"var(--mint-l)" },
+  { id:"shop",   e:"🛍️", n:"おかいもの", c:"var(--pink-l)" },
+  { id:"trip",   e:"🧳", n:"りょこう",   c:"#e8f1fb" },
+  { id:"event",  e:"🎪", n:"イベント",   c:"#fbeef6" },
+  { id:"other",  e:"✨", n:"その他",     c:"#f5f0f3" }
+];
+const catOf = id => CATS.find(c => c.id === id) || CATS[CATS.length - 1];
+
+/* ---------- ちょっとした道具 ---------- */
+function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2300); }
+function openSheet(html){ $layer.innerHTML = `<div class="ov" data-a="ovclose"><div class="sheet" role="dialog"><div class="grab"></div>${html}</div></div>`; }
+function closeSheet(){ $layer.innerHTML = ""; }
+function randKey(n = 24){ const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, b => "abcdefghijkmnpqrstuvwxyz23456789"[b % 32]).join(""); }
+function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function fmtDate(s){ if(!s) return ""; const [y,m,d] = String(s).split("-"); return `${y}年${+m}月${+d}日`; }
+function ms(t){ return t && t.toMillis ? t.toMillis() : (typeof t === "number" ? t : Date.now()); }
+const AUTH_ERR = {
+  "auth/invalid-email":"メールアドレスの形がちがうみたい",
+  "auth/missing-password":"パスワードを入れてね",
+  "auth/weak-password":"パスワードは6文字以上にしてね",
+  "auth/email-already-in-use":"このメールアドレスはもう登録されているよ。「ログイン」から入ってね",
+  "auth/invalid-credential":"メールアドレスかパスワードがちがうみたい",
+  "auth/wrong-password":"メールアドレスかパスワードがちがうみたい",
+  "auth/user-not-found":"メールアドレスかパスワードがちがうみたい",
+  "auth/too-many-requests":"何度も失敗したので、少し時間をおいてね",
+  "auth/network-request-failed":"ネットにつながっていないみたい",
+  "auth/operation-not-allowed":"Firebaseで「メール/パスワード」のログインがまだオンになっていないみたい",
+  "auth/unauthorized-domain":"このURLがFirebaseの「承認済みドメイン」に入っていないみたい"
+};
+const authMsg = e => AUTH_ERR[e?.code] || ("うまくいかなかったよ（" + (e?.code || e?.message || "不明") + "）");
+
+/* ---------- 招待URLで開かれたら覚えておく（ログインが終わるまで） ---------- */
+{
+  const m = location.hash.match(/join=([A-Za-z0-9]{10,40})\.([a-z0-9]{16,40})/);
+  if (m) { localStorage.setItem("futari_join", JSON.stringify({ room: m[1], key: m[2] })); history.replaceState(null, "", location.pathname + location.search); }
+}
+const pendingJoin = () => { try { return JSON.parse(localStorage.getItem("futari_join") || "null"); } catch { return null; } };
+
+/* ---------- Firebaseの設定がまだのとき ---------- */
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
+  $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>準備中です（Firebaseの設定がまだ入っていません）</p></div>`;
+  throw new Error("firebaseConfig not set");
+}
+
+const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp, arrayUnion, deleteField } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+auth.languageCode = "ja";
+const db = getFirestore(fbApp);
+
+/* ---------- 状態 ---------- */
+const S = {
+  user:null, profile:null, room:null, roomId:null, places:[], subs:[],
+  tab:"list", cat:"all", sort:"new", q:"",
+  rMode:"both", rCat:"all", rResult:null, rSpin:false,
+  authMode:"login", busy:false
+};
+const me = () => S.user?.uid;
+const partnerUid = () => (S.room?.members || []).find(u => u !== me());
+const nameOf = uid => (S.room?.names || {})[uid] || (uid === me() ? (S.profile?.name || "わたし") : "あいて");
+const isPaired = () => (S.room?.members || []).length >= 2;
+const votesOf = p => Object.keys(p.votes || {}).filter(u => p.votes[u] && (S.room?.members || []).includes(u));
+const isBoth = p => isPaired() && votesOf(p).length >= 2;
+const inviteUrl = () => `${location.origin}${location.pathname}#join=${S.roomId}.${S.room?.inviteKey || ""}`;
+
+function stopSubs(){ S.subs.forEach(f => { try { f(); } catch {} }); S.subs = []; }
+
+/* =============== ログインの状態が変わったとき =============== */
+onAuthStateChanged(auth, async user => {
+  stopSubs(); closeSheet();
+  S.user = user; S.profile = null; S.room = null; S.roomId = null; S.places = [];
+  if (!user) return renderLogin();
+  $app.innerHTML = `<div class="center"><div class="spinner"></div>よみこみ中…</div>`; $nav.innerHTML = "";
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    S.profile = snap.exists() ? snap.data() : {};
+  } catch (e) { return renderFatal(e); }
+  route();
+});
+
+async function route(){
+  if (!S.profile?.name) return renderName();
+  const j = pendingJoin();
+  if (j && j.room !== S.profile.roomId) return renderJoin(j);
+  if (j) localStorage.removeItem("futari_join");
+  if (!S.profile.roomId) return renderNoRoom();
+  openRoom(S.profile.roomId);
+}
+
+function renderFatal(e){
+  $nav.innerHTML = "";
+  $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1></div>
+  <div class="card"><h2>うまく読みこめませんでした</h2><p class="muted">${esc(e?.code || e?.message || e)}</p>
+  <button class="btn block" data-a="reload">もう一度ためす</button><div class="gap"></div><button class="btn ghost block" data-a="logout">ログアウト</button></div>`;
+}
+
+/* =============== ログイン画面 =============== */
+function renderLogin(){
+  $nav.innerHTML = "";
+  const reg = S.authMode === "signup";
+  const j = pendingJoin();
+  $app.innerHTML = `
+  <div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>ふたりで行きたい場所を、いっしょに決めよう</p></div>
+  ${j ? `<div class="card invite"><span class="deco">💌</span><h2>招待が届いています</h2><p class="muted" style="margin:0">${reg ? "登録" : "ログイン"}すると、ふたりのルームに参加できます。はじめての人は「新しく登録」を選んでね。</p></div>` : ""}
+  <div class="card">
+    <div class="seg"><button class="${reg ? "" : "on"}" data-a="mode" data-v="login">ログイン</button><button class="${reg ? "on" : ""}" data-a="mode" data-v="signup">新しく登録</button></div>
+    <form id="authf">
+      <label class="f"><span>メールアドレス</span><input class="in" type="email" name="email" autocomplete="email" required></label>
+      <label class="f"><span>パスワード${reg ? "（6文字以上）" : ""}</span><input class="in" type="password" name="pw" autocomplete="${reg ? "new-password" : "current-password"}" required minlength="6"></label>
+      <div class="err" id="aerr"></div>
+      <button class="btn block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
+    </form>
+    ${reg ? "" : `<div style="text-align:center;margin-top:8px"><button class="linkbtn" data-a="forgot">パスワードを忘れたとき</button></div>`}
+  </div>`;
+  document.getElementById("authf").onsubmit = async ev => {
+    ev.preventDefault();
+    const f = new FormData(ev.target), email = String(f.get("email")).trim(), pw = String(f.get("pw"));
+    const b = ev.target.querySelector("button"); b.disabled = true;
+    try {
+      if (reg) await createUserWithEmailAndPassword(auth, email, pw);
+      else await signInWithEmailAndPassword(auth, email, pw);
+    } catch (e) { document.getElementById("aerr").textContent = authMsg(e); b.disabled = false; }
+  };
+}
+
+/* =============== 名前を決める =============== */
+function renderName(){
+  $nav.innerHTML = "";
+  $app.innerHTML = `
+  <div class="hero"><div class="mark">${IC.logo}</div><h1>ようこそ</h1><p>アプリの中で表示する名前を決めてね</p></div>
+  <div class="card"><form id="namef">
+    <label class="f"><span>なまえ（ニックネームでOK）</span><input class="in" name="name" maxlength="12" required placeholder="例：けいすけ"></label>
+    <div class="err" id="nerr"></div>
+    <button class="btn block">つぎへ</button>
+  </form></div>`;
+  document.getElementById("namef").onsubmit = async ev => {
+    ev.preventDefault();
+    const name = String(new FormData(ev.target).get("name")).trim().slice(0, 12);
+    if (!name) return;
+    ev.target.querySelector("button").disabled = true;
+    try {
+      await setDoc(doc(db, "users", me()), { name }, { merge: true });
+      S.profile = { ...S.profile, name };
+      route();
+    } catch (e) { document.getElementById("nerr").textContent = "保存できませんでした（" + (e.code || e.message) + "）"; ev.target.querySelector("button").disabled = false; }
+  };
+}
+
+/* =============== ルームがまだないとき =============== */
+function renderNoRoom(){
+  $nav.innerHTML = "";
+  $app.innerHTML = `
+  <div class="hero"><div class="mark">${IC.logo}</div><h1 style="font-size:22px">${esc(S.profile.name)}さん、こんにちは</h1><p>ふたりの場所をつくろう</p></div>
+  <div class="card">
+    <h2>🏠 ふたりのルームを作る</h2>
+    <p class="muted" style="margin-top:0">作ったあとに招待URLを恋人に送ると、ふたりで同じリストを使えます。</p>
+    <button class="btn block" data-a="createRoom">ルームを作る</button>
+  </div>
+  <div class="card">
+    <h2>💌 招待URLをもらった人は</h2>
+    <p class="muted" style="margin:0">恋人から届いたURLを、もう一度ひらいてね。自動で参加できます。</p>
+  </div>
+  <div style="text-align:center"><button class="linkbtn" data-a="logout">ログアウト</button></div>`;
+}
+
+async function createRoom(){
+  if (S.busy) return; S.busy = true;
+  try {
+    const ref = doc(collection(db, "rooms"));
+    await setDoc(ref, {
+      name: "ふたり日和", ownerUid: me(), members: [me()], names: { [me()]: S.profile.name },
+      inviteKey: randKey(), createdAt: serverTimestamp()
+    });
+    await setDoc(doc(db, "users", me()), { roomId: ref.id }, { merge: true });
+    S.profile.roomId = ref.id;
+    openRoom(ref.id, true);
+  } catch (e) { toast("作れませんでした（" + (e.code || e.message) + "）"); }
+  S.busy = false;
+}
+
+/* =============== 招待URLから参加する =============== */
+function renderJoin(j){
+  $nav.innerHTML = "";
+  const hasRoom = !!S.profile.roomId;
+  $app.innerHTML = `
+  <div class="hero"><div class="mark">${IC.logo}</div><h1>💌 招待が届いています</h1><p>ふたりのルームに参加しよう</p></div>
+  <div class="card">
+    ${hasRoom ? `<p class="muted" style="margin-top:0">いまのルームから移って参加します。いまのルームのリストは見られなくなります。</p>` : `<p class="muted" style="margin-top:0">参加すると、恋人と同じおでかけリストが使えるようになります。</p>`}
+    <div class="err" id="jerr"></div>
+    <button class="btn block" data-a="join">参加する</button>
+    <div class="gap"></div>
+    <button class="btn ghost block" data-a="joinCancel">やめておく</button>
+  </div>`;
+}
+
+async function joinRoom(){
+  const j = pendingJoin(); if (!j || S.busy) return; S.busy = true;
+  const err = document.getElementById("jerr");
+  try {
+    await updateDoc(doc(db, "rooms", j.room), { members: arrayUnion(me()), ["names." + me()]: S.profile.name, joinKey: j.key });
+    const old = S.profile.roomId;
+    await setDoc(doc(db, "users", me()), { roomId: j.room }, { merge: true });
+    if (old && old !== j.room) { try { await leaveRoomDoc(old); } catch {} }
+    localStorage.removeItem("futari_join");
+    S.profile.roomId = j.room;
+    toast("参加しました♡");
+    openRoom(j.room);
+  } catch (e) {
+    err.textContent = e.code === "permission-denied"
+      ? "参加できませんでした。招待URLが古いか、ルームがすでにふたりでいっぱいかもしれません。恋人に新しい招待URLを送ってもらってね。"
+      : "参加できませんでした（" + (e.code || e.message) + "）";
+  }
+  S.busy = false;
+}
+
+async function leaveRoomDoc(roomId){
+  const ref = doc(db, "rooms", roomId);
+  const snap = await getDoc(ref); if (!snap.exists()) return;
+  const r = snap.data();
+  await updateDoc(ref, { members: (r.members || []).filter(u => u !== me()), ["names." + me()]: deleteField() });
+}
+
+/* =============== ルームを開く（リアルタイムで受け取る） =============== */
+function openRoom(roomId, fresh){
+  stopSubs();
+  S.roomId = roomId; S.room = null; S.places = [];
+  let gotRoom = false, gotPlaces = false;
+  S.subs.push(onSnapshot(doc(db, "rooms", roomId), snap => {
+    if (!snap.exists() || !(snap.data().members || []).includes(me())) return lostRoom();
+    S.room = snap.data(); gotRoom = true;
+    if (gotPlaces) render();
+    if (fresh) { fresh = false; setTimeout(openInvite, 300); }
+  }, e => e.code === "permission-denied" ? lostRoom() : renderFatal(e)));
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "places"), snap => {
+    S.places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    gotPlaces = true;
+    if (gotRoom) render();
+  }, e => { if (e.code !== "permission-denied") renderFatal(e); }));
+}
+
+async function lostRoom(){
+  stopSubs(); closeSheet();
+  try { await setDoc(doc(db, "users", me()), { roomId: deleteField() }, { merge: true }); } catch {}
+  S.profile.roomId = null; S.room = null; S.roomId = null;
+  toast("ルームから外れました");
+  route();
+}
+
+/* =============== メイン画面 =============== */
+function render(){
+  if (!S.room) return;
+  const paired = isPaired();
+  const both = S.places.filter(p => !p.visited && isBoth(p)).length;
+  $app.innerHTML = `
+  <header class="top">
+    <div class="logo">${IC.logo}<span class="h">ふたり</span><span class="b">日和</span></div>
+    <span class="status ${paired ? "" : "wait"}">${paired ? `${esc(nameOf(me()))} ♡ ${esc(nameOf(partnerUid()))}` : "招待待ち"}</span>
+    <button class="iconbtn" data-a="settings" aria-label="設定">${IC.gear}</button>
+  </header>
+  ${paired ? "" : `<div class="card invite"><span class="deco">💌</span><h2>恋人を招待しよう</h2><p>招待URLを送ると、ふたりで同じリストが使えます。</p><button class="btn sm" data-a="invite">招待URLを送る</button></div>`}
+  <div id="view">${view()}</div>`;
+  const tabs = [
+    ["list", IC.list, "行きたい"],
+    ["both", IC.both, "ふたりで♡", both],
+    ["rand", IC.dice, "きめる"],
+    ["memo", IC.memo, "おもいで"]
+  ];
+  $nav.innerHTML = `
+  ${S.tab === "list" || S.tab === "both" ? `<button class="fab" data-a="add" aria-label="候補を追加">${IC.plus}</button>` : ""}
+  <nav class="tabs"><div class="in2">${tabs.map(([id, ic, n, c]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${ic}<span>${n}${c ? `<span class="n">${c}</span>` : ""}</span></button>`).join("")}</div></nav>`;
+  const q = document.getElementById("q");
+  if (q) q.oninput = () => { S.q = q.value; document.getElementById("plist").innerHTML = listHtml(filtered()); document.getElementById("cnt").textContent = filtered().length + "件"; };
+}
+
+function view(){
+  if (S.tab === "both") return viewBoth();
+  if (S.tab === "rand") return viewRand();
+  if (S.tab === "memo") return viewMemo();
+  return viewList();
+}
+
+function sortPlaces(arr){
+  const a = arr.slice();
+  if (S.sort === "love") a.sort((x, y) => votesOf(y).length - votesOf(x).length || ms(y.createdAt) - ms(x.createdAt));
+  else if (S.sort === "old") a.sort((x, y) => ms(x.createdAt) - ms(y.createdAt));
+  else a.sort((x, y) => ms(y.createdAt) - ms(x.createdAt));
+  return a;
+}
+function filtered(){
+  const q = S.q.trim().toLowerCase();
+  return sortPlaces(S.places.filter(p => !p.visited
+    && (S.cat === "all" || p.cat === S.cat)
+    && (!q || [p.title, p.area, p.memo].join(" ").toLowerCase().includes(q))));
+}
+
+function placeCard(p){
+  const c = catOf(p.cat), v = votesOf(p), mine = v.includes(me()), pu = partnerUid();
+  const both = isBoth(p);
+  return `<div class="place ${both ? "both" : ""}" data-a="open" data-id="${p.id}">
+    ${both ? `<span class="ribbon">ふたりとも行きたい♡</span>` : ""}
+    <div class="cat" style="background:${c.c}">${c.e}</div>
+    <div class="main">
+      <div class="t">${esc(p.title)}</div>
+      <div class="s">${esc([p.area, c.n].filter(Boolean).join(" ・ "))}</div>
+      <div class="who">${pu && v.includes(pu) ? `<span class="tag">${esc(nameOf(pu))}も行きたい♡</span>` : ""}${p.by && p.by !== me() && S.room.names?.[p.by] ? `<span class="tag lav">${esc(nameOf(p.by))}が追加</span>` : ""}</div>
+    </div>
+    <button class="heart ${mine ? "on" : ""}" data-a="vote" data-id="${p.id}" aria-label="行きたい">${IC.heart}</button>
+  </div>`;
+}
+function listHtml(arr){
+  if (!arr.length) {
+    if (!S.places.filter(p => !p.visited).length) return `<div class="empty"><div class="big">🗺️</div><p>まだ候補がありません</p><p>右下の＋ボタンから、行ってみたい場所を追加してね</p></div>`;
+    return `<div class="empty"><div class="big">🔍</div><p>見つかりませんでした</p></div>`;
+  }
+  return arr.map(placeCard).join("");
+}
+
+function viewList(){
+  const arr = filtered();
+  return `
+  <div class="search">${IC.search}<input class="in" id="q" placeholder="名前・エリア・メモでさがす" value="${esc(S.q)}"></div>
+  <div class="chips">
+    <button class="chip ${S.cat === "all" ? "on" : ""}" data-a="cat" data-v="all">すべて</button>
+    ${CATS.map(c => `<button class="chip ${S.cat === c.id ? "on" : ""}" data-a="cat" data-v="${c.id}">${c.e} ${c.n}</button>`).join("")}
+  </div>
+  <div class="bar"><span class="count" id="cnt">${arr.length}件</span>
+    <select data-a="sort"><option value="new" ${S.sort === "new" ? "selected" : ""}>新しい順</option><option value="love" ${S.sort === "love" ? "selected" : ""}>♡が多い順</option><option value="old" ${S.sort === "old" ? "selected" : ""}>古い順</option></select>
+  </div>
+  <div id="plist">${listHtml(arr)}</div>`;
+}
+
+function viewBoth(){
+  if (!isPaired()) return `<div class="empty"><div class="big">💞</div><p>恋人が参加すると、ふたりとも「行きたい♡」を押した場所がここに出ます</p></div>`;
+  const arr = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
+  if (!arr.length) return `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>「行きたい」タブで♡を押してみてね</p></div>`;
+  return `<div class="sec">ふたりとも「行きたい♡」の場所 ・ ${arr.length}件</div>` + arr.map(placeCard).join("");
+}
+
+function randPool(){
+  return S.places.filter(p => !p.visited
+    && (S.rMode === "all" || (S.rMode === "both" ? isBoth(p) : votesOf(p).includes(me())))
+    && (S.rCat === "all" || p.cat === S.rCat));
+}
+function viewRand(){
+  const pool = randPool(), r = S.rResult && S.places.find(p => p.id === S.rResult);
+  const modes = [["both", "ふたりで♡"], ["mine", "わたしの♡"], ["all", "ぜんぶ"]];
+  if (!isPaired() && S.rMode === "both") S.rMode = "all";
+  return `<div class="card dice">
+    <h2 style="justify-content:center">🎲 今日の行き先をきめる</h2>
+    <div class="opt">${modes.filter(m => isPaired() || m[0] !== "both").map(([id, n]) => `<button class="chip ${S.rMode === id ? "on" : ""}" data-a="rmode" data-v="${id}">${n}</button>`).join("")}</div>
+    <div class="chips" style="justify-content:flex-start">
+      <button class="chip ${S.rCat === "all" ? "on" : ""}" data-a="rcat" data-v="all">すべて</button>
+      ${CATS.map(c => `<button class="chip ${S.rCat === c.id ? "on" : ""}" data-a="rcat" data-v="${c.id}">${c.e} ${c.n}</button>`).join("")}
+    </div>
+    <div class="slot ${r && !S.rSpin ? "done" : ""}" id="slot">
+      ${r ? `<div><div style="font-size:34px">${catOf(r.cat).e}</div><div class="name" id="slotname">${esc(r.title)}</div><div class="sub">${esc(r.area || catOf(r.cat).n)}</div></div>`
+          : `<div><div style="font-size:34px">💫</div><div class="name" id="slotname">？？？</div><div class="sub">候補 ${pool.length}件から選びます</div></div>`}
+    </div>
+    <button class="btn block" data-a="spin" ${pool.length ? "" : "disabled"}>${r ? "もう一回えらぶ" : "えらぶ！"}</button>
+    ${r && !S.rSpin ? `<div class="gap"></div><button class="btn ghost block" data-a="open" data-id="${r.id}">くわしく見る</button>` : ""}
+    ${pool.length ? "" : `<p class="muted">この条件の候補がありません${S.rMode === "both" ? "。「ふたりで♡」は、ふたりとも♡を押した場所から選びます" : ""}</p>`}
+  </div>`;
+}
+function spin(){
+  const pool = randPool(); if (!pool.length || S.rSpin) return;
+  S.rSpin = true; S.rResult = null;
+  document.getElementById("view").innerHTML = viewRand();
+  const slot = document.getElementById("slot"); slot.classList.add("spin");
+  const nameEl = document.getElementById("slotname");
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  let i = 0, delay = 60;
+  const step = () => {
+    nameEl.textContent = pool[i++ % pool.length].title;
+    delay *= 1.12;
+    if (delay < 380) setTimeout(step, delay);
+    else { S.rSpin = false; S.rResult = pick.id; document.getElementById("view").innerHTML = viewRand(); }
+  };
+  step();
+}
+
+function viewMemo(){
+  const arr = S.places.filter(p => p.visited).sort((a, b) => String(b.visitedAt || "").localeCompare(String(a.visitedAt || "")) || ms(b.updatedAt) - ms(a.updatedAt));
+  if (!arr.length) return `<div class="empty"><div class="big">📷</div><p>行った場所がここにたまっていきます</p><p>候補をひらいて「行った！」を押してね</p></div>`;
+  return `<div class="sec">ふたりで行った場所 ・ ${arr.length}件</div><div class="memos">${arr.map(p => {
+    const c = catOf(p.cat);
+    return `<div class="memo" data-a="open" data-id="${p.id}"><div class="ph" style="background:${c.c}">${c.e}</div><div class="t">${esc(p.title)}</div><div class="d">${esc(fmtDate(p.visitedAt))}</div>${p.visitNote ? `<div class="n">${esc(p.visitNote)}</div>` : ""}</div>`;
+  }).join("")}</div>`;
+}
+
+/* =============== シート：詳細 =============== */
+function openDetail(id){
+  const p = S.places.find(x => x.id === id); if (!p) return closeSheet();
+  const c = catOf(p.cat), v = votesOf(p), pu = partnerUid();
+  const url = /^https?:\/\//i.test(p.url || "") ? p.url : "";
+  openSheet(`
+  <div class="detail" data-id="${p.id}">
+    <h3><span></span><button class="x" data-a="close">×</button></h3>
+    <div class="head"><div class="cat" style="background:${c.c}">${c.e}</div><div><div class="ttl">${esc(p.title)}</div><div class="muted">${esc(c.n)}${p.visited ? " ・ 行った♪" : ""}</div></div></div>
+    ${p.visited ? "" : `<div class="votes">
+      <div class="vote ${v.includes(me()) ? "on" : ""}"><div class="ic">${v.includes(me()) ? "💗" : "🤍"}</div>${esc(nameOf(me()))}</div>
+      <div class="vote ${pu && v.includes(pu) ? "on" : ""}"><div class="ic">${pu && v.includes(pu) ? "💗" : "🤍"}</div>${pu ? esc(nameOf(pu)) : "（招待待ち）"}</div>
+    </div>`}
+    <div class="kv">
+      ${p.area ? `<div><b>エリア</b><span>${esc(p.area)}</span></div>` : ""}
+      ${url ? `<div><b>リンク</b><span><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></span></div>` : ""}
+      ${p.memo ? `<div><b>メモ</b><span>${esc(p.memo)}</span></div>` : ""}
+      ${p.visited ? `<div><b>行った日</b><span>${esc(fmtDate(p.visitedAt))}</span></div>${p.visitNote ? `<div><b>ひとこと</b><span>${esc(p.visitNote)}</span></div>` : ""}` : ""}
+      <div><b>追加した人</b><span>${esc(nameOf(p.by))}</span></div>
+    </div>
+    ${p.visited
+      ? `<button class="btn lav block" data-a="visitEdit" data-id="${p.id}">思い出を編集</button><div class="gap"></div>
+         <button class="btn ghost block" data-a="unvisit" data-id="${p.id}">「まだ行ってない」に戻す</button>`
+      : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? "♡ 行きたいを取り消す" : "♡ 行きたい！"}</button><div class="gap"></div>
+         <button class="btn mint block" data-a="visit" data-id="${p.id}">行った！</button>`}
+    <div class="gap"></div>
+    <div class="row"><button class="btn ghost sm" style="flex:1" data-a="edit" data-id="${p.id}">編集</button><button class="btn danger sm" style="flex:1" data-a="del" data-id="${p.id}">削除</button></div>
+  </div>`);
+}
+
+/* =============== シート：追加・編集 =============== */
+function openEdit(id){
+  const p = id ? S.places.find(x => x.id === id) : null;
+  let cat = p?.cat || (S.cat !== "all" ? S.cat : "cafe");
+  openSheet(`
+  <h3>${p ? "候補を編集" : "行きたい場所を追加"}<button class="x" data-a="close">×</button></h3>
+  <form id="pf">
+    <label class="f"><span>場所の名前 *</span><input class="in" name="title" maxlength="60" required value="${esc(p?.title)}" placeholder="例：海の見えるカフェ"></label>
+    <span class="muted" style="display:block;margin:0 0 6px 4px;font-size:12px">カテゴリ</span>
+    <div class="catpick">${CATS.map(c => `<button type="button" class="${c.id === cat ? "on" : ""}" data-cat="${c.id}"><b>${c.e}</b>${c.n}</button>`).join("")}</div>
+    <label class="f"><span>エリア</span><input class="in" name="area" maxlength="40" value="${esc(p?.area)}" placeholder="例：岡崎・名古屋"></label>
+    <label class="f"><span>リンク（お店のページやInstagramなど）</span><input class="in" name="url" type="url" maxlength="500" value="${esc(p?.url)}" placeholder="https://"></label>
+    <label class="f"><span>メモ</span><textarea class="in" name="memo" maxlength="500" placeholder="例：パンケーキが有名！">${esc(p?.memo)}</textarea></label>
+    ${p ? "" : `<label class="row" style="margin:0 4px 14px;font-size:14px"><input type="checkbox" name="love" checked style="width:18px;height:18px;accent-color:#e2809c"> わたしも「行きたい♡」を押しておく</label>`}
+    <div class="err" id="perr"></div>
+    <button class="btn block">${p ? "保存する" : "追加する"}</button>
+  </form>`);
+  const form = document.getElementById("pf");
+  form.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { cat = b.dataset.cat; form.querySelectorAll("[data-cat]").forEach(x => x.classList.toggle("on", x === b)); });
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    const f = new FormData(form);
+    const data = {
+      title: String(f.get("title")).trim().slice(0, 60), cat,
+      area: String(f.get("area") || "").trim().slice(0, 40),
+      url: String(f.get("url") || "").trim().slice(0, 500),
+      memo: String(f.get("memo") || "").trim().slice(0, 500),
+      updatedAt: serverTimestamp()
+    };
+    if (!data.title) return;
+    if (data.url && !/^https?:\/\//i.test(data.url)) return document.getElementById("perr").textContent = "リンクは https:// から始まるURLを入れてね";
+    form.querySelector("button[type=submit],button:not([type])").disabled = true;
+    try {
+      if (p) await updateDoc(doc(db, "rooms", S.roomId, "places", p.id), data);
+      else await addDoc(collection(db, "rooms", S.roomId, "places"), { ...data, by: me(), createdAt: serverTimestamp(), visited: false, votes: f.get("love") ? { [me()]: true } : {} });
+      closeSheet(); toast(p ? "保存しました" : "追加しました♡");
+    } catch (e) { document.getElementById("perr").textContent = "保存できませんでした（" + (e.code || e.message) + "）"; form.querySelector("button:not([type=button])").disabled = false; }
+  };
+}
+
+/* =============== シート：行った！ =============== */
+function openVisit(id){
+  const p = S.places.find(x => x.id === id); if (!p) return;
+  openSheet(`
+  <h3>${p.visited ? "思い出を編集" : "行った！"} 📷<button class="x" data-a="close">×</button></h3>
+  <p class="muted" style="margin-top:-6px">${esc(p.title)}</p>
+  <form id="vf">
+    <label class="f"><span>行った日</span><input class="in" type="date" name="d" value="${esc(p.visitedAt || today())}" required></label>
+    <label class="f"><span>ひとこと（なくてもOK）</span><textarea class="in" name="n" maxlength="200" placeholder="例：また行きたい！">${esc(p.visitNote)}</textarea></label>
+    <button class="btn mint block">保存する</button>
+  </form>`);
+  document.getElementById("vf").onsubmit = async ev => {
+    ev.preventDefault();
+    const f = new FormData(ev.target);
+    try {
+      await updateDoc(doc(db, "rooms", S.roomId, "places", p.id), { visited: true, visitedAt: String(f.get("d")), visitNote: String(f.get("n") || "").trim().slice(0, 200), updatedAt: serverTimestamp() });
+      closeSheet(); toast(p.visited ? "保存しました" : "おもいでに追加しました📷");
+    } catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+  };
+}
+
+/* =============== シート：招待 =============== */
+function openInvite(){
+  if (!S.room) return;
+  if (isPaired()) { openSheet(`<h3>💞 ふたりで参加中<button class="x" data-a="close">×</button></h3><p>${esc(nameOf(me()))} と ${esc(nameOf(partnerUid()))} のルームです。このルームはふたりでいっぱいなので、ほかの人は参加できません。</p>`); return; }
+  openSheet(`
+  <h3>💌 恋人を招待<button class="x" data-a="close">×</button></h3>
+  <p class="muted" style="margin-top:-4px">このURLを恋人に送ってね。ひらいて登録すると、ふたりのルームに参加できます。参加できるのは1人だけです。</p>
+  <div class="linkbox">${esc(inviteUrl())}</div>
+  ${navigator.share ? `<button class="btn block" data-a="share">LINEなどで送る</button><div class="gap"></div>` : ""}
+  <button class="btn ${navigator.share ? "ghost" : ""} block" data-a="copy">URLをコピー</button>
+  <div class="gap"></div>
+  <button class="linkbtn" data-a="rekey">URLを作り直す（前のURLは使えなくなります）</button>`);
+}
+
+/* =============== シート：設定 =============== */
+function openSettings(){
+  const paired = isPaired();
+  openSheet(`
+  <h3>設定<button class="x" data-a="close">×</button></h3>
+  <div class="sec">ふたりのルーム</div>
+  <div class="menu">
+    <div class="itm">💞 メンバー<span class="r">${esc(nameOf(me()))}${paired ? " ・ " + esc(nameOf(partnerUid())) : "（招待待ち）"}</span></div>
+    <button data-a="invite">💌 ${paired ? "招待の状態" : "恋人を招待する"}<span class="r">›</span></button>
+  </div>
+  <div class="sec">わたし</div>
+  <div class="menu">
+    <button data-a="rename">🙂 表示する名前<span class="r">${esc(S.profile.name)} ›</span></button>
+    <div class="itm">✉️ メール<span class="r">${esc(S.user.email)}</span></div>
+  </div>
+  <div class="sec">そのほか</div>
+  <div class="menu">
+    <button data-a="logout">🚪 ログアウト</button>
+    <button data-a="leave" style="color:#d46a7e">👋 ルームから抜ける</button>
+  </div>
+  <p class="muted" style="text-align:center">iPhoneでは、Safariの共有ボタン →「ホーム画面に追加」で、アプリのように使えます。</p>`);
+}
+
+function openRename(){
+  openSheet(`
+  <h3>表示する名前<button class="x" data-a="close">×</button></h3>
+  <form id="rf"><label class="f"><span>なまえ</span><input class="in" name="name" maxlength="12" required value="${esc(S.profile.name)}"></label>
+  <button class="btn block">保存する</button></form>`);
+  document.getElementById("rf").onsubmit = async ev => {
+    ev.preventDefault();
+    const name = String(new FormData(ev.target).get("name")).trim().slice(0, 12); if (!name) return;
+    try {
+      await setDoc(doc(db, "users", me()), { name }, { merge: true });
+      S.profile.name = name;
+      if (S.roomId) await updateDoc(doc(db, "rooms", S.roomId), { ["names." + me()]: name });
+      closeSheet(); toast("変更しました");
+    } catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+  };
+}
+
+function confirmSheet(title, text, okLabel, act, danger = true){
+  openSheet(`<h3>${title}<button class="x" data-a="close">×</button></h3><p>${text}</p>
+  <button class="btn ${danger ? "danger" : ""} block" data-a="${act}">${okLabel}</button><div class="gap"></div><button class="btn ghost block" data-a="close">やめる</button>`);
+}
+
+/* =============== ボタンが押されたとき =============== */
+let pendingDel = null;
+document.addEventListener("click", async ev => {
+  const el = ev.target.closest("[data-a]"); if (!el) return;
+  const a = el.dataset.a, id = el.dataset.id;
+  if (a === "ovclose") { if (ev.target === el) closeSheet(); return; }
+  if (a === "vote" || a === "open") ev.stopPropagation();
+  switch (a) {
+    case "close": closeSheet(); break;
+    case "reload": location.reload(); break;
+    case "mode": S.authMode = el.dataset.v; renderLogin(); break;
+    case "forgot": {
+      const email = document.querySelector("#authf [name=email]").value.trim();
+      if (!email) { document.getElementById("aerr").textContent = "上にメールアドレスを入れてから押してね"; break; }
+      try { await sendPasswordResetEmail(auth, email); toast("パスワード再設定のメールを送りました"); }
+      catch (e) { document.getElementById("aerr").textContent = authMsg(e); }
+      break;
+    }
+    case "logout": stopSubs(); closeSheet(); await signOut(auth); break;
+    case "createRoom": createRoom(); break;
+    case "join": joinRoom(); break;
+    case "joinCancel": localStorage.removeItem("futari_join"); route(); break;
+    case "tab": S.tab = el.dataset.v; if (S.tab !== "rand") S.rResult = null; render(); window.scrollTo(0, 0); break;
+    case "cat": S.cat = el.dataset.v; render(); break;
+    case "rmode": S.rMode = el.dataset.v; S.rResult = null; document.getElementById("view").innerHTML = viewRand(); break;
+    case "rcat": S.rCat = el.dataset.v; S.rResult = null; document.getElementById("view").innerHTML = viewRand(); break;
+    case "spin": spin(); break;
+    case "add": openEdit(); break;
+    case "open": openDetail(id); break;
+    case "edit": openEdit(id); break;
+    case "vote": {
+      const p = S.places.find(x => x.id === id); if (!p) break;
+      const on = !votesOf(p).includes(me());
+      el.classList?.toggle("on", on);
+      try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["votes." + me()]: on ? true : deleteField() }); if (on && isPaired() && votesOf(p).includes(partnerUid())) toast("ふたりとも行きたい場所になったよ💞"); }
+      catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+      if (document.querySelector(".detail")) openDetail(id);
+      break;
+    }
+    case "visit": case "visitEdit": openVisit(id); break;
+    case "unvisit":
+      try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { visited: false, visitedAt: deleteField(), visitNote: deleteField(), updatedAt: serverTimestamp() }); closeSheet(); toast("「行きたい」に戻しました"); }
+      catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "del": {
+      const p = S.places.find(x => x.id === id); if (!p) break;
+      pendingDel = id;
+      confirmSheet("削除しますか？", `「${esc(p.title)}」を削除します。ふたりのリストから消えて、元に戻せません。`, "削除する", "delOk");
+      break;
+    }
+    case "delOk":
+      try { await deleteDoc(doc(db, "rooms", S.roomId, "places", pendingDel)); closeSheet(); toast("削除しました"); }
+      catch (e) { toast("削除できませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "settings": openSettings(); break;
+    case "invite": openInvite(); break;
+    case "share":
+      try { await navigator.share({ title: "ふたり日和", text: "ふたり日和に招待したよ♡ このURLをひらいて登録してね", url: inviteUrl() }); } catch {}
+      break;
+    case "copy":
+      try { await navigator.clipboard.writeText(inviteUrl()); toast("コピーしました"); }
+      catch { toast("コピーできませんでした。URLを長押ししてコピーしてね"); }
+      break;
+    case "rekey":
+      try { await updateDoc(doc(db, "rooms", S.roomId), { inviteKey: randKey() }); toast("新しいURLにしました"); setTimeout(openInvite, 200); }
+      catch (e) { toast("作り直せませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "rename": openRename(); break;
+    case "leave":
+      confirmSheet("ルームから抜けますか？", isPaired() ? "抜けると、ふたりのリストが見られなくなります。もう一度入るには、恋人から新しい招待URLをもらう必要があります。" : "抜けると、このルームのリストは見られなくなります。", "抜ける", "leaveOk");
+      break;
+    case "leaveOk":
+      try {
+        const rid = S.roomId; stopSubs();
+        await leaveRoomDoc(rid);
+        await setDoc(doc(db, "users", me()), { roomId: deleteField() }, { merge: true });
+        S.profile.roomId = null; S.room = null; S.roomId = null; closeSheet(); toast("ルームから抜けました"); route();
+      } catch (e) { toast("抜けられませんでした（" + (e.code || e.message) + "）"); if (S.profile.roomId) openRoom(S.profile.roomId); }
+      break;
+  }
+});
+document.addEventListener("change", ev => {
+  if (ev.target.matches("select[data-a=sort]")) { S.sort = ev.target.value; render(); }
+});
+</script>
+</body>
+</html>
