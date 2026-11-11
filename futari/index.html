@@ -757,12 +757,51 @@ function viewList(){
   <div id="plist">${listHtml(arr)}</div>`;
 }
 
+/* スワイプ用のおすすめ（「行きたい」にしたものだけ候補に追加される） */
+const SAMPLES = [
+  { k:"okazaki-park", t:"岡崎公園と岡崎城", c:"nature", a:"岡崎", m:"お城と公園をのんびりおさんぽ。春は桜、夏は花火も" },
+  { k:"hatcho", t:"八丁味噌の蔵見学", c:"play", a:"岡崎", m:"昔ながらの味噌蔵を見学。味噌ソフトも食べたい" },
+  { k:"korankei", t:"香嵐渓の紅葉", c:"nature", a:"豊田", m:"秋の紅葉が有名。夜のライトアップも" },
+  { k:"obara", t:"小原の四季桜", c:"nature", a:"豊田", m:"秋に咲く桜と紅葉がいっしょに見られる" },
+  { k:"ghibli", t:"ジブリパーク", c:"play", a:"長久手", m:"チケットは予約制。早めに取ろう" },
+  { k:"aquarium", t:"名古屋港水族館", c:"play", a:"名古屋", m:"シャチとイルカのショーを見たい" },
+  { k:"higashiyama", t:"東山動植物園", c:"play", a:"名古屋", m:"動物園と植物園、展望タワーもある" },
+  { k:"legoland", t:"レゴランド・ジャパン", c:"play", a:"名古屋", m:"大人ふたりでも楽しめる" },
+  { k:"planetarium", t:"名古屋市科学館のプラネタリウム", c:"play", a:"名古屋", m:"世界最大級のドーム。雨の日にも" },
+  { k:"osu", t:"大須商店街で食べ歩き", c:"food", a:"名古屋", m:"古着屋さんや食べ歩きグルメがいっぱい" },
+  { k:"hitsumabushi", t:"ひつまぶしを食べに行く", c:"food", a:"名古屋", m:"3通りの食べ方で楽しむ名古屋めし" },
+  { k:"misokatsu", t:"味噌カツを食べ比べ", c:"food", a:"名古屋", m:"お店ごとの味噌だれのちがいを楽しむ" },
+  { k:"morning", t:"喫茶店でモーニング", c:"cafe", a:"どこでも", m:"ドリンクにトーストがついてくる、東海のモーニング文化" },
+  { k:"oasis21", t:"オアシス21とテレビ塔の夜景", c:"play", a:"名古屋", m:"水の宇宙船から見る夜景がきれい" },
+  { k:"hoshigaoka", t:"星が丘テラスでカフェとおかいもの", c:"shop", a:"名古屋", m:"おしゃれなお店がならぶ坂道" },
+  { k:"laguna", t:"ラグーナテンボス", c:"play", a:"蒲郡", m:"テーマパークと海辺のアウトレット" },
+  { k:"takeshima", t:"竹島をおさんぽ", c:"nature", a:"蒲郡", m:"橋をわたって行ける小さな島" },
+  { k:"inuyama", t:"犬山城と城下町", c:"play", a:"犬山", m:"国宝のお城と、食べ歩きできる城下町" },
+  { k:"meijimura", t:"博物館明治村", c:"play", a:"犬山", m:"レトロな建物の中をおさんぽ。レンタル衣装も" },
+  { k:"littleworld", t:"リトルワールド", c:"play", a:"犬山", m:"世界の家と料理を旅する気分で" },
+  { k:"tokoname", t:"常滑やきもの散歩道", c:"shop", a:"常滑", m:"焼きものの町をおさんぽ。器さがし" },
+  { k:"sakushima", t:"佐久島でアートめぐり", c:"trip", a:"西尾", m:"船で行く島。島のあちこちにアート作品" },
+  { k:"himakajima", t:"日間賀島でたこ料理", c:"trip", a:"南知多", m:"タコとフグの島。日帰りでも行ける" },
+  { k:"irago", t:"伊良湖岬で夕日を見る", c:"nature", a:"田原", m:"渥美半島の先っぽ。ドライブにも" },
+  { k:"chausuyama", t:"茶臼山高原の芝桜", c:"nature", a:"豊根", m:"春は一面ピンクの芝桜" },
+  { k:"nabana", t:"なばなの里のイルミネーション", c:"event", a:"三重・桑名", m:"冬の光のトンネルがすてき" },
+  { k:"nagashima", t:"ナガシマスパーランド", c:"play", a:"三重・桑名", m:"絶叫系にチャレンジ。アウトレットもとなり" },
+  { k:"gero", t:"下呂温泉で一泊", c:"trip", a:"岐阜", m:"足湯めぐりと温泉街さんぽ" },
+  { k:"shirakawago", t:"白川郷", c:"trip", a:"岐阜", m:"合掌造りの村。冬の雪景色も" },
+  { k:"pottery", t:"陶芸体験でおそろいの器", c:"play", a:"どこでも", m:"ふたりで作って、焼き上がりを待つのも楽しい" },
+  { k:"bouldering", t:"ボルダリング体験", c:"play", a:"どこでも", m:"はじめてでも楽しめる。応援しあおう" },
+  { k:"moviepizza", t:"おうちで映画とピザ", c:"other", a:"おうち", m:"見たい映画を1本ずつえらぶ" }
+];
+const sampleId = k => "s_" + k;
+const passedSamples = () => S.profile?.passedSamples || [];
+const unseenSamples = () => SAMPLES.filter(x => !S.places.some(p => p.id === sampleId(x.k)) && !passedSamples().includes(x.k));
 const unseen = () => S.places.filter(p => !p.visited && !(p.votes || {})[me()] && !(p.passes || {})[me()]);
+const passedCount = () => S.places.filter(p => !p.visited && (p.passes || {})[me()]).length + passedSamples().length;
 function swipeCta(){
-  const n = unseen().length, passed = S.places.filter(p => !p.visited && (p.passes || {})[me()]).length;
-  if (!S.places.some(p => !p.visited)) return "";
-  return `<div class="card swipe-cta"><span class="ic">🃏</span><div><b>スワイプで決める</b><div class="muted" style="font-size:12px">${n ? `まだ見ていない候補 ${n}件` : passed ? "ぜんぶ見たよ！パスした場所をもう一度見ることもできます" : "ぜんぶ見たよ！"}</div></div>
-    <button class="btn sm" data-a="swipe">${n ? "はじめる" : passed ? "もう一度" : "ひらく"}</button></div>`;
+  const n = unseen().length, ns = unseenSamples().length, passed = passedCount();
+  const sub = n || ns ? [n ? `まだ見ていない候補 ${n}件` : "", ns ? `おすすめ ${ns}件` : ""].filter(Boolean).join(" ・ ") : passed ? "ぜんぶ見たよ！パスした場所をもう一度見ることもできます" : "ぜんぶ見たよ！";
+  return `<div class="card swipe-cta"><span class="ic">🃏</span><div><b>スワイプで決める</b><div class="muted" style="font-size:12px">${sub}</div></div>
+    <button class="btn sm" data-a="swipe">${n || ns ? "はじめる" : passed ? "もう一度" : "ひらく"}</button></div>`;
 }
 function viewBoth(){
   const cta = swipeCta();
@@ -773,36 +812,47 @@ function viewBoth(){
 }
 
 /* =============== スワイプで決める =============== */
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 function openSwipe(){
-  let ids = unseen().map(p => p.id);
-  for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
-  S.deck = ids; S.deckPos = 0; S.deckTotal = ids.length;
+  // 恋人が追加した・まだ見ていない候補を先に、そのあとおすすめ
+  S.deck = [...shuffle(unseen().map(p => ({ id: p.id }))), ...shuffle(unseenSamples().map(x => ({ k: x.k })))];
+  S.deckPos = 0; S.deckTotal = S.deck.length;
   openSheet(`<h3>🃏 スワイプで決める<button class="x" data-a="close">×</button></h3>
     <p class="muted" style="margin:-8px 0 4px;font-size:12px">右にスワイプで「行きたい♡」、左で「パス」。ふたりとも右にした場所はマッチ！</p>
     <div id="swipebody"></div>`);
   renderDeck();
 }
-function cardHtml(p, back){
-  const c = catOf(p.cat);
-  return `<div class="scard ${back ? "back" : ""}" ${back ? "" : `id="topcard" data-id="${p.id}"`}>
+/* デッキの1枚を、表示用の形にそろえる（候補 or おすすめ） */
+function deckItem(it){
+  if (!it) return null;
+  if (it.id) { const p = S.places.find(x => x.id === it.id && !x.visited); return p ? { key: it.id, title: p.title, cat: p.cat, area: p.area, memo: p.memo, by: p.by } : null; }
+  const x = SAMPLES.find(s => s.k === it.k);
+  if (!x || passedSamples().includes(x.k)) return null;
+  const made = S.places.find(p => p.id === sampleId(x.k));
+  if (made && ((made.votes || {})[me()] || (made.passes || {})[me()] || made.visited)) return null;
+  return { key: "sample:" + x.k, sample: true, title: x.t, cat: x.c, area: x.a, memo: x.m, by: made?.by };
+}
+function cardHtml(d, back){
+  const c = catOf(d.cat);
+  return `<div class="scard ${back ? "back" : ""}" ${back ? "" : `id="topcard" data-key="${esc(d.key)}"`}>
     <div class="art" style="background:${c.c}">${c.e}</div>
     ${back ? "" : `<span class="stamp like">行きたい♡</span><span class="stamp pass">パス</span>`}
-    <div class="info"><div class="t">${esc(p.title)}</div><div class="s">${esc([p.area, c.n].filter(Boolean).join(" ・ "))}${p.by ? ` ・ ${esc(nameOf(p.by))}が追加` : ""}</div>${p.memo ? `<div class="m">${esc(p.memo)}</div>` : ""}</div>
+    <div class="info">${d.sample && !d.by ? `<span class="tag lav" style="margin-bottom:4px;display:inline-block">✨ おすすめ</span>` : ""}<div class="t">${esc(d.title)}</div><div class="s">${esc([d.area, c.n].filter(Boolean).join(" ・ "))}${d.by ? ` ・ ${esc(nameOf(d.by))}が追加` : ""}</div>${d.memo ? `<div class="m">${esc(d.memo)}</div>` : ""}</div>
   </div>`;
 }
 function renderDeck(){
   const body = document.getElementById("swipebody"); if (!body) return;
-  while (S.deckPos < S.deck.length && !S.places.find(p => p.id === S.deck[S.deckPos] && !p.visited)) S.deckPos++;
-  const cur = S.places.find(p => p.id === S.deck[S.deckPos]);
+  while (S.deckPos < S.deck.length && !deckItem(S.deck[S.deckPos])) S.deckPos++;
+  const cur = deckItem(S.deck[S.deckPos]);
   if (!cur) {
-    const passed = S.places.filter(p => !p.visited && (p.passes || {})[me()]).length;
+    const passed = passedCount();
     body.innerHTML = `<div class="empty"><div class="big">🎉</div><p><b>ぜんぶ見たよ！</b></p><p>${isPaired() ? "ふたりとも右にした場所は「ふたりで♡」に出ます" : "恋人が参加したら、ふたりでスワイプしてみてね"}</p></div>
       ${passed ? `<button class="btn ghost block" data-a="unpass">パスした${passed}件をもう一度見る</button><div class="gap"></div>` : ""}
       <button class="btn block" data-a="close">とじる</button>`;
     return;
   }
-  const nextId = S.deck.slice(S.deckPos + 1).find(id => S.places.some(p => p.id === id && !p.visited));
-  const next = nextId && S.places.find(p => p.id === nextId);
+  let next = null;
+  for (let i = S.deckPos + 1; i < S.deck.length && !next; i++) next = deckItem(S.deck[i]);
   body.innerHTML = `<div class="deck">${next ? cardHtml(next, true) : ""}${cardHtml(cur)}</div>
     <div class="sbtns"><button class="sbtn" data-a="sw" data-v="0" aria-label="パス">✕</button><button class="sbtn like" data-a="sw" data-v="1" aria-label="行きたい">♥</button></div>
     <div class="gap"></div><div class="sprog">${S.deckPos + 1} / ${S.deckTotal}</div>`;
@@ -826,21 +876,37 @@ function bindSwipe(card){
 }
 function swipeOut(isLike){
   const card = document.getElementById("topcard"); if (!card || card.dataset.gone) return;
-  card.dataset.gone = "1";
-  const id = card.dataset.id;
+  card.dataset.gone = "1"; card.removeAttribute("id");
+  const key = card.dataset.key;
   card.querySelector(isLike ? ".stamp.like" : ".stamp.pass").style.opacity = 1;
   card.style.transform = `translate(${isLike ? 700 : -700}px,40px) rotate(${isLike ? 30 : -30}deg)`; card.style.opacity = "0";
-  const ref = doc(db, "rooms", S.roomId, "places", id);
-  updateDoc(ref, isLike ? { ["votes." + me()]: true, ["passes." + me()]: deleteField() } : { ["passes." + me()]: true })
-    .catch(e => toast("保存できませんでした（" + (e.code || e.message) + "）"));
+  saveSwipe(key, isLike).catch(e => toast("保存できませんでした（" + (e.code || e.message) + "）"));
   setTimeout(() => { S.deckPos++; renderDeck(); }, 260);
+}
+async function saveSwipe(key, isLike){
+  if (!key.startsWith("sample:")) {
+    return updateDoc(doc(db, "rooms", S.roomId, "places", key), isLike ? { ["votes." + me()]: true, ["passes." + me()]: deleteField() } : { ["passes." + me()]: true });
+  }
+  const k = key.slice(7), x = SAMPLES.find(s => s.k === k), id = sampleId(k);
+  if (!isLike) {
+    S.profile.passedSamples = [...new Set([...passedSamples(), k])];
+    return setDoc(doc(db, "users", me()), { passedSamples: arrayUnion(k) }, { merge: true });
+  }
+  // 「行きたい」にしたおすすめは、ふたりの候補に追加する（同じおすすめは同じ候補になる）
+  if (S.places.some(p => p.id === id)) return updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["votes." + me()]: true });
+  return setDoc(doc(db, "rooms", S.roomId, "places", id), {
+    title: x.t, cat: x.c, area: x.a, memo: x.m, url: "", by: me(), sample: true, visited: false,
+    votes: { [me()]: true }, createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+  }, { merge: true });
 }
 async function unpass(){
   const list = S.places.filter(p => !p.visited && (p.passes || {})[me()]);
   try {
     const b = writeBatch(db);
     list.forEach(p => b.update(doc(db, "rooms", S.roomId, "places", p.id), { ["passes." + me()]: deleteField() }));
+    if (passedSamples().length) b.set(doc(db, "users", me()), { passedSamples: [] }, { merge: true });
     await b.commit();
+    S.profile.passedSamples = [];
     setTimeout(openSwipe, 200);
   } catch (e) { toast("うまくいきませんでした（" + (e.code || e.message) + "）"); }
 }
