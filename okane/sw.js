@@ -1,5 +1,5 @@
 /* オフラインでも開けるようにする。中身は「まずネットから、だめなら前回の控え」 */
-const CACHE = "okane-google1111";
+const CACHE = "okane-nc1112";
 const SHELL = ["./", "app.css", "fin.js", "pay.js", "kb.js", "move.js", "../shared/u-base.css", "../shared/u-core.js", "manifest.json", "icon-180.png", "icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {
@@ -13,5 +13,6 @@ self.addEventListener("fetch", e => {
   if (!own && !lib) return; /* Firebase との通信などは触らない */
   const put = res => { if (res && (res.ok || res.type === "opaque")) { const c = res.clone(); caches.open(CACHE).then(x => x.put(r, c)); } return res; };
   if (lib) e.respondWith(caches.match(r).then(hit => hit || fetch(r).then(put)));
-  else e.respondWith(fetch(r).then(put).catch(() => caches.match(r, { ignoreSearch: true }).then(hit => hit || caches.match("./"))));
+  /* 自分のファイルは毎回サーバーに確認する（古い画面が残らないように） */
+  else e.respondWith(fetch(r.url, { cache: "no-cache", credentials: "same-origin" }).then(put).catch(() => caches.match(r, { ignoreSearch: true }).then(hit => hit || caches.match("./"))));
 });
