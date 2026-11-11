@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="ふたり日和">
+<meta name="apple-mobile-web-app-title" content="ウリログ">
 <meta name="theme-color" content="#fdf8f4">
-<title>ふたり日和</title>
+<title>ウリログ</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png?v=3">
 <link rel="icon" type="image/png" href="icon-192.png?v=3">
@@ -414,7 +414,7 @@ const emailOk = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
 /* ---------- Firebaseの設定がまだのとき ---------- */
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
-  $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>準備中です（Firebaseの設定がまだ入っていません）</p></div>`;
+  $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ウリログ</h1><p>準備中です（Firebaseの設定がまだ入っていません）</p></div>`;
   throw new Error("firebaseConfig not set");
 }
 
@@ -456,7 +456,7 @@ const isPaired = () => (S.room?.members || []).length >= 2;
 const votesOf = p => Object.keys(p.votes || {}).filter(u => p.votes[u] && (S.room?.members || []).includes(u));
 const isBoth = p => isPaired() && votesOf(p).length >= 2;
 const myEmail = () => normEmail(S.user?.email);
-const inviteText = email => `ふたり日和を使おう♡\nこのURLをひらいて、${email} でログインしてね。\n${appUrl()}?openExternalBrowser=1`;
+const inviteText = email => `ウリログを使おう♡\nこのURLをひらいて、${email} でログインしてね。\n${appUrl()}?openExternalBrowser=1`;
 
 function stopSubs(){ S.subs.forEach(f => { try { f(); } catch {} }); S.subs = []; }
 
@@ -493,7 +493,7 @@ async function route(){
 
 function renderFatal(e, where){
   $nav.innerHTML = "";
-  $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1></div>
+  $app.innerHTML = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ウリログ</h1></div>
   <div class="card"><h2>うまく読みこめませんでした</h2><p class="muted">${where ? esc(where) + "：" : ""}${esc(e?.code || e?.message || e)}</p>
   <button class="btn block" data-a="reload">もう一度ためす</button><div class="gap"></div><button class="btn ghost block" data-a="logout">ログアウト</button></div>`;
 }
@@ -536,7 +536,7 @@ function renderLogin(){
       <button class="btn ${STANDALONE ? "" : "sub"} block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
     </form>
     ${reg ? "" : `<div style="text-align:center;margin-top:8px"><button class="linkbtn" data-a="forgot">${STANDALONE ? "パスワードをまだ作っていない・忘れたとき" : "パスワードを忘れたとき"}</button></div>`}`;
-  const hero = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>ふたりで行きたい場所を、いっしょに決めよう</p></div>`;
+  const hero = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ウリログ</h1><p>ふたりの行きたい場所も、予定も、思い出も</p></div>`;
   const note = `<p class="muted" style="text-align:center;padding:0 12px">💌 恋人に招待された人は、恋人が登録したメールアドレス（またはそのGoogleアカウント）でログインしてね</p>`;
   if (STANDALONE) {
     // ホーム画面のアプリ：パスワードがいちばん確実（Safariとはログインが別で、メールのリンクはSafariが開いてしまうため）
@@ -642,7 +642,7 @@ async function createRoom(){
   try {
     const ref = doc(collection(db, "rooms"));
     await setDoc(ref, {
-      name: "ふたり日和", ownerUid: me(), members: [me()], names: { [me()]: S.profile.name },
+      name: "ウリログ", ownerUid: me(), members: [me()], names: { [me()]: S.profile.name },
       partnerEmail: "", createdAt: serverTimestamp()
     });
     await setDoc(doc(db, "users", me()), { roomId: ref.id }, { merge: true });
@@ -740,7 +740,7 @@ function render(){
   const both = S.places.filter(p => !p.visited && isBoth(p)).length;
   $app.innerHTML = `
   <header class="top">
-    <div class="logo">${IC.logo}<span class="h">ふたり</span><span class="b">日和</span></div>
+    <div class="logo">${IC.logo}<span class="h">ウリ</span><span class="b">ログ</span></div>
     <span class="status ${paired ? "" : "wait"}">${paired ? `${esc(nameOf(me()))} ♡ ${esc(nameOf(partnerUid()))}` : "招待待ち"}</span>
     <button class="iconbtn" data-a="settings" aria-label="設定">${IC.gear}</button>
   </header>
@@ -1679,7 +1679,7 @@ document.addEventListener("click", async ev => {
     case "settings": openSettings(); break;
     case "invite": openInvite(); break;
     case "share":
-      try { await navigator.share({ title: "ふたり日和", text: inviteText(S.room.partnerEmail) }); } catch {}
+      try { await navigator.share({ title: "ウリログ", text: inviteText(S.room.partnerEmail) }); } catch {}
       break;
     case "copy":
       try { await navigator.clipboard.writeText(inviteText(S.room.partnerEmail)); toast("コピーしました"); }
