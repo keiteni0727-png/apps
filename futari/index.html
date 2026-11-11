@@ -191,10 +191,12 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .anniv-empty{display:flex;align-items:center;gap:10px;font-size:13px}
 .anniv-empty .btn{margin-left:auto;flex:none}
 
+/* きめるタブ：STEP 1・2 のカード */
+.step{position:relative;padding-top:44px}
+.stepno{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--lav-d);background:var(--lav-l);border-radius:99px;padding:1px 10px}
+.stepdesc{margin:0 0 10px;font-size:12.5px}
+.steparrow{text-align:center;color:var(--lav);font-size:14px;margin:-6px 0 8px}
 /* スワイプ */
-.swipe-cta{background:linear-gradient(135deg,#f0ebfb,#fde8ee);display:flex;align-items:center;gap:12px}
-.swipe-cta .ic{font-size:34px}
-.swipe-cta .btn{margin-left:auto;flex:none}
 .deck{position:relative;height:min(58vh,440px);margin:6px 0 16px}
 .scard{position:absolute;inset:0;background:#fff;border-radius:28px;box-shadow:0 10px 30px rgba(176,128,160,.22);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .25s ease,opacity .25s;display:flex;flex-direction:column}
 .scard.back{transform:scale(.94) translateY(14px);opacity:.7;pointer-events:none}
@@ -846,15 +848,20 @@ const unseen = () => S.places.filter(p => !p.visited && !(p.votes || {})[me()] &
 const passedCount = () => S.places.filter(p => !p.visited && (p.passes || {})[me()]).length + passedSamples().length;
 function swipeCta(){
   const n = unseen().length, ns = unseenSamples(true).length, passed = passedCount();
-  const sub = n || ns ? [n ? `まだ見ていない候補 ${n}件` : "", ns ? `おすすめ ${ns}件` : ""].filter(Boolean).join(" ・ ") : passed ? "ぜんぶ見たよ！パスした場所をもう一度見ることもできます" : "ぜんぶ見たよ！";
-  return `<div class="card swipe-cta"><span class="ic">🃏</span><div><b>スワイプで決める</b><div class="muted" style="font-size:12px">${sub}</div></div>
-    <button class="btn sm" data-a="swipe">${n || ns ? "はじめる" : passed ? "もう一度" : "ひらく"}</button></div>`;
+  const sub = n || ns ? [n ? `まだ見ていない候補 ${n}件` : "", ns ? `おすすめ ${ns}件` : ""].filter(Boolean).map(esc).join("<br>") : passed ? "ぜんぶ見たよ！<br><small>パスした場所をもう一度見ることもできます</small>" : "ぜんぶ見たよ！";
+  return `<div class="card dice step">
+    <div class="stepno">STEP 1</div>
+    <h2 style="justify-content:center">🃏 行きたい場所をえらぶ</h2>
+    <p class="muted stepdesc">候補やおすすめをスワイプして、行きたい場所に♡をつけます。ふたりとも♡をつけたらマッチ！</p>
+    <div class="slot"><div><div style="font-size:34px">💌</div><div class="name" style="font-size:16px;line-height:1.6">${sub}</div></div></div>
+    <button class="btn block" data-a="swipe">${n || ns ? "スワイプではじめる" : passed ? "パスした場所をもう一度見る" : "ひらく"}</button>
+  </div>`;
 }
 function viewBoth(){
   const cta = "";
   if (!isPaired()) return cta + `<div class="empty"><div class="big">💞</div><p>恋人が参加すると、ふたりとも「行きたい♡」を押した場所がここに出ます</p></div>`;
   const arr = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
-  if (!arr.length) return cta + `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>「きめる」タブのスワイプか、「行きたい」タブの♡で選んでみてね</p></div>`;
+  if (!arr.length) return cta + `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>「きめる」タブのスワイプ（STEP 1）か、「行きたい」タブの♡で選んでみてね</p></div>`;
   return cta + `<div class="sec">ふたりとも「行きたい♡」の場所 ・ ${arr.length}件</div>` + arr.map(placeCard).join("");
 }
 
@@ -864,7 +871,7 @@ function openSwipe(){
   // 恋人が追加した・まだ見ていない候補を先に、そのあとおすすめ
   S.deck = [...shuffle(unseen().map(p => ({ id: p.id }))), ...shuffle(unseenSamples().map(x => ({ k: x.k })))];
   S.deckPos = 0; S.deckTotal = S.deck.length;
-  openSheet(`<h3>🃏 スワイプで決める<button class="x" data-a="close">×</button></h3>
+  openSheet(`<h3>🃏 行きたい場所をえらぶ<button class="x" data-a="close">×</button></h3>
     <p class="muted" style="margin:-8px 0 6px;font-size:12px">右にスワイプで「行きたい♡」、左で「パス」。ふたりとも右にした場所はマッチ！</p>
     <div class="chips" style="padding-bottom:4px">${REGIONS.map(([id, n]) => `<button class="chip ${(S.swRegion || "all") === id ? "on" : ""}" data-a="swregion" data-v="${id}">${n}</button>`).join("")}</div>
     <div id="swipebody"></div>`);
@@ -992,11 +999,13 @@ function randPool(){
     && (S.rCat === "all" || p.cat === S.rCat));
 }
 function viewRand(){
-  const pool = randPool(), r = S.rResult && S.places.find(p => p.id === S.rResult);
-  const modes = [["both", "ふたりで♡"], ["mine", "わたしの♡"], ["all", "ぜんぶ"]];
   if (!isPaired() && S.rMode === "both") S.rMode = "all";
-  return `${swipeCta()}<div class="card dice">
-    <h2 style="justify-content:center">🎲 今日の行き先をきめる</h2>
+  const pool = randPool(), r = S.rResult && S.places.find(p => p.id === S.rResult);
+  const modes = [["both", "ふたりとも♡"], ["mine", "わたしの♡"], ["all", "すべての候補"]];
+  return `${swipeCta()}<div class="steparrow">▼</div><div class="card dice step">
+    <div class="stepno">STEP 2</div>
+    <h2 style="justify-content:center">🎲 次に行く場所をきめる</h2>
+    <p class="muted stepdesc">♡をつけた場所から、ランダムで1つ選びます。どの場所から選ぶかは、下で切りかえられます。</p>
     <div class="opt">${modes.filter(m => isPaired() || m[0] !== "both").map(([id, n]) => `<button class="chip ${S.rMode === id ? "on" : ""}" data-a="rmode" data-v="${id}">${n}</button>`).join("")}</div>
     <div class="chips" style="justify-content:flex-start">
       <button class="chip ${S.rCat === "all" ? "on" : ""}" data-a="rcat" data-v="all">すべて</button>
@@ -1004,14 +1013,15 @@ function viewRand(){
     </div>
     <div class="slot ${r && !S.rSpin ? "done" : ""}" id="slot">
       ${r ? `<div><div style="font-size:34px">${catOf(r.cat).e}</div><div class="name" id="slotname">${esc(r.title)}</div><div class="sub">${esc(r.area || catOf(r.cat).n)}</div></div>`
-          : `<div><div style="font-size:34px">💫</div><div class="name" id="slotname">？？？</div><div class="sub">候補 ${pool.length}件から選びます</div></div>`}
+          : `<div><div style="font-size:34px">💫</div><div class="name" id="slotname">？？？</div><div class="sub">${pool.length}件の中から選びます</div></div>`}
     </div>
-    <button class="btn block" data-a="spin" ${pool.length ? "" : "disabled"}>${r ? "もう一回えらぶ" : "えらぶ！"}</button>
+    <button class="btn block" data-a="spin" ${pool.length ? "" : "disabled"}>${r ? "もう一回きめる" : "ランダムできめる"}</button>
     ${r && !S.rSpin ? `<div class="gap"></div><button class="btn ghost block" data-a="open" data-id="${r.id}">くわしく見る</button>` : ""}
-    ${pool.length ? "" : `<p class="muted">この条件の候補がありません${S.rMode === "both" ? "。「ふたりで♡」は、ふたりとも♡を押した場所から選びます" : ""}</p>`}
+    ${pool.length ? "" : `<p class="muted">この条件の場所がありません。${S.rMode === "all" ? "" : "STEP 1 のスワイプで♡をつけてね"}</p>`}
   </div>`;
 }
 function spin(){
+  if (!isPaired() && S.rMode === "both") S.rMode = "all";
   const pool = randPool(); if (!pool.length || S.rSpin) return;
   S.rSpin = true; S.rResult = null;
   document.getElementById("view").innerHTML = viewRand();
