@@ -264,6 +264,8 @@ const AUTH_ERR = {
 const authMsg = e => AUTH_ERR[e?.code] || ("うまくいかなかったよ（" + (e?.code || e?.message || "不明") + "）");
 
 const appUrl = () => location.origin + location.pathname;
+const STANDALONE = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+const IN_LINE = / Line\//i.test(navigator.userAgent);
 const normEmail = s => String(s || "").trim().toLowerCase();
 const emailOk = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 
@@ -274,7 +276,7 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
 }
 
 const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
-const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updatePassword, linkWithCredential, EmailAuthProvider } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
 const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, onSnapshot, serverTimestamp, arrayUnion, deleteField, writeBatch } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
 
 const fbApp = initializeApp(firebaseConfig);
@@ -310,7 +312,7 @@ const isPaired = () => (S.room?.members || []).length >= 2;
 const votesOf = p => Object.keys(p.votes || {}).filter(u => p.votes[u] && (S.room?.members || []).includes(u));
 const isBoth = p => isPaired() && votesOf(p).length >= 2;
 const myEmail = () => normEmail(S.user?.email);
-const inviteText = email => `ふたり日和を使おう♡\nこのURLをひらいて「新しく登録」から、${email} で登録してね。\n${appUrl()}`;
+const inviteText = email => `ふたり日和を使おう♡\nこのURLをひらいて、${email} でログインしてね。\n${appUrl()}?openExternalBrowser=1`;
 
 function stopSubs(){ S.subs.forEach(f => { try { f(); } catch {} }); S.subs = []; }
 
@@ -381,23 +383,41 @@ function renderLogin(){
       <div class="err" id="merr"></div>
       <button class="btn block">ログイン用のメールを送る</button></form>`;
   }
-  $app.innerHTML = `
-  <div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>ふたりで行きたい場所を、いっしょに決めよう</p></div>
-  <div class="card"><button class="btn lav block" data-a="google">Googleでログイン</button></div>
-  <div class="card">${mail}</div>
-  <details class="card"><summary class="muted" style="cursor:pointer">パスワードでログイン・登録する</summary>
-    <div class="gap"></div>
+  const pwForm = `
     <div class="seg"><button class="${reg ? "" : "on"}" data-a="mode" data-v="login">ログイン</button><button class="${reg ? "on" : ""}" data-a="mode" data-v="signup">新しく登録</button></div>
     <form id="authf">
-      <label class="f"><span>メールアドレス</span><input class="in" type="email" name="email" autocomplete="email" required></label>
+      <label class="f"><span>メールアドレス</span><input class="in" type="email" name="email" autocomplete="username" required value="${esc(saved)}"></label>
       <label class="f"><span>パスワード${reg ? "（6文字以上）" : ""}</span><input class="in" type="password" name="pw" autocomplete="${reg ? "new-password" : "current-password"}" required minlength="6"></label>
       <div class="err" id="aerr"></div>
-      <button class="btn sub block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
+      <button class="btn ${STANDALONE ? "" : "sub"} block" type="submit">${reg ? "登録してはじめる" : "ログイン"}</button>
     </form>
-    ${reg ? "" : `<div style="text-align:center;margin-top:8px"><button class="linkbtn" data-a="forgot">パスワードを忘れたとき</button></div>`}
-  </details>
-  <p class="muted" style="text-align:center;padding:0 12px">💌 恋人に招待された人は、恋人が登録したメールアドレス（またはそのGoogleアカウント）でログインしてね</p>`;
-  if (S.authMode === "signup" || S.openPw) document.querySelector("details.card").open = true;
+    ${reg ? "" : `<div style="text-align:center;margin-top:8px"><button class="linkbtn" data-a="forgot">${STANDALONE ? "パスワードをまだ作っていない・忘れたとき" : "パスワードを忘れたとき"}</button></div>`}`;
+  const hero = `<div class="hero"><div class="mark">${IC.logo}</div><h1>ふたり日和</h1><p>ふたりで行きたい場所を、いっしょに決めよう</p></div>`;
+  const note = `<p class="muted" style="text-align:center;padding:0 12px">💌 恋人に招待された人は、恋人が登録したメールアドレス（またはそのGoogleアカウント）でログインしてね</p>`;
+  if (STANDALONE) {
+    // ホーム画面のアプリ：パスワードがいちばん確実（Safariとはログインが別で、メールのリンクはSafariが開いてしまうため）
+    $app.innerHTML = `${hero}
+    <div class="card">
+      <h2>🔑 パスワードでログイン</h2>
+      <p class="muted" style="margin-top:0">ホーム画面のアプリでは、パスワードでのログインがおすすめです。一度ログインすれば、次からはそのまま使えます。</p>
+      ${pwForm}
+      <p class="muted" style="margin:10px 0 0;font-size:12px">メールのリンクやGoogleで登録した人は、「パスワードをまだ作っていない」を押すと、パスワードを作るメールが届きます。メールで作ったら、ここに戻ってログインしてね。</p>
+    </div>
+    <details class="card"><summary class="muted" style="cursor:pointer">ほかの方法でログイン（Google・メールのリンク）</summary>
+      <div class="gap"></div><button class="btn lav block" data-a="google">Googleでログイン</button>
+      <div class="gap"></div>${mail}
+    </details>${note}`;
+    if (LOGIN.sent || LOGIN.link) document.querySelector("details.card").open = true;
+  } else {
+    $app.innerHTML = `${hero}
+    ${IN_LINE ? `<div class="card" style="background:var(--butter-l)"><h2 style="color:#c79a2c">📱 Safariで開いてね</h2><p class="muted" style="margin:0">LINEの中ではログインが保存されにくいです。右下のメニューから「ブラウザで開く」を選んでね。</p></div>` : ""}
+    <div class="card"><button class="btn lav block" data-a="google">Googleでログイン</button></div>
+    <div class="card">${mail}</div>
+    <details class="card"><summary class="muted" style="cursor:pointer">パスワードでログイン・登録する</summary>
+      <div class="gap"></div>${pwForm}
+    </details>${note}`;
+    if (S.authMode === "signup" || S.openPw) document.querySelector("details.card").open = true;
+  }
 
   document.getElementById("authf").onsubmit = async ev => {
     ev.preventDefault();
@@ -846,6 +866,7 @@ function openSettings(){
   <div class="sec">わたし</div>
   <div class="menu">
     <button data-a="rename">🙂 表示する名前<span class="r">${esc(S.profile.name)} ›</span></button>
+    <button data-a="setpw">🔑 パスワードを設定<span class="r">${(S.user.providerData || []).some(p => p.providerId === "password") ? "" : "未設定 "}›</span></button>
     <div class="itm">✉️ メール<span class="r">${esc(S.user.email)}</span></div>
   </div>
   <div class="sec">そのほか</div>
@@ -870,6 +891,36 @@ function openRename(){
       if (S.roomId) await updateDoc(doc(db, "rooms", S.roomId), { ["names." + me()]: name });
       closeSheet(); toast("変更しました");
     } catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+  };
+}
+
+function openSetPw(){
+  openSheet(`
+  <h3>🔑 パスワードを設定<button class="x" data-a="close">×</button></h3>
+  <p class="muted" style="margin-top:-4px">パスワードを作っておくと、ホーム画面のアプリでもすぐログインできます。メールアドレスは ${esc(S.user.email)} です。</p>
+  <form id="pwf">
+    <input type="email" name="u" autocomplete="username" value="${esc(S.user.email)}" hidden>
+    <label class="f"><span>新しいパスワード（6文字以上）</span><input class="in" type="password" name="p1" autocomplete="new-password" minlength="6" required></label>
+    <label class="f"><span>もう一度</span><input class="in" type="password" name="p2" autocomplete="new-password" minlength="6" required></label>
+    <div class="err" id="pwerr"></div>
+    <button class="btn block">設定する</button>
+  </form>`);
+  document.getElementById("pwf").onsubmit = async ev => {
+    ev.preventDefault();
+    const f = new FormData(ev.target), p1 = String(f.get("p1")), p2 = String(f.get("p2")), er = document.getElementById("pwerr");
+    if (p1 !== p2) return er.textContent = "2つのパスワードがちがうみたい";
+    const b = ev.target.querySelector("button"); b.disabled = true;
+    try {
+      const u = auth.currentUser;
+      if ((u.providerData || []).some(p => p.providerId === "password")) await updatePassword(u, p1);
+      else await linkWithCredential(u, EmailAuthProvider.credential(u.email, p1));
+      closeSheet(); toast("パスワードを設定しました🔑");
+    } catch (e) {
+      er.textContent = e.code === "auth/requires-recent-login"
+        ? "安全のため、一度ログアウトして、もう一度ログインしてから設定してね"
+        : authMsg(e);
+      b.disabled = false;
+    }
   };
 }
 
@@ -902,7 +953,7 @@ document.addEventListener("click", async ev => {
     case "forgot": {
       const email = document.querySelector("#authf [name=email]").value.trim();
       if (!email) { document.getElementById("aerr").textContent = "上にメールアドレスを入れてから押してね"; break; }
-      try { await sendPasswordResetEmail(auth, email); toast("パスワード再設定のメールを送りました"); }
+      try { await sendPasswordResetEmail(auth, email); document.getElementById("aerr").textContent = ""; toast("パスワードを作るメールを送りました"); document.getElementById("aerr").insertAdjacentHTML("afterend", `<p class="muted" style="font-size:12px">${esc(email)} にメールを送りました。メールのリンクから新しいパスワードを決めたら、ここに戻って、そのパスワードでログインしてね。届かないときは迷惑メールも見てね。</p>`); }
       catch (e) { document.getElementById("aerr").textContent = authMsg(e); }
       break;
     }
@@ -957,6 +1008,7 @@ document.addEventListener("click", async ev => {
       catch (e) { toast("取り消せませんでした（" + (e.code || e.message) + "）"); }
       break;
     case "rename": openRename(); break;
+    case "setpw": openSetPw(); break;
     case "leave":
       confirmSheet("ルームから抜けますか？", isPaired() ? "抜けると、ふたりのリストが見られなくなります。もう一度入るには、恋人にもう一度メールアドレスを登録してもらう必要があります。" : "抜けると、このルームのリストは見られなくなります。", "抜ける", "leaveOk");
       break;
