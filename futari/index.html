@@ -758,56 +758,103 @@ function viewList(){
 }
 
 /* スワイプ用のおすすめ（「行きたい」にしたものだけ候補に追加される） */
+const REGIONS = [["all","すべて"],["aichi","愛知・東海"],["kansai","関西"],["kanto","関東"],["japan","全国の旅行"],["any","どこでも"]];
 const SAMPLES = [
-  { k:"okazaki-park", t:"岡崎公園と岡崎城", c:"nature", a:"岡崎", m:"お城と公園をのんびりおさんぽ。春は桜、夏は花火も" },
-  { k:"hatcho", t:"八丁味噌の蔵見学", c:"play", a:"岡崎", m:"昔ながらの味噌蔵を見学。味噌ソフトも食べたい" },
-  { k:"korankei", t:"香嵐渓の紅葉", c:"nature", a:"豊田", m:"秋の紅葉が有名。夜のライトアップも" },
-  { k:"obara", t:"小原の四季桜", c:"nature", a:"豊田", m:"秋に咲く桜と紅葉がいっしょに見られる" },
-  { k:"ghibli", t:"ジブリパーク", c:"play", a:"長久手", m:"チケットは予約制。早めに取ろう" },
-  { k:"aquarium", t:"名古屋港水族館", c:"play", a:"名古屋", m:"シャチとイルカのショーを見たい" },
-  { k:"higashiyama", t:"東山動植物園", c:"play", a:"名古屋", m:"動物園と植物園、展望タワーもある" },
-  { k:"legoland", t:"レゴランド・ジャパン", c:"play", a:"名古屋", m:"大人ふたりでも楽しめる" },
-  { k:"planetarium", t:"名古屋市科学館のプラネタリウム", c:"play", a:"名古屋", m:"世界最大級のドーム。雨の日にも" },
-  { k:"osu", t:"大須商店街で食べ歩き", c:"food", a:"名古屋", m:"古着屋さんや食べ歩きグルメがいっぱい" },
-  { k:"hitsumabushi", t:"ひつまぶしを食べに行く", c:"food", a:"名古屋", m:"3通りの食べ方で楽しむ名古屋めし" },
-  { k:"misokatsu", t:"味噌カツを食べ比べ", c:"food", a:"名古屋", m:"お店ごとの味噌だれのちがいを楽しむ" },
-  { k:"morning", t:"喫茶店でモーニング", c:"cafe", a:"どこでも", m:"ドリンクにトーストがついてくる、東海のモーニング文化" },
-  { k:"oasis21", t:"オアシス21とテレビ塔の夜景", c:"play", a:"名古屋", m:"水の宇宙船から見る夜景がきれい" },
-  { k:"hoshigaoka", t:"星が丘テラスでカフェとおかいもの", c:"shop", a:"名古屋", m:"おしゃれなお店がならぶ坂道" },
-  { k:"laguna", t:"ラグーナテンボス", c:"play", a:"蒲郡", m:"テーマパークと海辺のアウトレット" },
-  { k:"takeshima", t:"竹島をおさんぽ", c:"nature", a:"蒲郡", m:"橋をわたって行ける小さな島" },
-  { k:"inuyama", t:"犬山城と城下町", c:"play", a:"犬山", m:"国宝のお城と、食べ歩きできる城下町" },
-  { k:"meijimura", t:"博物館明治村", c:"play", a:"犬山", m:"レトロな建物の中をおさんぽ。レンタル衣装も" },
-  { k:"littleworld", t:"リトルワールド", c:"play", a:"犬山", m:"世界の家と料理を旅する気分で" },
-  { k:"tokoname", t:"常滑やきもの散歩道", c:"shop", a:"常滑", m:"焼きものの町をおさんぽ。器さがし" },
-  { k:"sakushima", t:"佐久島でアートめぐり", c:"trip", a:"西尾", m:"船で行く島。島のあちこちにアート作品" },
-  { k:"himakajima", t:"日間賀島でたこ料理", c:"trip", a:"南知多", m:"タコとフグの島。日帰りでも行ける" },
-  { k:"irago", t:"伊良湖岬で夕日を見る", c:"nature", a:"田原", m:"渥美半島の先っぽ。ドライブにも" },
-  { k:"chausuyama", t:"茶臼山高原の芝桜", c:"nature", a:"豊根", m:"春は一面ピンクの芝桜" },
-  { k:"nabana", t:"なばなの里のイルミネーション", c:"event", a:"三重・桑名", m:"冬の光のトンネルがすてき" },
-  { k:"nagashima", t:"ナガシマスパーランド", c:"play", a:"三重・桑名", m:"絶叫系にチャレンジ。アウトレットもとなり" },
-  { k:"gero", t:"下呂温泉で一泊", c:"trip", a:"岐阜", m:"足湯めぐりと温泉街さんぽ" },
-  { k:"shirakawago", t:"白川郷", c:"trip", a:"岐阜", m:"合掌造りの村。冬の雪景色も" },
-  { k:"pottery", t:"陶芸体験でおそろいの器", c:"play", a:"どこでも", m:"ふたりで作って、焼き上がりを待つのも楽しい" },
-  { k:"bouldering", t:"ボルダリング体験", c:"play", a:"どこでも", m:"はじめてでも楽しめる。応援しあおう" },
-  { k:"moviepizza", t:"おうちで映画とピザ", c:"other", a:"おうち", m:"見たい映画を1本ずつえらぶ" }
+  // 愛知・東海
+  { r:"aichi", k:"okazaki-park", t:"岡崎公園と岡崎城", c:"nature", a:"愛知・岡崎", m:"お城と公園をのんびりおさんぽ。春は桜、夏は花火も" },
+  { r:"aichi", k:"hatcho", t:"八丁味噌の蔵見学", c:"play", a:"愛知・岡崎", m:"昔ながらの味噌蔵を見学。味噌ソフトも食べたい" },
+  { r:"aichi", k:"korankei", t:"香嵐渓の紅葉", c:"nature", a:"愛知・豊田", m:"秋の紅葉が有名。夜のライトアップも" },
+  { r:"aichi", k:"ghibli", t:"ジブリパーク", c:"play", a:"愛知・長久手", m:"チケットは予約制。早めに取ろう" },
+  { r:"aichi", k:"aquarium", t:"名古屋港水族館", c:"play", a:"愛知・名古屋", m:"シャチとイルカのショーを見たい" },
+  { r:"aichi", k:"higashiyama", t:"東山動植物園", c:"play", a:"愛知・名古屋", m:"動物園と植物園、展望タワーもある" },
+  { r:"aichi", k:"planetarium", t:"名古屋市科学館のプラネタリウム", c:"play", a:"愛知・名古屋", m:"世界最大級のドーム。雨の日にも" },
+  { r:"aichi", k:"osu", t:"大須商店街で食べ歩き", c:"food", a:"愛知・名古屋", m:"古着屋さんや食べ歩きグルメがいっぱい" },
+  { r:"aichi", k:"hitsumabushi", t:"ひつまぶしを食べに行く", c:"food", a:"愛知・名古屋", m:"3通りの食べ方で楽しむ名古屋めし" },
+  { r:"aichi", k:"oasis21", t:"オアシス21とテレビ塔の夜景", c:"play", a:"愛知・名古屋", m:"水の宇宙船から見る夜景がきれい" },
+  { r:"aichi", k:"laguna", t:"ラグーナテンボス", c:"play", a:"愛知・蒲郡", m:"テーマパークと海辺のアウトレット" },
+  { r:"aichi", k:"inuyama", t:"犬山城と城下町", c:"play", a:"愛知・犬山", m:"国宝のお城と、食べ歩きできる城下町" },
+  { r:"aichi", k:"meijimura", t:"博物館明治村", c:"play", a:"愛知・犬山", m:"レトロな建物の中をおさんぽ。レンタル衣装も" },
+  { r:"aichi", k:"sakushima", t:"佐久島でアートめぐり", c:"trip", a:"愛知・西尾", m:"船で行く島。島のあちこちにアート作品" },
+  { r:"aichi", k:"himakajima", t:"日間賀島でたこ料理", c:"trip", a:"愛知・南知多", m:"タコとフグの島。日帰りでも行ける" },
+  { r:"aichi", k:"nabana", t:"なばなの里のイルミネーション", c:"event", a:"三重・桑名", m:"冬の光のトンネルがすてき" },
+  { r:"aichi", k:"nagashima", t:"ナガシマスパーランド", c:"play", a:"三重・桑名", m:"絶叫系にチャレンジ。アウトレットもとなり" },
+  // 関西
+  { r:"kansai", k:"usj", t:"ユニバーサル・スタジオ・ジャパン", c:"play", a:"大阪", m:"おそろいのカチューシャで一日中" },
+  { r:"kansai", k:"kaiyukan", t:"海遊館", c:"play", a:"大阪", m:"大きな水槽をジンベエザメが泳ぐ" },
+  { r:"kansai", k:"dotonbori", t:"道頓堀で食べ歩き", c:"food", a:"大阪", m:"たこ焼き、お好み焼き、ネオン看板の前で写真" },
+  { r:"kansai", k:"shinsekai", t:"通天閣と新世界で串カツ", c:"food", a:"大阪", m:"レトロな街で串カツ。ソースの二度づけは禁止" },
+  { r:"kansai", k:"umeda-sky", t:"梅田スカイビルの空中庭園", c:"play", a:"大阪", m:"屋上の展望台から夜景" },
+  { r:"kansai", k:"fushimi", t:"伏見稲荷大社の千本鳥居", c:"play", a:"京都", m:"朱色の鳥居がつづく道をふたりで" },
+  { r:"kansai", k:"arashiyama", t:"嵐山の竹林と渡月橋", c:"nature", a:"京都", m:"竹林の小道をおさんぽ。人力車も" },
+  { r:"kansai", k:"kiyomizu", t:"清水寺と二年坂・三年坂", c:"play", a:"京都", m:"着物をレンタルして歩くのも" },
+  { r:"kansai", k:"kamogawa", t:"鴨川沿いをおさんぽ", c:"nature", a:"京都", m:"川べりに座って、のんびり" },
+  { r:"kansai", k:"gion-matcha", t:"祇園で抹茶スイーツ", c:"cafe", a:"京都", m:"抹茶パフェやわらび餅を食べ比べ" },
+  { r:"kansai", k:"nara-park", t:"奈良公園でシカとふれあう", c:"nature", a:"奈良", m:"東大寺の大仏さまも見に行こう" },
+  { r:"kansai", k:"kobe-harbor", t:"神戸ハーバーランドとメリケンパーク", c:"play", a:"兵庫・神戸", m:"海辺の夜景と観覧車" },
+  { r:"kansai", k:"kikuseidai", t:"摩耶山・掬星台の夜景", c:"nature", a:"兵庫・神戸", m:"「1000万ドルの夜景」と呼ばれる景色" },
+  { r:"kansai", k:"nankinmachi", t:"南京町で食べ歩き", c:"food", a:"兵庫・神戸", m:"豚まんや小籠包をはんぶんこ" },
+  { r:"kansai", k:"arima", t:"有馬温泉", c:"trip", a:"兵庫", m:"金泉・銀泉、ふたつのお湯を楽しむ" },
+  { r:"kansai", k:"adventure-world", t:"アドベンチャーワールド", c:"play", a:"和歌山・白浜", m:"パンダに会いに行く。白浜の海も" },
+  // 関東
+  { r:"kanto", k:"tdr", t:"東京ディズニーリゾート", c:"play", a:"千葉・舞浜", m:"ランドとシー、どっちに行く？" },
+  { r:"kanto", k:"asakusa", t:"浅草寺と仲見世で食べ歩き", c:"play", a:"東京・浅草", m:"人力車や着物レンタルも" },
+  { r:"kanto", k:"skytree", t:"東京スカイツリー", c:"play", a:"東京・押上", m:"展望デッキから東京を一望" },
+  { r:"kanto", k:"shibuya-sky", t:"渋谷スカイの夜景", c:"play", a:"東京・渋谷", m:"屋上の展望台から夕日と夜景" },
+  { r:"kanto", k:"teamlab", t:"チームラボの展示", c:"play", a:"東京", m:"光とアートの中で写真を撮ろう" },
+  { r:"kanto", k:"kichijoji", t:"吉祥寺と井の頭公園", c:"nature", a:"東京・吉祥寺", m:"ボートに乗って、カフェめぐり" },
+  { r:"kanto", k:"ueno", t:"上野動物園と上野公園", c:"play", a:"東京・上野", m:"パンダと美術館とおさんぽ" },
+  { r:"kanto", k:"minatomirai", t:"横浜みなとみらいと赤レンガ倉庫", c:"play", a:"神奈川・横浜", m:"海沿いの夜景と観覧車" },
+  { r:"kanto", k:"chinatown", t:"横浜中華街で食べ歩き", c:"food", a:"神奈川・横浜", m:"小籠包、ごま団子、焼き小籠包" },
+  { r:"kanto", k:"kamakura", t:"鎌倉の大仏と小町通り", c:"play", a:"神奈川・鎌倉", m:"お寺めぐりと食べ歩き" },
+  { r:"kanto", k:"enoshima", t:"江ノ島", c:"nature", a:"神奈川・藤沢", m:"海を見ながら島をおさんぽ。夕日もきれい" },
+  { r:"kanto", k:"hakone", t:"箱根温泉と芦ノ湖", c:"trip", a:"神奈川・箱根", m:"海賊船とロープウェイ、温泉でのんびり" },
+  { r:"kanto", k:"kamogawa-sw", t:"鴨川シーワールド", c:"play", a:"千葉・鴨川", m:"シャチのショーと海辺ドライブ" },
+  { r:"kanto", k:"kawagoe", t:"小江戸・川越をおさんぽ", c:"play", a:"埼玉・川越", m:"蔵造りの町並みと、時の鐘" },
+  { r:"kanto", k:"hitachi", t:"国営ひたち海浜公園", c:"nature", a:"茨城・ひたちなか", m:"春はネモフィラ、秋はコキアの丘" },
+  { r:"kanto", k:"nikko", t:"日光東照宮", c:"trip", a:"栃木・日光", m:"豪華な建物と、華厳の滝" },
+  { r:"kanto", k:"kawaguchiko", t:"河口湖から富士山を見る", c:"nature", a:"山梨・河口湖", m:"湖に映る富士山。富士急ハイランドも近い" },
+  // 全国の旅行
+  { r:"japan", k:"otaru", t:"小樽運河", c:"trip", a:"北海道", m:"ガス灯の運河と、ガラス細工のお店" },
+  { r:"japan", k:"hakodate", t:"函館山の夜景", c:"trip", a:"北海道", m:"夜景と朝市の海鮮丼" },
+  { r:"japan", k:"furano", t:"富良野・美瑛の花畑", c:"trip", a:"北海道", m:"夏はラベンダー畑。青い池も" },
+  { r:"japan", k:"ginzan", t:"銀山温泉", c:"trip", a:"山形", m:"大正ロマンの温泉街。雪の夜景が有名" },
+  { r:"japan", k:"kusatsu", t:"草津温泉", c:"trip", a:"群馬", m:"湯畑を見ながら温泉街さんぽ" },
+  { r:"japan", k:"kanazawa", t:"金沢・兼六園とひがし茶屋街", c:"trip", a:"石川", m:"金箔ソフトと古い町並み" },
+  { r:"japan", k:"shirakawago", t:"白川郷", c:"trip", a:"岐阜", m:"合掌造りの村。冬の雪景色も" },
+  { r:"japan", k:"gero", t:"下呂温泉で一泊", c:"trip", a:"岐阜", m:"足湯めぐりと温泉街さんぽ" },
+  { r:"japan", k:"ise", t:"伊勢神宮とおかげ横丁", c:"trip", a:"三重", m:"お参りして、赤福と伊勢うどん" },
+  { r:"japan", k:"miyajima", t:"宮島・厳島神社", c:"trip", a:"広島", m:"海に浮かぶ大鳥居と、もみじ饅頭" },
+  { r:"japan", k:"naoshima", t:"直島でアートめぐり", c:"trip", a:"香川", m:"島じゅうがアート。黄色いかぼちゃも" },
+  { r:"japan", k:"dogo", t:"道後温泉", c:"trip", a:"愛媛", m:"歴史ある本館と、商店街の食べ歩き" },
+  { r:"japan", k:"beppu", t:"別府温泉の地獄めぐり", c:"trip", a:"大分", m:"色とりどりの温泉を見てまわる" },
+  { r:"japan", k:"nagasaki", t:"長崎・稲佐山の夜景", c:"trip", a:"長崎", m:"夜景とちゃんぽん。ハウステンボスも" },
+  { r:"japan", k:"takachiho", t:"高千穂峡でボート", c:"trip", a:"宮崎", m:"滝のそばをボートでゆっくり" },
+  { r:"japan", k:"yakushima", t:"屋久島の森", c:"trip", a:"鹿児島", m:"苔むした森を歩く。体力に自信があれば縄文杉も" },
+  { r:"japan", k:"churaumi", t:"沖縄美ら海水族館", c:"trip", a:"沖縄", m:"ジンベエザメと、エメラルドの海" },
+  { r:"japan", k:"ishigaki", t:"石垣島・竹富島", c:"trip", a:"沖縄", m:"水牛車と白い砂の道、きれいな海" },
+  // どこでも
+  { r:"any", k:"morning", t:"喫茶店でモーニング", c:"cafe", a:"どこでも", m:"ドリンクにトーストがついてくる、東海のモーニング文化" },
+  { r:"any", k:"pottery", t:"陶芸体験でおそろいの器", c:"play", a:"どこでも", m:"ふたりで作って、焼き上がりを待つのも楽しい" },
+  { r:"any", k:"bouldering", t:"ボルダリング体験", c:"play", a:"どこでも", m:"はじめてでも楽しめる。応援しあおう" },
+  { r:"any", k:"moviepizza", t:"おうちで映画とピザ", c:"other", a:"おうち", m:"見たい映画を1本ずつえらぶ" }
 ];
 const sampleId = k => "s_" + k;
 const passedSamples = () => S.profile?.passedSamples || [];
-const unseenSamples = () => SAMPLES.filter(x => !S.places.some(p => p.id === sampleId(x.k)) && !passedSamples().includes(x.k));
+const inRegion = x => !S.swRegion || S.swRegion === "all" || x.r === S.swRegion;
+const unseenSamples = (all) => SAMPLES.filter(x => (all || inRegion(x)) && !S.places.some(p => p.id === sampleId(x.k)) && !passedSamples().includes(x.k));
 const unseen = () => S.places.filter(p => !p.visited && !(p.votes || {})[me()] && !(p.passes || {})[me()]);
 const passedCount = () => S.places.filter(p => !p.visited && (p.passes || {})[me()]).length + passedSamples().length;
 function swipeCta(){
-  const n = unseen().length, ns = unseenSamples().length, passed = passedCount();
+  const n = unseen().length, ns = unseenSamples(true).length, passed = passedCount();
   const sub = n || ns ? [n ? `まだ見ていない候補 ${n}件` : "", ns ? `おすすめ ${ns}件` : ""].filter(Boolean).join(" ・ ") : passed ? "ぜんぶ見たよ！パスした場所をもう一度見ることもできます" : "ぜんぶ見たよ！";
   return `<div class="card swipe-cta"><span class="ic">🃏</span><div><b>スワイプで決める</b><div class="muted" style="font-size:12px">${sub}</div></div>
     <button class="btn sm" data-a="swipe">${n || ns ? "はじめる" : passed ? "もう一度" : "ひらく"}</button></div>`;
 }
 function viewBoth(){
-  const cta = swipeCta();
+  const cta = "";
   if (!isPaired()) return cta + `<div class="empty"><div class="big">💞</div><p>恋人が参加すると、ふたりとも「行きたい♡」を押した場所がここに出ます</p></div>`;
   const arr = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
-  if (!arr.length) return cta + `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>スワイプか、「行きたい」タブの♡で選んでみてね</p></div>`;
+  if (!arr.length) return cta + `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>「きめる」タブのスワイプか、「行きたい」タブの♡で選んでみてね</p></div>`;
   return cta + `<div class="sec">ふたりとも「行きたい♡」の場所 ・ ${arr.length}件</div>` + arr.map(placeCard).join("");
 }
 
@@ -818,7 +865,8 @@ function openSwipe(){
   S.deck = [...shuffle(unseen().map(p => ({ id: p.id }))), ...shuffle(unseenSamples().map(x => ({ k: x.k })))];
   S.deckPos = 0; S.deckTotal = S.deck.length;
   openSheet(`<h3>🃏 スワイプで決める<button class="x" data-a="close">×</button></h3>
-    <p class="muted" style="margin:-8px 0 4px;font-size:12px">右にスワイプで「行きたい♡」、左で「パス」。ふたりとも右にした場所はマッチ！</p>
+    <p class="muted" style="margin:-8px 0 6px;font-size:12px">右にスワイプで「行きたい♡」、左で「パス」。ふたりとも右にした場所はマッチ！</p>
+    <div class="chips" style="padding-bottom:4px">${REGIONS.map(([id, n]) => `<button class="chip ${(S.swRegion || "all") === id ? "on" : ""}" data-a="swregion" data-v="${id}">${n}</button>`).join("")}</div>
     <div id="swipebody"></div>`);
   renderDeck();
 }
@@ -947,7 +995,7 @@ function viewRand(){
   const pool = randPool(), r = S.rResult && S.places.find(p => p.id === S.rResult);
   const modes = [["both", "ふたりで♡"], ["mine", "わたしの♡"], ["all", "ぜんぶ"]];
   if (!isPaired() && S.rMode === "both") S.rMode = "all";
-  return `<div class="card dice">
+  return `${swipeCta()}<div class="card dice">
     <h2 style="justify-content:center">🎲 今日の行き先をきめる</h2>
     <div class="opt">${modes.filter(m => isPaired() || m[0] !== "both").map(([id, n]) => `<button class="chip ${S.rMode === id ? "on" : ""}" data-a="rmode" data-v="${id}">${n}</button>`).join("")}</div>
     <div class="chips" style="justify-content:flex-start">
@@ -1331,6 +1379,7 @@ document.addEventListener("click", async ev => {
       catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
       break;
     case "swipe": openSwipe(); break;
+    case "swregion": S.swRegion = el.dataset.v; openSwipe(); break;
     case "sw": swipeOut(el.dataset.v === "1"); break;
     case "unpass": unpass(); break;
     case "fxclose": document.getElementById("fx").innerHTML = ""; break;
