@@ -234,7 +234,8 @@ async function onUser(user){
     }catch(err){ console.error(err); renderDenied(true); return; }
   }
   localStorage.removeItem('fitlife_invite');
-  S.role = (S.cfg.memberUid && S.cfg.memberUid === user.uid) ? 'member' : 'owner';
+  const myMail = (user.email||'').toLowerCase();
+  S.role = ((S.cfg.memberUid && S.cfg.memberUid === user.uid) || (S.cfg.memberEmail && user.emailVerified && S.cfg.memberEmail === myMail)) ? 'member' : 'owner';
   startListeners();
   if(S.role === 'member') await loadPrivMeta();
   render();
@@ -456,7 +457,7 @@ function viewHome(){
     <div class="hello">${isM ? `${name ? esc(name)+'、' : ''}${greet()}♡` : '今日のようす'}</div>
     <p>${isM ? cheer : 'シェアされた記録を見られます（閲覧だけ）。'}</p></div>`;
 
-  if(!isM && !S.cfg.memberUid){
+  if(!isM && !S.cfg.memberUid && !S.cfg.memberEmail){
     html += `<div class="card"><h2>${IC.heart.replace('<svg','<svg style="width:16px"')} はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
   }
 
@@ -645,9 +646,16 @@ function viewSettings(){
   const url = location.origin + location.pathname;
   let html = '';
   if(!isM){
-    const joined = !!S.cfg.memberUid, inv = S.invite;
+    const joined = !!S.cfg.memberUid, inv = S.invite, mail = S.cfg.memberEmail;
     let body;
-    if(joined){
+    if(mail && !joined){
+      const msg = `FitLife に招待しました♡\n${url}?openExternalBrowser=1\nこのURLを開いて「メールでログイン」に ${mail} を入れてね。届いたメールのリンクを押すとログインできるよ`;
+      body = `<p>登録中：<b>${esc(mail)}</b></p>
+        <p class="muted">このアドレスでログインした人だけが参加できます（メールのリンク、またはこのアドレスのGoogleアカウント）。</p>
+        <div class="row"><a class="btn" style="text-decoration:none" href="https://line.me/R/share?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">LINEで送る</a>
+        <button class="btn sub" data-a="copy" data-v="${esc(msg)}">コピー</button></div>
+        <button class="btn ghost sm" data-a="uninvite" style="margin-top:10px">登録を取り消す</button>`;
+    } else if(joined){
       body = `<p>${IC.heart.replace('<svg','<svg style="width:14px;vertical-align:-2px"')} <b>参加済み</b>（あなた＋1人）</p>
         <p class="muted">これ以上は誰も参加できません。</p>
         <button class="btn ghost sm" data-a="uninvite">参加を取り消す</button>`;
@@ -662,6 +670,11 @@ function viewSettings(){
     } else {
       body = `<p class="muted">招待リンクを作って、LINEなどで送ってください。リンクは24時間・1回だけ使えます。</p>
         <button class="btn block" data-a="newinvite">招待リンクを作る</button>`;
+    }
+    if(!joined && !mail){
+      body += `<div style="border-top:1px dashed var(--line);margin-top:14px;padding-top:12px">
+        <p class="muted" style="margin:0 0 6px">または、相手のメールアドレスを登録する</p>
+        <form data-form="regmail"><input class="in" type="email" name="email" required placeholder="example@icloud.com" autocomplete="off"><button class="btn sub block" style="margin-top:8px">このアドレスを登録</button></form></div>`;
     }
     html += `<div class="card"><h2>招待</h2>${body}</div>
     <div class="card"><h2>共有されている記録</h2>
@@ -761,6 +774,15 @@ async function handleForm(kind, f){
       if(v.p1 !== v.p2) throw new Error('合言葉が一致しません');
       await setupPass(v.p1); await idbSet('key_' + S.user.uid, S.key).catch(()=>{}); startPrivListeners();
       break;
+    case 'regmail': {
+      const email = v.email.trim().toLowerCase();
+      if(email === (S.user.email||'').toLowerCase()) throw new Error('自分のアドレスは登録できません');
+      const b = writeBatch(db);
+      if(S.invite) b.delete(doc(db,'invites',S.invite.id));
+      b.set(doc(db,'config','app'), { memberUid:'', inviteToken:'', memberEmail: email });
+      await b.commit();
+      break;
+    }
     case 'sendlink': {
       const email = v.email.trim().toLowerCase();
       const inv = localStorage.getItem('fitlife_invite');
@@ -791,7 +813,7 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -831,13 +853,13 @@ document.addEventListener('click', async e => {
       case 'lock': await lockNow(); toast('ロックしました'); break;
       case 'copy': await navigator.clipboard.writeText(v); toast('コピーしました'); break;
       case 'uninvite':
-        if(!confirm('参加を取り消しますか？（相手はログインできなくなります。記録は残ります）')) return;
-        await setDoc(doc(db,'config','app'), { memberUid:'', inviteToken:'' }); toast('取り消しました'); break;
+        if(!confirm('取り消しますか？（相手はログインできなくなります。記録は残ります）')) return;
+        await setDoc(doc(db,'config','app'), { memberUid:'', inviteToken:'', memberEmail:'' }); toast('取り消しました'); break;
       case 'newinvite': {
         const t = [...crypto.getRandomValues(new Uint8Array(32))].map(x => x.toString(16).padStart(2,'0')).join('');
         const b = writeBatch(db);
         if(S.invite) b.delete(doc(db,'invites',S.invite.id));
-        b.set(doc(db,'config','app'), { memberUid:'', inviteToken:'' });
+        b.set(doc(db,'config','app'), { memberUid:'', inviteToken:'', memberEmail:'' });
         b.set(doc(db,'invites',t), { used:false, usedBy:'', expiresAt: Timestamp.fromMillis(Date.now() + 24*3600*1000), createdAt: serverTimestamp() });
         await b.commit(); toast('招待リンクを作りました'); break;
       }
