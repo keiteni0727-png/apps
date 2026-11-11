@@ -336,10 +336,12 @@ h3 input.inl{font-size:18px;font-weight:800}
 .mdot.d{background:var(--drama)}
 .mdot.m{background:var(--movie)}
 .mdot.s{background:var(--stream)}
-.kind.r{background:var(--reality)}
-.time .kind.r{letter-spacing:-.06em;padding:1px 3px}
+.kind.r{background:var(--stream)}
+.kind.f{background:var(--movie)}
+.segc button.kf[aria-pressed="true"]{background:var(--movie);border-color:var(--movie);color:#fff}
+.khint{grid-column:1/-1;margin:-2px 0 0;font-size:12px;color:var(--u-sub)}
 .hbar .add{margin-left:auto}
-.segc button.kr[aria-pressed="true"]{background:var(--reality);border-color:var(--reality);color:#fff}
+.segc button.kr[aria-pressed="true"]{background:var(--stream);border-color:var(--stream);color:#fff}
 /* ===== スマホ：左上の☰から開くメニュー（PCの左メニューと同じ中身） ===== */
 .hmenu{flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
 .hmenu svg{width:20px;height:20px}
@@ -1654,7 +1656,7 @@ function renderTabbar() {
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
 /* 配信タブ：種別「配信」（配信オリジナル）をジャンル問わずまとめて出す。リアリティ（k="r"）は映画・配信タブにだけ出る */
 const ofKind = i =>
-  (state.kind === "all" || i.k === state.kind) &&
+  (state.kind === "all" || i.k === state.kind || (state.mode === "m" && state.kind === "d" && i.k === "f")) &&
   (state.mode !== "m" || mediaOf(i).media === "movie") &&
   (state.mode !== "s" || mediaOf(i).media === "stream");
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
@@ -1669,7 +1671,8 @@ function vodBarHtml() {
     `<button type="button" data-vod="${esc(v)}" aria-pressed="${state.vod === v}">${esc(lab)}</button>`;
   return `<div class="vodbar" role="group" aria-label="配信サイトで絞り込み">${b("", "すべて")}${l.map(v => b(v, v)).join("")}</div>`;
 }
-const KIND_LAB = { a: "アニメ", d: "ドラマ", r: "リアリティ" };
+/* ジャンル：a=アニメ d=ドラマ f=映画（ドラマと関係ない実写映画） r=配信（恋愛リアリティ・バラエティなど、アニメでもドラマでもない配信番組） */
+const KIND_LAB = { a: "アニメ", d: "ドラマ", f: "映画", r: "配信" };
 const kindTag = i => `<span class="kind ${i.k}">${KIND_LAB[i.k] || "ドラマ"}</span>`;
 /* 番組表の時刻の下に出す放送局（配信なら配信サイト） */
 function stationTxt(i) {
@@ -2648,15 +2651,23 @@ function formHtml() {
     `<section class="fsec"><h4>${title}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
     title: `<label class="field full"><span>タイトル</span><input id="f-t" autocomplete="off" placeholder="例：薬屋のひとりごと 第3期" value="${esc(f.t)}"></label>`,
-    kind: `<div class="field"><span>種類</span><div class="segc" role="group" aria-label="種類">${seg(
+    kind: `<div class="field"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${seg(
       "data-fk",
       [
         ["a", "アニメ", "ka"],
         ["d", "ドラマ", "kd"],
-        ["r", "リアリティ", "kr"],
+        ["f", "映画", "kf"],
+        ["r", "配信", "kr"],
       ],
       f.k,
-    )}</div></div>`,
+    )}</div><p class="khint">${
+      {
+        a: "表示される場所：アニメ（放送形態が映画なら映画、配信なら配信にも）",
+        d: "表示される場所：ドラマ（放送形態が映画なら映画、配信なら配信にも）",
+        f: "表示される場所：映画　ドラマと関係ない実写映画",
+        r: "表示される場所：配信　恋愛リアリティ・バラエティなど",
+      }[f.k] || ""
+    }</p></div>`,
     status: `<div class="field"><span>ステータス</span><div class="segc" role="group" aria-label="ステータス">${seg(
       "data-fs",
       STATUSES.map(s => [s, stLabel(s)]),
@@ -2795,7 +2806,7 @@ function openForm(it, target) {
   } else
     form = {
       id: null,
-      k: ["d", "r"].includes(state.kind) ? state.kind : state.mode === "s" ? "r" : "a",
+      k: state.mode === "s" ? "r" : state.mode === "m" ? (state.kind === "a" ? "a" : "f") : state.kind === "d" ? "d" : "a",
       t: "",
       s: "未視聴",
       dow: -1,
@@ -4194,7 +4205,11 @@ function onTitleFormClick(e) {
     const fk = e.target.closest("[data-fk],[data-fs]");
     if (fk) {
       readForm();
-      if (fk.dataset.fk) form.k = fk.dataset.fk;
+      if (fk.dataset.fk) {
+        form.k = fk.dataset.fk;
+        if (form.k === "f") form.media = "movie";
+        if (form.k === "r" && form.media !== "stream") form.media = "stream";
+      }
       if (fk.dataset.fs) form.s = fk.dataset.fs;
       redrawForm();
       return true;
