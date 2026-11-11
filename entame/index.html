@@ -537,7 +537,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 /* スマホ・タブレット：画面下のメニュー（家計簿と同じ形）と、その横の設定ボタン */
 @media (max-width:899px){
   :root{--tbh:58px}
-  body{padding-bottom:calc(var(--tbh) + 24px + env(safe-area-inset-bottom,0px))}
+  body{padding-bottom:calc(var(--u-navb) + var(--tbh) + 24px)}
   /* 下部メニュー（共通部品）：このアプリではシートを手前に出す。2項目のときは狭く */
   .u-app .tbwrap{z-index:12}
   .tabbar.n2{flex-basis:320px}

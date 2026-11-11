@@ -17,7 +17,7 @@ body.sel{--u-toast-b:180px}
 .kb,.pay{display:contents}
 .kb{font:15px/1.5 var(--u-f)}
 .pay{font-family:var(--u-f);font-size:14px;line-height:1.6;color:var(--u-ink)}
-@media (max-width:899px){body{padding-bottom:calc(var(--tbh) + 24px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:899px){body{padding-bottom:calc(var(--u-navb) + var(--tbh) + 24px)}}
 /* 画面の切り替え：body の data-tab で出し分ける */
 body:not([data-tab="list"]) #v-list,body:not([data-tab="graph"]) #v-graph,body:not([data-tab="ai"]) #v-ai,
 body:not([data-tab="home"]) #v-home,body:not([data-tab="balance"]) #v-balance{display:none}
@@ -334,7 +334,7 @@ body.sel .kb .layout{padding-bottom:190px}
   body[data-tab="rules"] .kb #rulepanel{display:block!important;position:static;box-shadow:none;max-width:none;overflow:visible;margin:14px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
   body[data-tab="rules"] .kb #rbk{display:none}
   /* 選択バー・通知・トップへは下部メニューの上に浮かせる */
-  .kb #selbar:not([hidden]){left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(var(--tbh) + 18px + env(safe-area-inset-bottom,0px));padding:10px 12px;border:1px solid var(--u-line);border-radius:18px}
+  .kb #selbar:not([hidden]){left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(var(--u-navb) + var(--tbh) + 8px);padding:10px 12px;border:1px solid var(--u-line);border-radius:18px}
 }
 @media (max-width:599px){
   .kb .aictl{grid-template-columns:1fr auto}

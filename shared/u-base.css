@@ -56,9 +56,11 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .u-btns button.ghost{border:0;background:none;color:var(--u-sub);padding:6px 8px}
 
 /* ===== スマホの下部メニュー：.tbwrap の中に .tabbar（画面の切り替え）と .tbgear（設定）。PCでは出さない ===== */
+/* 画面下からの距離（ウリログと同じ：ホームバーぎりぎりまで下げる） */
+:root{--u-navb:max(4px,calc(env(safe-area-inset-bottom,0px) - 16px))}
 .u-app .tbwrap{display:none}
 @media (max-width:899px){
-  .u-app .tbwrap{position:fixed;z-index:30;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;justify-content:center;gap:8px;pointer-events:none}
+  .u-app .tbwrap{position:fixed;z-index:30;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:var(--u-navb);display:flex;justify-content:center;gap:8px;pointer-events:none}
   .u-app .tbwrap>*{pointer-events:auto;background:var(--u-surface);border:1px solid var(--u-line);border-radius:22px;box-shadow:0 8px 28px rgba(16,24,40,.18)}
   .u-app .tabbar{flex:0 1 520px;min-width:0;display:flex;gap:2px;padding:4px}
   .u-app .tabbar button{flex:1;border:0;background:none;color:var(--u-sub);border-radius:18px;height:calc(var(--tbh,58px) - 8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:700;padding:0}
@@ -75,7 +77,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .u-app .totop span{font-size:15px;line-height:1}
 .u-app .totop.hide{opacity:0;transform:translateY(10px);pointer-events:none}
 @media (prefers-reduced-motion:no-preference){.u-app .totop{transition:opacity .2s,transform .2s}}
-@media (max-width:899px){.u-app .totop{bottom:calc(var(--tbh,58px) + 22px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:899px){.u-app .totop{bottom:calc(var(--u-navb) + var(--tbh,58px) + 12px)}}
 
 /* ===== 通知（U.toast）。下からの位置は、アプリ側で body に --u-toast-b を指定して変える ===== */
 .u-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--u-toast-b,20px) + env(safe-area-inset-bottom,0px));z-index:70;width:max-content;max-width:min(calc(100% - 32px),520px);background:var(--u-ink);color:var(--u-surface);border-radius:12px;padding:10px 16px;font:13px/1.5 var(--u-f);box-shadow:var(--u-shadow)}
