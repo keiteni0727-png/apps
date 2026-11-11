@@ -825,6 +825,11 @@ function setTab(t) {
 /* 下のメニュー・左メニュー・分析の切り替えで、いまの画面に印をつける（分析の3画面では「分析」にも） */
 function markTabs(t) {
   markCurrent(".tabbar [data-tab], .sb [data-tab], .anseg [data-tab]", "tab", t);
+  /* スマホの上の帯：今いる画面のアイコン（左メニューと同じもの） */
+  const key = t === "rules" ? "gear" : AN.includes(t) ? "an" : t;
+  const ic = document.querySelector(`.sb .mic.${key}`);
+  const hc = $("hcur");
+  if (hc && ic) hc.innerHTML = ic.innerHTML;
   document
     .querySelectorAll('[data-tab="an"]')
     .forEach(b => (AN.includes(t) ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
@@ -1977,6 +1982,35 @@ async function runAI() {
 
 /* ===================== イベント ===================== */
 /* ---------- クリック：画面ごとの処理に振り分ける。各処理は、受け持ったら true を返す ---------- */
+/* ---------- スマホ：☰メニューの開閉と右下の＋ ---------- */
+function setDrawer(on) {
+  document.body.classList.toggle("drawer", on);
+  const b = document.querySelector(".hmenu");
+  if (b) b.setAttribute("aria-expanded", on);
+}
+document.addEventListener("click", e => {
+  const dr = e.target.closest("[data-drawer]");
+  if (dr) {
+    setDrawer(dr.dataset.drawer === "open");
+    return;
+  }
+  if (document.body.classList.contains("drawer") && e.target.closest(".sb [data-tab], .sb #sbgear")) setDrawer(false);
+  if (e.target.closest("#fab")) {
+    /* 今の画面の「追加」を押したのと同じにする */
+    const id = { list: "manual", home: "cAdd", balance: "mAdd" }[view.tab];
+    const b = id && $(id);
+    if (b) b.click();
+  }
+});
+(() => {
+  let x0 = null;
+  document.addEventListener("touchstart", e => (x0 = e.target.closest(".sb") ? e.touches[0].clientX : null), { passive: true });
+  document.addEventListener("touchend", e => {
+    if (x0 != null && x0 - e.changedTouches[0].clientX > 60) setDrawer(false);
+    x0 = null;
+  }, { passive: true });
+  matchMedia("(max-width:899px)").addEventListener("change", () => setDrawer(false));
+})();
 document.addEventListener("click", e => {
   if (e.target.closest(".pay, #st-pay")) return; // 支払いの部品は pay.js が受け持つ
   if (clickListCheck(e)) return;
