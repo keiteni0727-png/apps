@@ -173,7 +173,7 @@ const COL_LABEL = { meals:'食事', gym:'ジム', weights:'体重', water:'水�
 
 /* ===== 状態 ===== */
 const S = {
-  user:null, role:null, cfg:{}, share:{}, profile:{},
+  user:null, role:null, cfg:{}, share:{}, profile:{}, cheers:[], invite:null,
   data:{ meals:[], gym:[], weights:[], water:[], sleep:[] }, denied:{},
   privMeta:undefined, key:null, priv:{ logs:[], photos:[] },
   tab:'home',
@@ -216,7 +216,7 @@ if(!configured){
 
 async function onUser(user){
   unsub(subs); unsub(colSubs); unsub(privSubs);
-  Object.assign(S, { user, role:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, tab:'home' });
+  Object.assign(S, { user, role:null, cheers:[], invite:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, tab:'home' });
   S.data = { meals:[], gym:[], weights:[], water:[], sleep:[] };
   if(!user){ renderLogin(); return; }
   $app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<p class="muted">読み込み中…</p></div>`;
@@ -255,17 +255,15 @@ function startListeners(){
       render();
     }, ()=>{}));
   }
-  subs.push(onSnapshot(doc(db,'config','share'), s => {
-    S.share = s.data()||{};
-    if(S.role === 'owner' || colSubs.length === 0) startColListeners();
-    render();
-  }, () => { if(colSubs.length === 0) startColListeners(); }));
+  subs.push(onSnapshot(query(collection(db,'cheers'), orderBy('ts','desc'), limit(60)), s => {
+    S.cheers = s.docs.map(d => ({ id:d.id, ...d.data() })); render();
+  }, ()=>{}));
+  if(S.role === 'member') startColListeners();
 }
 
 function startColListeners(){
   unsub(colSubs);
   for(const col of COLS){
-    if(S.role === 'owner' && !S.share[col]){ S.denied[col] = true; S.data[col] = []; continue; }
     S.denied[col] = false;
     const q = query(collection(db,col), orderBy('date','desc'), limit(400));
     colSubs.push(onSnapshot(q, s => {
@@ -274,9 +272,7 @@ function startColListeners(){
       render();
     }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
   }
-  if(S.role === 'member' || S.share.profile){
-    colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
-  } else { S.profile = {}; }
+  colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
 }
 
 /* ===== 暗号化（センシティブな記録用） ===== */
@@ -431,8 +427,9 @@ function render(){
   if(!S.user || !S.role) return;
   const isM = S.role === 'member';
   const tabs = isM ? [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body],['secret','ひみつ',IC.lock]]
-                   : [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body]];
-  const views = { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, secret:viewSecret, settings:viewSettings };
+                   : [];
+  const views = isM ? { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, secret:viewSecret, settings:viewSettings }
+                    : { home:viewOwnerHome, settings:viewSettings };
   const fabTarget = isM ? ({ meals:'meal', gym:'gym', secret: S.key ? 'log' : null })[S.tab] : null;
   const y = window.scrollY;
   $app.innerHTML = `
@@ -440,9 +437,10 @@ function render(){
       <div class="logo">${IC.heart} FitLife<span class="badge">${isM ? 'わたし' : 'オーナー'}</span></div>
       <button class="iconbtn" data-a="tab" data-v="settings" aria-label="設定">${IC.gear}</button>
     </header>
-    ${(views[S.tab] || viewHome)()}
+    ${(views[S.tab] || views.home)()}
     ${fabTarget ? `<button class="fab" data-a="open" data-v="${fabTarget}" aria-label="記録する">＋</button>` : ''}
-    <nav class="tabs"><div class="in">${tabs.map(([k,l,ic]) => `<button class="${S.tab===k?'on':''}" data-a="tab" data-v="${k}">${ic}<span>${l}</span></button>`).join('')}</div></nav>`;
+    ${S.tab === 'settings' && !isM ? `<button class="btn sub block" data-a="tab" data-v="home">← メッセージに戻る</button>` : ''}
+    ${tabs.length ? `<nav class="tabs"><div class="in">${tabs.map(([k,l,ic]) => `<button class="${S.tab===k?'on':''}" data-a="tab" data-v="${k}">${ic}<span>${l}</span></button>`).join('')}</div></nav>` : ''}`;
   window.scrollTo(0, y);
 }
 
@@ -455,14 +453,12 @@ function viewHome(){
   const isM = S.role === 'member';
   const p = S.profile, t = today();
   const name = isM ? (p.name || '') : '';
-  const cheer = CHEERS[Math.floor(Date.now()/86400000) % CHEERS.length];
+  const latest = S.cheers[0];
+  const cheer = latest ? esc(latest.text) : CHEERS[Math.floor(Date.now()/86400000) % CHEERS.length];
   let html = `<div class="card cheer">${IC.heart.replace('<svg','<svg class="deco"')}
-    <div class="hello">${isM ? `${name ? esc(name)+'、' : ''}${greet()}♡` : '今日のようす'}</div>
-    <p>${isM ? cheer : 'シェアされた記録を見られます（閲覧だけ）。'}</p></div>`;
-
-  if(!isM && !S.cfg.memberUid && !S.cfg.memberEmail){
-    html += `<div class="card"><h2>${IC.heart.replace('<svg','<svg style="width:16px"')} はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
-  }
+    <div class="hello">${name ? esc(name)+'、' : ''}${greet()}♡</div>
+    <p style="white-space:pre-wrap">${cheer}</p>
+    ${latest ? `<p class="muted" style="text-align:right;margin-top:6px">${FROM}より♡ ${cheerDate(latest)}</p>` : ''}</div>`;
 
   // 体重
   const w = S.data.weights;
@@ -501,8 +497,32 @@ function viewHome(){
       <button class="btn sub" data-a="water" data-v="150">＋150ml</button>
       <button class="btn sub" data-a="water" data-v="200">＋200ml</button>
       <button class="btn sub" data-a="water" data-v="500">＋500ml</button></div></div>
-      <div class="row"><button class="btn sub" data-a="open" data-v="meal">食事を記録</button><button class="btn sub" data-a="open" data-v="sleep">睡眠を記録</button><button class="btn sub" data-a="open" data-v="gym">ジムを記録</button></div>`;
+      <div class="row" style="margin-bottom:14px"><button class="btn sub" data-a="open" data-v="meal">食事を記録</button><button class="btn sub" data-a="open" data-v="sleep">睡眠を記録</button><button class="btn sub" data-a="open" data-v="gym">ジムを記録</button></div>`;
   }
+  return html + pastCheers();
+}
+const FROM = 'Keisuke';
+const cheerDate = c => { const d = c.ts?.toDate ? c.ts.toDate() : new Date(); return `${d.getMonth()+1}/${d.getDate()}`; };
+function pastCheers(){
+  const old = S.cheers.slice(1, 15);
+  if(!old.length) return '';
+  return `<div class="card"><h2>${IC.heart.replace('<svg','<svg style="width:16px"')} これまでのメッセージ</h2><ul class="list">
+    ${old.map(c => `<li><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div><div class="s">${FROM}より ・ ${cheerDate(c)}</div></div></li>`).join('')}</ul></div>`;
+}
+function viewOwnerHome(){
+  const joined = S.cfg.memberUid || S.cfg.memberEmail;
+  let html = `<div class="card cheer">${IC.heart.replace('<svg','<svg class="deco"')}
+    <div class="hello">応援メッセージ</div>
+    <p>ここに書いたメッセージが、彼女のホーム画面のいちばん上に出ます。</p></div>`;
+  if(!joined) html += `<div class="card"><h2>はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
+  html += `<div class="card"><h2>メッセージを送る</h2><form data-form="cheer">
+      <textarea class="in" name="text" rows="4" maxlength="300" required placeholder="例：ジムおつかれさま！無理しすぎないでね"></textarea>
+      <button class="btn block" style="margin-top:10px">送る ♡</button></form></div>`;
+  html += `<div class="card"><h2>送ったメッセージ<span class="sub">最新のものが表示されます</span></h2>
+    ${S.cheers.length ? `<ul class="list">${S.cheers.map((c,i) => `<li><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
+      <div class="s">${cheerDate(c)}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div>
+      <button class="del" data-a="delcheer" data-id="${c.id}" aria-label="削除">×</button></li>`).join('')}</ul>` : '<p class="empty">まだ送っていません</p>'}
+    <p class="muted">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
   return html;
 }
 function greet(){ const h = new Date().getHours(); return h < 11 ? 'おはよう' : h < 18 ? 'こんにちは' : 'おつかれさま'; }
@@ -679,10 +699,7 @@ function viewSettings(){
         <p class="muted" style="margin:0 0 6px">または、相手のメールアドレスを登録する</p>
         <form data-form="regmail"><input class="in" type="email" name="email" required placeholder="example@icloud.com" autocomplete="off"><button class="btn sub block" style="margin-top:8px">このアドレスを登録</button></form></div>`;
     }
-    html += `<div class="card"><h2>招待</h2>${body}</div>
-    <div class="card"><h2>共有されている記録</h2>
-      ${['profile',...COLS].map(c => `<div class="switch"><span>${COL_LABEL[c]}</span><span class="${S.share[c] ? '' : 'muted'}">${S.share[c] ? '見られる' : '非公開'}</span></div>`).join('')}
-      <p class="muted">共有の設定は招待した人が決めます。生理・体調・体型写真はいつでも非公開です。</p></div>`;
+    html += `<div class="card"><h2>招待</h2>${body}</div>`;
   } else {
     const p = S.profile;
     html += `<div class="card"><h2>プロフィール・目標</h2><form data-form="profile">
@@ -694,9 +711,7 @@ function viewSettings(){
         <div><label class="f">お水の目標(ml)</label><input class="in" type="number" inputmode="numeric" name="waterGoal" value="${esc(p.waterGoal ?? 1500)}"></div></div>
       <button class="btn block" style="margin-top:14px">保存</button></form>
       <p class="muted" style="margin-top:8px">急に減らすより、ゆっくり続けるのがいちばん。健康第一でいこうね。</p></div>
-    <div class="card"><h2>オーナーに見せる記録</h2>
-      ${['profile',...COLS].map(c => `<label class="switch"><span>${COL_LABEL[c]}</span><input type="checkbox" data-a="share" data-v="${c}" ${S.share[c] ? 'checked' : ''}></label>`).join('')}
-      <p class="muted">オフにした記録はオーナーには見えません（データベース側でブロック）。生理・体調・体型写真はこの設定に関係なく、いつもあなただけのものです。</p></div>`;
+    <div class="card"><h2>プライバシー</h2><p class="muted">あなたの記録はすべて、あなただけが見られます（オーナーにも見えません）。生理・体調・体型写真は、さらに合言葉で暗号化しています。</p></div>`;
   }
   html += `<div class="card"><h2>アカウント</h2><p class="muted">${esc(S.user.email)}</p><button class="btn ghost" data-a="logout">ログアウト</button></div>`;
   return html;
@@ -777,6 +792,13 @@ async function handleForm(kind, f){
       if(v.p1 !== v.p2) throw new Error('合言葉が一致しません');
       await setupPass(v.p1); await idbSet('key_' + S.user.uid, S.key).catch(()=>{}); startPrivListeners();
       break;
+    case 'cheer': {
+      const text = v.text.trim();
+      if(!text) throw new Error('メッセージを書いてね');
+      await addDoc(collection(db,'cheers'), { text, ts: serverTimestamp() });
+      f.reset();
+      break;
+    }
     case 'regmail': {
       const email = v.email.trim().toLowerCase();
       if(email === (S.user.email||'').toLowerCase()) throw new Error('自分のアドレスは登録できません');
@@ -816,20 +838,12 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
     toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : (err.message || '保存できませんでした')));
   }finally{ if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = btn.dataset.t; } }
-});
-
-document.addEventListener('change', async e => {
-  const el = e.target;
-  if(el.dataset.a === 'share'){
-    try{ await setDoc(doc(db,'config','share'), { [el.dataset.v]: el.checked }, { merge:true }); }
-    catch(err){ el.checked = !el.checked; toast('変更できませんでした'); }
-  }
 });
 
 document.addEventListener('click', async e => {
@@ -853,6 +867,9 @@ document.addEventListener('click', async e => {
       case 'del':
         if(!confirm('この記録を削除しますか？')) return;
         await deleteDoc(doc(db, el.dataset.col, el.dataset.id)); toast('削除しました'); break;
+      case 'delcheer':
+        if(!confirm('このメッセージを削除しますか？')) return;
+        await deleteDoc(doc(db,'cheers',el.dataset.id)); toast('削除しました'); break;
       case 'lock': await lockNow(); toast('ロックしました'); break;
       case 'copy': await navigator.clipboard.writeText(v); toast('コピーしました'); break;
       case 'uninvite':
