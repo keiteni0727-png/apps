@@ -15,11 +15,11 @@
 <link rel="stylesheet" href="../shared/u-base.css">
 <style>
 /* 色・書体・角丸・土台・左メニューは u-base.css（アプリ共通）。ここはアクセント色と、このアプリだけの色 */
-:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090}
+:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--stream:#0f8a8a;--reality:#d2457a;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090}
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
+  :root:not([data-theme="light"]){--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
 }
-:root[data-theme="dark"]{--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
+:root[data-theme="dark"]{--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8}
 /* Layout: 番組表（TV guide）— sticky channel bar, weekday rows of program slots, bottom sheet detail */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){color-scheme:dark}
@@ -335,6 +335,40 @@ h3 input.inl{font-size:18px;font-weight:800}
 .mdot.a{background:var(--anime)}
 .mdot.d{background:var(--drama)}
 .mdot.m{background:var(--movie)}
+.mdot.s{background:var(--stream)}
+.kind.r{background:var(--reality)}
+.time .kind.r{letter-spacing:-.06em;padding:1px 3px}
+.hbar .add{margin-left:auto}
+.segc button.kr[aria-pressed="true"]{background:var(--reality);border-color:var(--reality);color:#fff}
+/* ===== スマホ：左上の☰から開くメニュー（PCの左メニューと同じ中身） ===== */
+.hmenu{flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
+.hmenu svg{width:20px;height:20px}
+.hcur{display:flex;align-items:center;gap:7px;font-size:17px;font-weight:900;white-space:nowrap;min-width:0}
+.hcur .mdot{width:10px;height:10px}
+.hcur .ytmark{color:var(--yt)}
+.dscrim{display:none}
+@media (max-width:899px){
+  .hbar .logo{display:none}
+  .hbar .hsp{display:block}
+  body.drawer{overflow:hidden}
+  body.drawer .dscrim{display:block;position:fixed;inset:0;z-index:59;background:var(--u-scrim)}
+  .u-app .sb{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(280px,82vw);background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .22s ease;box-shadow:var(--u-shadow);visibility:hidden}
+  body.drawer .u-app .sb{transform:none;visibility:visible}
+  .u-app .sb-top{display:flex;align-items:center;gap:8px;padding:2px 4px 12px;border-bottom:1px solid var(--u-line);margin-bottom:10px}
+  .u-app .sb-lamp{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.1em;line-height:1;color:var(--u-on);background:var(--u-accent);padding:4px 6px 3px;border-radius:4px;white-space:nowrap;flex:none}
+  .u-app .sb-top b{font-size:17px;font-weight:900;white-space:nowrap}
+  .u-app .sb-tog{margin-left:auto;width:32px;height:32px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;color:var(--u-sub);display:grid;place-items:center;font-size:15px;flex:none;padding:0}
+  .u-app .sb-sec{font-size:11px;font-weight:700;color:var(--u-sub);letter-spacing:.08em;padding:8px 8px 4px}
+  .u-app .sb-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:11px 10px;border-radius:10px;font-size:15.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
+  .u-app .sb-it i{width:22px;text-align:center;font-style:normal;flex:none;font-size:17px}
+  .u-app .sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-accent)}
+  .u-app .sb-sub{display:flex;flex-direction:column;gap:2px;margin:0 0 6px 20px;padding-left:12px;border-left:2px solid var(--u-line)}
+  .u-app .sb-sub .sb-it{font-size:14px;padding:8px 10px}
+  .u-app .sb-sub .sb-it[aria-current="page"]{background:var(--u-chip);color:var(--u-ink)}
+  .u-app .sb-foot{margin-top:auto;border-top:1px solid var(--u-line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
+  .u-app .sb-add{display:none}
+  .u-app .sb-st{font-size:11.5px;padding:4px 10px;display:flex;flex-direction:column;gap:2px}
+}
 .eped.nosub .er{grid-template-columns:72px 1fr 30px}
 @media (max-width:520px){
   .eped.nosub .er{grid-template-columns:64px 1fr 30px}
@@ -685,13 +719,8 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 <header>
   <div class="wrap">
     <div class="hbar">
-      <div class="logo"><span class="lamp">ON AIR</span><span id="logoText" class="ltxt">エンタメ管理</span></div>
-      <div class="modes" role="tablist" aria-label="管理するもの">
-        <button type="button" role="tab" data-mode="a" aria-selected="true"><i class="mdot a" aria-hidden="true"></i>アニメ</button>
-        <button type="button" role="tab" data-mode="d" aria-selected="false"><i class="mdot d" aria-hidden="true"></i>ドラマ</button>
-        <button type="button" role="tab" data-mode="m" aria-selected="false"><i class="mdot m" aria-hidden="true"></i>映画</button>
-        <button type="button" role="tab" data-mode="yt" aria-selected="false"><span class="ytmark" aria-hidden="true">▶</span><span class="ytl">YouTube</span></button>
-      </div>
+      <button type="button" class="hmenu" data-drawer="open" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="hcur" id="hcur"></div>
       <span class="hsp"></span>
       <button class="add" id="addBtn" type="button" aria-label="追加"><span aria-hidden="true">＋</span><span class="addl"> 追加</span></button>
     </div>
@@ -702,6 +731,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 <div class="wrap vbarw"><div id="vbar" class="vbar"></div></div>
 <main class="wrap" id="main"><p class="loading">作品データを読み込み中…</p></main>
 <div class="tbwrap"><nav class="tabbar" id="tabbar" aria-label="画面の切り替え"></nav><button type="button" class="tbgear" id="tbGear" data-gear="1" aria-label="設定"></button></div>
+<div class="dscrim" data-drawer="close"></div>
 <div id="layer"></div>
 <button type="button" id="toTop" class="totop" aria-label="ページの先頭に戻る" hidden><span aria-hidden="true">↑</span>トップへ</button>
 </div>
@@ -715,15 +745,17 @@ const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 const stLabel = s => String(s ?? "").replace(/視聴済み/g, "視聴済");
 const COLLAB_SUBS_DEF = ["TOP4", "最俺", "P-P"];
 const TV_STATIONS = ["フジテレビ", "日本テレビ", "テレビ朝日", "TBS", "テレビ東京", "TOKYO MX", "NHK", "BS", "その他"];
+/* よく見る3つ（Netflix・Disney＋・ABEMA）を先頭に固定 */
+const VOD_TOP = ["Netflix", "Disney＋", "ABEMA"];
 const VODS = [
   "Netflix",
+  "Disney＋",
+  "ABEMA",
   "U-NEXT",
   "Prime Video",
-  "Disney＋",
   "hulu",
   "FOD",
   "TELASA",
-  "ABEMA",
   "Lemino",
   "dアニメストア",
 ];
@@ -793,10 +825,11 @@ const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
 if (typeof state.fOpen !== "string") state.fOpen = "";
-if (!["a", "d", "m", "yt"].includes(state.mode)) state.mode = "a";
+if (!["a", "d", "m", "s", "yt"].includes(state.mode)) state.mode = "a";
 if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
 if (typeof state.vod !== "string") state.vod = "";
 if (state.mode === "m") state.kind = state.mk;
+else if (state.mode === "s") state.kind = "all";
 else if (state.mode !== "yt") state.kind = state.mode;
 const saveUI = () =>
   ls.set(K_UI, {
@@ -816,7 +849,7 @@ const saveUI = () =>
   });
 /* ---------- 保存したフィルタ（アニメ・ドラマで別々。マスタに保存するので端末をまたいで同じ） ---------- */
 const SVK = ["sf", "era", "type", "cour", "series"];
-const svKey = () => (state.mode === "m" ? "m" : state.kind);
+const svKey = () => (state.mode === "m" || state.mode === "s" ? state.mode : state.kind);
 const svList = () => {
   const all = master.savedFilters || {};
   return Array.isArray(all[svKey()]) ? all[svKey()] : [];
@@ -1532,10 +1565,10 @@ function renderSidebar() {
           `<button type="button" class="sb-it${state.mode === m && on ? " on" : ""}"${state.mode === m && on ? ' aria-current="page"' : ""} data-go="${m}" data-tb="${esc(k)}">${esc(lab)}</button>`,
       )
       .join("")}</div>`;
-  sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b><button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button></div>
+  sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${matchMedia("(max-width:899px)").matches ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : `<button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button>`}</div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
-    ${mode("a", "📺", "アニメ")}${mode("d", "🎬", "ドラマ")}${mode("m", "🎞️", "映画")}${mode("yt", "▶️", "YouTube")}
+    ${mode("a", "📺", "アニメ")}${mode("d", "🎬", "ドラマ")}${mode("m", "🎞️", "映画")}${mode("s", "📡", "配信")}${mode("yt", "▶️", "YouTube")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
 function renderVbar() {
@@ -1589,21 +1622,25 @@ function renderTabbar() {
     .join("");
 }
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
+/* 配信タブ：種別「配信」（配信オリジナル）をジャンル問わずまとめて出す。リアリティ（k="r"）は映画・配信タブにだけ出る */
 const ofKind = i =>
-  (state.kind === "all" || i.k === state.kind) && (state.mode !== "m" || mediaOf(i).media === "movie");
+  (state.kind === "all" || i.k === state.kind) &&
+  (state.mode !== "m" || mediaOf(i).media === "movie") &&
+  (state.mode !== "s" || mediaOf(i).media === "stream");
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
 const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
 const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
 function vodBarHtml() {
   const used = new Set(items.filter(ofKind).flatMap(vodsOf));
-  const order = [...new Set([...M("vods"), ...used])];
+  const order = [...new Set([...VOD_TOP, ...M("vods"), ...used])];
   const l = order.filter(v => used.has(v) || v === state.vod);
   if (!l.length) return "";
   const b = (v, lab) =>
     `<button type="button" data-vod="${esc(v)}" aria-pressed="${state.vod === v}">${esc(lab)}</button>`;
   return `<div class="vodbar" role="group" aria-label="配信サイトで絞り込み">${b("", "すべて")}${l.map(v => b(v, v)).join("")}</div>`;
 }
-const kindTag = i => `<span class="kind ${i.k}">${i.k === "a" ? "アニメ" : "ドラマ"}</span>`;
+const KIND_LAB = { a: "アニメ", d: "ドラマ", r: "リアリティ" };
+const kindTag = i => `<span class="kind ${i.k}">${KIND_LAB[i.k] || "ドラマ"}</span>`;
 /* 番組表の時刻の下に出す放送局（配信なら配信サイト） */
 function stationTxt(i) {
   const m = mediaOf(i);
@@ -1990,7 +2027,12 @@ function setMain(html) {
 }
 function render() {
   const yt = state.mode === "yt";
-  document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-selected", b.dataset.mode === state.mode));
+  const hc = $("#hcur");
+  if (hc)
+    hc.innerHTML =
+      state.mode === "yt"
+        ? '<span class="ytmark" aria-hidden="true">▶</span>YouTube'
+        : `<i class="mdot ${state.mode}" aria-hidden="true"></i>${{ a: "アニメ", d: "ドラマ", m: "映画", s: "配信" }[state.mode]}`;
   renderTabbar();
   renderVbar();
   renderSidebar();
@@ -2056,7 +2098,7 @@ function filterHtml() {
       <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
       <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`
   }
-    ${state.mode === "m" ? "" : `<div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>`}
+    ${state.mode === "m" || state.mode === "s" ? "" : `<div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>`}
     <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">複数選べます</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
       .map(e => {
         const n = tb.filter(e.test).length;
@@ -2581,6 +2623,7 @@ function formHtml() {
       [
         ["a", "アニメ", "ka"],
         ["d", "ドラマ", "kd"],
+        ["r", "リアリティ", "kr"],
       ],
       f.k,
     )}</div></div>`,
@@ -2722,13 +2765,13 @@ function openForm(it, target) {
   } else
     form = {
       id: null,
-      k: state.kind === "d" ? "d" : "a",
+      k: ["d", "r"].includes(state.kind) ? state.kind : state.mode === "s" ? "r" : "a",
       t: "",
       s: "未視聴",
       dow: -1,
       time: "",
       from: "",
-      media: state.mode === "m" ? "movie" : "tv",
+      media: state.mode === "m" ? "movie" : state.mode === "s" ? "stream" : "tv",
       irregular: false,
       stations: [],
       plat: [],
@@ -3823,8 +3866,8 @@ function onSettingsClick(e) {
 function setMode(m) {
   if (state.mode === m) return;
   state.mode = m;
-  if (m === "m") {
-    state.kind = state.mk;
+  if (m === "m" || m === "s") {
+    state.kind = m === "m" ? state.mk : "all";
     state.type = [];
     state.limit = 200;
     state.series = [];
@@ -4415,7 +4458,41 @@ function onCommonClick(e) {
   return false;
 }
 /* クリックは上から順に試し、処理したところで止める */
+/* スマホ：☰メニューの開閉。メニュー内で画面を選んだら閉じる */
+function setDrawer(on) {
+  document.body.classList.toggle("drawer", on);
+  const b = document.querySelector(".hmenu");
+  if (b) b.setAttribute("aria-expanded", on);
+}
+function onDrawerClick(e) {
+  const d = e.target.closest("[data-drawer]");
+  if (d) {
+    if (d.dataset.drawer === "open") renderSidebar();
+    setDrawer(d.dataset.drawer === "open");
+    return true;
+  }
+  if (document.body.classList.contains("drawer") && e.target.closest("#sb [data-mode],#sb [data-tb],#sb [data-gear]"))
+    setDrawer(false);
+  return false;
+}
+(() => {
+  let x0 = null;
+  document.addEventListener("touchstart", e => (x0 = e.target.closest("#sb") ? e.touches[0].clientX : null), { passive: true });
+  document.addEventListener(
+    "touchend",
+    e => {
+      if (x0 != null && x0 - e.changedTouches[0].clientX > 60) setDrawer(false);
+      x0 = null;
+    },
+    { passive: true },
+  );
+  matchMedia("(max-width:899px)").addEventListener("change", () => {
+    setDrawer(false);
+    renderSidebar();
+  });
+})();
 const CLICK_HANDLERS = [
+  onDrawerClick,
   onShellClick,
   onSettingsClick,
   onNavClick,
