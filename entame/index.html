@@ -1569,7 +1569,7 @@ function renderSidebar() {
   /* 3種類とも下の項目を開いたまま出す。押すとその種類・その画面へ直接切り替える */
   const subOf = m =>
     m === "yt"
-      ? ["すべて", ...ytAuthors()].map(a => [a, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a])
+      ? ytAuthors().map(a => [a, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a])
       : m === "m"
         ? [
           ["all", "すべて", state.kind === "all"],
@@ -1598,7 +1598,7 @@ function renderVbar() {
   if (!v) return;
   const yt = state.mode === "yt";
   const opts = yt
-    ? ["すべて", ...ytAuthors()].map(a => [a, a, yst.author === a])
+    ? ytAuthors().map(a => [a, a, yst.author === a])
     : state.mode === "m"
       ? [
           ["all", "すべて", state.kind === "all"],
@@ -1617,7 +1617,7 @@ function renderTabbar() {
   const yt = state.mode === "yt";
   const EMO = { キヨ: "🐱", 牛沢: "🐮", レトルト: "🦀" };
   const items = yt
-    ? ["すべて", ...ytAuthors()].map(a => [
+    ? ytAuthors().map(a => [
         a,
         a,
         a === "すべて" ? TB_ICON.all : EMO[a] ? `<i class="temo" aria-hidden="true">${EMO[a]}</i>` : TB_ICON.user,
@@ -2060,6 +2060,9 @@ function setMain(html) {
 }
 function render() {
   const yt = state.mode === "yt";
+  /* YouTubeは「すべて」をなくし、投稿者ごとのタブだけ。今の投稿者がいなければ先頭にする */
+  const al = ytAuthors();
+  if (al.length && !al.includes(yst.author)) yst.author = al[0];
   const hc = $("#hcur");
   if (hc)
     hc.innerHTML =
