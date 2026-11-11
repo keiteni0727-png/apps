@@ -714,6 +714,38 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .clock .soon .lbl{font-size:13px}
   .row.lst .pwide .pill,.row.yrow.lst .pwide .pill{font-size:13px}
 }
+/* 絞り込み：1列のボタンと、下から出る選択肢 */
+.frow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 42px;gap:6px;margin-top:10px}
+.frow.one{display:flex}
+.frow.one .fb{flex:none;padding:0 14px;min-width:96px}
+.fb{height:36px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:10px;font:inherit;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;padding:0 6px}
+.fb .v{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.fb .chev{font-size:9px;color:var(--u-sub);flex:none}
+.fb.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
+.fb.on .chev{color:inherit;opacity:.7}
+.fb[aria-expanded="true"]{box-shadow:0 0 0 2px var(--u-accent)}
+.fb.srt{padding:0}
+.count{display:flex;align-items:center;gap:10px}
+.count .clear{border:0;background:transparent;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;padding:2px 0}
+.fpop-scrim{position:fixed;inset:0;z-index:50;background:var(--u-scrim)}
+.fsdrop.fpop{position:fixed;left:0;right:0;bottom:0;z-index:51;margin:0;border:0;border-radius:18px 18px 0 0;max-height:72vh;overflow:auto;overscroll-behavior:contain;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.2)}
+.fsdrop.fpop .fgroup:last-child{display:grid}
+.fsdrop.fpop .fgroup:nth-child(2):last-child{display:block}
+.fsdrop.fpop .fgroup:nth-child(2):last-child>h5{display:none}
+.fpop-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.fpop-h b{font-size:16px}
+.fsdrop.fpop .fgroup{grid-template-columns:76px 1fr;margin-top:12px}
+.fsdrop.fpop .fgroup h5{font-size:12.5px;margin-top:7px}
+.fsdrop.fpop .fgroup .chips{gap:6px}
+.fsdrop.fpop .fgroup .chips button,.fsdrop.fpop .fgroup .chips select,.fsdrop.fpop .fgroup .chips button[data-couryear]{padding:6px 12px;font-size:13.5px}
+.fsdrop.fpop .fgroup .chips button small{font-size:11px}
+.fsdrop.fpop #seriesQ{font-size:16px;padding:8px 10px}
+.fsdrop.fpop .sortlist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.fsdrop.fpop .sortlist button{padding:10px;font-size:14px}
+@media (min-width:900px){
+  .frow{grid-template-columns:repeat(4,minmax(0,170px)) 42px}
+  .fsdrop.fpop{left:calc(50% + var(--sbw,0px) / 2);right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:min(560px,90vw);border-radius:18px;padding-bottom:18px}
+}
 /* メニューのアイコン */
 .mic{display:inline-grid;place-items:center;width:22px;height:22px;line-height:0}
 .mic svg{width:20px;height:20px}
@@ -852,7 +884,7 @@ const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
 ["sf", "era", "cour", "series", "type"].forEach(k => (state[k] = arrOf(state[k])));
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
-if (typeof state.fOpen !== "string") state.fOpen = "";
+state.fOpen = "";
 if (!["a", "d", "m", "s", "yt"].includes(state.mode)) state.mode = "a";
 if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
 if (typeof state.vod !== "string") state.vod = "";
@@ -1876,7 +1908,7 @@ function isFinOn(i, day) {
 }
 function renderWeek() {
   const pool = items.filter(i => ofKind(i) && vodOk(i) && i.s === "視聴中");
-  let h = `${vodBarHtml()}<div class="clock" id="clock">${clockHtml()}</div>`;
+  let h = `${fRowHtml(["vod"])}${fPopHtml({ vod: vodPanelHtml() })}<div class="clock" id="clock">${clockHtml()}</div>`;
   const now = new Date();
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const by = new Map();
@@ -2022,6 +2054,46 @@ function fsBar(open, nF, sortLab, fBody, sBody) {
     <button type="button" class="fsbtn${open === "s" ? " on" : ""}" data-ftog="s" aria-expanded="${open === "s"}"><span class="ico" aria-hidden="true">⇅</span>ソート<small>${esc(sortLab)}</small><span class="chev" aria-hidden="true">${open === "s" ? "▴" : "▾"}</span></button></div>
     ${open === "f" ? `<div class="fsdrop">${fBody}</div>` : open === "s" ? `<div class="fsdrop sort">${sBody}</div>` : ""}`;
 }
+/* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
+const FKEYS = ["sf", "vod", "time", "etc", "sort"];
+const SORT_IC =
+  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
+function fBtnLab(k) {
+  const many = (lab, l, one) => (!l.length ? [lab, false] : l.length === 1 ? [one(l[0]), true] : [`${lab} ${l.length}`, true]);
+  if (k === "sf") return many("視聴", state.sf, stLabel);
+  if (k === "vod") return state.vod ? [state.vod, true] : ["配信", false];
+  if (k === "time") return many("時期", [...state.cour, ...state.era], v => (/^\d{4}/.test(v) ? `${v.slice(2, 4)}年${v.slice(4)}` : v === ALLYEAR ? "通年" : v));
+  if (k === "etc") {
+    const cur = svCur();
+    if (cur) return ["★" + cur.name, true];
+    return many("その他", [...state.series, ...state.type], v => (TYPES.find(t => t[0] === v) || [, v])[1]);
+  }
+  return ["", state.sort !== "new"];
+}
+function fRowHtml(keys) {
+  const btns = keys
+    .map(k => {
+      const [lab, on] = fBtnLab(k);
+      const open = state.fOpen === k;
+      if (k === "sort")
+        return `<button type="button" class="fb srt${on ? " on" : ""}" data-fpop="sort" aria-expanded="${open}" aria-label="並び順：${esc(SORTS.find(x => x[0] === state.sort)[1])}">${SORT_IC}</button>`;
+      return `<button type="button" class="fb${on ? " on" : ""}" data-fpop="${k}" aria-expanded="${open}"><span class="v">${esc(lab)}</span><span class="chev" aria-hidden="true">▾</span></button>`;
+    })
+    .join("");
+  return `<div class="frow${keys.length === 1 ? " one" : ""}">${btns}</div>`;
+}
+function fPopHtml(panels) {
+  const k = state.fOpen;
+  if (!panels[k]) return "";
+  const T = { sf: "視聴", vod: "配信サイト", time: "時期", etc: "その他", sort: "並び順" };
+  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-fpop="${k}">完了</button></div>${panels[k]}</div>`;
+}
+function vodPanelHtml() {
+  const used = new Set(items.filter(ofKind).flatMap(vodsOf));
+  const l = [...new Set([...VOD_TOP, ...M("vods"), ...used])].filter(v => used.has(v) || v === state.vod || VOD_TOP.includes(v));
+  const n = v => items.filter(i => ofKind(i) && vodsOf(i).includes(v)).length;
+  return `<div class="fgroup"><h5>配信</h5><div class="chips">${chipBtn("data-vod", "", !state.vod, "すべて")}${l.map(v => chipBtn("data-vod", v, state.vod === v, v, n(v))).join("")}</div></div>`;
+}
 function renderList() {
   const list = filtered();
   const act = [];
@@ -2048,12 +2120,18 @@ function renderList() {
     })
     .join("")}</div></div>`;
   const sortHtml = `<div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div>`;
+  const anyF = act.length || state.vod;
+  const panels = {
+    sf: sfHtml,
+    vod: vodPanelHtml(),
+    time: filterHtml("time"),
+    etc: filterHtml("series") + filterHtml("type") + svPanelHtml(),
+    sort: sortHtml,
+  };
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
-    ${vodBarHtml()}
-    ${svBarHtml()}
-    ${fsBar(state.fOpen, act.length, SORTS.find(x => x[0] === state.sort)[1], svPanelHtml() + sfHtml + filterHtml(), sortHtml)}
-    ${act.length ? `<div class="active">${act.map(([k, v]) => `<button type="button" class="tag" data-unset="${k}" aria-label="${esc(v)}の条件を外す">${esc(v)}</button>`).join("")}<button type="button" class="clear" data-unset="all">すべて解除</button></div>` : ""}
-    <p class="count">${list.length}件</p>
+    ${fRowHtml(FKEYS)}
+    <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}</p>
+    ${fPopHtml(panels)}
     ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
 }
 let loaded = false;
@@ -2124,7 +2202,7 @@ function seriesSugHtml(q) {
     ? `${nq ? "" : `<span class="hint" style="width:100%">作品数の多いシリーズ</span>`}${shown.map(n => `<button type="button" data-seradd="${esc(n)}">＋ ${esc(n)}<small>${cnt[n]}</small></button>`).join("")}${names.length > shown.length ? `<span class="hint">ほか${names.length - shown.length}件。名前で検索してください</span>` : ""}`
     : `<span class="hint">「${esc(q)}」に一致するシリーズはありません</span>`;
 }
-function filterHtml() {
+function filterHtml(part) {
   const base = items.filter(i => ofKind(i) && seriesOk(i));
   const cnt = seriesCounts();
   const chip = (attr, val, cur, label, n) =>
@@ -2139,15 +2217,28 @@ function filterHtml() {
     ),
   ].sort((a, b) => b - a);
   const cy = courYears.includes(state.courY) ? state.courY : courYears[0];
-  return `${
-    false
-      ? ""
-      : `<div class="fgroup"><h5>シリーズ <span class="hint" style="font-weight:400">複数選べます</span></h5>
+  const P = {};
+  P.series = `<div class="fgroup"><h5>シリーズ <span class="hint" style="font-weight:400">複数選べます</span></h5>
       ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
       <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
-      <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`
-  }
-    ${state.mode === "m" || state.mode === "s" ? "" : `<div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>`}
+      <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
+  P.type = `${state.mode === "m" || state.mode === "s" ? "" : `<div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>`}`;
+  const yAll = SEASONS.every(se => state.cour.includes(cy + se));
+  P.time = `<div class="fgroup"><h5>放送クール</h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
+      <select id="courY" aria-label="クールの年">${courYears.map(y => `<option ${y === cy ? "selected" : ""}>${y}</option>`).join("")}</select>
+      <button type="button" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button>
+      ${SEASONS.map(se => {
+        const key = `${cy}${se}`;
+        return chip("data-cour", key, state.cour, se, tb.filter(i => coursOf(i).includes(key)).length);
+      }).join("")}</div></div>
+    <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">クール未設定の作品も</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
+      .map(e => {
+        const n = tb.filter(e.test).length;
+        return n ? chip("data-era", e.key, state.era, e.key, n) : "";
+      })
+      .join("")}</div></div>`;
+  if (part) return P[part] || "";
+  return `${P.series}${P.type}
     <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">複数選べます</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
       .map(e => {
         const n = tb.filter(e.test).length;
@@ -3952,8 +4043,9 @@ function onNavClick(e) {
   }
   const vb = e.target.closest("[data-vod]");
   if (vb) {
-    state.vod = state.vod === vb.dataset.vod ? "" : vb.dataset.vod;
+    state.vod = vb.dataset.vod === "" ? "" : state.vod === vb.dataset.vod ? "" : vb.dataset.vod;
     state.limit = 200;
+    state.fOpen = "";
     render();
     return true;
   }
@@ -3987,7 +4079,7 @@ function onNavClick(e) {
 }
 /* フィルタ・ソートの折りたたみは、外を押したら閉じる */
 function closeDropdownOnOutsideClick(e) {
-  if (!e.target.closest(".fsdrop,.fsbar,.svbar,#layer,#subPop,.u-toast") && e.target.isConnected) {
+  if (!e.target.closest(".fsdrop,.fsbar,.svbar,.frow,#layer,#subPop,.u-toast") && e.target.isConnected) {
     let shut = false;
     if (state.mode === "yt" && yst.fp) {
       yst.fp = "";
@@ -4041,6 +4133,24 @@ function onRowClick(e) {
 }
 /* ライブラリのフィルタ・ソート */
 function onFilterClick(e) {
+  const fp = e.target.closest("[data-fpop]");
+  if (fp) {
+    const v = fp.dataset.fpop;
+    state.fOpen = state.fOpen === v ? "" : v;
+    state.svMode = "";
+    state.svName = null;
+    render();
+    return true;
+  }
+  const cyb = e.target.closest("[data-couryear]");
+  if (cyb) {
+    const ks = SEASONS.map(se => cyb.dataset.couryear + se);
+    const all = ks.every(k => state.cour.includes(k));
+    state.cour = all ? state.cour.filter(c => !ks.includes(c)) : [...new Set([...state.cour, ...ks])];
+    state.limit = 200;
+    render();
+    return true;
+  }
   const ftg = e.target.closest("[data-ftog]");
   if (ftg) {
     const v = ftg.dataset.ftog;
@@ -4120,6 +4230,7 @@ function onFilterClick(e) {
     const [g, v] = u.split(/:(.*)/s);
     if (u === "all" || u === "filters") {
       Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [] });
+      if (u === "all") state.vod = "";
     } else if (v !== undefined && Array.isArray(state[g])) state[g] = state[g].filter(x => x !== v);
     else if (g === "sort") state.sort = "new";
     else if (g === "type") state.type = [];
