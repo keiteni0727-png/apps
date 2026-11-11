@@ -86,8 +86,22 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
         id: ref.id,
         get: async () => snap(await F.getDoc(ref)),
         set: data => F.setDoc(ref, data),
-        /* 入れ子の項目も「渡した分だけ」書きかえる（claude.ai の保存先の update と同じ動きにそろえる） */
-        update: data => F.setDoc(ref, data, { merge: true }),
+        /* 渡した項目だけ書きかえる。{items:{id:中身}} なら items の中の id ごとに丸ごと入れ替え（null は削除の印として残す） */
+        update: async data => {
+          const args = [];
+          Object.entries(data).forEach(([k, v]) => {
+            if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length)
+              Object.entries(v).forEach(([k2, v2]) => args.push(new F.FieldPath(k, k2), v2));
+            else args.push(new F.FieldPath(k), v);
+          });
+          if (!args.length) return;
+          try {
+            await F.updateDoc(ref, ...args);
+          } catch (e) {
+            if (e && e.code === "not-found") await F.setDoc(ref, data, { merge: true });
+            else throw e;
+          }
+        },
         delete: () => F.deleteDoc(ref),
         onSnapshot: (cb, err) => F.onSnapshot(ref, d => cb(snap(d)), err),
       };

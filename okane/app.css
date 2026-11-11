@@ -1,0 +1,1226 @@
+/* 色・書体・角丸・土台・左メニューは u-base.css（アプリ共通） */
+
+/* 画面の帯の高さ（家計簿の配置で使う） */
+:root{--abh:56px;--tbh:58px}
+/* 口座の区分の色（支払い） */
+:root{--c-card:#2f5e8a;--c-loan:#a3602a;--c-other:#6d6a80;--c-personal:#7a5a6e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--c-card:#7fb0dc;--c-loan:#e0a06a;--c-other:#aeaac4;--c-personal:#cfa3bf}}
+:root[data-theme="dark"]{--c-card:#7fb0dc;--c-loan:#e0a06a;--c-other:#aeaac4;--c-personal:#cfa3bf}
+
+/* 通知（共通部品）の位置：下部メニューや選択バーの上に出す */
+body.sel{--u-toast-b:180px}
+@media (max-width:899px){body{--u-toast-b:calc(var(--tbh) + 22px)}body.sel{--u-toast-b:calc(var(--tbh) + 190px)}}
+
+/* ===== 土台 =====
+  .kb＝家計簿の部品、.pay＝支払管理の部品。どちらも箱を作らず（display:contents）、CSSの範囲を分けるためだけに使う
+  ページ全体をスクロールさせる。端を越えて引っ張れないようにする */
+.kb,.pay{display:contents}
+.kb{font:15px/1.5 var(--u-f)}
+.pay{font-family:var(--u-f);font-size:14px;line-height:1.6;color:var(--u-ink)}
+@media (max-width:899px){body{padding-bottom:calc(var(--tbh) + 24px + env(safe-area-inset-bottom,0px))}}
+/* 画面の切り替え：body の data-tab で出し分ける */
+body:not([data-tab="list"]) #v-list,body:not([data-tab="graph"]) #v-graph,body:not([data-tab="ai"]) #v-ai,
+body:not([data-tab="home"]) #v-home,body:not([data-tab="balance"]) #v-balance{display:none}
+body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
+
+/* ===================== 家計簿の部品 ===================== */
+/* ===== 3アプリ共通：色・書体・角丸。アクセント色だけアプリごとに変える ===== */
+
+
+
+
+/* 家計簿で使う短い名前（JavaScript の中の style でも使う） */
+
+
+/* ===== 土台 =====
+  スマホ：画面は1つずつ＋下部メニュー。PC（幅900px以上）：ヘッダー内のメニューで切り替え
+  ページ全体をスクロールさせる。端を越えて引っ張れないようにする */
+
+
+
+
+.kb .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+
+/* 入力欄：文字は16px（iPhoneで入力時に拡大されないため） */
+.kb select,.kb input{font:inherit;color:var(--u-ink)}
+.kb select,.kb input[type=text],.kb input[type=number],.kb input[type=date]{background:var(--u-bg);border:1px solid var(--u-line);border-radius:var(--u-r);padding:7px 8px;min-width:0;width:100%;max-width:100%;font-size:16px}
+.kb input[type=date]{-webkit-appearance:none;appearance:none;min-height:38px;display:block}
+.kb input[type=date]::-webkit-date-and-time-value{text-align:left}
+
+/* ボタン：塗り＝主な操作、枠線＝そのほかの操作、ghost＝控えめな文字 */
+@media (hover:hover){.kb button:not(:disabled):hover{border-color:var(--u-accent)}}
+.kb button.armed{color:var(--u-danger)} /* 「2回押す」の1回目 */
+.kb button.grow{flex:1}
+.kb button.wide{width:100%}
+
+/* 並べ方・文字 */
+.kb .row{display:flex;gap:8px;align-items:center}
+.kb .sp{justify-content:space-between}
+.kb .mu{color:var(--u-sub);font-size:13px}
+.kb .err{color:var(--u-danger)}
+.kb .num,.kb .amt,.kb .total{font-variant-numeric:tabular-nums}
+.kb .cell{min-width:0} /* 横並びの中で、文字の列を縮められるようにする */
+.kb .empty{padding:16px 0}
+.kb .mt4{margin-top:4px}.kb .mt6{margin-top:6px}.kb .mt8{margin-top:8px}.kb .mt10{margin-top:10px}.kb .mt12{margin-top:12px}.kb .mt14{margin-top:14px}.kb .mb6{margin-bottom:6px}
+/* 金額は共通の数字書体 */
+.kb .total,.kb .amt,.kb .kpis b,.kb .tiles b,.kb .day span:last-child,.kb #selsum{font-family:var(--u-num);font-weight:600;letter-spacing:-.01em}
+
+/* ===== 共通部品 ===== */
+.kb .u-mark{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.12em;line-height:1;color:var(--u-on);background:var(--u-accent);padding:4px 6px 3px;border-radius:4px;flex:none}
+.kb .card{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-rl);padding:16px;margin-bottom:12px}
+.kb .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.kb .sh b{font-size:16px}
+
+/* セグメント（設定の項目・マスタの種類） */
+.kb .seg{display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;margin:10px 0 14px}
+.kb .seg button{flex:1;border:0;background:none;color:var(--u-sub);padding:8px 6px;border-radius:8px;font-size:14px}
+.kb .seg button[aria-current="page"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.kb .seg.sm{margin:0 0 10px;max-width:320px}
+.kb .seg.sm button{padding:6px;font-size:13px}
+
+/* アイコン・ラベル（色相 --h・彩度 --s は分類ごと） */
+.kb .ico{width:36px;height:36px;min-width:36px;border-radius:12px;display:grid;place-items:center;font-size:19px;line-height:1;background:hsl(var(--h) var(--s,75%) 93%)}
+.kb .ico.sm{width:26px;height:26px;min-width:26px;border-radius:8px;font-size:14px}
+.kb .chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;line-height:1.7;padding:0 8px;border-radius:999px;white-space:nowrap;background:hsl(var(--h) var(--s,70%) 92%);color:hsl(var(--h) var(--s,55%) 28%)}
+.kb .chip.out{background:none;border:1px solid hsl(var(--h) var(--s,45%) 75%);line-height:1.55}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) .kb .ico{background:hsl(var(--h) var(--s,35%) 22%)}
+  :root:not([data-theme="light"]) .kb .chip{background:hsl(var(--h) var(--s,40%) 24%);color:hsl(var(--h) var(--s,75%) 82%)}
+  :root:not([data-theme="light"]) .kb .chip.out{background:none;border-color:hsl(var(--h) var(--s,35%) 38%)}
+}
+:root[data-theme="dark"] .kb .ico{background:hsl(var(--h) var(--s,35%) 22%)}
+:root[data-theme="dark"] .kb .chip{background:hsl(var(--h) var(--s,40%) 24%);color:hsl(var(--h) var(--s,75%) 82%)}
+:root[data-theme="dark"] .kb .chip.out{background:none;border-color:hsl(var(--h) var(--s,35%) 38%)}
+
+/* 丸いチェック */
+.kb .ck{appearance:none;-webkit-appearance:none;width:22px;height:22px;min-width:22px;margin:0;border-radius:50%;border:2px solid var(--u-strong);background:var(--u-surface);display:inline-grid;place-content:center;cursor:pointer;transition:background .12s,border-color .12s}
+.kb .ck:checked,.kb .ck:indeterminate{background:var(--u-accent);border-color:var(--u-accent)}
+.kb .ck:checked::after{content:"";width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
+.kb .ck:indeterminate::after{content:"";width:10px;height:2.5px;border-radius:2px;background:#fff}
+.kb .ckl{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--u-sub);font-weight:600;cursor:pointer;user-select:none}
+
+/* 入力フォーム（確認・編集・ルール） */
+.kb .rv{border:1px solid var(--u-line);border-radius:12px;padding:10px;margin:8px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kb .rv .full{grid-column:1/-1}
+.kb .rv>*{min-width:0}
+.kb .rv.dup{border-color:var(--u-danger)}
+.kb .rv label{display:block;font-size:12px;color:var(--u-sub)}
+.kb .warn{color:var(--u-danger);font-size:12px}
+/* 直近のメモ候補 */
+.kb .mcs{grid-column:1/-1;display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin-bottom:10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.kb .mcs::-webkit-scrollbar{display:none}
+.kb .mcs .lb{font-size:11px;color:var(--u-sub);font-weight:700;align-self:center;white-space:nowrap}
+.kb .mc{flex:none;min-height:36px;padding:6px 14px;border-radius:999px;background:var(--u-surface);color:var(--u-ink);font-size:14px;font-weight:700;white-space:nowrap;max-width:70vw;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--u-line)}
+.kb .mc.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
+
+/* 棒・増減 */
+.kb .track{height:6px;border-radius:3px;background:var(--u-bg);margin-top:5px;overflow:hidden}
+.kb .track span{display:block;height:100%;border-radius:0 3px 3px 0}
+.kb .dl{font-size:11px;font-weight:700}
+.kb .dl.up{color:var(--u-danger)}.kb .dl.dn{color:var(--u-ok)}.kb .dl.eq{color:var(--u-sub)}
+
+/* ポップアップ・通知 */
+.kb #rbk:not([hidden]){position:fixed;inset:0;background:var(--u-scrim);z-index:40}
+.kb .pop:not([hidden]){position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 12px);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);max-width:700px;margin:0 auto;overflow:auto;z-index:50;border-radius:16px;box-shadow:var(--u-shadow)}
+/* トップへ戻る */
+
+/* ===== ヘッダー：3アプリ共通の1行構成 ===== */
+.kb .appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--u-surface);border-bottom:1px solid var(--u-line)}
+.kb .abin{height:var(--abh);display:flex;align-items:center;gap:10px}
+.kb .brand{display:flex;align-items:center;gap:8px;margin-right:auto;font-size:18px;font-weight:900;letter-spacing:.02em}
+.kb .hnav{display:none;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;margin-right:auto}
+.kb .hnav button{border:0;background:none;color:var(--u-sub);padding:6px 14px;border-radius:8px;font-size:14px}
+.kb .hnav button[aria-current="page"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.kb button.mcur{height:36px;padding:0 12px;border-color:var(--u-accent);color:var(--u-accent);font-size:14px;flex:none}
+.kb button.mcur:disabled{opacity:.35}
+.kb .mnav{display:flex;align-items:center;gap:2px;background:var(--u-chip);border:0;border-radius:var(--u-r);padding:3px}
+.kb .mnav select{border:0;background:none;width:auto;font-family:var(--u-num);font-weight:600;padding:4px 2px;text-align:center}
+.kb .ib{width:36px;height:36px;padding:0;border:0;border-radius:999px;background:none;color:var(--u-sub);display:grid;place-items:center;font-size:18px}
+.kb .ib svg{width:20px;height:20px}
+.kb .mnav .ib{width:30px;height:30px}
+.kb #gear[aria-pressed="true"]{color:var(--u-accent);background:var(--u-accent2)}
+
+/* ===== 下部メニュー：選んでいる項目はアイコンの後ろに淡い丸 ===== */
+
+/* ===== 画面の切り替え ===== */
+.kb .layout{padding-block:14px 24px}
+
+/* ===== 明細：当月サマリ ===== */
+.kb .sum .sumtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.kb .eyebrow{font-size:12px;color:var(--u-sub);font-weight:600;letter-spacing:.04em}
+.kb .total{font-size:32px;line-height:1.15;margin-top:2px}
+.kb .delta{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.kb .delta.up{background:var(--u-danger2);color:var(--u-danger)}
+.kb .delta.dn{background:var(--u-ok2);color:var(--u-ok)}
+.kb .delta.eq{background:var(--u-bg);color:var(--u-sub)}
+.kb .stack{display:flex;gap:2px;height:12px;border-radius:6px;overflow:hidden;margin:14px 0 8px;background:var(--u-bg)}
+.kb .stack span{display:block;height:100%}
+.kb .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--u-sub)}
+.kb .legend span{display:inline-flex;align-items:center;gap:4px}
+.kb .legend i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.kb .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.kb .kpis div{background:var(--u-bg);border-radius:var(--u-r);padding:8px 10px;min-width:0}
+.kb .kpis span{display:block;font-size:11px;color:var(--u-sub);font-weight:600}
+.kb .kpis b{font-size:15px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kb .meths{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+
+/* ===== 明細：追加・一覧 ===== */
+.kb #msg{margin-top:6px}
+.kb #msg:empty{display:none}
+.kb #lhead{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--abh));z-index:10;background:var(--u-surface);margin:-16px -16px 0;padding:12px 16px 8px;border-bottom:1px solid var(--u-line);border-radius:var(--u-rl) var(--u-rl) 0 0}
+.kb .filters{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kb .filters #fq{grid-column:1/-1}
+.kb .day{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700;margin:14px -16px 2px;padding:6px 16px;background:var(--u-bg);border-block:1px solid var(--u-line)}
+.kb .day:first-child{margin-top:0;border-top:0}
+.kb .day small{font-size:12px;font-weight:600;color:var(--u-sub)}
+.kb .day.sun small{color:var(--u-danger)}
+.kb .day.sat small{color:var(--u-accent)}
+.kb .day span:last-child{font-size:13px;color:var(--u-sub);font-variant-numeric:tabular-nums}
+.kb .it{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--u-line);cursor:pointer}
+.kb .it:last-child{border-bottom:0}
+.kb .it.on{background:var(--u-accent2);margin:0 -16px;padding:10px 16px}
+.kb .itm{flex:1;min-width:0}
+.kb .memo{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb .tag{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.kb .tag .mu{font-size:11px}
+.kb .it.ro{cursor:default} /* グラフの明細（押しても何も起きない） */
+.kb .amt{white-space:nowrap}
+.kb .foot{text-align:center;margin:6px 0 10px}
+
+/* ===== 選択したときの下部バー・詳細編集 ===== */
+.kb #selbar:not([hidden]){position:fixed;left:0;right:0;bottom:0;z-index:35;background:var(--u-surface);border-top:1px solid var(--u-line);box-shadow:0 -6px 20px rgba(16,24,40,.14);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.kb #selbar .in{max-width:760px;margin:0 auto;display:grid;gap:8px}
+.kb #selbar .acts{display:flex;flex-wrap:wrap;gap:6px}
+.kb #selbar .acts button{padding:8px 12px;font-size:14px}
+.kb #selbar .q{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+body.sel .kb .layout{padding-bottom:190px}
+.kb #bulk:not([hidden]){bottom:auto}
+.kb #bsum{margin:4px 0 8px}
+
+/* ===== グラフ ===== */
+.kb .gctl{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.kb .gctl #gsel{grid-column:1/-1}
+.kb .gh{font-size:14px;font-weight:800;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.kb .gh small{font-size:11.5px;font-weight:600;color:var(--u-sub)}
+.kb .gselh{margin-top:6px;flex-wrap:wrap}
+.kb .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.kb .tiles div{background:var(--u-bg);border-radius:var(--u-r);padding:8px;min-width:0}
+.kb .tiles span{display:block;font-size:11px;color:var(--u-sub);font-weight:600}
+.kb .tiles b{font-variant-numeric:tabular-nums;font-size:14px;white-space:nowrap}
+.kb .tiles small{display:block;font-size:10px;color:var(--u-sub)}
+/* 構成比ドーナツと項目ごとの前月比 */
+.kb .donutwrap{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:center}
+.kb .donut{width:132px;height:132px;display:block}
+.kb .donut .dk{font-size:10px;fill:var(--u-sub);font-family:var(--u-f)}
+.kb .donut .dv{font-size:15px;font-weight:600;fill:var(--u-ink);font-family:var(--u-num)}
+.kb .irow{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 4px;border-radius:8px;cursor:pointer}
+.kb .irow:hover{background:var(--u-bg)}
+.kb .irow .nm{display:flex;justify-content:space-between;gap:6px;font-size:13px;font-weight:600}
+.kb .irow .nm small{color:var(--u-sub);font-family:var(--u-num);font-weight:600}
+.kb .irow .track{margin-top:4px;height:5px}
+.kb .irow .rt{text-align:right;font-family:var(--u-num);font-size:13px;font-weight:600;line-height:1.25}
+.kb .irow .rt .dl{display:block;font-family:var(--u-f)}
+.kb .irow .permo{font-size:10px;color:var(--u-sub);font-family:var(--u-f)}
+/* 月別推移・日別の棒 */
+.kb .chart{position:relative;display:flex;align-items:flex-end;gap:4px;height:120px;border-bottom:1px solid var(--u-strong);margin-top:4px}
+.kb .chart .avg{position:absolute;left:0;right:0;border-top:1px dashed var(--u-sub);pointer-events:none}
+.kb .chart .col{flex:1;height:100%;display:flex;align-items:flex-end;cursor:pointer}
+.kb .chart .col span{display:block;width:100%;border-radius:4px 4px 0 0;min-height:1px}
+.kb .chart .col .stk{width:100%;display:flex;flex-direction:column-reverse;border-radius:4px 4px 0 0;overflow:hidden}
+.kb .chart .col .stk i{display:block;width:100%;border-top:1px solid var(--u-surface)}
+.kb .chart.daily{gap:1px}
+.kb .chart.daily .col span{border-radius:2px 2px 0 0}
+.kb .xlab{display:flex;gap:4px}
+.kb .xlab div{flex:1;text-align:center;font-size:10px;color:var(--u-sub);cursor:pointer;line-height:1.3;font-variant-numeric:tabular-nums}
+.kb .xlab div.on{color:var(--u-accent);font-weight:700}
+.kb .xlab .l{text-align:left}
+.kb .xlab .r{text-align:right}
+.kb .lg2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--u-sub);margin-top:6px}
+.kb .lg2 span{display:inline-flex;align-items:center;gap:4px}
+.kb .lg2 i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.kb .lg2 i.ln{height:3px;border-radius:2px}
+.kb .lg2 i.dash{height:0;border-top:2px dashed var(--u-sub);background:none}
+.kb .lg2.col{flex-direction:column;gap:3px}
+/* 当月のペース・曜日別 */
+.kb .pace{position:relative}
+.kb .pace svg{width:100%;height:140px;display:block;overflow:visible}
+.kb .pace .yl{position:absolute;left:0;top:-2px;font-size:10px;color:var(--u-sub);font-family:var(--u-num)}
+.kb .pnote{font-size:13px;margin-top:6px}
+.kb .pnote b{font-family:var(--u-num)}
+.kb .pnote .dl{font-size:13px}
+.kb .wdr{display:grid;grid-template-columns:22px minmax(0,1fr) 72px;gap:8px;align-items:center;font-size:12.5px;margin:3px 0}
+.kb .wdr>span:last-child{text-align:right;font-family:var(--u-num);font-weight:600}
+.kb .wdr .track{margin:0;height:8px}
+.kb .wdr .wd{font-weight:700;color:var(--u-ink)}
+.kb .wdr .wd.sun{color:var(--u-danger)}
+.kb .wdr .wd.sat{color:var(--u-accent)}
+
+/* ===== AI分析 ===== */
+.kb .aictl{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;margin:12px 0 4px}
+.kb .aiwait{display:flex;align-items:center;gap:10px;padding:18px 0;color:var(--u-sub)}
+.kb .aiwait i{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--u-strong);border-top-color:var(--u-accent);animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.kb .aihero{background:var(--u-accent2);border-radius:var(--u-rl);padding:16px;margin:12px 0}
+.kb .aihero .k{font-size:12px;font-weight:700;color:var(--u-accent)}
+.kb .aihero .v{font-family:var(--u-num);font-size:30px;font-weight:600;line-height:1.2;margin:2px 0 6px}
+.kb .aihero .unit{font-size:14px;font-family:var(--u-f);font-weight:700}
+.kb .aihero p{margin:0;line-height:1.7}
+.kb .aih{font-size:15px;font-weight:800;margin:18px 0 8px}
+.kb .svgrid{display:grid;gap:10px}
+.kb .sv{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:14px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
+.kb .sv .t{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.kb .sv .t b{font-size:15px}
+.kb .sv .meta{gap:6px;margin-top:4px;flex-wrap:wrap}
+.kb .sv .save{font-family:var(--u-num);font-weight:600;font-size:14px;color:var(--u-ok);background:var(--u-ok2);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.kb .sv p{margin:6px 0;font-size:13.5px;line-height:1.7;color:var(--u-ink)}
+.kb .sv ul{margin:6px 0 0;padding-left:1.2em;font-size:13.5px;line-height:1.7}
+.kb .conf{font-size:11px;font-weight:700;color:var(--u-sub);border:1px solid var(--u-line);border-radius:999px;padding:0 8px}
+.kb .ail{display:grid;gap:8px}
+.kb .ail div{background:var(--u-bg);border-radius:var(--u-r);padding:10px 12px;font-size:13.5px;line-height:1.7}
+.kb .ail b{display:block;font-size:14px}
+
+/* ===== 設定：分類ルール ===== */
+.kb .ptitle{font-size:17px}
+.kb .st-desc{margin:4px 0 12px}
+.kb #st-master .st-desc{margin:2px 0 10px}
+.kb .rule{border:1px solid var(--u-line);border-radius:14px;padding:12px;margin-bottom:8px}
+.kb .rule .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.kb .kind{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--u-accent2);color:var(--u-accent)}
+.kb .kind.split{background:var(--u-danger2);color:var(--u-danger)}
+.kb .kind.name{background:var(--u-ok2);color:var(--u-ok)}
+.kb .rdesc{margin:6px 0 8px;font-size:14px;line-height:1.6}
+.kb .rdesc q{quotes:"「" "」";font-weight:700}
+.kb .rule .acts{display:flex;flex-wrap:wrap;gap:6px}
+.kb .rule .acts button{padding:7px 12px;font-size:13px}
+/* 既存データへの適用：対象一覧 */
+.kb .pv{margin-top:10px;border-top:1px solid var(--u-line);padding-top:10px}
+.kb .pvl{max-height:300px;overflow:auto;border:1px solid var(--u-line);border-radius:10px}
+.kb .pvr{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--u-line);font-size:13px;cursor:pointer}
+.kb .pvr:last-child{border-bottom:0}
+.kb .pvr .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb .pvr .chg{color:var(--u-sub);font-size:12px;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.kb .pvr .chg em{font-style:normal;color:var(--u-ok);font-weight:700}
+/* ルールの追加・編集フォーム */
+.kb .rform{border:1px dashed var(--u-strong);border-radius:14px;padding:12px;margin-top:12px}
+.kb .rform .lg{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--u-ink);margin-top:6px}
+.kb .rform .rv{border:0;padding:0;margin:8px 0}
+
+/* ===== 設定：マスタ・データ ===== */
+.kb .mrow{display:grid;grid-template-columns:46px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--u-line)}
+.kb .mrow:last-child{border-bottom:0}
+.kb .mrow .me{width:46px;height:40px;text-align:center;font-size:20px;padding:0;border-radius:12px;background:hsl(var(--h) var(--s,75%) 93%);border-color:transparent}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kb .mrow .me{background:hsl(var(--h) var(--s,35%) 22%)}}
+:root[data-theme="dark"] .kb .mrow .me{background:hsl(var(--h) var(--s,35%) 22%)}
+.kb .mrow .mn{font-weight:700}
+.kb .mrow .cnt{font-size:11px;color:var(--u-sub);white-space:nowrap;font-family:var(--u-num)}
+.kb .mrow .mv{display:flex;gap:2px}
+.kb .mrow .mv button{width:36px;height:36px;padding:0;font-size:15px}
+.kb .mrow .mdel{padding:6px 8px;font-size:12px}
+.kb .mrow.used .mdel{opacity:.4;cursor:default}
+.kb .mrow .info{grid-column:2/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.kb .madd{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:6px;margin-top:12px}
+.kb .madd #madde{text-align:center;font-size:18px;padding:4px}
+.kb .mcf{background:var(--u-danger2);border-radius:var(--u-r);padding:10px 12px;margin-top:10px;font-size:13.5px}
+.kb .mcf .row{margin-top:8px}
+.kb .dcard{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:14px;margin-bottom:10px;display:grid;gap:6px;justify-items:start}
+
+/* ===== スマホ（幅899px以下） ===== */
+@media (max-width:899px){
+  
+  .kb .abin{gap:6px}
+  /* 設定は画面の切り替えで開く（[hidden] を上書きするため !important） */
+  body[data-tab="rules"] .kb .layout{display:none}
+  body[data-tab="rules"] .kb #rulepanel{display:block!important;position:static;box-shadow:none;max-width:none;overflow:visible;margin:14px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+  body[data-tab="rules"] .kb #rbk{display:none}
+  /* 選択バー・通知・トップへは下部メニューの上に浮かせる */
+  .kb #selbar:not([hidden]){left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(var(--tbh) + 18px + env(safe-area-inset-bottom,0px));padding:10px 12px;border:1px solid var(--u-line);border-radius:18px}
+}
+@media (max-width:599px){
+  .kb .aictl{grid-template-columns:1fr auto}
+  .kb .aictl #aigoal{grid-column:1/-1;grid-row:2}
+}
+@media (max-width:440px){
+  .kb .brand .u-mark{display:none}
+  .kb button.mcur{padding:0 9px}
+}
+
+/* ===== PC（幅900px以上） ===== */
+@media (min-width:900px){
+  .kb .brand{margin-right:12px}
+  .kb .hnav{display:flex}
+  .kb #v-list{max-width:780px;margin:0 auto}
+  .kb #v-graph,.kb #v-ai{padding:22px 24px}
+  .kb .gctl{grid-template-columns:200px 200px minmax(0,320px)}
+  .kb .gctl #gsel{grid-column:auto}
+  .kb .gbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:28px;align-items:start}
+  .kb .gbody .chart{height:240px}
+  .kb .svgrid{grid-template-columns:1fr 1fr}
+}
+
+/* 動きを減らす設定のとき */
+@media (prefers-reduced-motion:reduce){
+  
+  .kb .aiwait i{animation:none}
+}
+
+/* ===================== 支払管理の部品 ===================== */
+/* ===== 3アプリ共通：色・書体・角丸。アクセント色だけアプリごとに変える ===== */
+
+
+
+
+/* 支払管理で使う短い名前（JavaScript の中の style でも使う）と、口座の区分の色 */
+
+
+
+
+/* ===== 土台 =====
+  ページ全体をスクロールさせる。端を越えて引っ張れないようにする */
+
+
+
+
+.pay .wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+.pay section{display:flex;flex-direction:column;gap:18px;padding-top:18px}
+
+/* タップしたときの枠を出さない */
+.pay .acc,.pay .row,.pay .hrow,.pay .np-it,.pay .fold-h,.pay button{-webkit-tap-highlight-color:transparent}
+.pay .acc:focus:not(:focus-visible),.pay .row:focus:not(:focus-visible),.pay .fold-h:focus:not(:focus-visible){outline:none}
+
+/* 文字 */
+.pay h2{margin:0;font-size:15px;letter-spacing:.03em;text-wrap:balance}
+.pay h3{margin:0;font-size:14px}
+.pay .label{font-size:11px;color:var(--u-sub);letter-spacing:.08em}
+.pay .note{font-size:12px;color:var(--u-sub)}
+.pay .num{font-family:var(--u-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ボタン：塗り＝主な操作、枠線＝そのほかの操作、ghost＝控えめな文字 */
+.pay button.danger{color:var(--u-danger);border-color:var(--u-danger)}
+.pay button.warn{color:var(--u-warn);border-color:var(--u-warn)}
+.pay .linkbtn{background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;font:inherit}
+
+/* 入力欄 */
+.pay input,.pay select,.pay textarea{font:inherit;color:var(--u-ink);background:var(--u-bg);border:1px solid var(--u-line);border-radius:var(--u-r);padding:8px 10px;width:100%;min-width:0}
+.pay input[type=number]{font-family:var(--u-num)}
+.pay input[type=range]{padding:0;background:none;border:0;accent-color:var(--u-accent)}
+/* 日付入力：iPhoneで枠からはみ出して隣と重ならないように */
+.pay input[type=date],.pay input[type=month]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;width:100%;min-height:42px;text-align:left}
+.pay input[type=date]::-webkit-date-and-time-value,.pay input[type=month]::-webkit-date-and-time-value{text-align:left}
+
+/* ===== 共通部品 ===== */
+
+.pay .panel{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-rl);min-width:0}
+.pay .panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--u-soft);flex-wrap:wrap}
+.pay .bar-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.pay .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.pay .cols-cycle{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.pay .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pay .empty{padding:24px 16px;text-align:center;color:var(--u-sub);display:flex;flex-direction:column;gap:10px;align-items:center}
+.pay .status{font-size:12px;color:var(--u-sub);padding:8px 0 0}
+.pay .status.err{color:var(--u-danger)}
+.pay .warnbox{background:var(--u-warn2);color:var(--u-ink);border-radius:var(--u-r);padding:10px 12px;font-size:12px}
+.pay .stack14{display:flex;flex-direction:column;gap:14px}
+.pay .mt6{margin-top:6px}
+.pay .center{text-align:center}
+.pay .t-danger{color:var(--u-danger)} .pay .t-ok{color:var(--u-ok)}
+.pay .endbar{display:flex;justify-content:flex-end;margin-top:10px}
+.pay .okline{font-size:12px;color:var(--u-ok);background:var(--u-ok2);border-radius:var(--u-r);padding:8px 12px}
+
+/* セグメント（絞り込み・口座の画面のタブ） */
+.pay .seg{display:inline-flex;flex-wrap:wrap;overflow:hidden;gap:2px;padding:3px;border:0;border-radius:var(--u-r);background:var(--u-chip)}
+.pay .seg button{border:0;border-radius:8px;padding:6px 12px;font-size:12px;background:transparent;color:var(--u-sub)}
+.pay .seg button[aria-pressed="true"]{background:var(--u-surface);color:var(--u-ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+
+/* 集計の帯 */
+.pay .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--u-line);border-radius:var(--u-rl);background:var(--u-surface)}
+.pay .stat{padding:12px 16px;border-left:1px solid var(--u-soft);display:flex;flex-direction:column;gap:2px;min-width:0}
+.pay .stat:first-child{border-left:0}
+.pay .stat .v{font-family:var(--u-num);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pay .stat .s{font-size:11px;color:var(--u-sub)}
+.pay .v.danger{color:var(--u-danger)} .pay .v.ok{color:var(--u-ok)}
+
+/* ラベル */
+.pay .pill{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:700;white-space:nowrap}
+.pay .pill.done{background:var(--u-ok2);color:var(--u-ok)}
+.pay .pill.def{background:var(--u-warn2);color:var(--u-warn)}
+.pay .chip{font-size:10px;padding:1px 7px;border-radius:9px;font-weight:700;letter-spacing:.04em;border:1px solid currentColor;line-height:1.5;white-space:nowrap}
+.pay .chip.card{color:var(--c-card)} .pay .chip.loan{color:var(--c-loan)} .pay .chip.other{color:var(--c-other)} .pay .chip.personal{color:var(--c-personal)}
+.pay .chip.late{color:var(--u-surface);background:var(--u-danger);border-color:var(--u-danger)}
+.pay .mtag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--u-chip);color:var(--u-ink);white-space:nowrap;font-family:var(--u-f)}
+.pay .mtag b{font-family:var(--u-num);font-weight:600}
+.pay .memo-tag{font-size:10px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--u-chip);color:var(--u-sub);white-space:nowrap}
+.pay .edited{font-size:11px;color:var(--u-accent);font-weight:400}
+.pay .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;align-items:center}
+.pay .legend span{display:flex;align-items:center;gap:6px}
+.pay .dot{width:10px;height:3px;display:inline-block;border-radius:2px}
+.pay .dot-ok{background:var(--u-ok);height:8px} .pay .dot-danger{background:var(--u-danger);height:8px}
+
+/* 折りたたみ（開閉はこの端末に覚えておく） */
+.pay .fold-h{cursor:pointer;user-select:none;-webkit-user-select:none}
+.pay .fold-h h2{display:flex;align-items:center;gap:8px}
+.pay .fold-h h2::before{content:"";width:7px;height:7px;border-right:2px solid var(--u-sub);border-bottom:2px solid var(--u-sub);transform:rotate(45deg) translateY(-2px);transition:transform .15s;flex:none}
+.pay .folded>.fold-h h2::before{transform:rotate(-45deg)}
+.pay .folded>:not(.fold-h){display:none!important} /* 中身の display 指定より優先して隠す */
+.pay .panel.folded>.panel-h{border-bottom:0}
+
+/* 表（口座の返済予定表） */
+.pay .tablewrap{overflow-x:auto}
+.pay table{width:100%;border-collapse:collapse;font-size:13px}
+.pay th{font-size:11px;color:var(--u-sub);font-weight:400;letter-spacing:.06em;text-align:right;padding:8px 10px;border-bottom:1px solid var(--u-line);white-space:nowrap;position:sticky;top:0;background:var(--u-surface)}
+.pay th:first-child,.pay td:first-child{text-align:left;padding-left:16px}
+.pay td{padding:7px 10px;border-bottom:1px solid var(--u-soft);text-align:right;white-space:nowrap}
+.pay td.n{font-family:var(--u-num);font-variant-numeric:tabular-nums}
+.pay table.sch{min-width:0}
+.pay table.sch td,.pay table.sch th{padding:7px 8px}
+.pay tr.fromplan td:first-child::after{content:"登録済";font-size:10px;color:var(--u-sub);margin-left:6px}
+.pay tr.final td{background:var(--u-ok2);font-weight:700}
+.pay tr.gap td{text-align:center;color:var(--u-sub);font-size:11px;background:var(--u-bg);white-space:normal}
+
+/* 金額の入力 */
+.pay .amtbox{display:flex;align-items:center;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-bg);padding-left:10px}
+.pay .amtbox span{font-family:var(--u-num);color:var(--u-sub)}
+.pay .amtbox input{border:0;background:transparent;font-size:20px;font-weight:600;padding:8px}
+.pay .quick{display:flex;gap:6px;margin-top:6px}
+.pay .quick button{flex:1;padding:5px 0;font-size:12px}
+.pay .quick button[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-accent);border-color:var(--u-accent);font-weight:700}
+.pay .win{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:0 16px 10px;padding:10px;background:var(--u-ok2);border-radius:var(--u-r);font-size:14px}
+.pay .win b{color:var(--u-ok);font-family:var(--u-num);font-size:17px}
+.pay .win.flat{margin:0}
+.pay .win.win-pp{margin:10px 0 0}
+
+/* 通知 */
+
+/* ===== ヘッダー：家計簿・エンタメ管理と同じ1行のバー ===== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav{display:none}
+/* 保存の状態 */
+
+
+  
+@media (prefers-reduced-motion:no-preference){@keyframes svp{50%{opacity:.25}}}
+/* 画面の切り替え（PCはヘッダーの中、スマホは画面下に浮いたバー） */
+
+
+
+
+
+
+/* ===== 支払い：アラート・次の引き落とし・集計期間 ===== */
+.pay .alert{border:2px solid var(--u-danger);background:var(--u-danger2);border-radius:var(--u-rl);display:flex;flex-direction:column}
+.pay .alert-h{display:flex;gap:12px;align-items:center;padding:12px 16px}
+.pay .alert-h .ico{width:28px;height:28px;border-radius:50%;background:var(--u-danger);color:var(--u-surface);display:grid;place-items:center;font-weight:700;flex:none}
+.pay .alert-h b{color:var(--u-danger)}
+.pay .alert-list{border-top:1px solid color-mix(in srgb,var(--u-danger) 30%,transparent)}
+.pay .arow{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 16px;border-top:1px solid color-mix(in srgb,var(--u-danger) 15%,transparent);font-size:13px}
+.pay .arow:first-child{border-top:0}
+.pay .arow .an{font-weight:700;min-width:0;overflow-wrap:anywhere}
+.pay .arow .aa{font-weight:600}
+.pay .atag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap}
+.pay .atag.over{background:var(--u-danger);color:var(--u-surface)}
+.pay .atag.late{background:var(--u-surface);color:var(--u-danger);border:1px solid var(--u-danger)}
+.pay .nextpay{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-rl);overflow:hidden}
+.pay .np-h{display:flex;align-items:baseline;gap:4px 10px;padding:12px 16px;flex-wrap:wrap}
+.pay .np-lbl{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--u-accent)}
+.pay .np-h b{font-size:17px}
+.pay .np-when{font-size:12px;font-weight:700;color:var(--u-sub)}
+.pay .nextpay.soon .np-when{color:var(--u-warn)}
+.pay .np-sum{margin-left:auto;font-family:var(--u-num);font-size:17px;font-weight:600}
+.pay .np-list{border-top:1px solid var(--u-soft)}
+.pay .np-it{display:grid;grid-template-columns:minmax(0,1fr) auto auto 10px;gap:10px;align-items:center;width:100%;border:0;border-top:1px solid var(--u-soft);border-radius:0;background:transparent;padding:9px 16px;text-align:left;font-weight:400}
+.pay .np-it:first-child{border-top:0}
+@media (hover:hover){.pay .np-it:hover{background:var(--u-accent2)}}
+.pay .np-it::after{content:"›";color:var(--u-sub);font-size:16px;line-height:1}
+.pay .np-n{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay .np-m{font-size:11px;color:var(--u-sub);white-space:nowrap}
+.pay .np-a{font-family:var(--u-num);font-weight:600;white-space:nowrap}
+.pay .np-foot{padding:8px 16px;background:var(--u-bg);border-top:1px solid var(--u-soft);font-size:12px;color:var(--u-sub);display:flex;flex-wrap:wrap;gap:2px 12px}
+.pay .np-foot b{font-family:var(--u-num);color:var(--u-ink);font-weight:600}
+.pay .prange{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:0 2px;margin-bottom:-6px}
+.pay .prange b{font-size:14px;font-weight:600}
+.pay .listbar{justify-content:space-between}
+
+/* ===== 支払い：一覧（支払済・未払・延滞をひと目で） ===== */
+.pay .dayhead{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;justify-content:space-between;padding:6px 16px;font-size:12px;color:var(--u-sub);background:var(--u-bg);border-top:1px solid var(--u-soft)}
+.pay .dayhead:first-child{border-top:0}
+.pay .dayhead .dh-d{font-weight:700;color:var(--u-ink)}
+.pay .dayhead .dh-m{display:flex;flex-wrap:wrap;gap:4px}
+.pay .dayhead .dh-t{color:var(--u-sub);font-weight:600}
+.pay .dayhead .dh-done{font-size:11px;color:var(--u-ok);font-weight:700}
+.pay .row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 16px;border-top:1px solid var(--u-soft);cursor:pointer;position:relative}
+.pay .dayhead+.row{border-top:0}
+@media (hover:hover){.pay .row:hover{background:var(--u-accent2)}}
+.pay .row .rmain{min-width:0;display:flex;flex-direction:column;gap:3px}
+.pay .row .nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;font-weight:700;line-height:1.3}
+.pay .row .sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--u-sub);font-family:var(--u-f);white-space:normal;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.pay .row .sub .chip{font-size:9.5px;padding:0 6px}
+.pay .row .slbl{font-weight:700}
+.pay .row .smemo{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:12em}
+.pay .row .rright{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.pay .row .amt{font-family:var(--u-num);font-size:15px;font-weight:600;text-align:right;white-space:nowrap}
+.pay .row .paybtn{padding:5px 14px;font-size:12px}
+.pay .sico{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;line-height:1;border:2px solid var(--u-line);color:transparent}
+/* 未払：白い行・空の丸・支払うボタン */
+.pay .row.st-planned .sico{border-color:var(--u-sub)}
+.pay .row.st-planned.over .sico{border-color:var(--u-danger)}
+.pay .row.st-planned.over .slbl{color:var(--u-danger)}
+/* 支払済：緑の丸にチェック・行を少しうすく */
+.pay .row.st-paid{background:color-mix(in srgb,var(--u-ok2) 55%,transparent)}
+.pay .row.st-paid .sico{background:var(--u-ok);border-color:var(--u-ok);color:var(--u-on)}
+.pay .row.st-paid .slbl{color:var(--u-ok)}
+.pay .row.st-paid .nm,.pay .row.st-paid .amt{color:var(--u-sub)}
+/* 延滞分：赤い帯・赤い丸・赤い金額 */
+.pay .row.st-late{background:var(--u-danger2);box-shadow:inset 4px 0 0 var(--u-danger)}
+.pay .row.st-late .sico{background:var(--u-danger);border-color:var(--u-danger);color:var(--u-on)}
+.pay .row.st-late .slbl{color:var(--u-danger)}
+.pay .row.st-late .amt{color:var(--u-danger)}
+.pay .row.st-late .paybtn{background:var(--u-danger);border-color:var(--u-danger)}
+/* 翌月へ回した元の支払：灰色・取り消し線 */
+.pay .row.st-deferred{background:repeating-linear-gradient(135deg,transparent 0 8px,color-mix(in srgb,var(--u-line) 35%,transparent) 8px 9px)}
+.pay .row.st-deferred .sico{border-style:dashed;color:var(--u-sub)}
+.pay .row.st-deferred .nm,.pay .row.st-deferred .amt{color:var(--u-sub);text-decoration:line-through;text-decoration-color:var(--u-sub)}
+.pay .row.st-deferred .slbl{color:var(--u-warn)}
+.pay .row.st-deferred .mtag,.pay .row.st-deferred .chip{opacity:.6}
+/* この期間のお金の流れ */
+.pay .cf{display:flex;flex-direction:column}
+.pay .cf .kv{display:flex;justify-content:space-between;padding:8px 16px;border-top:1px solid var(--u-soft);font-size:13px}
+.pay .cf .kv:first-child{border-top:0}
+.pay .cf .kv .num{font-weight:600}
+.pay .cf .kv.total{font-weight:700;background:var(--u-bg)}
+.pay .kvbtn{width:100%;border:0;border-radius:0;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer;align-items:center}
+.pay .kvbtn .edit{color:var(--u-accent);font-family:var(--u-f);margin-left:4px}
+.pay .kvbtn .pill,.pay .kvbtn .note{margin-left:6px;font-size:10px}
+
+/* ===== 残高と計画：集計・完済の見通し・AI ===== */
+.pay #bStats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pay #bStats .stat{border-left:1px solid var(--u-soft);border-top:1px solid var(--u-soft)}
+.pay #bStats .stat.bs-total{grid-column:1/-1;border-left:0;border-top:0;padding:14px 16px}
+.pay #bStats .stat.bs-total .v{font-size:26px}
+.pay #bStats .stat:nth-child(2){border-left:0}
+.pay .ol-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;padding:14px 16px 10px;align-items:end}
+.pay .ol-final{display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3}
+.pay .ol-final b{font-size:22px;color:var(--u-ok);font-weight:600}
+.pay .ol-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pay .ol-kpi>div{display:flex;flex-direction:column;line-height:1.3}
+.pay .ol-kpi b{font-size:15px;font-weight:600}
+.pay .ol-kpi small{font-size:11px;font-family:var(--u-num)}
+.pay .ol-kpi .ok{color:var(--u-ok)}
+.pay .ol-warn{margin:0 16px}
+.pay .ol-next{padding:8px 16px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--u-soft)}
+.pay .ms{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.pay .ms .when{font-family:var(--u-num);color:var(--u-sub);white-space:nowrap}
+.pay .ai{border-top:1px solid var(--u-soft);background:linear-gradient(180deg,var(--u-accent2),transparent 140px)}
+.pay .ai-h{display:flex;align-items:center;gap:8px;padding:12px 16px 6px;flex-wrap:wrap}
+.pay .ai-h b{font-size:14px}
+.pay .ai-h button{margin-left:auto}
+.pay .ai-badge{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--u-on);background:var(--u-accent);padding:2px 6px;border-radius:4px}
+.pay .ai-body{padding:4px 16px 14px;display:flex;flex-direction:column;gap:12px}
+.pay .ai-hl{margin:0;font-size:16px;font-weight:900;line-height:1.5;text-wrap:pretty}
+.pay .ai-sum{margin:0;font-size:13.5px;line-height:1.8;text-wrap:pretty}
+.pay .ai-sec{display:flex;flex-direction:column;gap:6px}
+.pay .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:6px}
+.pay .ai-tl li{display:flex;flex-direction:column;font-size:13px;line-height:1.6;position:relative}
+.pay .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
+.pay .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-accent)}
+.pay .ai-act{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding:10px 12px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r)}
+.pay .ai-n{width:22px;height:22px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:12px;font-weight:900;font-family:var(--u-num)}
+.pay .ai-act b{font-size:14px}
+.pay .ai-act p{margin:2px 0 4px;font-size:12.5px;line-height:1.7;color:var(--u-sub)}
+.pay .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px}
+.pay .ai-watch{margin:0;padding-left:18px;font-size:13px;line-height:1.7}
+.pay .ai-watch li::marker{color:var(--u-warn)}
+.pay .ai-cheer{margin:0;font-size:13px;font-weight:700;color:var(--u-accent)}
+.pay .ai-foot{font-size:11px}
+.pay .ai-wait{display:flex;gap:6px;padding:6px 0}
+.pay .ai-wait i{width:8px;height:8px;border-radius:50%;background:var(--u-accent);opacity:.3}
+@media (prefers-reduced-motion:no-preference){.pay .ai-wait i{animation:aiw 1.2s ease-in-out infinite}.pay .ai-wait i:nth-child(2){animation-delay:.2s}.pay .ai-wait i:nth-child(3){animation-delay:.4s}@keyframes aiw{40%{opacity:1;transform:translateY(-3px)}}}
+
+/* ===== 残高と計画：口座 ===== */
+.pay .grp{display:flex;flex-direction:column;gap:8px}
+.pay .grp-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:4px}
+.pay .grp-h.fold-h{padding:4px 2px}
+.pay .grp-h.plan-h{margin-top:6px}
+.pay .acc-hint{margin-top:-8px}
+.pay .grp-h h2{white-space:nowrap}
+.pay .acc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;border-radius:var(--u-rl)}
+.pay .acc{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1px 10px;align-items:center;padding:9px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-rl)}
+.pay .acc:hover{border-color:var(--u-line)}
+@media (hover:hover){.pay .acc:hover{border-color:var(--u-accent)}}
+.pay .acc.donecard{opacity:.7}
+.pay .acc .ac-n{display:flex;align-items:center;gap:6px;min-width:0}
+.pay .acc .ac-n b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay .acc .ac-b{font-size:15px;font-weight:600;text-align:right}
+.pay .acc .ac-m{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:0 1px;white-space:nowrap;font-size:11px;color:var(--u-sub);line-height:1.5}
+.pay .acc .ac-m i{font-style:normal;opacity:.6}
+.pay .acc .ac-m b{font-weight:700;color:var(--u-ink);font-family:var(--u-num)}
+
+/* ===== 残高と計画：返済の計画 ===== */
+.pay .boost-h{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;padding:16px 16px 4px;align-items:end}
+.pay .rank{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--u-soft)}
+.pay .rank:first-child{border-top:0}
+.pay .rank.top{background:var(--u-ok2)}
+.pay .rk{font-size:11px;font-weight:700;color:var(--u-sub);min-width:28px;text-align:center;font-family:var(--u-num)}
+.pay .rank.top .rk{color:var(--u-surface);background:var(--u-ok);border-radius:10px;padding:2px 8px}
+.pay .rank-more{padding:6px 16px 12px}
+.pay .rb{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pay .rb .note{font-size:11px}
+.pay .eff{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;margin-top:2px}
+.pay .eff b{font-family:var(--u-num);color:var(--u-ok)}
+.pay .ib{display:grid;grid-template-columns:110px minmax(0,1fr) 96px;gap:10px;align-items:center;padding:7px 16px;border-top:1px solid var(--u-soft);font-size:13px}
+.pay .ib:first-child{border-top:0}
+.pay .int-legend{padding:8px 16px 12px}
+.pay .ib .in{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay .ibar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--u-soft)}
+.pay .ibar .pi{background:var(--u-ok)} .pay .ibar .ii{background:var(--u-danger)}
+.pay .ib .iv{text-align:right;font-weight:600;display:flex;flex-direction:column;line-height:1.2}
+.pay .ib .iv small{font-size:10px;color:var(--u-sub);font-weight:400}
+.pay .ib.hi .iv{color:var(--u-danger)}
+.pay .chartbox{padding:8px 16px 12px;overflow-x:auto}
+.pay .chartbox svg{display:block;width:100%;height:auto;min-width:520px}
+.pay .timeline{display:flex;flex-direction:column}
+.pay .tl{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:10px;padding:8px 16px;border-top:1px solid var(--u-soft);align-items:center;font-size:13px}
+.pay .tl:first-child{border-top:0}
+.pay .tl .when{font-family:var(--u-num);color:var(--u-accent);font-weight:600}
+.pay .tl .diff{font-family:var(--u-num);font-size:12px;color:var(--u-ok)}
+.pay .rd{display:flex;flex-direction:column;min-width:0;line-height:1.4}
+.pay .rd .note{font-size:11px}
+.pay .whatif{padding:14px 16px;border-top:1px solid var(--u-soft);display:flex;flex-direction:column;gap:6px;background:var(--u-bg)}
+
+/* ===== シート（支払う・編集・口座・設定のポップアップ） ===== */
+.pay .scrim{position:fixed;inset:0;background:var(--u-scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.pay .sheet{background:var(--u-surface);width:100%;max-width:560px;max-height:92%;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-radius:16px;box-shadow:var(--u-shadow);padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.pay .sheet.wide{max-width:860px}
+.pay #sheetHost .sheet{outline:none}
+.pay .sheet h3{font-size:16px}
+@media (prefers-reduced-motion:no-preference){.pay .sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}}}
+.pay .ad-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pay .ad-btns{display:flex;gap:6px}
+.pay .xbtn{border:0;background:transparent;color:var(--u-sub);font-size:22px;line-height:1;width:36px;height:36px;padding:0;border-radius:50%;flex:none}
+.pay .xbtn:hover{background:var(--u-bg)}
+/* フォーム */
+.pay .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}
+.pay .form>*{min-width:0}
+.pay .form .full{grid-column:1/-1}
+.pay .form .full,.pay .form .cb,.pay .form .note,.pay .form .sumline{align-self:start}
+.pay .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pay .field label{font-size:11px;color:var(--u-sub);letter-spacing:.06em}
+.pay .sheet input:not([type=checkbox]):not([type=range]),.pay .sheet select{height:44px;box-sizing:border-box;line-height:1.2}
+.pay .cb{display:flex;align-items:center;gap:8px;font-size:13px}
+.pay .cb input{width:auto}
+.pay .ro{background:transparent;border-style:dashed;color:var(--u-sub)}
+.pay .memo-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end}
+.pay .memo-row .cb{height:40px;white-space:nowrap}
+.pay .nobal{font-size:12px;margin-top:-2px}
+.pay .nobal .note{font-size:11px}
+.pay #e-money{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pay .sumline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 10px;background:var(--u-accent2);border-radius:var(--u-r);font-size:13px;flex-wrap:wrap}
+.pay .sumline b{font-size:17px}
+.pay .warnt{font-size:11px;color:var(--u-danger);font-family:var(--u-f);font-weight:400}
+/* 支払後の見込み・状態バー */
+.pay .after{background:var(--u-ok2);border-radius:var(--u-r);padding:10px 12px;display:flex;flex-direction:column;gap:2px;font-size:12.5px}
+.pay .after b{font-family:var(--u-num)}
+.pay .after b.ok{color:var(--u-ok);font-size:15px}
+.pay .after .big2{font-size:18px;font-weight:700;color:var(--u-ok)}
+.pay .stbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--u-r);font-size:13px;font-weight:700}
+.pay .stbar.paid{background:var(--u-ok2);color:var(--u-ok)}
+.pay .stbar.deferred{background:var(--u-warn2);color:var(--u-warn)}
+.pay .stbar button{white-space:nowrap}
+/* シートのボタン */
+.pay .actions{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.pay .actions div{display:flex;gap:8px;flex-wrap:wrap}
+.pay .actions button{white-space:nowrap}
+.pay .act-pay{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center}
+.pay .act-pay #p-defer{grid-column:1}.pay .act-pay #p-save{grid-column:3}.pay .act-pay #p-ok{grid-column:4}
+.pay .subacts{display:flex;justify-content:space-between;gap:8px;margin-top:-4px}
+.pay .subacts .dangertxt{color:var(--u-danger)}
+/* 口座の画面：残高・タブ・履歴・返済計画 */
+.pay .ad-sum{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--u-line);border-radius:var(--u-rl)}
+.pay .ad-sum>div{padding:10px 12px;display:flex;flex-direction:column;gap:1px;min-width:0;border-left:1px solid var(--u-soft)}
+.pay .ad-sum>div:first-child{border-left:0}
+.pay .ad-sum b{font-size:17px;font-weight:600;white-space:nowrap}
+.pay .ad-sum b.ok{color:var(--u-ok)}
+.pay .ad-sum small{font-size:10px;color:var(--u-sub)}
+.pay .ad-cond{margin-top:6px}
+.pay .adtabs{width:100%;margin-top:12px}
+.pay .adtabs button{flex:1;font-size:13px}
+.pay .cnt2{display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:var(--u-line);font-size:10px;line-height:16px;font-family:var(--u-num)}
+.pay .ad-body{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+.pay .hsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;background:var(--u-bg);border-radius:var(--u-r);padding:10px 12px}
+.pay .hsum>div{display:flex;flex-direction:column}
+.pay .hsum b{font-size:15px}
+.pay .hsum b.ok{color:var(--u-ok)}
+.pay .hlist{display:flex;flex-direction:column;border:1px solid var(--u-line);border-radius:var(--u-rl);overflow:hidden}
+.pay .hrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border:0;border-top:1px solid var(--u-soft);border-radius:0;background:var(--u-surface);text-align:left;font:inherit;color:inherit;cursor:pointer}
+.pay .hrow:first-child{border-top:0}
+.pay .hrow .hd{font-size:12px;color:var(--u-sub)}
+.pay .hrow .hn{display:flex;flex-direction:column;min-width:0;font-weight:700;font-size:13px}
+.pay .hrow .hn small{font-weight:400;font-size:11px;color:var(--u-sub);font-family:var(--u-num);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pay .pl-sec{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:12px;display:flex;flex-direction:column;gap:8px}
+.pay .pl-sec h4{margin:0;font-size:14px}
+.pay .pl-sec .form{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+.pay .cmp{margin:4px 16px 10px;border:1px solid var(--u-line);border-radius:var(--u-rl);overflow:hidden}
+.pay .cmp-h,.pay .cmp-r{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr);gap:8px;padding:8px 12px;align-items:center}
+.pay .cmp-h{background:var(--u-bg);font-size:11px;color:var(--u-sub)}
+.pay .cmp-h span:not(:first-child),.pay .cmp-r b{text-align:right}
+.pay .cmp-r{border-top:1px solid var(--u-soft);font-size:13px}
+.pay .cmp-r b{font-weight:600}
+.pay .cmp-r b.ok{color:var(--u-ok)}
+.pay .cmp.cmp-plan{margin:10px 0}
+.pay .steps{border-top:1px solid var(--u-soft);padding:10px 16px;display:flex;flex-direction:column;gap:4px;background:var(--u-bg)}
+.pay .steps.steps-plan{margin-top:10px;border-radius:var(--u-r)}
+.pay .step{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+/* 設定 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ===== 中くらいの幅 ===== */
+@media (max-width:900px){.pay .cols,.pay .cols-cycle,.pay .cols-2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:680px){
+  .pay .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pay .stat:nth-child(3){border-left:0}
+  .pay .stat:nth-child(n+3){border-top:1px solid var(--u-soft)}
+}
+
+/* ===== PC（幅640px以上） ===== */
+@media (min-width:640px){
+  .pay .scrim{align-items:center}
+  .pay .sheet{padding:22px}
+}
+
+
+/* ===== スマホ（幅640px以下） ===== */
+@media (max-width:640px){
+  
+  .pay .wrap{padding-block:0 24px}
+  .pay section{gap:12px;padding-top:12px}
+  .pay .bar-row{gap:8px}
+  /* 入力欄：文字は16px（iPhoneで入力時に拡大されないため） */
+  .pay input,.pay select,.pay textarea{font-size:16px;padding:9px 10px}
+  /* ヘッダー */
+  
+  
+  
+  
+  
+  
+  
+  /* 下部メニュー：家計簿と同じ、画面下に浮いた角丸のバー */
+  
+  
+  
+  
+  
+  /* 支払い */
+  .pay .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pay .stat{padding:10px 12px}
+  .pay .stat .v{font-size:16px}
+  .pay .stat .label{font-size:10px}
+  .pay .stat .s{font-size:10px}
+  .pay #cFilter{width:100%}
+  .pay #cFilter button{flex:1;padding:8px 4px}
+  .pay .listbar .seg{flex:1}
+  .pay .listbar .seg button{flex:1;padding:8px 4px}
+  .pay .alert-h{padding:10px 12px;gap:10px}
+  .pay .alert-h b{font-size:13px}
+  .pay .arow{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 12px}
+  .pay .arow .atag{grid-column:1;justify-self:start}
+  .pay .arow .ad{display:inline;grid-column:2;grid-row:1;justify-self:end;font-size:11px;color:var(--u-sub)}
+  .pay .arow .an{grid-column:1}
+  .pay .arow .aa{grid-column:2;grid-row:2;justify-self:end}
+  .pay .arow button.primary{grid-column:1/-1;grid-row:3;width:100%;margin-top:4px;padding:8px}
+  .pay .np-h{padding:10px 14px}
+  .pay .np-it{padding:9px 14px}
+  .pay .np-foot{padding:8px 14px}
+  .pay .row{grid-template-columns:24px minmax(0,1fr) auto;padding:9px 12px;gap:3px 8px}
+  .pay .row .amt{font-size:14px}
+  .pay .sico{width:22px;height:22px;font-size:12px}
+  .pay .dayhead{padding:5px 12px}
+  /* 残高と計画 */
+  .pay .ms{font-size:12px;flex-direction:column;gap:0}
+  .pay .ms .when{font-size:11px}
+  .pay .ol-head{grid-template-columns:minmax(0,1fr);padding:12px 14px 8px}
+  .pay .ol-next{padding:8px 14px 12px}
+  .pay .ai-h{padding:12px 14px 6px}
+  .pay .ai-body{padding:4px 14px 14px}
+  .pay .grp-h h2{font-size:14px}
+  .pay .acc-grid{grid-template-columns:minmax(0,1fr);gap:0;border:1px solid var(--u-line);overflow:hidden}
+  .pay .acc{border:0;border-top:1px solid var(--u-soft)}
+  .pay .acc:first-child{border-top:0}
+  .pay .acc,.pay .acc:hover{border-color:transparent;border-top-color:var(--u-soft)}
+  .pay .acc:first-child{border-top-color:transparent}
+  .pay .boost-h{grid-template-columns:minmax(0,1fr);gap:12px;padding:14px 14px 4px}
+  .pay .rank{grid-template-columns:auto minmax(0,1fr);padding:10px 14px;gap:4px 10px}
+  .pay .rank button{grid-column:1/-1;width:100%;padding:8px}
+  .pay .ib{grid-template-columns:84px minmax(0,1fr) 78px;padding:6px 14px;font-size:12px;gap:8px}
+  .pay .chartbox{padding:8px 8px 10px}
+  .pay .chartbox svg{min-width:0}
+  .pay .tl{grid-template-columns:78px minmax(0,1fr) auto;font-size:12px}
+  /* シート：画面の真ん中に小さく浮かせ、外側をタップで閉じられるようにする */
+  .pay .scrim{align-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 12px max(16px,env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
+  .pay .sheet,.pay .sheet.wide{max-height:calc(100dvh - 48px);border-radius:18px;gap:8px;padding:12px 12px 10px}
+  .pay .sheet h3{font-size:15px}
+  .pay .sheet .xbtn{width:30px;height:30px}
+  .pay .ad-top{flex-wrap:wrap}
+  .pay .form{gap:10px}
+  .pay .sheet .form{gap:6px 8px}
+  .pay .form .field label{font-size:10px}
+  .pay .sheet .form .field label{font-size:10px;line-height:1.3}
+  .pay .sheet .field{gap:2px}
+  .pay .sheet input:not([type=checkbox]):not([type=range]),.pay .sheet select{height:36px;padding:4px 9px;font-size:16px}
+  .pay .sheet input[type=date]{min-height:0}
+  .pay .sheet #e-money{gap:6px 8px}
+  .pay .memo-row .cb{height:36px}
+  .pay .sheet .sumline{padding:5px 10px}
+  .pay .sheet .sumline b{font-size:16px}
+  .pay .sheet .after{padding:6px 10px}
+  .pay .sheet .stbar{padding:5px 8px;font-size:12px}
+  .pay table.sch td,.pay table.sch th{font-size:11px}
+  .pay .sheet th:first-child,.pay .sheet td:first-child{padding-left:10px}
+  .pay .actions{position:static;padding:8px 0 0;margin:0;background:var(--u-surface);border-top:1px solid var(--u-soft)}
+  .pay .actions>div:last-child{margin-left:auto;gap:6px}
+  .pay .actions:not(.act-pay){flex-wrap:nowrap;align-items:center}
+  .pay .actions:not(.act-pay)>div{flex-wrap:nowrap}
+  .pay .actions button{padding:10px 12px}
+  .pay .sheet .actions button{padding:8px 12px}
+  .pay .act-pay{grid-template-columns:1fr 1fr;row-gap:8px}
+  .pay .act-pay #p-save{grid-column:1;grid-row:1}.pay .act-pay #p-ok{grid-column:2;grid-row:1}
+  .pay .act-pay #p-defer{grid-column:1/-1;grid-row:2;border-style:dashed}
+  .pay .act-pay button{width:100%}
+  .pay .sheet .act-pay button{padding:9px 8px}
+}
+
+/* ===================== 統合で足した部品 ===================== */
+/* 設定を開いているとき（スマホ）は、支払いの画面も隠す */
+@media (max-width:899px){body[data-tab="rules"] #payWrap{display:none}}
+
+/* ヘッダー：保存の状態（家計簿・支払いのどちらかが保存中なら「保存中」） */
+.kb .savest{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--u-sub);white-space:nowrap;margin-left:2px}
+.kb .savest::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.kb .savest.ok{color:var(--u-ok)} .kb .savest.busy{color:var(--u-warn)} .kb .savest.err{color:var(--u-danger)}
+@media (prefers-reduced-motion:no-preference){.kb .savest.busy::before{animation:svp 1s ease-in-out infinite}@keyframes svp{50%{opacity:.25}}}
+@media (max-width:899px){.kb .savest{font-size:0;gap:0}}
+/* 下部メニュー5項目：文字を少し詰める */
+/* 下部メニュー（共通部品）：3項目なので少し狭く。選択中はトップへ戻るを隠す */
+.kb .tabbar{flex-basis:420px}
+body.sel .kb .totop{opacity:0;transform:translateY(10px);pointer-events:none}
+.kb .tabbar button{font-size:10.5px}
+.kb .tabbar svg{padding:3px 12px}
+
+/* 当月サマリ：月度の期間 */
+.kb .eyebrow .rng{font-family:var(--u-num);font-weight:600;letter-spacing:0;margin-left:6px}
+
+/* 設定：支払い（収入と給料日・引落口座・支払予定の作成） */
+.kb .pset{border:0;padding:0;margin:8px 0}
+.kb .pml{display:grid;width:100%}
+.kb .pmr{display:grid;grid-template-columns:22px minmax(0,1fr) 36px 36px auto;gap:4px;align-items:center;padding:4px 0;border-bottom:1px solid var(--u-line)}
+.kb .pmr:last-child{border-bottom:0}
+.kb .pmr .mi{font-size:11px;color:var(--u-sub);text-align:center;font-family:var(--u-num)}
+.kb .pmr .mn{font-weight:700}
+.kb .pmr .mv{width:36px;height:36px;padding:0;font-size:15px}
+.kb .pmadd{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;width:100%;margin-top:6px}
+.kb .pgen{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%}
+.kb .pgen input{width:180px}
+.kb #pmsg:empty{display:none}
+
+/* AI分析：生活費と返済をまとめた結果 */
+.kb .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:8px}
+.kb .ai-tl li{display:flex;flex-direction:column;font-size:13.5px;line-height:1.6;position:relative}
+.kb .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
+.kb .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-accent)}
+.kb .ai-n{width:30px;height:30px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:14px;font-weight:900;font-family:var(--u-num)}
+.kb .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px;margin-top:6px}
+.kb .ai-cheer{margin:14px 0 0;font-size:14px;font-weight:700;color:var(--u-accent)}
+.kb .aistale{color:var(--u-warn);font-weight:700}
+
+/* 残高と計画：AI分析への案内 */
+.pay .ai-link{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--u-soft);flex-wrap:wrap}
+.pay .ai-link p{margin:0;flex:1;min-width:0;font-size:13px;font-weight:700;line-height:1.5}
+
+/* ヘッダー：月度の名前が少し長いので、狭い画面では文字を小さくして1行に収める */
+.kb .brand{white-space:nowrap;flex:none}
+@media (max-width:440px){.kb .mnav select{font-size:14px;padding-inline:0}.kb .abin{gap:5px}}
+body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:none}
+.kb .seg button{white-space:nowrap;padding-left:4px;padding-right:4px}
+.kb input[type=month]{background:var(--u-bg);border:1px solid var(--u-line);border-radius:var(--u-r);padding:7px 8px;min-width:0;max-width:100%;font-size:16px;-webkit-appearance:none;appearance:none;min-height:38px}
+/* ===== メニュー：家計簿・支払い・分析（グラフ／残高と計画／AI分析） ===== */
+.kb .anseg-w{display:none}
+@media (max-width:899px){
+  /* 下のメニュー（3つ）と、その横の設定ボタン。エンタメ管理と同じ形 */
+  /* 分析の中の切り替え */
+  body[data-tab="graph"] .kb .anseg-w,body[data-tab="balance"] .kb .anseg-w,body[data-tab="ai"] .kb .anseg-w{display:block;padding-top:12px}
+  body[data-tab="graph"] .kb .layout,body[data-tab="ai"] .kb .layout{padding-top:12px}
+  .kb .anseg{display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px}
+  .kb .anseg button{flex:1;border:0;background:none;color:var(--u-sub);padding:8px 4px;border-radius:8px;font-size:14px;font-weight:700;white-space:nowrap}
+  .kb .anseg button[aria-current="page"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+  body[data-tab="balance"] .pay section{padding-top:12px}
+}
+/* PC：左の折りたためるメニュー（エンタメ管理と同じ大きさ） */
+@media (min-width:900px){
+  .kb .wrap,.pay .wrap{max-width:1100px}
+  /* 上の帯は月度の切り替えだけ（アプリ名と保存の状態は左メニュー） */
+  .kb .appbar{background:var(--u-bg)}
+  .kb .brand{display:none}
+  .kb .mcur{margin-left:auto}
+  .kb #selbar:not([hidden]){left:var(--sbw)}
+}
+/* 支払い：集計期間と支払予定を1つの箱に */
+.pay .pbox{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;border:1px solid var(--u-line);border-radius:var(--u-rl);background:var(--u-surface);padding:14px 16px}
+.pay .pbox .prange{flex-direction:column;align-items:flex-start;gap:2px;margin:0;padding:0;min-width:0}
+.pay .pbox .prange b{font-size:15px}
+.pay .pbox .stats{display:block;border:0;border-radius:0;background:none;margin-left:auto}
+.pay .pbox .stat{padding:0;border:0;align-items:flex-end;text-align:right}
+.pay .pbox .stat .v{font-size:24px}
+/* 延滞手数料・振込先・支払前後の残高 */
+.pay .feenote{font-size:11px;color:var(--u-sub);align-self:center;line-height:1.4}
+.pay .feenote b{color:var(--u-ink);font-family:var(--u-num)}
+.pay .sumline small.note{font-size:10.5px;color:var(--u-sub);margin-left:4px}
+.pay .form .sec{font-size:12px;font-weight:700;color:var(--u-ink);padding-top:8px;margin-top:2px;border-top:1px solid var(--u-soft)}
+.pay .bank{border:1.5px solid var(--u-warn);background:var(--u-warn2);border-radius:var(--u-r);padding:8px 10px;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.pay .bank-h{display:flex;justify-content:space-between;align-items:center;color:var(--u-warn)}
+.pay .bank-r{display:grid;grid-template-columns:4.5em minmax(0,1fr) auto;align-items:center;gap:8px}
+.pay .bank-r .bl{font-size:11px;color:var(--u-sub)}
+.pay .bank-r .bv{overflow-wrap:anywhere}
+.pay .bank-r .bv b{font-family:var(--u-num);font-size:14px}
+.pay .bank-r button,.pay .bank-h button{padding:2px 10px;min-height:0;height:26px;font-size:11px}
+.pay .bank.empty{flex-direction:row;justify-content:space-between;align-items:center;color:var(--u-warn);font-weight:700}
+.pay .bank .note{font-size:11px;color:var(--u-sub)}
+.pay .after .balrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pay .after .balrow>span:not(.arr){display:flex;flex-direction:column;line-height:1.2}
+.pay .after .balrow small{font-size:10.5px;color:var(--u-sub)}
+.pay .after .balrow b{font-size:16px}
+.pay .after .balrow .arr{color:var(--u-sub);font-size:16px}
+.pay .after>.note{font-size:11px;color:var(--u-sub)}
+/* ===== PC表示の文字サイズ（エンタメ管理のPC画面に合わせる） ===== */
+@media (min-width:900px){
+  .kb{font-size:17px}
+  /* PCは文字が大きいので、ボタン（共通部品）の文字も合わせて大きくする */
+  .u-btns button{font-size:16px}
+  .u-btns button.sm,.u-btns button.btn-s{font-size:14px}
+  .pay{font-size:16px}
+  .kb select,.kb input[type=text],.kb input[type=number],.kb input[type=date]{font-size:18px}
+  .kb .mu{font-size:15px}
+  .kb .u-mark{font-size:11.5px}
+  .kb .sh b{font-size:18px}
+  .kb .seg button{font-size:16px}
+  .kb .seg.sm button{font-size:15px}
+  .kb .ico{font-size:21.5px}
+  .kb .ico.sm{font-size:16px}
+  .kb .chip{font-size:12.5px}
+  .kb .ckl{font-size:15px}
+  .kb .rv label{font-size:13.5px}
+  .kb .warn{font-size:13.5px}
+  .kb .mcs .lb{font-size:12.5px}
+  .kb .mc{font-size:16px}
+  .kb .dl{font-size:12.5px}
+  .kb .totop{font-size:15px}
+  .kb .totop span{font-size:17px}
+  .kb .brand{font-size:20.5px}
+  .kb .hnav button{font-size:16px}
+  .kb button.mcur{font-size:16px}
+  .kb .ib{font-size:20.5px}
+  .kb .tabbar button{font-size:12.5px}
+  .kb .eyebrow{font-size:13.5px}
+  .kb .delta{font-size:13.5px}
+  .kb .legend{font-size:13.5px}
+  .kb .kpis span{font-size:12.5px}
+  .kb .kpis b{font-size:17px}
+  .kb .day{font-size:16px}
+  .kb .day small{font-size:13.5px}
+  .kb .day span:last-child{font-size:15px}
+  .kb .tag .mu{font-size:12.5px}
+  .kb #selbar .acts button{font-size:16px}
+  .kb .gh{font-size:16px}
+  .kb .gh small{font-size:13px}
+  .kb .tiles span{font-size:12.5px}
+  .kb .tiles b{font-size:16px}
+  .kb .tiles small{font-size:11.5px}
+  .kb .donut .dk{font-size:11.5px}
+  .kb .donut .dv{font-size:17px}
+  .kb .irow .nm{font-size:15px}
+  .kb .irow .rt{font-size:15px}
+  .kb .irow .permo{font-size:11.5px}
+  .kb .xlab div{font-size:11.5px}
+  .kb .lg2{font-size:13px}
+  .kb .pace .yl{font-size:11.5px}
+  .kb .pnote{font-size:15px}
+  .kb .pnote .dl{font-size:15px}
+  .kb .wdr{font-size:14px}
+  .kb .aihero .k{font-size:13.5px}
+  .kb .aihero .unit{font-size:16px}
+  .kb .aih{font-size:17px}
+  .kb .sv .t b{font-size:17px}
+  .kb .sv .save{font-size:16px}
+  .kb .sv p{font-size:15.5px}
+  .kb .sv ul{font-size:15.5px}
+  .kb .conf{font-size:12.5px}
+  .kb .ail div{font-size:15.5px}
+  .kb .ail b{font-size:16px}
+  .kb .ptitle{font-size:19.5px}
+  .kb .kind{font-size:12.5px}
+  .kb .rdesc{font-size:16px}
+  .kb .rule .acts button{font-size:15px}
+  .kb .pvr{font-size:15px}
+  .kb .pvr .chg{font-size:13.5px}
+  .kb .rform .lg{font-size:13.5px}
+  .kb .mrow .me{font-size:23px}
+  .kb .mrow .cnt{font-size:12.5px}
+  .kb .mrow .mv button{font-size:17px}
+  .kb .mrow .mdel{font-size:13.5px}
+  .kb .madd #madde{font-size:20.5px}
+  .kb .mcf{font-size:15.5px}
+  .pay h2{font-size:17px}
+  .pay h3{font-size:16px}
+  .pay .label{font-size:12.5px}
+  .pay .note{font-size:13.5px}
+  .pay .status{font-size:13.5px}
+  .pay .warnbox{font-size:13.5px}
+  .pay .okline{font-size:13.5px}
+  .pay .seg button{font-size:13.5px}
+  .pay .stat .v{font-size:21.5px}
+  .pay .stat .s{font-size:12.5px}
+  .pay .pill{font-size:12.5px}
+  .pay .chip{font-size:11.5px}
+  .pay .mtag{font-size:12px}
+  .pay .memo-tag{font-size:11.5px}
+  .pay .edited{font-size:12.5px}
+  .pay .legend{font-size:13.5px}
+  .pay table{font-size:15px}
+  .pay th{font-size:12.5px}
+  .pay tr.fromplan td:first-child::after{font-size:11.5px}
+  .pay tr.gap td{font-size:12.5px}
+  .pay .amtbox input{font-size:23px}
+  .pay .quick button{font-size:13.5px}
+  .pay .win{font-size:16px}
+  .pay .win b{font-size:19.5px}
+  .pay .arow{font-size:15px}
+  .pay .atag{font-size:12.5px}
+  .pay .np-lbl{font-size:11.5px}
+  .pay .np-h b{font-size:19.5px}
+  .pay .np-when{font-size:13.5px}
+  .pay .np-sum{font-size:19.5px}
+  .pay .np-it::after{font-size:18px}
+  .pay .np-m{font-size:12.5px}
+  .pay .np-foot{font-size:13.5px}
+  .pay .prange b{font-size:16px}
+  .pay .dayhead{font-size:13.5px}
+  .pay .dayhead .dh-done{font-size:12.5px}
+  .pay .row .nm{font-size:16px}
+  .pay .row .sub{font-size:12.5px}
+  .pay .row .sub .chip{font-size:11px}
+  .pay .row .amt{font-size:17px}
+  .pay .row .paybtn{font-size:13.5px}
+  .pay .sico{font-size:15px}
+  .pay .cf .kv{font-size:15px}
+  .pay .kvbtn .pill,.pay .kvbtn .note{font-size:11.5px}
+  .pay #bStats .stat.bs-total .v{font-size:29.5px}
+  .pay .ol-final{font-size:16px}
+  .pay .ol-final b{font-size:25px}
+  .pay .ol-kpi b{font-size:17px}
+  .pay .ol-kpi small{font-size:12.5px}
+  .pay .ms{font-size:15px}
+  .pay .ai-h b{font-size:16px}
+  .pay .ai-badge{font-size:11.5px}
+  .pay .ai-hl{font-size:18px}
+  .pay .ai-sum{font-size:15.5px}
+  .pay .ai-tl li{font-size:15px}
+  .pay .ai-tl b{font-size:13.5px}
+  .pay .ai-n{font-size:13.5px}
+  .pay .ai-act b{font-size:16px}
+  .pay .ai-act p{font-size:14px}
+  .pay .ai-eff{font-size:13.5px}
+  .pay .ai-watch{font-size:15px}
+  .pay .ai-cheer{font-size:15px}
+  .pay .ai-foot{font-size:12.5px}
+  .pay .acc .ac-n b{font-size:16px}
+  .pay .acc .ac-b{font-size:17px}
+  .pay .acc .ac-m{font-size:12.5px}
+  .pay .rk{font-size:12.5px}
+  .pay .rb .note{font-size:12.5px}
+  .pay .eff{font-size:15px}
+  .pay .ib{font-size:15px}
+  .pay .ib .iv small{font-size:11.5px}
+  .pay .tl{font-size:15px}
+  .pay .tl .diff{font-size:13.5px}
+  .pay .rd .note{font-size:12.5px}
+  .pay .sheet h3{font-size:18px}
+  .pay .xbtn{font-size:25px}
+  .pay .field label{font-size:12.5px}
+  .pay .cb{font-size:15px}
+  .pay .nobal{font-size:13.5px}
+  .pay .nobal .note{font-size:12.5px}
+  .pay .sumline{font-size:15px}
+  .pay .sumline b{font-size:19.5px}
+  .pay .warnt{font-size:12.5px}
+  .pay .after{font-size:14px}
+  .pay .after b.ok{font-size:17px}
+  .pay .after .big2{font-size:20.5px}
+  .pay .stbar{font-size:15px}
+  .pay .ad-sum b{font-size:19.5px}
+  .pay .ad-sum small{font-size:11.5px}
+  .pay .adtabs button{font-size:15px}
+  .pay .cnt2{font-size:11.5px}
+  .pay .hsum b{font-size:17px}
+  .pay .hrow .hd{font-size:13.5px}
+  .pay .hrow .hn{font-size:15px}
+  .pay .hrow .hn small{font-size:12.5px}
+  .pay .pl-sec h4{font-size:16px}
+  .pay .cmp-h{font-size:12.5px}
+  .pay .cmp-r{font-size:15px}
+  .pay .step{font-size:15px}
+  .kb .savest{font-size:12.5px}
+  .kb .tabbar button{font-size:12px}
+  .kb .pmr .mi{font-size:12.5px}
+  .kb .pmr .mv{font-size:17px}
+  .kb .ai-tl li{font-size:15.5px}
+  .kb .ai-tl b{font-size:13.5px}
+  .kb .ai-n{font-size:16px}
+  .kb .ai-eff{font-size:13.5px}
+  .kb .ai-cheer{font-size:16px}
+  .pay .ai-link p{font-size:15px}
+  .kb input[type=month]{font-size:18px}
+  .pay .pbox .prange b{font-size:17px}
+  .pay .pbox .stat .v{font-size:27.5px}
+  .pay .feenote{font-size:12.5px}
+  .pay .sumline small.note{font-size:12px}
+  .pay .form .sec{font-size:13.5px}
+  .pay .bank{font-size:14px}
+  .pay .bank-r .bl{font-size:12.5px}
+  .pay .bank-r .bv b{font-size:16px}
+  .pay .bank-r button,.pay .bank-h button{font-size:12.5px}
+  .pay .bank .note{font-size:12.5px}
+  .pay .after .balrow small{font-size:12px}
+  .pay .after .balrow b{font-size:18px}
+  .pay .after .balrow .arr{font-size:18px}
+  .pay .after>.note{font-size:12.5px}
+}

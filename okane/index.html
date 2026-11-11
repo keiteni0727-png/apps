@@ -1,0 +1,226 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>おかね手帳</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<script>(function(){var c="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover";document.querySelectorAll('meta[name="viewport"]').forEach(function(m){m.setAttribute("content",c)})})();</script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="おかね手帳">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex,nofollow">
+<script>document.documentElement.classList.add("noai");try{["okane.an","kakeibo.tab"].forEach(function(k){if(localStorage.getItem(k)==="ai")localStorage.setItem(k,"graph")})}catch(e){}</script>
+<style>/* 単独版ではClaudeのAI機能（スクショ読み取り・AI分析）を使えないので隠す */html.noai [data-tab="ai"],html.noai #shot,html.noai #file+.mu,html.noai #aiBox,html.noai #v-ai{display:none!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="../shared/u-base.css">
+<link rel="stylesheet" href="app.css">
+<div class="kb u-app u-btns">
+<aside class="sb" aria-label="メニュー">
+  <div class="sb-top"><span class="sb-lamp">MONEY</span><b class="lbl">おかね手帳</b><button type="button" class="sb-tog" id="sbtog" aria-label="メニューを折りたたむ">«</button></div>
+  <div class="sb-sec lbl">メニュー</div>
+  <button type="button" class="sb-it" data-tab="list" title="家計簿"><i aria-hidden="true">📒</i><span class="lbl">家計簿</span></button>
+  <button type="button" class="sb-it" data-tab="home" title="支払い"><i aria-hidden="true">💳</i><span class="lbl">支払い</span></button>
+  <button type="button" class="sb-it" data-tab="an" title="分析"><i aria-hidden="true">📊</i><span class="lbl">分析</span></button>
+  <div class="sb-sub"><button type="button" class="sb-it" data-tab="graph">グラフ</button><button type="button" class="sb-it" data-tab="balance">残高と計画</button><button type="button" class="sb-it" data-tab="ai">AI分析</button></div>
+  <div class="sb-foot"><button type="button" class="sb-it" id="sbgear" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st"><span id="sbSave" class="savest wait">接続中…</span></div></div>
+</aside>
+<header class="appbar"><div class="wrap abin">
+  <div class="brand"><span class="u-mark" aria-hidden="true">MONEY</span>おかね手帳<span id="saveSt" class="savest wait" role="status" aria-live="polite">接続中…</span></div>
+    <button type="button" class="mcur" id="mcur">当月</button>
+  <div class="mnav"><button class="ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="ib" id="mnext" aria-label="次の月度">›</button></div>
+</div></header>
+
+<div class="wrap anseg-w"><nav class="anseg" aria-label="分析の画面"><button data-tab="graph">グラフ</button><button data-tab="balance">残高と計画</button><button data-tab="ai">AI分析</button></nav></div>
+<div class="wrap layout">
+  <section class="view" id="v-list">
+    <div class="card sum" id="summary"></div>
+    <div class="card">
+      <div class="row">
+        <button class="pri grow" id="shot">📷 スクショから追加</button>
+        <button id="manual">＋ 手入力</button>
+      </div>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+      <div class="mu mt8">カード明細・決済アプリ・レシートのスクショを複数枚まとめて選べます。</div>
+      <div id="msg" class="mu"></div>
+      <div id="review"></div>
+    </div>
+    <div class="card">
+      <div id="lhead">
+        <div class="filters"><input type="text" id="fq" placeholder="メモ・金額で検索"><select id="fc" aria-label="分類で絞り込み"></select><select id="fm" aria-label="支払い方法で絞り込み"></select></div>
+        <div class="mu" id="fsum"></div>
+      </div>
+      <div id="list"></div>
+    </div>
+  </section>
+
+  <section class="view card" id="v-graph">
+      <div class="sh"><b>グラフ・平均</b></div>
+      <div class="gctl"><select id="gby" aria-label="集計の単位"><option value="category">分類別</option><option value="method">支払い方法別</option></select><select id="gper" aria-label="期間"><option value="cur">当月</option><option value="3" selected>直近3か月</option><option value="6">直近6か月</option><option value="12">直近12か月</option><option value="all">全期間</option></select><select id="gsel" aria-label="項目"></select></div>
+      <div class="gbody"><div id="gavg"></div><div><div id="gtrend"></div><div id="gdet"></div><div id="gpace"></div><div id="gwd"></div></div></div>
+    </section>
+  <section class="view card" id="v-ai">
+    <div class="sh"><b>AI分析</b><span class="mu" id="aimeta"></span></div>
+    <div class="mu">明細（生活費）と返済の状況をまとめて、Claudeが減らせそうな支出と、完済を早める打ち手を具体的な金額つきで提案します。表示中の月度までの期間を分析し、あなたのClaudeの利用枠を使います。結果はアカウントに保存され、ほかの端末でも見られます。</div>
+    <div class="aictl"><select id="aiper" aria-label="分析する期間"><option value="3">直近3か月度</option><option value="6" selected>直近6か月度</option><option value="12">直近12か月度</option></select><input type="text" id="aigoal" placeholder="目標（任意）例: 月2万円減らしたい"><button class="pri" id="airun">分析する</button></div>
+    <div id="aiout"></div>
+  </section>
+</div>
+</div>
+
+<div class="pay u-btns">
+<div class="wrap" id="payWrap">
+  <div id="status" class="status" hidden></div>
+
+  <!-- 支払い（概要＋毎月の支払い） -->
+  <section id="v-home">
+    <div id="cAlert"></div>
+    <div id="hNext"></div>
+    <div class="pbox"><div class="prange"><span class="label">集計期間</span><b class="num" id="cRange"></b><span class="note" id="cPeriod"></span></div><div class="stats" id="hStats"></div></div>
+    <div class="bar-row listbar">
+      <div class="seg" id="cFilter"><button data-f="all" aria-pressed="true">すべて</button><button data-f="unpaid">未払</button><button data-f="late">延滞分</button></div>
+      <button class="primary" id="cAdd">＋ 支払を追加</button>
+    </div>
+    <div class="cols cols-cycle">
+      <div class="panel"><div id="cList"></div></div>
+      <div class="stack14">
+        <div class="panel">
+          <div class="panel-h"><h2>この期間のお金の流れ</h2></div>
+          <div class="cf" id="cFlow"></div>
+        </div>
+        <div class="note" id="cNote"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 残高と計画（残高と口座＋返済計画） -->
+  <section id="v-balance">
+    <div class="stats" id="bStats"></div>
+    <div class="panel outlook" data-foldbox="outlook">
+      <div class="panel-h fold-h" data-fold="outlook" role="button" tabindex="0"><h2>完済の見通し</h2><span class="note">いまの返済条件のまま</span></div>
+      <div id="olTop"></div>
+      <div class="ai" id="aiBox"></div>
+    </div>
+    <div class="grp-h"><h2>口座</h2><button class="primary sm" id="mAdd">＋ 口座を追加</button></div>
+    <div class="note acc-hint">口座を押すと、履歴・今後の予定・その口座の返済計画が見られます。</div>
+    <div id="bGroups" class="stack14"></div>
+    <div class="grp-h plan-h"><h2>返済の計画</h2></div>
+    <div class="panel" data-foldbox="once">
+      <div class="panel-h fold-h" data-fold="once" role="button" tabindex="0"><h2>1回だけ繰上げするなら</h2><span class="note">今期に1回だけ繰上げした場合</span></div>
+      <div class="boost-h">
+        <div class="field"><label for="pAmt">繰上げに回す額</label>
+          <div class="amtbox"><span>¥</span><input type="number" id="pAmt" inputmode="numeric" step="1000" value="10000"></div>
+        </div>
+        <div class="quick" id="pQuick"><button data-qa="5000">5千</button><button data-qa="10000">1万</button><button data-qa="30000">3万</button><button data-qa="50000">5万</button></div>
+      </div>
+      <div id="pRank"></div>
+    </div>
+
+    <div class="panel" data-foldbox="int">
+      <div class="panel-h fold-h" data-fold="int" role="button" tabindex="0"><h2>利息に消えているお金</h2><span class="note" id="pIntSum"></span></div>
+      <div id="pInt"></div>
+    </div>
+
+    <div class="panel" data-foldbox="road">
+      <div class="panel-h fold-h" data-fold="road" role="button" tabindex="0"><h2>毎月の返済が軽くなっていく日</h2><span class="note">いまの返済条件のまま（家賃などは除く）</span></div>
+      <div class="chartbox" id="pChart"></div>
+      <div class="timeline" id="pRoad"></div>
+      <div class="whatif">
+        <div class="bar-row"><label for="sExtra" class="label">毎月あと少し返せたら</label><b class="num" id="sExtraV"></b></div>
+        <input type="range" id="sExtra" min="0" max="50000" step="1000" value="0">
+        <div class="note" id="sResult"></div>
+      </div>
+    </div>
+  </section>
+
+
+</div>
+<div id="sheetHost"></div>
+</div>
+
+<div class="kb u-app u-btns">
+<div class="tbwrap"><nav class="tabbar" aria-label="画面の切り替え">
+  <button data-tab="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>家計簿</button>
+  <button data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>支払い</button>
+  <button data-tab="an"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></svg>分析</button>
+</nav><button class="tbgear" id="gear" aria-label="設定" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+
+<div id="selbar" hidden><div class="in">
+  <div class="row sp"><div><b id="selcnt"></b> <span class="mu">合計</span> <b id="selsum" class="num"></b></div><button class="ghost" id="selend">選択を解除</button></div>
+  <div class="q"><select id="qc" aria-label="分類を変更"></select><select id="qm" aria-label="支払い方法を変更"></select></div>
+  <div class="acts"><button class="pri" id="qmerge">1件に合算</button><button id="selpost">詳細編集</button><button id="qrule">ルールにする</button><button class="ghost" id="qdel">削除</button></div>
+</div></div>
+<button type="button" id="toTop" class="totop hide" aria-label="ページの先頭に戻る" tabindex="-1" aria-hidden="true"><span aria-hidden="true">↑</span>トップへ</button>
+<datalist id="memos"></datalist>
+<div id="rbk" hidden></div>
+
+<div class="card pop" id="bulk" hidden><div class="row sp"><b>まとめて編集</b><button class="ghost" id="bclose">閉じる</button></div>
+  <div class="mu" id="bsum"></div>
+  <div class="rv"><label>日付<input type="date" id="bd"></label><label>メモ（空欄なら変更なし）<input type="text" id="bn" list="memos"></label><button class="pri full" id="bapply">選択した明細に適用</button></div>
+  <div class="mu mt6">分類・支払い方法の変更、合算、削除は下部のバーから行えます。</div>
+  <div id="bmsg" class="err mt6"></div></div>
+
+<div class="card pop" id="rulepanel" hidden>
+  <div class="row sp"><b class="ptitle">設定</b><button class="ghost" id="rclose">閉じる</button></div>
+  <div class="seg" role="tablist" aria-label="設定の項目"><button data-stab="rules">分類ルール</button><button data-stab="master">マスタ</button><button data-stab="pay">支払い</button></div>
+  <div id="st-rules">
+  <div class="mu st-desc">「自動適用」がオンのルールは、新しく追加する明細にかかります。登録済みの明細には、ルールごとに「既存データに適用」で対象を確認してから反映します。</div>
+  <div id="rules"></div>
+  <div class="row mt4"><button class="ghost" id="rundo">直前の変更を取り消す</button></div>
+  <div id="rmsg" class="mu"></div>
+  <div class="rform" id="rform">
+    <b id="rftitle">ルールを追加</b>
+    <div class="rv">
+      <label class="full">種類<select id="rk"><option value="set">条件に合う明細のメモ・分類・支払い方法を変える</option><option value="split">金額で一部を別の分類に分ける</option></select></label>
+      <div class="lg" data-k="set">条件（入力した項目すべてに合う明細が対象）</div>
+      <label class="full" data-k="set">メモのキーワード（カンマ区切りで複数）<input type="text" id="rw" placeholder="例: NewDays,ニューデイズ"></label>
+      <label data-k="set">キーワードの一致方法<select id="rmode"><option value="contains">含む</option><option value="prefix">で始まる</option><option value="exact">完全に一致</option></select></label>
+      <label data-k="set">分類が<select id="rcat"></select></label>
+      <label data-k="set">支払い方法が<select id="rmet"></select></label>
+      <label data-k="set">金額（円以上）<input type="number" id="rmin" inputmode="numeric"></label>
+      <label data-k="set">金額（円以下）<input type="number" id="rmax" inputmode="numeric"></label>
+      <div class="lg" data-k="set">変更内容（空欄・「変更しない」はそのまま）</div>
+      <label class="full" data-k="set">メモをこの名称に統一<input type="text" id="snm" list="memos" placeholder="例: NewDays"></label>
+      <label data-k="set">分類を<select id="scat"></select></label>
+      <label data-k="set">支払い方法を<select id="smet"></select></label>
+      <label data-k="split">元の分類<select id="rf"></select></label>
+      <label data-k="split">分ける先の分類<select id="rt"></select></label>
+      <label data-k="split">金額（例 640）<input type="number" id="ra" inputmode="numeric"></label>
+      <label data-k="split">最大個数<input type="number" id="rm" value="1" inputmode="numeric"></label>
+    </div>
+    <div class="row"><button class="pri grow" id="radd">ルールを追加</button><button class="ghost" id="rfcancel" hidden>編集をやめる</button></div>
+  </div>
+  </div>
+  <div id="st-master" hidden>
+    <div class="seg sm" role="tablist" aria-label="マスタの種類"><button data-mk="cats">分類</button><button data-mk="mets">支払い方法</button></div>
+    <div class="mu st-desc">↑↓で並び順を変えると、入力欄やグラフの並びに反映されます。名前を変えると、登録済みの明細とルールにも反映されます。既にある名前に変えると、その項目に統合されます。</div>
+    <div id="mlist"></div>
+    <div id="mconf"></div>
+    <div class="madd"><input type="text" id="madde" maxlength="4" placeholder="🏷️" aria-label="アイコン（絵文字）"><input type="text" id="maddn" placeholder="新しい分類の名前" aria-label="新しい名前"><button class="pri" id="maddb">追加</button></div>
+    <div id="mmsg" class="mu"></div>
+  </div>
+  <div id="st-pay" hidden>
+    <div class="dcard"><b>収入と給料日</b><div class="mu">月度（給料日から次の給料日の前日まで。土日は直前の平日）は、家計簿・支払い・分析のすべてで使います。</div>
+      <div class="rv pset"><label>標準の手取り（毎月）<input type="number" id="mIncome" inputmode="numeric"></label><label>給料日<input type="number" id="mPayday" min="1" max="28" inputmode="numeric"></label></div>
+      <button class="pri" id="mSaveCfg">保存</button></div>
+    <div class="dcard"><b>引落口座（支払いの支払方法）</b><div class="mu">↑↓で並び順を変えると、支払いの入力欄の並びに反映されます。</div>
+      <div class="pml" id="mMethods"></div>
+      <form id="mMethodForm" class="pmadd"><input type="text" id="mMethodIn" placeholder="例：楽天銀行" aria-label="新しい引落口座"><button class="pri">追加</button></form></div>
+    <div class="dcard"><b>支払予定の作成</b><div class="mu">返済中の口座は、次の給料日以降の支払予定を いまの残高・年利・返済条件 から作り直せます（3年分）。延滞分・支払済・口座なしの支払はそのまま残ります。口座の設定を保存したときも、その口座の分は自動で作り直します。</div>
+      <button class="pri" id="mRegen">今後の支払予定を作り直す</button>
+      <div class="mu mt6">奨学金などの定額の支払は、月を指定してまとめて作れます（同じ月にすでにある口座はとばします）。</div>
+      <div class="pgen"><input type="month" id="mGenMonth" aria-label="作成する月"><button class="pri" id="mGen">支払予定を作成</button></div></div>
+    <div id="pmsg" class="mu"></div>
+  </div>
+  <div id="okMove"></div>
+</div>
+</div>
+<script>window.U_APP={id:"okane",user:true,fb:{"apiKey": "AIzaSyCTyub7aHKuwtjqahlCxU5Tji4D0ydz570", "authDomain": "apps-78dd3.firebaseapp.com", "projectId": "apps-78dd3", "storageBucket": "apps-78dd3.firebasestorage.app", "messagingSenderId": "593145768210", "appId": "1:593145768210:web:1269b3e88b34d825746bcb"},root:u=>"users/"+u+"/apps/okane"}</script>
+<script src="../shared/u-core.js"></script>
+<script src="fin.js"></script>
+<script src="pay.js"></script>
+<script src="kb.js"></script>
+<script src="move.js"></script>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});</script>
+</body></html>
