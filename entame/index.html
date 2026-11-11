@@ -712,6 +712,25 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .clock .soon .lbl{font-size:13px}
   .row.lst .pwide .pill,.row.yrow.lst .pwide .pill{font-size:13px}
 }
+/* ===== スマホ：上の帯に ☰・切り替え・設定、追加は右下の丸ボタン ===== */
+.fab{display:none}
+@media (max-width:899px){
+  .u-app .tbwrap{display:none}
+  body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));--u-toast-b:86px}
+  .hbar{gap:8px}
+  .hcur{flex:none;gap:0}
+  .hcur .hname{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .hcur .mdot{width:11px;height:11px}
+  .hcur .ytmark{font-size:13px}
+  .hseg{flex:1;min-width:0;display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .hseg::-webkit-scrollbar{display:none}
+  .hseg button{flex:1 0 auto;border:0;background:none;color:var(--u-sub);padding:7px 10px;border-radius:8px;font-size:13.5px;font-weight:700;white-space:nowrap}
+  .hseg button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+  .hgear{flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-sub);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
+  .hgear svg{width:20px;height:20px}
+  .fab{display:grid;place-items:center;position:fixed;z-index:12;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border:0;border-radius:50%;background:var(--u-accent);color:var(--u-on);font-size:30px;font-weight:400;line-height:1;padding:0;box-shadow:0 8px 24px rgba(16,24,40,.28)}
+  .u-app .totop{right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+}
 </style>
 
 <div class="u-app">
@@ -721,8 +740,8 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
     <div class="hbar">
       <button type="button" class="hmenu" data-drawer="open" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div class="hcur" id="hcur"></div>
-      <span class="hsp"></span>
-      <button class="add" id="addBtn" type="button" aria-label="追加"><span aria-hidden="true">＋</span><span class="addl"> 追加</span></button>
+      <div class="hseg" id="hseg" role="tablist" aria-label="画面の切り替え"></div>
+      <button type="button" class="hgear" id="hGear" data-gear="1" aria-label="設定"></button>
     </div>
   </div>
 </header>
@@ -731,6 +750,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 <div class="wrap vbarw"><div id="vbar" class="vbar"></div></div>
 <main class="wrap" id="main"><p class="loading">作品データを読み込み中…</p></main>
 <div class="tbwrap"><nav class="tabbar" id="tabbar" aria-label="画面の切り替え"></nav><button type="button" class="tbgear" id="tbGear" data-gear="1" aria-label="設定"></button></div>
+<button class="fab" id="addBtn" type="button" aria-label="追加"><span aria-hidden="true">＋</span></button>
 <div class="dscrim" data-drawer="close"></div>
 <div id="layer"></div>
 <button type="button" id="toTop" class="totop" aria-label="ページの先頭に戻る" hidden><span aria-hidden="true">↑</span>トップへ</button>
@@ -1604,8 +1624,8 @@ function renderTabbar() {
     : state.mode === "m"
       ? [
           ["all", "すべて", TB_ICON.all, state.kind === "all"],
-          ["a", "アニメ映画", '<i class="temo" aria-hidden="true">📺</i>', state.kind === "a"],
-          ["d", "ドラマ・実写", '<i class="temo" aria-hidden="true">🎬</i>', state.kind === "d"],
+          ["a", "アニメ", '<i class="temo" aria-hidden="true">📺</i>', state.kind === "a"],
+          ["d", "実写", '<i class="temo" aria-hidden="true">🎬</i>', state.kind === "d"],
         ]
       : [
         ["week", "番組表", TB_ICON.week, state.view === "week"],
@@ -1614,6 +1634,16 @@ function renderTabbar() {
   nav.className = "tabbar n" + items.length;
   const gear = $("#tbGear");
   if (gear && !gear.firstChild) gear.innerHTML = GEAR;
+  const hs = $("#hseg");
+  if (hs) {
+    hs.innerHTML = items
+      .map(([v, l, , on]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${esc(l)}</button>`)
+      .join("");
+    const on = hs.querySelector('[aria-selected="true"]');
+    if (on && hs.scrollWidth > hs.clientWidth) hs.scrollLeft = on.offsetLeft - (hs.clientWidth - on.offsetWidth) / 2;
+  }
+  const hg = $("#hGear");
+  if (hg && !hg.firstChild) hg.innerHTML = GEAR;
   nav.innerHTML = items
     .map(
       ([v, l, ic, on]) =>
@@ -2031,8 +2061,8 @@ function render() {
   if (hc)
     hc.innerHTML =
       state.mode === "yt"
-        ? '<span class="ytmark" aria-hidden="true">▶</span>YouTube'
-        : `<i class="mdot ${state.mode}" aria-hidden="true"></i>${{ a: "アニメ", d: "ドラマ", m: "映画", s: "配信" }[state.mode]}`;
+        ? '<span class="ytmark" aria-hidden="true">▶</span><span class="hname">YouTube</span>'
+        : `<i class="mdot ${state.mode}" aria-hidden="true"></i><span class="hname">${{ a: "アニメ", d: "ドラマ", m: "映画", s: "配信" }[state.mode]}</span>`;
   renderTabbar();
   renderVbar();
   renderSidebar();
