@@ -243,6 +243,72 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .menu button,.menu .itm{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:13px 16px;cursor:pointer;text-align:left;border-top:1px solid var(--line);font-size:14px}
 .menu>*:first-child{border-top:0}
 .menu .r{margin-left:auto;color:var(--muted);font-size:13px}
+
+/* カウントダウン（記念日カウンターとそろえた見た目） */
+.anniv.cd{background:linear-gradient(135deg,#f0ebfb,#fde8ee 60%,#fff0ea)}
+.anniv.cd .num{color:var(--lav-d)}
+.anniv.cd .num small:first-child{margin:0 2px 0 0}
+.anniv.cd .next{min-width:0;max-width:58%}
+.anniv.cd .next b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--pink-d)}
+
+/* カレンダー */
+.cal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-head b{font-size:17px;flex:1;text-align:center}
+.cal-nav{border:0;background:var(--pink-l);width:36px;height:36px;border-radius:50%;color:var(--pink-d);font-size:18px;cursor:pointer;flex:none}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal-w{font-size:11px;color:var(--muted);padding:2px 0 4px}
+.cal-w.sun,.cal-d.sun .n{color:#e2809c}
+.cal-w.sat,.cal-d.sat .n{color:var(--lav-d)}
+.cal-d{border:0;background:none;height:46px;border-radius:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0;font-size:14px}
+.cal-d .n{width:28px;height:28px;line-height:28px;border-radius:50%}
+.cal-d.out{opacity:.32}
+.cal-d.today .n{background:var(--lav-l);font-weight:700}
+.cal-d.sel{background:linear-gradient(135deg,#f9b6c7,#e2809c)}
+.cal-d.sel .n{color:#fff!important;background:none;font-weight:700}
+.cal-d .dots{display:flex;gap:2px;height:6px}
+.cal-d .dots i{width:6px;height:6px;border-radius:50%;background:var(--pink-d)}
+.cal-d.sel .dots i{background:#fff}
+.ditem{display:flex;gap:12px;align-items:center;background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:10px 12px;margin-bottom:10px;cursor:pointer}
+.ditem.past{opacity:.6}
+.ditem .dd{width:50px;flex:none;text-align:center;border-radius:16px;background:var(--pink-l);color:var(--pink-d);padding:4px 0;line-height:1.2}
+.ditem .dd b{display:block;font-size:20px}
+.ditem .dd small{font-size:10px}
+.ditem .main{flex:1;min-width:0}
+.ditem .t{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ditem .s{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ditem .tag{flex:none}
+
+/* 相性テスト */
+.qset{display:flex;gap:12px;align-items:center;background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:12px;margin-bottom:10px;cursor:pointer}
+.qset .main{flex:1;min-width:0}
+.qset .t{font-weight:700}
+.qset .r{color:var(--muted);font-size:20px}
+.qtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.qtop .muted{margin-left:auto}
+.qbar{height:8px;border-radius:9px;background:var(--pink-l);overflow:hidden;margin-bottom:16px}
+.qbar i{display:block;height:100%;background:linear-gradient(90deg,#f4a3b8,#b8a6e6);border-radius:9px;transition:width .25s}
+.qq{background:#fff;border-radius:24px;box-shadow:var(--shadow);padding:18px;text-align:center;margin-bottom:14px}
+.qwho{display:inline-block;font-size:12px;font-weight:700;border-radius:99px;padding:2px 12px;background:var(--pink-l);color:var(--pink-d);margin-bottom:8px}
+.qwho.lav{background:var(--lav-l);color:var(--lav-d)}
+.qq .qt{font-size:19px;font-weight:700;line-height:1.45}
+.qopts{display:grid;gap:8px}
+.qopt{border:1.5px solid var(--line);background:#fff;border-radius:18px;padding:13px 16px;text-align:left;cursor:pointer;font-size:15px;transition:transform .12s}
+.qopt:active{transform:scale(.97)}
+.qopt.on{border-color:var(--pink);background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.qopt.g.on{border-color:var(--lav);background:var(--lav-l);color:var(--lav-d)}
+.qres-top{text-align:center;padding:6px 0 14px}
+.score{font-size:60px;font-weight:700;color:var(--pink-d);line-height:1.1;animation:pop .6s ease}
+.score small{font-size:22px}
+.qmsg{font-size:18px;font-weight:700;margin:2px 0}
+.vs{display:flex;align-items:center;justify-content:center;gap:22px;margin:4px 0 8px}
+.vs b{display:block;font-size:34px;color:var(--lav-d);line-height:1.1}
+.vs span{font-size:12px;color:var(--muted)}
+.qrow{background:#fff;border-radius:18px;padding:10px 14px;margin-bottom:8px}
+.qrow .qt2{font-size:13px;font-weight:700;margin-bottom:4px}
+.qa{display:flex;gap:8px;align-items:center;font-size:13px;padding:2px 0}
+.qa span{width:64px;flex:none;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qa b{font-weight:500}
+.qa em{margin-left:auto;font-style:normal;font-size:11px;background:var(--lav-l);color:var(--lav-d);border-radius:99px;padding:0 8px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -276,7 +342,8 @@ const IC = {
   list: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
   both: '<svg viewBox="0 0 24 24" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3.1 1.6-1.9 3.1-3.1 5.2-3.1 3.5 0 5.4 3.5 4.1 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/><path d="M9 11.5l2 2 4-4" stroke-linecap="round"/></svg>',
   dice: '<svg viewBox="0 0 24 24" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.1" fill="currentColor"/></svg>',
-  memo: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M4 15.5l4.5-4 3.5 3 2.5-2 5.5 4.5"/><circle cx="15" cy="8" r="1.6"/></svg>'
+  memo: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M4 15.5l4.5-4 3.5 3 2.5-2 5.5 4.5"/><circle cx="15" cy="8" r="1.6"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="4"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 17.6s-2.6-1.6-3.2-3.1c-.4-1.1.3-2.1 1.3-2.1.8 0 1.3.5 1.9 1.2.6-.7 1.1-1.2 1.9-1.2 1 0 1.7 1 1.3 2.1-.6 1.5-3.2 3.1-3.2 3.1z" fill="currentColor" stroke="none"/></svg>'
 };
 
 /* ---------- カテゴリ ---------- */
@@ -376,7 +443,8 @@ const db = getFirestore(fbApp);
 
 /* ---------- 状態 ---------- */
 const S = {
-  user:null, profile:null, room:null, roomId:null, places:[], subs:[],
+  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, extraErr:null, subs:[],
+  calY:null, calM:null, calSel:null, qv:null,
   tab:"list", cat:"all", sort:"new", q:"",
   rMode:"both", rCat:"all", rResult:null, rSpin:false,
   authMode:"login", busy:false
@@ -643,6 +711,18 @@ function openRoom(roomId, fresh){
     gotPlaces = true;
     if (gotRoom) { render(); checkMatches(); }
   }, e => setTimeout(() => { if (S.roomId === roomId) renderFatal(e, "候補の読みこみ"); }, 800)));
+  // デートの予定と相性テスト（ルールが未更新でも、ほかの機能は止めない）
+  S.dates = []; S.quiz = {}; S.extraErr = null;
+  const extraErr = e => { S.extraErr = e.code || e.message; if (gotRoom && gotPlaces) render(); };
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "dates"), snap => {
+    S.dates = snap.docs.map(d => ({ id: d.id, ...d.data() })); S.extraErr = null;
+    if (gotRoom && gotPlaces) render();
+  }, extraErr));
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "quiz"), snap => {
+    S.quiz = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+    if (gotRoom && gotPlaces) render();
+    if (document.getElementById("qbody") && S.qv && S.qv.v !== "play") renderQuiz();
+  }, extraErr));
 }
 
 async function lostRoom(){
@@ -670,10 +750,12 @@ function render(){
     ["list", IC.list, "行きたい"],
     ["both", IC.both, "ふたりで♡", both],
     ["rand", IC.dice, "きめる"],
+    ["cal", IC.cal, "よてい"],
     ["memo", IC.memo, "おもいで"]
   ];
   $nav.innerHTML = `
   ${S.tab === "list" || S.tab === "both" ? `<button class="fab" data-a="add" aria-label="候補を追加">${IC.plus}</button>` : ""}
+  ${S.tab === "cal" ? `<button class="fab" data-a="dateAdd" aria-label="予定を追加">${IC.plus}</button>` : ""}
   <nav class="tabs"><div class="in2">${tabs.map(([id, ic, n, c]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${ic}<span>${n}${c ? `<span class="n">${c}</span>` : ""}</span></button>`).join("")}</div></nav>`;
   const q = document.getElementById("q");
   if (q) q.oninput = () => { S.q = q.value; document.getElementById("plist").innerHTML = listHtml(filtered()); document.getElementById("cnt").textContent = filtered().length + "件"; };
@@ -683,6 +765,7 @@ function view(){
   if (S.tab === "both") return viewBoth();
   if (S.tab === "rand") return viewRand();
   if (S.tab === "memo") return viewMemo();
+  if (S.tab === "cal") return viewCal();
   return viewList();
 }
 
@@ -747,7 +830,7 @@ function annivHtml(){
 
 function viewList(){
   const arr = filtered();
-  return `${annivHtml()}
+  return `${S.extraErr ? "" : countdownHtml()}${annivHtml()}
   <div class="search">${IC.search}<input class="in" id="q" placeholder="名前・エリア・メモでさがす" value="${esc(S.q)}"></div>
   <div class="chips">
     <button class="chip ${S.cat === "all" ? "on" : ""}" data-a="cat" data-v="all">すべて</button>
@@ -858,7 +941,7 @@ function swipeCta(){
   </div>`;
 }
 function viewBoth(){
-  const cta = "";
+  const cta = quizCta();
   if (!isPaired()) return cta + `<div class="empty"><div class="big">💞</div><p>恋人が参加すると、ふたりとも「行きたい♡」を押した場所がここに出ます</p></div>`;
   const arr = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
   if (!arr.length) return cta + `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>「きめる」タブのスワイプ（STEP 1）か、「行きたい」タブの♡で選んでみてね</p></div>`;
@@ -1047,6 +1130,230 @@ function viewMemo(){
   }).join("")}</div>`;
 }
 
+/* =============== デートの予定・カウントダウン =============== */
+const WD = "日月火水木金土";
+const pad2 = n => String(n).padStart(2, "0");
+const wdOf = s => new Date(ymd(s)).getUTCDay();
+function fmtShort(s){ return `${+s.slice(5, 7)}月${+s.slice(8, 10)}日(${WD[wdOf(s)]})`; }
+const dateTitle = d => (d.placeId && S.places.find(p => p.id === d.placeId)?.title) || d.title || "デート";
+const dateSort = (a, b) => (a.date + (a.time || "99")).localeCompare(b.date + (b.time || "99"));
+function nextDate(){ const t = today(); return S.dates.filter(d => d.date >= t).sort(dateSort)[0]; }
+const extraNote = () => `<div class="card" style="background:var(--butter-l)"><h2 style="color:#c79a2c">⚙️ もう少しで使えます</h2><p class="muted" style="margin:0">Firebaseのルールを更新すると、デートの予定と相性テストが使えるようになります。</p></div>`;
+
+function countdownHtml(){
+  const n = nextDate();
+  if (!n) return `<div class="card anniv-empty"><span style="font-size:22px">📅</span><span class="muted">デートの予定を入れると、カウントダウンが出ます</span><button class="btn sub sm" data-a="dateAdd">予定を入れる</button></div>`;
+  const left = dayDiff(today(), n.date);
+  return `<div class="card anniv cd ${left === 0 ? "today" : ""}" data-a="dateOpen" data-id="${n.id}">
+    ${left === 0 ? `<span class="party">💕</span>` : ""}
+    <div>${left === 0
+      ? `<div class="lbl">今日は</div><div class="num" style="font-size:24px">デートの日！</div>`
+      : `<div class="lbl">次のデートまで</div><div class="num"><small>あと</small>${left}<small>日</small></div>`}</div>
+    <div class="next"><b>${esc(dateTitle(n))}</b>${esc(fmtShort(n.date))}${n.time ? " " + esc(n.time) : ""}</div>
+  </div>`;
+}
+
+function dateItem(d){
+  const left = dayDiff(today(), d.date), p = d.placeId && S.places.find(x => x.id === d.placeId);
+  return `<div class="ditem ${left < 0 ? "past" : ""}" data-a="dateOpen" data-id="${d.id}">
+    <div class="dd"><small>${+d.date.slice(5, 7)}月</small><b>${+d.date.slice(8, 10)}</b><small>${WD[wdOf(d.date)]}</small></div>
+    <div class="main"><div class="t">${p ? catOf(p.cat).e + " " : ""}${esc(dateTitle(d))}</div><div class="s">${esc([d.time, d.memo].filter(Boolean).join(" ・ ")) || "&nbsp;"}</div></div>
+    <span class="tag ${left < 0 ? "gray" : left === 0 ? "" : "lav"}">${left < 0 ? "おわり" : left === 0 ? "今日♡" : "あと" + left + "日"}</span>
+  </div>`;
+}
+
+function viewCal(){
+  if (S.extraErr) return extraNote();
+  const t = today();
+  if (S.calY == null) { S.calY = +t.slice(0, 4); S.calM = +t.slice(5, 7); }
+  if (!S.calSel) S.calSel = t;
+  const y = S.calY, m = S.calM, first = `${y}-${pad2(m)}-01`;
+  const startW = wdOf(first), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const weeks = Math.ceil((startW + dim) / 7), start = addDays(first, -startW);
+  const byDay = {}; S.dates.forEach(d => (byDay[d.date] ||= []).push(d));
+  let cells = "";
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = addDays(start, i), w = i % 7, inM = +d.slice(5, 7) === m;
+    cells += `<button class="cal-d ${inM ? "" : "out"} ${d === t ? "today" : ""} ${d === S.calSel ? "sel" : ""} ${w === 0 ? "sun" : w === 6 ? "sat" : ""}" data-a="calday" data-v="${d}"><span class="n">${+d.slice(8, 10)}</span><span class="dots">${(byDay[d] || []).slice(0, 3).map(() => "<i></i>").join("")}</span></button>`;
+  }
+  const selList = (byDay[S.calSel] || []).sort(dateSort);
+  const upcoming = S.dates.filter(d => d.date >= t).sort(dateSort);
+  return `<div class="card">
+    <div class="cal-head"><button class="cal-nav" data-a="calmove" data-v="-1" aria-label="前の月">‹</button><b>${y}年 ${m}月</b><button class="cal-nav" data-a="calmove" data-v="1" aria-label="次の月">›</button></div>
+    <div class="cal-grid">${[...WD].map((w, i) => `<div class="cal-w ${i === 0 ? "sun" : i === 6 ? "sat" : ""}">${w}</div>`).join("")}${cells}</div>
+    ${y !== +t.slice(0, 4) || m !== +t.slice(5, 7) ? `<div style="text-align:center"><button class="linkbtn" data-a="caltoday">今日にもどる</button></div>` : ""}
+  </div>
+  <div class="sec">${esc(fmtShort(S.calSel))}${S.calSel === t ? "（今日）" : ""}</div>
+  ${selList.length ? selList.map(dateItem).join("") : `<div class="card anniv-empty" style="box-shadow:none"><span class="muted">この日の予定はまだありません</span><button class="btn sub sm" data-a="dateAdd">予定を入れる</button></div>`}
+  <div class="sec">これからの予定 ・ ${upcoming.length}件</div>
+  ${upcoming.length ? upcoming.map(dateItem).join("") : `<div class="empty" style="padding:20px 16px"><div class="big">📅</div><p>まだ予定がありません</p><p>カレンダーの日にちをタップするか、右下の＋から入れてね</p></div>`}`;
+}
+
+function openDateEdit(id, pre = {}){
+  if (S.extraErr) return openSheet(`<h3>📅 デートの予定<button class="x" data-a="close">×</button></h3>${extraNote()}`);
+  const d = id ? S.dates.find(x => x.id === id) : null;
+  if (id && !d) return closeSheet();
+  const pid = d ? (d.placeId || "") : (pre.placeId || "");
+  const opts = sortPlaces(S.places.filter(p => !p.visited || p.id === pid)).sort((a, b) => isBoth(b) - isBoth(a));
+  const left = d ? dayDiff(today(), d.date) : null, p = d?.placeId && S.places.find(x => x.id === d.placeId);
+  openSheet(`
+  <h3>${d ? "デートの予定" : "デートの予定を入れる"} 📅<button class="x" data-a="close">×</button></h3>
+  ${d && left <= 0 && p && !p.visited ? `<div class="card" style="background:var(--mint-l);box-shadow:none"><p style="margin:0 0 8px;font-size:13px">${left === 0 ? "今日のデート、楽しんでね♡" : "このデート、どうだった？"}</p><button class="btn mint block sm" data-a="visit" data-id="${p.id}">行った！思い出に残す 📷</button></div>` : ""}
+  <form id="df">
+    <div class="row" style="flex-wrap:nowrap;align-items:flex-start">
+      <label class="f" style="flex:1.4;min-width:0"><span>日にち *</span><input class="in" type="date" name="date" required value="${esc(d?.date || pre.date || today())}"></label>
+      <label class="f" style="flex:1;min-width:0"><span>時間</span><input class="in" type="time" name="time" value="${esc(d?.time || "")}"></label>
+    </div>
+    <label class="f"><span>行き先</span><select class="in" name="pid"><option value="">✏️ 自分で入力する</option>${opts.map(o => `<option value="${o.id}" ${o.id === pid ? "selected" : ""}>${catOf(o.cat).e} ${esc(o.title)}${isBoth(o) ? " ♡" : ""}</option>`).join("")}</select></label>
+    <label class="f" id="dtw" ${pid ? 'style="display:none"' : ""}><span>行き先・やること</span><input class="in" name="title" maxlength="60" value="${esc(pid ? "" : d?.title || "")}" placeholder="例：映画を見に行く"></label>
+    <label class="f"><span>メモ</span><textarea class="in" name="memo" maxlength="300" placeholder="例：駅に10時集合">${esc(d?.memo)}</textarea></label>
+    <div class="err" id="derr"></div>
+    <button class="btn block">${d ? "保存する" : "予定を入れる"}</button>
+  </form>
+  ${d ? `<div class="gap"></div><button class="btn danger block sm" data-a="dateDel" data-id="${d.id}">この予定を消す</button>` : ""}`);
+  const f = document.getElementById("df"), sel = f.querySelector("[name=pid]"), tw = document.getElementById("dtw");
+  sel.onchange = () => { tw.style.display = sel.value ? "none" : ""; };
+  f.onsubmit = async ev => {
+    ev.preventDefault();
+    const fd = new FormData(f), er = document.getElementById("derr");
+    const date = String(fd.get("date")), placeId = String(fd.get("pid") || ""), pl = placeId && S.places.find(x => x.id === placeId);
+    const title = pl ? pl.title : String(fd.get("title") || "").trim().slice(0, 60);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return er.textContent = "日にちを入れてね";
+    if (!title) return er.textContent = "行き先をえらぶか、入力してね";
+    const data = { date, time: String(fd.get("time") || ""), placeId, title, memo: String(fd.get("memo") || "").trim().slice(0, 300), updatedAt: serverTimestamp() };
+    const b = f.querySelector("button"); b.disabled = true;
+    try {
+      if (d) await updateDoc(doc(db, "rooms", S.roomId, "dates", d.id), data);
+      else await addDoc(collection(db, "rooms", S.roomId, "dates"), { ...data, by: me(), createdAt: serverTimestamp() });
+      S.calSel = date; S.calY = +date.slice(0, 4); S.calM = +date.slice(5, 7);
+      closeSheet(); toast(d ? "保存しました" : "予定を入れました📅"); render();
+    } catch (e) { er.textContent = "保存できませんでした（" + (e.code || e.message) + "）"; b.disabled = false; }
+  };
+}
+
+/* =============== 相性テスト（相性診断＋当てっこクイズ） =============== */
+const QSETS = [
+  { id:"date", e:"💕", n:"デートの好み", c:"var(--pink-l)", q:[
+    ["休日のデート、どっち派？", ["おうちでまったり", "外におでかけ"]],
+    ["デートは何時から？", ["朝から1日たっぷり", "お昼から", "夕方から夜"]],
+    ["ごはん屋さんえらびは？", ["行きつけが安心", "新しいお店を開拓"]],
+    ["旅行するなら？", ["海", "山", "街あるき", "温泉"]],
+    ["デート中の写真は？", ["いっぱい撮る", "ほどほど", "あまり撮らない"]],
+    ["記念日のお祝いは？", ["サプライズがうれしい", "いっしょに計画したい"]],
+    ["遊園地でいちばん乗りたいのは？", ["絶叫系", "観覧車", "パレード・ショー"]],
+    ["雨の日のデートは？", ["映画館", "カフェでのんびり", "おうちデートに変更"]],
+    ["おそろいのもの、ほしい？", ["ほしい！", "さりげなくならOK", "なくていい"]],
+    ["理想のデートのしめくくりは？", ["夜景を見る", "おいしいスイーツ", "次のデートの計画"]]
+  ]},
+  { id:"life", e:"🏠", n:"ふだんのこと", c:"var(--mint-l)", q:[
+    ["朝型？夜型？", ["朝型", "夜型"]],
+    ["連絡の回数は？", ["こまめにしたい", "用があるときだけ"]],
+    ["休みの日の起きる時間は？", ["いつもどおり早起き", "お昼までゆっくり"]],
+    ["落ちこんだときは？", ["話を聞いてほしい", "そっとしておいてほしい"]],
+    ["好きな季節は？", ["春", "夏", "秋", "冬"]],
+    ["部屋は？", ["きれい好き", "ちょっと散らかってても平気"]],
+    ["お金の使い方は？", ["コツコツ貯める", "使うときはパッと使う"]],
+    ["犬派？猫派？", ["犬派", "猫派", "どっちも好き"]],
+    ["予定の立て方は？", ["きっちり決めたい", "その場のノリで"]],
+    ["ケンカしたら？", ["すぐ話し合いたい", "少し時間をおきたい"]]
+  ]},
+  { id:"moshimo", e:"✨", n:"もしもの話", c:"var(--lav-l)", q:[
+    ["宝くじで1億円当たったら？", ["旅行に行く", "家を買う", "貯金する"]],
+    ["1日だけ超能力が使えるなら？", ["瞬間移動", "透明人間", "時間を止める", "心が読める"]],
+    ["無人島に1つだけ持っていくなら？", ["ナイフ", "スマホ", "大好きな食べ物", "恋人"]],
+    ["生まれ変わるなら？", ["また人間", "鳥", "猫", "海の生きもの"]],
+    ["一生1つしか食べられないなら？", ["お米", "パン", "麺"]],
+    ["タイムマシンがあったら？", ["過去に行く", "未来に行く"]],
+    ["住むなら？", ["都会", "田舎", "海の近く"]],
+    ["ふたりでお店を開くなら？", ["カフェ", "パン屋さん", "居酒屋", "雑貨屋さん"]],
+    ["1週間休みがあったら？", ["海外旅行", "国内旅行", "おうちでだらだら"]],
+    ["動物と話せるなら、だれと話したい？", ["犬", "猫", "イルカ", "パンダ"]]
+  ]}
+];
+const qDoc = id => S.quiz[id] || {};
+const qDone = (id, uid) => !!(uid && (qDoc(id).done || {})[uid]);
+const pName = () => partnerUid() ? nameOf(partnerUid()) : "恋人";
+
+function quizCta(){
+  const pu = partnerUid(), waiting = QSETS.filter(s => qDone(s.id, pu) && !qDone(s.id, me())).length;
+  return `<div class="card invite" data-a="quiz" style="cursor:pointer"><span class="deco">💞</span><h2>ふたりの相性テスト</h2>
+    <p>${waiting ? `<b>${esc(pName())}が答えたテストが${waiting}つあるよ！</b>` : "相性診断と当てっこクイズが、一度にできます"}</p>
+    <span class="btn sm">${waiting ? "答えてみる" : "あそぶ"}</span></div>`;
+}
+function openQuiz(){ S.qv = { v: "list" }; renderQuiz(); }
+function renderQuiz(){
+  if (!S.qv) return;
+  let body = document.getElementById("qbody");
+  if (!body) { openSheet(`<h3>💞 ふたりの相性テスト<button class="x" data-a="close">×</button></h3><div id="qbody"></div>`); body = document.getElementById("qbody"); }
+  body.innerHTML = S.extraErr ? extraNote() : S.qv.v === "play" ? quizPlayHtml() : S.qv.v === "res" ? quizResultHtml(S.qv.set) : quizListHtml();
+}
+function quizListHtml(){
+  const pu = partnerUid();
+  return `<p class="muted" style="margin-top:-6px">1問ごとに「自分の答え」と「${esc(pName())}がえらびそうな答え」を選びます。ふたりとも終わると、<b>相性◯%</b>と<b>当てっこの点数</b>が出ます。答えは、ふたりとも終わるまで見えません。</p>
+  ${QSETS.map(s => {
+    const mine = qDone(s.id, me()), his = qDone(s.id, pu);
+    const st = mine && his ? `<span class="tag">結果が出たよ♡</span>` : mine ? `<span class="tag gray">${esc(pName())}を待っています</span>` : his ? `<span class="tag lav">${esc(pName())}は回答ずみ！</span>` : `<span class="tag gray">${s.q.length}問</span>`;
+    return `<div class="qset" data-a="qset" data-v="${s.id}"><div class="cat" style="background:${s.c}">${s.e}</div><div class="main"><div class="t">${s.n}</div><div class="who">${st}</div></div><span class="r">›</span></div>`;
+  }).join("")}`;
+}
+function startQuiz(id){ S.qv = { v: "play", set: id, i: 0, step: 0, a: [], g: [] }; renderQuiz(); }
+function quizPlayHtml(){
+  const v = S.qv, s = QSETS.find(x => x.id === v.set), [q, opts] = s.q[v.i];
+  const guess = v.step === 1, cur = guess ? v.g[v.i] : v.a[v.i], done = v.i * 2 + v.step;
+  return `<div class="qtop"><button class="btn ghost sm" data-a="qback">‹ ${v.i === 0 && v.step === 0 ? "一覧" : "もどる"}</button><span class="muted">${s.e} ${s.n}　${v.i + 1} / ${s.q.length}</span></div>
+  <div class="qbar"><i style="width:${done / (s.q.length * 2) * 100}%"></i></div>
+  <div class="qq"><div class="qwho ${guess ? "lav" : ""}">${guess ? `🔮 ${esc(pName())}はどれをえらぶ？` : "🙋 あなたは？"}</div><div class="qt">${esc(q)}</div></div>
+  <div class="qopts">${opts.map((o, k) => `<button class="qopt ${guess ? "g" : ""} ${cur === k ? "on" : ""}" data-a="qpick" data-v="${k}">${esc(o)}</button>`).join("")}</div>`;
+}
+function quizPick(k, el){
+  const v = S.qv; if (!v || v.v !== "play" || v.lock) return;
+  v.lock = true; el.classList.add("on");
+  (v.step ? v.g : v.a)[v.i] = k;
+  setTimeout(() => {
+    v.lock = false;
+    const n = QSETS.find(x => x.id === v.set).q.length;
+    if (v.step === 0) v.step = 1; else { v.step = 0; v.i++; }
+    if (v.i >= n) return saveQuiz();
+    renderQuiz();
+  }, 220);
+}
+function quizBack(){
+  const v = S.qv;
+  if (v.step === 1) v.step = 0;
+  else if (v.i > 0) { v.i--; v.step = 1; }
+  else S.qv = { v: "list" };
+  renderQuiz();
+}
+async function saveQuiz(){
+  const v = S.qv;
+  document.getElementById("qbody").innerHTML = `<div class="center" style="padding:40px 0"><div class="spinner"></div>保存中…</div>`;
+  try {
+    await setDoc(doc(db, "rooms", S.roomId, "quiz", v.set), { a: { [me()]: v.a }, g: { [me()]: v.g }, done: { [me()]: true }, updatedAt: serverTimestamp() }, { merge: true });
+    S.qv = { v: "res", set: v.set }; renderQuiz();
+  } catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); S.qv = { v: "list" }; renderQuiz(); }
+}
+function quizResultHtml(id){
+  const s = QSETS.find(x => x.id === id), d = qDoc(id), pu = partnerUid(), A = d.a || {}, G = d.g || {};
+  const back = `<div class="qtop"><button class="btn ghost sm" data-a="qlist">‹ 一覧</button><span class="muted">${s.e} ${s.n}</span></div>`;
+  if (!qDone(id, me())) return back + `<button class="btn block" data-a="qstart" data-v="${id}">はじめる</button>`;
+  if (!qDone(id, pu)) return back + `<div class="empty"><div class="big">⏳</div><p><b>${esc(pName())}の回答を待っています</b></p><p>${pu ? "ふたりとも答えたら、相性と当てっこの結果が出ます" : "恋人が参加したら、やってもらってね"}</p></div>
+    <button class="btn ghost block" data-a="qstart" data-v="${id}">自分の答えをやり直す</button>`;
+  const am = A[me()] || [], ap = A[pu] || [], gm = G[me()] || [], gp = G[pu] || [], n = s.q.length;
+  const same = s.q.filter((_, i) => am[i] === ap[i]).length, pct = Math.round(same / n * 100);
+  const myHit = s.q.filter((_, i) => gm[i] === ap[i]).length, hisHit = s.q.filter((_, i) => gp[i] === am[i]).length;
+  const msg = pct >= 90 ? "運命のふたり！💘" : pct >= 70 ? "相性ばっちり♡" : pct >= 50 ? "いい感じのふたり☺️" : pct >= 30 ? "ちがいも楽しめるふたり" : "正反対だからおもしろい！";
+  const win = myHit === hisHit ? "引き分け！どっちも相手のことよく見てるね" : `${esc(nameOf(myHit > hisHit ? me() : pu))}の勝ち！🏆`;
+  return back + `<div class="qres-top"><div class="muted">${esc(nameOf(me()))} と ${esc(nameOf(pu))} の相性</div><div class="score">${pct}<small>%</small></div><div class="qmsg">${msg}</div><div class="muted" style="font-size:12px">${n}問中 ${same}問がおなじ答え</div></div>
+  <div class="card" style="text-align:center"><h2 style="justify-content:center">🔮 当てっこクイズ</h2>
+    <div class="vs"><div><b>${myHit}</b><span>${esc(nameOf(me()))}</span></div><div class="muted">VS</div><div><b>${hisHit}</b><span>${esc(nameOf(pu))}</span></div></div>
+    <div style="font-weight:700;color:var(--lav-d)">${win}</div><div class="muted" style="font-size:12px">相手の答えを何問当てたか</div></div>
+  <div class="sec">答え合わせ</div>
+  ${s.q.map(([q, o], i) => `<div class="qrow"><div class="qt2">${i + 1}. ${esc(q)}${am[i] === ap[i] ? " 💗" : ""}</div>
+    <div class="qa"><span>${esc(nameOf(me()))}</span><b>${esc(o[am[i]] ?? "-")}</b>${gp[i] === am[i] ? `<em>${esc(nameOf(pu))}が当てた</em>` : ""}</div>
+    <div class="qa"><span>${esc(nameOf(pu))}</span><b>${esc(o[ap[i]] ?? "-")}</b>${gm[i] === ap[i] ? `<em>${esc(nameOf(me()))}が当てた</em>` : ""}</div></div>`).join("")}
+  <div class="gap"></div><button class="btn ghost block" data-a="qreset" data-v="${id}">ふたりともやり直す</button>`;
+}
+
 /* =============== シート：詳細 =============== */
 function openDetail(id){
   const p = S.places.find(x => x.id === id); if (!p) return closeSheet();
@@ -1072,7 +1379,8 @@ function openDetail(id){
       ? `<button class="btn lav block" data-a="visitEdit" data-id="${p.id}">思い出を編集</button><div class="gap"></div>
          <button class="btn ghost block" data-a="unvisit" data-id="${p.id}">「まだ行ってない」に戻す</button>`
       : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? "♡ 行きたいを取り消す" : "♡ 行きたい！"}</button><div class="gap"></div>
-         <button class="btn mint block" data-a="visit" data-id="${p.id}">行った！</button>`}
+         <button class="btn mint block" data-a="visit" data-id="${p.id}">行った！</button><div class="gap"></div>
+         <button class="btn lav block" data-a="dateAdd" data-pid="${p.id}">📅 デートの予定に入れる</button>`}
     <div class="gap"></div>
     <div class="row"><button class="btn ghost sm" style="flex:1" data-a="edit" data-id="${p.id}">編集</button><button class="btn danger sm" style="flex:1" data-a="del" data-id="${p.id}">削除</button></div>
   </div>`);
@@ -1304,7 +1612,7 @@ function confirmSheet(title, text, okLabel, act, danger = true){
 }
 
 /* =============== ボタンが押されたとき =============== */
-let pendingDel = null;
+let pendingDel = null, pendingDate = null, pendingQuiz = null;
 document.addEventListener("click", async ev => {
   const el = ev.target.closest("[data-a]"); if (!el) return;
   const a = el.dataset.a, id = el.dataset.id;
@@ -1387,6 +1695,40 @@ document.addEventListener("click", async ev => {
     case "sinceClear":
       try { await updateDoc(doc(db, "rooms", S.roomId), { since: deleteField() }); closeSheet(); toast("消しました"); }
       catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "dateAdd": openDateEdit(null, { placeId: el.dataset.pid || "", date: S.tab === "cal" && S.calSel >= today() ? S.calSel : "" }); break;
+    case "dateOpen": openDateEdit(id); break;
+    case "dateDel": {
+      const d = S.dates.find(x => x.id === id); if (!d) break;
+      pendingDate = id;
+      confirmSheet("予定を消しますか？", `${esc(fmtShort(d.date))}「${esc(dateTitle(d))}」の予定を消します。`, "消す", "dateDelOk");
+      break;
+    }
+    case "dateDelOk":
+      try { await deleteDoc(doc(db, "rooms", S.roomId, "dates", pendingDate)); closeSheet(); toast("消しました"); }
+      catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "calday": {
+      const v = el.dataset.v; S.calSel = v;
+      if (+v.slice(5, 7) !== S.calM) { S.calY = +v.slice(0, 4); S.calM = +v.slice(5, 7); }
+      document.getElementById("view").innerHTML = viewCal(); break;
+    }
+    case "calmove": {
+      const dt = new Date(Date.UTC(S.calY, S.calM - 1 + Number(el.dataset.v), 1));
+      S.calY = dt.getUTCFullYear(); S.calM = dt.getUTCMonth() + 1;
+      document.getElementById("view").innerHTML = viewCal(); break;
+    }
+    case "caltoday": S.calY = null; S.calSel = today(); document.getElementById("view").innerHTML = viewCal(); break;
+    case "quiz": openQuiz(); break;
+    case "qset": { const sid = el.dataset.v; if (qDone(sid, me())) { S.qv = { v: "res", set: sid }; renderQuiz(); } else startQuiz(sid); break; }
+    case "qstart": startQuiz(el.dataset.v); break;
+    case "qpick": quizPick(Number(el.dataset.v), el); break;
+    case "qback": quizBack(); break;
+    case "qlist": S.qv = { v: "list" }; renderQuiz(); break;
+    case "qreset": pendingQuiz = el.dataset.v; confirmSheet("ふたりともやり直す？", "このテストのふたりの答えを消して、最初からやり直します。", "やり直す", "qresetOk"); break;
+    case "qresetOk":
+      try { await deleteDoc(doc(db, "rooms", S.roomId, "quiz", pendingQuiz)); closeSheet(); openQuiz(); }
+      catch (e) { toast("うまくいきませんでした（" + (e.code || e.message) + "）"); }
       break;
     case "swipe": openSwipe(); break;
     case "swregion": S.swRegion = el.dataset.v; openSwipe(); break;

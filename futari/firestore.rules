@@ -67,6 +67,22 @@ service cloud.firestore {
           && request.resource.data.img.size() < 1000000;
       }
 
+      // デートの予定。ふたりだけ
+      match /dates/{dateId} {
+        allow read, delete: if isMember(roomId);
+        allow create, update: if isMember(roomId)
+          && request.resource.data.date is string
+          && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 100;
+      }
+
+      // 相性テストの答え。ふたりだけ
+      match /quiz/{setId} {
+        allow read, write: if isMember(roomId);
+      }
+
       match /places/{placeId} {
         allow read, delete: if isMember(roomId);
         allow create, update: if isMember(roomId)
