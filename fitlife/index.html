@@ -112,7 +112,7 @@ svg.chart{width:100%;height:auto;display:block}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
@@ -184,6 +184,7 @@ const unsub = arr => { arr.forEach(f=>{ try{f()}catch(e){} }); arr.length = 0; }
 /* ===== 起動 ===== */
 const LOGIN = { link:null, sent:false, busy:false };
 const appUrl = () => location.origin + location.pathname;
+const STANDALONE = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
 // 予期しないエラーが起きたら、真っ白（ピンク）にせず画面に出す
 function showFatal(msg){
   if($app.querySelector('.fatal')) return;
@@ -366,6 +367,13 @@ async function compress(file, max, q, maxLen){
 function authErr(err){
   return ({
     'auth/invalid-email':'メールアドレスの形がちがうみたい',
+    'auth/invalid-credential':'メールアドレスかパスワードがちがうみたい。まだ作っていないなら「パスワードをまだ作っていない」を押してね',
+    'auth/wrong-password':'メールアドレスかパスワードがちがうみたい',
+    'auth/user-not-found':'メールアドレスかパスワードがちがうみたい',
+    'auth/missing-password':'パスワードを入れてね',
+    'auth/weak-password':'パスワードは6文字以上にしてね',
+    'auth/too-many-requests':'何度も失敗したので、少し時間をおいてね',
+    'auth/network-request-failed':'ネットにつながっていないみたい',
     'auth/invalid-action-code':'このリンクは使えません（期限切れか使用済み）。もう一度送ってね',
     'auth/expired-action-code':'リンクの期限が切れています。もう一度送ってね',
     'auth/quota-exceeded':'今日はメールを送れる回数の上限です。明日また試してね',
@@ -381,6 +389,15 @@ async function finishEmailLink(email, link){
 }
 function renderLogin(){
   const saved = localStorage.getItem('fitlife_email') || '';
+  // ホーム画面のアプリはSafariとログインが別。メールのリンクはSafariが開くので、アプリの中ではパスワードがいちばん確実
+  const pwBox = `<form data-form="pwlogin" class="card" style="text-align:left;width:100%;max-width:340px">
+      <p style="margin:0 0 6px;font-weight:700">🔑 パスワードでログイン</p>
+      ${STANDALONE ? '<p class="muted" style="margin:0">ホーム画面のアプリでは、パスワードでのログインがおすすめです。一度ログインすれば、次からはそのまま使えます。</p>' : ''}
+      <input class="in" type="email" name="email" required value="${esc(saved)}" placeholder="メールアドレス" style="margin-top:8px" autocomplete="username">
+      <input class="in" type="password" name="pw" required minlength="6" placeholder="パスワード" style="margin-top:8px" autocomplete="current-password">
+      <button class="btn block" style="margin-top:10px">ログイン</button>
+      <button type="button" class="btn ghost sm" data-a="pwreset" style="margin-top:10px">パスワードをまだ作っていない・忘れたとき</button>
+      <p class="muted" id="pwnote" style="margin:8px 0 0;font-size:12px">メールのリンクやGoogleで登録した人は、上にメールアドレスを入れて「パスワードをまだ作っていない」を押すと、パスワードを作るメールが届きます。作ったら、ここに戻ってログインしてね。</p></form>`;
   let mail;
   if(LOGIN.link){
     mail = `<form data-form="finishlink" class="card" style="text-align:left;width:100%;max-width:340px">
@@ -408,10 +425,15 @@ function renderLogin(){
     ${IC.heart.replace('<svg','<svg class="big-heart"')}
     <div class="logo" style="font-size:28px">FitLife ♡</div>
     <p class="muted" style="margin:0">ふたりだけの健康管理アプリ</p>
-    ${mail}
+    ${STANDALONE ? `${pwBox}
+    <details style="width:100%;max-width:340px"><summary class="muted" style="cursor:pointer">ほかの方法でログイン（メールのリンク・Google）</summary>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:12px">${mail}<button class="btn sub" data-a="login" style="min-width:240px">Googleでログイン</button></div>
+    </details>` : `${mail}
     <p class="muted" style="margin:0">または</p>
     <button class="btn sub" data-a="login" style="min-width:240px">Googleでログイン</button>
+    <details style="width:100%;max-width:340px"><summary class="muted" style="cursor:pointer">パスワードでログイン</summary><div style="margin-top:10px">${pwBox}</div></details>`}
   </div>`;
+  if(STANDALONE && (LOGIN.sent || LOGIN.link)) $app.querySelector('details').open = true;
 }
 function renderDenied(badInvite){
   $app.innerHTML = `<div class="center">
@@ -713,7 +735,14 @@ function viewSettings(){
       <p class="muted" style="margin-top:8px">急に減らすより、ゆっくり続けるのがいちばん。健康第一でいこうね。</p></div>
     <div class="card"><h2>プライバシー</h2><p class="muted">あなたの記録はすべて、あなただけが見られます（オーナーにも見えません）。生理・体調・体型写真は、さらに合言葉で暗号化しています。</p></div>`;
   }
-  html += `<div class="card"><h2>アカウント</h2><p class="muted">${esc(S.user.email)}</p><button class="btn ghost" data-a="logout">ログアウト</button></div>`;
+  html += `<div class="card"><h2>アカウント</h2><p class="muted">${esc(S.user.email)}</p>
+    <details style="margin:0 0 12px"><summary style="cursor:pointer">🔑 パスワードを設定${(S.user.providerData||[]).some(p => p.providerId === 'password') ? '' : '（未設定）'}</summary>
+      <p class="muted">パスワードを作っておくと、ホーム画面のアプリでもすぐログインできます。</p>
+      <form data-form="setpw"><input type="email" name="u" autocomplete="username" value="${esc(S.user.email)}" hidden>
+        <input class="in" type="password" name="p1" required minlength="6" placeholder="新しいパスワード（6文字以上）" autocomplete="new-password">
+        <input class="in" type="password" name="p2" required minlength="6" placeholder="もう一度" style="margin-top:8px" autocomplete="new-password">
+        <button class="btn block" style="margin-top:10px">設定する</button></form></details>
+    <button class="btn ghost" data-a="logout">ログアウト</button></div>`;
   return html;
 }
 
@@ -817,6 +846,22 @@ async function handleForm(kind, f){
       return;
     }
     case 'finishlink': await finishEmailLink(v.email, LOGIN.link); return;
+    case 'pwlogin':
+      await signInWithEmailAndPassword(auth, v.email.trim().toLowerCase(), v.pw);
+      localStorage.setItem('fitlife_email', v.email.trim().toLowerCase());
+      return;
+    case 'setpw': {
+      if(v.p1 !== v.p2) throw new Error('2つのパスワードがちがうみたい');
+      const u = auth.currentUser;
+      try{
+        if((u.providerData||[]).some(p => p.providerId === 'password')) await updatePassword(u, v.p1);
+        else await linkWithCredential(u, EmailAuthProvider.credential(u.email, v.p1));
+      }catch(err){
+        if(err.code === 'auth/requires-recent-login') throw new Error('安全のため、一度ログアウトして、もう一度ログインしてから設定してね');
+        throw err;
+      }
+      break;
+    }
     case 'pastelink': {
       const link = v.link.trim();
       if(!isSignInWithEmailLink(auth, link)) throw new Error('メールのリンクではないみたい。もう一度コピーしてね');
@@ -838,7 +883,7 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -860,6 +905,15 @@ document.addEventListener('click', async e => {
       }
       case 'logout': await signOut(auth); break;
       case 'resend': LOGIN.sent = false; renderLogin(); break;
+      case 'pwreset': {
+        const f = el.closest('form'), email = f.email.value.trim().toLowerCase();
+        if(!email){ toast('先にメールアドレスを入れてね'); break; }
+        await sendPasswordResetEmail(auth, email);
+        localStorage.setItem('fitlife_email', email);
+        f.querySelector('#pwnote').innerHTML = `<b>${esc(email)}</b> にメールを送りました。メールのリンクから新しいパスワードを決めたら、ここに戻って、そのパスワードでログインしてね。届かないときは迷惑メールも見てね。`;
+        toast('パスワードを作るメールを送りました');
+        break;
+      }
       case 'tab': S.tab = v; window.scrollTo(0,0); render(); break;
       case 'open': openSheet(v); break;
       case 'close': case 'close-bg': closeSheet(); break;
@@ -886,7 +940,7 @@ document.addEventListener('click', async e => {
       case 'zoom':
         $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg" style="align-items:center"><img src="${el.src}" style="max-width:94vw;max-height:86vh;border-radius:18px" data-a="close"></div>`; break;
     }
-  }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? '権限がありません' : 'うまくいきませんでした'); }
+  }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : 'うまくいきませんでした')); }
 });
 </script>
 </body>
