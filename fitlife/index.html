@@ -110,7 +110,7 @@ svg.chart{width:100%;height:auto;display:block}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 /* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
 const firebaseConfig = {
@@ -187,6 +187,9 @@ if(!configured){
   const fbApp = initializeApp(firebaseConfig);
   auth = getAuth(fbApp);
   db = getFirestore(fbApp);
+  // 招待リンク（#invite=...）で開かれたら、ログインが終わるまで覚えておく
+  const m = location.hash.match(/invite=([0-9a-f]{64})/);
+  if(m){ localStorage.setItem('fitlife_invite', m[1]); history.replaceState(null, '', location.pathname + location.search); }
   onAuthStateChanged(auth, onUser);
   // メールのリンクから開かれたとき
   if(isSignInWithEmailLink(auth, location.href)){
@@ -202,14 +205,24 @@ async function onUser(user){
   S.data = { meals:[], gym:[], weights:[], water:[], sleep:[] };
   if(!user){ renderLogin(); return; }
   $app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<p class="muted">読み込み中…</p></div>`;
-  try{
-    const snap = await getDoc(doc(db,'config','app'));
-    S.cfg = snap.exists() ? snap.data() : {};
-  }catch(e){
-    renderDenied(); return;
+  const readCfg = async () => { const snap = await getDoc(doc(db,'config','app')); S.cfg = snap.exists() ? snap.data() : {}; };
+  try{ await readCfg(); }
+  catch(e){
+    // まだ参加していない人：招待リンクがあれば参加する
+    const token = localStorage.getItem('fitlife_invite');
+    if(!token){ renderDenied(); return; }
+    localStorage.removeItem('fitlife_invite');
+    try{
+      const b = writeBatch(db);
+      b.update(doc(db,'config','app'), { memberUid: user.uid, inviteToken: token });
+      b.update(doc(db,'invites',token), { used: true, usedBy: user.uid });
+      await b.commit();
+      await readCfg();
+      toast('参加しました ♡');
+    }catch(err){ console.error(err); renderDenied(true); return; }
   }
-  const email = (user.email||'').toLowerCase();
-  S.role = (S.cfg.memberEmail && email === S.cfg.memberEmail) ? 'member' : 'owner';
+  localStorage.removeItem('fitlife_invite');
+  S.role = (S.cfg.memberUid && S.cfg.memberUid === user.uid) ? 'member' : 'owner';
   startListeners();
   if(S.role === 'member') await loadPrivMeta();
   render();
@@ -217,6 +230,15 @@ async function onUser(user){
 
 function startListeners(){
   subs.push(onSnapshot(doc(db,'config','app'), s => { S.cfg = s.data()||{}; render(); }, ()=>{}));
+  if(S.role === 'owner'){
+    subs.push(onSnapshot(collection(db,'invites'), s => {
+      const now = Date.now();
+      S.invite = s.docs.map(d => ({ id:d.id, ...d.data() }))
+        .filter(i => !i.used && i.expiresAt && i.expiresAt.toMillis() > now)
+        .sort((a,b) => b.expiresAt.toMillis() - a.expiresAt.toMillis())[0] || null;
+      render();
+    }, ()=>{}));
+  }
   subs.push(onSnapshot(doc(db,'config','share'), s => {
     S.share = s.data()||{};
     if(S.role === 'owner' || colSubs.length === 0) startColListeners();
@@ -368,7 +390,7 @@ function renderLogin(){
   } else {
     mail = `<form data-form="sendlink" class="card" style="text-align:left;width:100%;max-width:340px">
       <p style="margin:0 0 6px;font-weight:700">メールでログイン</p>
-      <p class="muted" style="margin:0">招待されたメールアドレスを入れると、ログイン用のリンクが届きます</p>
+      <p class="muted" style="margin:0">あなたのメールアドレスを入れると、ログイン用のリンクが届きます</p>
       <input class="in" type="email" name="email" required value="${esc(saved)}" placeholder="example@icloud.com" style="margin-top:8px" autocomplete="email">
       <button class="btn block" style="margin-top:10px">ログインリンクを送る</button></form>`;
   }
@@ -381,11 +403,12 @@ function renderLogin(){
     <button class="btn sub" data-a="login" style="min-width:240px">Googleでログイン</button>
   </div>`;
 }
-function renderDenied(){
+function renderDenied(badInvite){
   $app.innerHTML = `<div class="center">
     ${IC.heart.replace('<svg','<svg class="big-heart"')}
-    <h2 style="margin:0">招待されていないアカウントです</h2>
-    <p class="muted">${esc(S.user?.email)} ではログインできません。<br>招待されたメールアドレスでログインしてね。</p>
+    <h2 style="margin:0">${badInvite ? 'この招待リンクは使えません' : '招待されていないアカウントです'}</h2>
+    <p class="muted">${badInvite ? '期限切れ（24時間）か、すでに使われたリンクです。<br>新しい招待リンクをもらってね。'
+      : `${esc(S.user?.email)} ではログインできません。<br>招待リンクから参加するか、最初に参加したときと同じ方法（Google／メール）でログインしてね。`}</p>
     <button class="btn sub" data-a="logout">ログアウト</button>
   </div>`;
 }
@@ -423,7 +446,7 @@ function viewHome(){
     <div class="hello">${isM ? `${name ? esc(name)+'、' : ''}${greet()}♡` : '今日のようす'}</div>
     <p>${isM ? cheer : 'シェアされた記録を見られます（閲覧だけ）。'}</p></div>`;
 
-  if(!isM && !S.cfg.memberEmail){
+  if(!isM && !S.cfg.memberUid){
     html += `<div class="card"><h2>${IC.heart.replace('<svg','<svg style="width:16px"')} はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
   }
 
@@ -612,17 +635,25 @@ function viewSettings(){
   const url = location.origin + location.pathname;
   let html = '';
   if(!isM){
-    const m = S.cfg.memberEmail;
-    const msg = `FitLife に招待しました♡\n${url}\nこのURLを開いて「メールでログイン」に ${m || ''} を入れてね。届いたメールのリンクを押すとログインできるよ`;
-    html += `<div class="card"><h2>招待</h2>
-      ${m ? `<p>招待中：<b>${esc(m)}</b></p>
+    const joined = !!S.cfg.memberUid, inv = S.invite;
+    let body;
+    if(joined){
+      body = `<p>${IC.heart.replace('<svg','<svg style="width:14px;vertical-align:-2px"')} <b>参加済み</b>（あなた＋1人）</p>
+        <p class="muted">これ以上は誰も参加できません。</p>
+        <button class="btn ghost sm" data-a="uninvite">参加を取り消す</button>`;
+    } else if(inv){
+      const link = `${url}#invite=${inv.id}`;
+      const msg = `FitLife に招待しました♡\n${link}\nこのリンクを開いて、Googleかメールでログインしてね（24時間・1回だけ使えます）`;
+      const ex = inv.expiresAt.toDate();
+      body = `<p class="muted">このリンクを送ってください。<b>${ex.getMonth()+1}/${ex.getDate()} ${z(ex.getHours())}:${z(ex.getMinutes())}まで・1回だけ</b>使えます。</p>
         <div class="row"><a class="btn" style="text-decoration:none" href="https://line.me/R/share?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">LINEで送る</a>
-        <button class="btn sub" data-a="copy" data-v="${esc(msg)}">メッセージをコピー</button></div>
-        <p class="muted" style="margin-top:10px">このメールアドレス以外ではログインできません（メールのリンクでもGoogleでも可）。利用できるのはあなたと招待した1人だけです。</p>
-        <button class="btn ghost sm" data-a="uninvite" style="margin-top:6px">招待を取り消す</button>`
-      : `<p class="muted">招待する人のメールアドレスを入れてください（Gmail以外のiCloudなどでもOK）。</p>
-        <form data-form="invite"><input class="in" type="email" name="email" required placeholder="example@gmail.com" autocomplete="off"><button class="btn block" style="margin-top:10px">招待する</button></form>`}
-    </div>
+        <button class="btn sub" data-a="copy" data-v="${esc(msg)}">コピー</button></div>
+        <button class="btn ghost sm" data-a="newinvite" style="margin-top:10px">リンクを作り直す</button>`;
+    } else {
+      body = `<p class="muted">招待リンクを作って、LINEなどで送ってください。リンクは24時間・1回だけ使えます。</p>
+        <button class="btn block" data-a="newinvite">招待リンクを作る</button>`;
+    }
+    html += `<div class="card"><h2>招待</h2>${body}</div>
     <div class="card"><h2>共有されている記録</h2>
       ${['profile',...COLS].map(c => `<div class="switch"><span>${COL_LABEL[c]}</span><span class="${S.share[c] ? '' : 'muted'}">${S.share[c] ? '見られる' : '非公開'}</span></div>`).join('')}
       <p class="muted">共有の設定は招待した人が決めます。生理・体調・体型写真はいつでも非公開です。</p></div>`;
@@ -716,12 +747,6 @@ async function handleForm(kind, f){
     case 'profile':
       await setDoc(doc(db,'profile','main'), { name:v.name.trim(), height:num(v.height), startWeight:num(v.startWeight), goalWeight:num(v.goalWeight), kcalGoal:num(v.kcalGoal), waterGoal:num(v.waterGoal) });
       break;
-    case 'invite': {
-      const email = v.email.trim().toLowerCase();
-      if(email === (S.user.email||'').toLowerCase()) throw new Error('自分のアドレスは招待できません');
-      await setDoc(doc(db,'config','app'), { memberEmail: email }, { merge:true });
-      break;
-    }
     case 'setup':
       if(v.p1 !== v.p2) throw new Error('合言葉が一致しません');
       await setupPass(v.p1); await idbSet('key_' + S.user.uid, S.key).catch(()=>{}); startPrivListeners();
@@ -755,7 +780,7 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', invite:'招待しました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -795,8 +820,16 @@ document.addEventListener('click', async e => {
       case 'lock': await lockNow(); toast('ロックしました'); break;
       case 'copy': await navigator.clipboard.writeText(v); toast('コピーしました'); break;
       case 'uninvite':
-        if(!confirm('招待を取り消しますか？（相手はログインできなくなります）')) return;
-        await setDoc(doc(db,'config','app'), { memberEmail:'' }, { merge:true }); toast('取り消しました'); break;
+        if(!confirm('参加を取り消しますか？（相手はログインできなくなります。記録は残ります）')) return;
+        await setDoc(doc(db,'config','app'), { memberUid:'', inviteToken:'' }); toast('取り消しました'); break;
+      case 'newinvite': {
+        const t = [...crypto.getRandomValues(new Uint8Array(32))].map(x => x.toString(16).padStart(2,'0')).join('');
+        const b = writeBatch(db);
+        if(S.invite) b.delete(doc(db,'invites',S.invite.id));
+        b.set(doc(db,'config','app'), { memberUid:'', inviteToken:'' });
+        b.set(doc(db,'invites',t), { used:false, usedBy:'', expiresAt: Timestamp.fromMillis(Date.now() + 24*3600*1000), createdAt: serverTimestamp() });
+        await b.commit(); toast('招待リンクを作りました'); break;
+      }
       case 'zoom':
         $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg" style="align-items:center"><img src="${el.src}" style="max-width:94vw;max-height:86vh;border-radius:18px" data-a="close"></div>`; break;
     }
