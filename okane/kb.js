@@ -2002,12 +2002,23 @@ document.addEventListener("click", e => {
     if (b) b.click();
   }
 });
+/* スワイプ：メニューが開いていれば、どこで左にスワイプしても閉じる。画面の左端から右へスワイプすると開く（それ以外の横スワイプでは何もしない） */
 (() => {
-  let x0 = null;
-  document.addEventListener("touchstart", e => (x0 = e.target.closest(".sb") ? e.touches[0].clientX : null), { passive: true });
+  let s0 = null;
+  document.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1 || !matchMedia("(max-width:899px)").matches) return (s0 = null);
+    const t = e.touches[0];
+    s0 = { x: t.clientX, y: t.clientY, at: Date.now() };
+  }, { passive: true });
   document.addEventListener("touchend", e => {
-    if (x0 != null && x0 - e.changedTouches[0].clientX > 60) setDrawer(false);
-    x0 = null;
+    if (!s0) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s0.x, dy = t.clientY - s0.y, x = s0.x, quick = Date.now() - s0.at < 700;
+    s0 = null;
+    if (!quick || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    const open = document.body.classList.contains("drawer");
+    if (open && dx < 0) setDrawer(false);
+    else if (!open && dx > 0 && x < 28) setDrawer(true);
   }, { passive: true });
   matchMedia("(max-width:899px)").addEventListener("change", () => setDrawer(false));
 })();
