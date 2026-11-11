@@ -94,4 +94,5 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .u-login input{font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--u-strong);border-radius:var(--u-r);background:var(--u-bg);color:var(--u-ink)}
 .u-login button{font:inherit;font-weight:700;padding:11px;border:0;border-radius:var(--u-r);background:var(--u-accent);color:var(--u-on)}
 .u-login button:disabled{opacity:.5}
+.u-login .u-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f;border:1px solid #dadce0}
 .u-login .u-login-err{color:var(--u-danger)}
