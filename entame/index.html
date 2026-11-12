@@ -2472,9 +2472,10 @@ const EP_RE =
 const zen = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
 function cleanSub(s) {
   return s
-    .replace(/^[「『"]+|[」』"]+$/g, "")
+    .replace(/\[(?:各回補足|注釈?|注|脚注|補足)?\s*[0-9０-９a-zA-Z]+\]/g, "")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .replace(/^「(.*)」$|^『(.*)』$|^"(.*)"$/, (m, a, b, c) => (a ?? b ?? c)); // 全体を囲むカッコだけ外す（途中の『』は残す）
 }
 function parseSubtitles(text) {
   const lines = String(text || "")
@@ -2483,10 +2484,31 @@ function parseSubtitles(text) {
   const out = [];
   let open = null,
     last = null; // open: 直前の行がサブタイトルで終わっていて、次の行に続きがある可能性
+  let yearHead = null, // 「2002年」だけの行（以降の放送日の年）
+    leadMode = false, // 「放送日 → 話数 → サブタイトル」の順の表
+    prevLead = null;
   for (const raw of lines) {
-    const line = raw.replace(/ /g, " ");
+    let line = raw.replace(/ /g, " ");
+    const yh = zen(line).match(/^\s*(\d{4})\s*年\s*$/);
+    if (yh) {
+      yearHead = +yh[1];
+      open = null;
+      continue;
+    }
+    // 先頭が放送日の行（例: 10月3日<TAB>1<TAB>サブタイトル）は日付を外して話数の行として読む
+    let lead = null;
+    const ld = zen(line).match(/^\s*(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*\t/);
+    if (ld && EP_RE.test(line.slice(ld[0].length))) {
+      if (ld[1]) yearHead = +ld[1];
+      lead = `${yearHead ? yearHead + "年" : ""}${ld[2]}月${ld[3]}日`;
+      line = line.slice(ld[0].length);
+      leadMode = true;
+    }
     const m = EP_RE.exec(line);
     if (m) {
+      // 2話連続放送などで日付の列が空の行は、直前の放送日を引き継ぐ
+      if (!lead && leadMode && prevLead) lead = prevLead;
+      if (lead) prevLead = lead;
       const n = kanjiNum(zen(m[1] || m[2] || m[3] || m[4]));
       if (!Number.isFinite(n)) {
         open = null;
@@ -2501,7 +2523,7 @@ function parseSubtitles(text) {
         sub = q[1];
         blk = rest.slice(q.index + q[0].length);
       } // 「第1話「タイトル」」形式
-      const e = { n, sub: cleanSub(sub), blk };
+      const e = { n, sub: cleanSub(sub), blk, lead };
       out.push(e);
       last = e;
       open = parts.length === 1 && line.includes("\t") ? e : null;
@@ -2527,7 +2549,8 @@ function parseSubtitles(text) {
   let year = null,
     prevM = 0;
   out.forEach(e => {
-    const t = zen(e.blk || "");
+    const t = zen(e.lead || e.blk || "");
+    delete e.lead;
     const re = /(?:(\d{4})\s*[年\/\-.]\s*)?(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})\s*日?/g;
     let m,
       hit = null;
