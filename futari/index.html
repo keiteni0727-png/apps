@@ -1256,10 +1256,7 @@ function openDateEdit(id, pre = {}){
   <h3>${d ? "デートの予定" : "デートの予定を入れる"} 📅<button class="x" data-a="close">×</button></h3>
   ${d && left <= 0 && p && !p.visited ? `<div class="card" style="background:var(--mint-l);box-shadow:none"><p style="margin:0 0 8px;font-size:13px">${left === 0 ? "今日のデート、楽しんでね♡" : "このデート、どうだった？"}</p><button class="btn mint block sm" data-a="visit" data-id="${p.id}">行った！思い出に残す 📷</button></div>` : ""}
   <form id="df">
-    <div class="row" style="flex-wrap:nowrap;align-items:flex-start">
-      <label class="f" style="flex:1.4;min-width:0"><span>日にち *</span><input class="in" type="date" name="date" required value="${esc(d?.date || pre.date || today())}"></label>
-      <label class="f" style="flex:1;min-width:0"><span>時間</span><input class="in" type="time" name="time" value="${esc(d?.time || "")}"></label>
-    </div>
+    <label class="f"><span>日にち *</span><input class="in" type="date" name="date" required value="${esc(d?.date || pre.date || today())}" style="min-width:0;width:100%"></label>
     <label class="f"><span>行き先</span><select class="in" name="pid"><option value="">✏️ 自分で入力する</option>${opts.map(o => `<option value="${o.id}" ${o.id === pid ? "selected" : ""}>${catOf(o.cat).e} ${esc(o.title)}${isBoth(o) ? " ♡" : ""}</option>`).join("")}</select></label>
     <label class="f" id="dtw" ${pid ? 'style="display:none"' : ""}><span>行き先・やること</span><input class="in" name="title" maxlength="60" value="${esc(pid ? "" : d?.title || "")}" placeholder="例：映画を見に行く"></label>
     <label class="f"><span>メモ</span><textarea class="in" name="memo" maxlength="300" placeholder="例：駅に10時集合">${esc(d?.memo)}</textarea></label>
@@ -1276,7 +1273,7 @@ function openDateEdit(id, pre = {}){
     const title = pl ? pl.title : String(fd.get("title") || "").trim().slice(0, 60);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return er.textContent = "日にちを入れてね";
     if (!title) return er.textContent = "行き先をえらぶか、入力してね";
-    const data = { date, time: String(fd.get("time") || ""), placeId, title, memo: String(fd.get("memo") || "").trim().slice(0, 300), updatedAt: serverTimestamp() };
+    const data = { date, time: d?.time || "", placeId, title, memo: String(fd.get("memo") || "").trim().slice(0, 300), updatedAt: serverTimestamp() };
     const b = f.querySelector("button"); b.disabled = true;
     try {
       if (d) await updateDoc(doc(db, "rooms", S.roomId, "dates", d.id), data);
