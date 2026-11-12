@@ -1,5 +1,5 @@
 rules_version = '2';
-// ふたり日和：Firestoreのセキュリティルール
+// ウリログ：Firestoreのセキュリティルール
 // ・自分のプロフィールは本人だけ
 // ・ルームとおでかけ候補は、ルームのメンバー（最大2人）だけ
 // ・参加できるのは、メンバーが登録した「恋人のメールアドレス」でログインした人だけ（1人まで）
@@ -43,7 +43,7 @@ service cloud.firestore {
       allow update: if signedIn() && (
         // メンバーの変更（名前・恋人のメールアドレス・自分が抜ける）
         (uid() in resource.data.members
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'names', 'partnerEmail', 'members', 'since'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'names', 'partnerEmail', 'members', 'since', 'annivs'])
           && (request.resource.data.members == resource.data.members
               || request.resource.data.members == resource.data.members.removeAll([uid()]))
           && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()]))
@@ -78,17 +78,12 @@ service cloud.firestore {
           && request.resource.data.title.size() <= 100;
       }
 
-      // つぶやき。ふたりだけ。消せるのは書いた本人だけ
+      // つぶやき（廃止）。残っている古いデータを消すためだけに、読むのと消すのを許可
       match /posts/{postId} {
-        allow read, update: if isMember(roomId);
-        allow create: if isMember(roomId)
-          && request.resource.data.by == request.auth.uid
-          && request.resource.data.text is string
-          && request.resource.data.text.size() <= 500;
-        allow delete: if isMember(roomId) && resource.data.by == request.auth.uid;
+        allow read, delete: if isMember(roomId);
       }
       match /postPhotos/{postId} {
-        allow read, write: if isMember(roomId);
+        allow read, delete: if isMember(roomId);
       }
 
       // 相性テストの答え。ふたりだけ
