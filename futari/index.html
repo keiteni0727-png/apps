@@ -116,6 +116,10 @@ textarea.in{min-height:76px;resize:vertical}
 .heart.on{background:linear-gradient(135deg,#f9b6c7,#e2809c)}
 .heart.on svg{fill:#fff;stroke:#fff}
 .heart:active{transform:scale(.88)}
+.heart{position:relative}
+.heart .hcnt{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#fff;color:var(--pink-d);font-size:11px;font-weight:700;line-height:19px;box-shadow:0 1px 4px rgba(226,128,156,.35)}
+.hpop{position:fixed;z-index:80;font-size:18px;pointer-events:none;animation:hpop 1s ease-out forwards}
+@keyframes hpop{0%{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:1;transform:translate(calc(var(--dx)*.3),-14px) scale(1.1)}100%{transform:translate(var(--dx),-70px) scale(.8);opacity:0}}
 .ribbon{position:absolute;top:-7px;left:14px;font-size:11px;background:linear-gradient(135deg,#f9b6c7,#e2809c);color:#fff;border-radius:99px;padding:1px 9px;font-weight:700}
 
 .empty{text-align:center;padding:40px 16px;color:var(--muted)}
@@ -169,6 +173,7 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .vote{background:#fff;border-radius:18px;padding:10px;text-align:center;font-size:13px}
 .vote .ic{font-size:22px}
 .vote.on{background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.vote .vn{font-size:11px;margin-top:2px}
 .linkbox{display:flex;gap:6px;align-items:center;background:#fff;border:1.5px dashed var(--lav);border-radius:16px;padding:10px 12px;font-size:12px;word-break:break-all;margin:6px 0 10px}
 
 /* 記念日カウンター */
@@ -547,7 +552,7 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
 
 const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
 const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updatePassword, linkWithCredential, EmailAuthProvider } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
-const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, getDocs, onSnapshot, serverTimestamp, arrayUnion, deleteField, writeBatch } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, getDocs, onSnapshot, serverTimestamp, arrayUnion, deleteField, writeBatch, increment } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
@@ -580,6 +585,8 @@ const partnerUid = () => (S.room?.members || []).find(u => u !== me());
 const nameOf = uid => (S.room?.names || {})[uid] || (uid === me() ? (S.profile?.name || "わたし") : "あいて");
 const isPaired = () => (S.room?.members || []).length >= 2;
 const votesOf = p => Object.keys(p.votes || {}).filter(u => p.votes[u] && (S.room?.members || []).includes(u));
+const loveOf = (p, u) => { const x = (p.votes || {})[u]; return x === true ? 1 : (+x || 0); };
+const loveSum = p => votesOf(p).reduce((n, u) => n + loveOf(p, u), 0);
 const isBoth = p => isPaired() && votesOf(p).length >= 2;
 const myEmail = () => normEmail(S.user?.email);
 const inviteText = email => `ウリログを使おう♡\nこのURLをひらいて、${email} でログインしてね。\n${appUrl()}?openExternalBrowser=1`;
@@ -920,7 +927,7 @@ function view(){
 
 function sortPlaces(arr){
   const a = arr.slice();
-  if (S.sort === "love") a.sort((x, y) => votesOf(y).length - votesOf(x).length || ms(y.createdAt) - ms(x.createdAt));
+  if (S.sort === "love") a.sort((x, y) => loveSum(y) - loveSum(x) || ms(y.createdAt) - ms(x.createdAt));
   else if (S.sort === "old") a.sort((x, y) => ms(x.createdAt) - ms(y.createdAt));
   else a.sort((x, y) => ms(y.createdAt) - ms(x.createdAt));
   return a;
@@ -943,9 +950,9 @@ function placeCard(p){
     <div class="main">
       <div class="t">${esc(p.title)}</div>
       <div class="s">${esc([p.area, c.n].filter(Boolean).join(" ・ "))}</div>
-      <div class="who">${pu && v.includes(pu) ? `<span class="tag">${esc(nameOf(pu))}も行きたい♡</span>` : ""}${p.by && p.by !== me() && S.room.names?.[p.by] ? `<span class="tag lav">${esc(nameOf(p.by))}が追加</span>` : ""}</div>
+      <div class="who">${pu && v.includes(pu) ? `<span class="tag">${esc(nameOf(pu))}も行きたい♡${loveOf(p, pu) > 1 ? "×" + loveOf(p, pu) : ""}</span>` : ""}${p.by && p.by !== me() && S.room.names?.[p.by] ? `<span class="tag lav">${esc(nameOf(p.by))}が追加</span>` : ""}</div>
     </div>
-    <button class="heart ${mine ? "on" : ""}" data-a="vote" data-id="${p.id}" aria-label="行きたい">${IC.heart}</button>
+    <button class="heart ${mine ? "on" : ""}" data-a="vote" data-id="${p.id}" aria-label="行きたい">${IC.heart}${mine ? `<span class="hcnt">${loveOf(p, me())}</span>` : ""}</button>
   </div>`;
 }
 function listHtml(arr){
@@ -1214,6 +1221,16 @@ async function unpass(){
 }
 
 /* =============== マッチ！（ふたりとも行きたいが新しくできたとき） =============== */
+/* ♡を押したときの小さいハート */
+function heartPop(el){
+  const r = el.getBoundingClientRect();
+  for (let i = 0; i < 4; i++) {
+    const d = document.createElement("div"); d.className = "hpop"; d.textContent = ["💗","💕","♡","💖"][i];
+    d.style.left = (r.left + r.width / 2 - 9 + (Math.random() * 30 - 15)) + "px"; d.style.top = (r.top - 4) + "px";
+    d.style.setProperty("--dx", (Math.random() * 60 - 30) + "px"); d.style.animationDelay = i * 0.06 + "s";
+    document.body.appendChild(d); setTimeout(() => d.remove(), 1100);
+  }
+}
 function checkMatches(){
   if (!isPaired() || !S.roomId) return;
   const key = "futari_seen_" + S.roomId;
@@ -2026,8 +2043,8 @@ function openDetail(id){
     ${p.photo ? `<img class="dphoto" id="dphoto" src="${p.photo}" alt="" data-a="zoom">` : ""}
     <div class="head"><div class="cat" style="background:${c.c}">${c.e}</div><div><div class="ttl">${esc(p.title)}</div><div class="muted">${esc(c.n)}${p.visited ? " ・ 行った♪" : ""}</div></div></div>
     ${p.visited ? "" : `<div class="votes">
-      <div class="vote ${v.includes(me()) ? "on" : ""}"><div class="ic">${v.includes(me()) ? "💗" : "🤍"}</div>${esc(nameOf(me()))}</div>
-      <div class="vote ${pu && v.includes(pu) ? "on" : ""}"><div class="ic">${pu && v.includes(pu) ? "💗" : "🤍"}</div>${pu ? esc(nameOf(pu)) : "（招待待ち）"}</div>
+      <div class="vote ${v.includes(me()) ? "on" : ""}"><div class="ic">${v.includes(me()) ? "💗" : "🤍"}</div>${esc(nameOf(me()))}${v.includes(me()) ? `<div class="vn">♡ ${loveOf(p, me())}回</div>` : ""}</div>
+      <div class="vote ${pu && v.includes(pu) ? "on" : ""}"><div class="ic">${pu && v.includes(pu) ? "💗" : "🤍"}</div>${pu ? esc(nameOf(pu)) : "（招待待ち）"}${pu && v.includes(pu) ? `<div class="vn">♡ ${loveOf(p, pu)}回</div>` : ""}</div>
     </div>`}
     <div class="kv">
       ${p.area ? `<div><b>エリア</b><span>${esc(p.area)}</span></div>` : ""}
@@ -2040,7 +2057,8 @@ function openDetail(id){
     ${p.visited
       ? `<button class="btn lav block" data-a="visitEdit" data-id="${p.id}">思い出を編集</button><div class="gap"></div>
          <button class="btn ghost block" data-a="unvisit" data-id="${p.id}">「まだ行ってない」に戻す</button>`
-      : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? "♡ 行きたいを取り消す" : "♡ 行きたい！"}</button><div class="gap"></div>
+      : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? "♡ もっと行きたい！（+1）" : "♡ 行きたい！"}</button><div class="gap"></div>
+         ${v.includes(me()) ? `<button class="linkbtn" style="display:block;margin:-2px auto 12px" data-a="voteReset" data-id="${p.id}">わたしの♡をリセット</button>` : ""}
          <button class="btn mint block" data-a="visit" data-id="${p.id}">行った！</button><div class="gap"></div>
          <button class="btn lav block" data-a="dateAdd" data-pid="${p.id}">📅 デートの予定に入れる</button>`}
     <div class="gap"></div>
@@ -2355,9 +2373,16 @@ document.addEventListener("click", async ev => {
     case "edit": openEdit(id); break;
     case "vote": {
       const p = S.places.find(x => x.id === id); if (!p) break;
-      const on = !votesOf(p).includes(me());
-      el.classList?.toggle("on", on);
-      try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["votes." + me()]: on ? true : deleteField() }); }
+      const cur = (p.votes || {})[me()];
+      el.classList?.add("on"); heartPop(el);
+      // 前の仕組みの「true」は1回ぶんとして数える
+      try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["votes." + me()]: cur === true ? 2 : increment(1) }); }
+      catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+      if (document.querySelector(".detail")) openDetail(id);
+      break;
+    }
+    case "voteReset": {
+      try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["votes." + me()]: deleteField() }); toast("♡をリセットしました"); }
       catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
       if (document.querySelector(".detail")) openDetail(id);
       break;
