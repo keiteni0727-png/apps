@@ -91,6 +91,11 @@ service cloud.firestore {
         allow read, write: if isMember(roomId);
       }
 
+      // うり坊（なまえ・ごはん）。ふたりだけ
+      match /meta/{docId} {
+        allow read, write: if isMember(roomId);
+      }
+
       // お願いチケット。ふたりだけ
       match /tickets/{ticketId} {
         allow read, write: if isMember(roomId);

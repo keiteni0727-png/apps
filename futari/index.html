@@ -379,6 +379,55 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .tpick button{border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 4px;cursor:pointer;font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.3}
 .tpick button b{font-size:24px;font-weight:400}
 .tpick button.on{border-color:var(--pink);background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.uricard{background:linear-gradient(160deg,#fff8ee,#fde8ee 55%,#f0ebfb);position:relative;overflow:hidden;padding-bottom:14px}
+.uhead{display:flex;align-items:center;gap:8px}
+.uhead .nm{font-size:17px;font-weight:700;color:var(--pink-d);border:0;background:none;padding:0;cursor:pointer}
+.uhead .linkbtn{margin-left:auto;padding:0;font-size:12px}
+.ustage{position:relative;height:168px;display:grid;place-items:end center;margin-top:-4px}
+.uri{width:150px;height:150px;cursor:pointer;transform-origin:50% 92%;-webkit-tap-highlight-color:transparent;transition:width .4s,height .4s}
+.uri.s0{width:104px;height:104px}.uri.s1{width:120px;height:120px}.uri.s2{width:134px;height:134px}.uri.s3{width:146px;height:146px}.uri.s4{width:156px;height:156px}
+.uri svg{width:100%;height:100%;display:block}
+.uri.idle{animation:ubreath 2.6s ease-in-out infinite}
+.uri.sleep{animation:ubreath 4s ease-in-out infinite}
+@keyframes ubreath{50%{transform:scale(1.03,.97)}}
+.uri.a-jump{animation:ujump .7s ease}
+@keyframes ujump{0%,100%{transform:translateY(0) scale(1)}15%{transform:scale(1.12,.86)}45%{transform:translateY(-46px) scale(.95,1.06)}75%{transform:translateY(0) scale(1.1,.9)}}
+.uri.a-spin{animation:uspin .8s ease}
+@keyframes uspin{to{transform:rotate(360deg)}}
+.uri.a-wiggle{animation:uwig .7s ease}
+@keyframes uwig{20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
+.uri.a-roll{animation:uroll 1s ease}
+@keyframes uroll{30%{transform:translateX(-40px) rotate(-200deg)}70%{transform:translateX(40px) rotate(160deg)}100%{transform:translateX(0) rotate(360deg)}}
+.uri.a-squish{animation:usq .6s ease}
+@keyframes usq{30%{transform:scale(1.25,.7)}60%{transform:scale(.9,1.12)}}
+.uri.a-dash{animation:udash .9s ease}
+@keyframes udash{30%{transform:translateX(70px) scaleX(-1)}31%{transform:translateX(70px) scaleX(-1)}65%{transform:translateX(-70px)}100%{transform:translateX(0)}}
+.uri .chew{animation:uchew .25s ease-in-out infinite alternate;transform-origin:60px 86px}
+@keyframes uchew{to{transform:scaleY(.3)}}
+.ububble{position:absolute;top:2px;left:50%;transform:translateX(-50%);background:#fff;border-radius:16px;padding:6px 12px;font-size:13px;font-weight:700;color:var(--text);box-shadow:var(--shadow);white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis;animation:fade .3s}
+.ububble:after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+.ufx{position:absolute;pointer-events:none;font-size:22px;animation:ufloat 1.2s ease-out forwards}
+@keyframes ufloat{to{transform:translateY(-80px) scale(1.3);opacity:0}}
+.ufood{position:absolute;bottom:20px;font-size:30px;animation:udrop .6s ease-in forwards;pointer-events:none}
+@keyframes udrop{from{transform:translateY(-120px)}}
+.ubars{display:grid;gap:6px;margin:6px 2px 12px}
+.ubar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.ubar span{width:62px;flex:none;white-space:nowrap}
+.ubar .tr{flex:1;height:9px;border-radius:9px;background:rgba(255,255,255,.8);overflow:hidden}
+.ubar .tr i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#f9b6c7,#e2809c);transition:width .6s}
+.ubar .tr i.g{background:linear-gradient(90deg,#bfe5d4,#6fbb9c)}
+.ubar em{font-style:normal;width:62px;text-align:right;flex:none;font-size:11px}
+.ufed{display:flex;gap:6px;justify-content:center;margin-top:6px;font-size:12px;color:var(--muted)}
+.ulog{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}
+.ulog:first-child{border-top:0}
+.ulog .main{flex:1;min-width:0}
+.ulog small{color:var(--muted);font-size:11px;display:block}
+.ulog b{color:var(--mint-d);font-size:12px;flex:none}
+.ustages{display:flex;justify-content:space-between;gap:4px;margin:4px 0 12px}
+.ustages div{flex:1;text-align:center;font-size:10px;color:var(--muted)}
+.ustages div .uri{width:52px;height:52px;margin:0 auto;cursor:default}
+.ustages div.lock .uri{filter:brightness(0) opacity(.18)}
+.ustages div.on{color:var(--pink-d);font-weight:700}
 .akind{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .akind button{border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 2px;cursor:pointer;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .akind button b{font-size:22px;font-weight:400}
@@ -517,7 +566,7 @@ const db = getFirestore(fbApp);
 
 /* ---------- 状態 ---------- */
 const S = {
-  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, qa:{}, tickets:[], needRules:false, tkTab:"got", extraErr:null, subs:[], noteEdit:null,
+  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, qa:{}, tickets:[], pet:null, needRules:false, tkTab:"got", extraErr:null, subs:[], noteEdit:null,
   calY:null, calM:null, calSel:null, qv:null,
   tab:"home", cat:"all", who:"all", sort:"new", q:"",
   authMode:"login", busy:false
@@ -800,6 +849,11 @@ function openRoom(roomId, fresh){
     if (gotRoom && gotPlaces && !document.activeElement?.closest?.(".qaform")) render();
     if (document.getElementById("qhist")) document.getElementById("qhist").innerHTML = qaHistHtml();
   }, needRules));
+  S.pet = null;
+  S.subs.push(onSnapshot(doc(db, "rooms", roomId, "meta", "pet"), snap => {
+    S.pet = snap.exists() ? snap.data() : {};
+    if (gotRoom && gotPlaces && !uriBusy && !document.activeElement?.closest?.(".qaform")) render();
+  }, needRules));
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "tickets"), snap => {
     S.tickets = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0));
     if (gotRoom && gotPlaces && !document.activeElement?.closest?.(".qaform")) render();
@@ -1041,7 +1095,7 @@ function whoOk(p){
 function viewHome(){
   const matches = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
   const nn = notesNew();
-  return `${S.extraErr ? "" : countdownHtml()}${annivHtml()}
+  return `${uriHtml()}${S.extraErr ? "" : countdownHtml()}${annivHtml()}
   ${ticketAlertsHtml()}
   ${qaHtml()}
   ${annivUpcomingHtml()}
@@ -1241,6 +1295,182 @@ async function saveNote(id, text){
   await updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["notes." + me()]: val || deleteField() });
   p.notes = { ...(p.notes || {}) }; if (val) p.notes[me()] = val; else delete p.notes[me()];
   S.noteEdit = null; refreshNotes(id);
+}
+
+/* うり坊のイラスト（stage 0〜4、mood: happy / normal / hungry / sad / sleep / eat） */
+function uriSvg(stage, mood){
+  const st = Math.max(0, Math.min(4, stage));
+  // 体のパーツ
+  const body = "#c99a72", dark = "#a77650", stripe = "#f4e1c8", snout = "#f5b5ae", nose = "#c46f68";
+  let eyes;
+  if (mood === "happy" || mood === "eat") eyes = `<path d="M40 60q5-6 10 0M70 60q5-6 10 0" stroke="#4a3540" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else if (mood === "sleep") eyes = `<path d="M40 60q5 4 10 0M70 60q5 4 10 0" stroke="#4a3540" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else eyes = `<ellipse cx="45" cy="59" rx="4.2" ry="5" fill="#4a3540"/><ellipse cx="75" cy="59" rx="4.2" ry="5" fill="#4a3540"/><circle cx="46.6" cy="57" r="1.6" fill="#fff"/><circle cx="76.6" cy="57" r="1.6" fill="#fff"/>`;
+  const brows = mood === "sad" ? `<path d="M38 50l10 3M82 50l-10 3" stroke="#7a5a48" stroke-width="2.4" stroke-linecap="round"/>` : "";
+  const tear = mood === "sad" ? `<path d="M41 66q-2 5 0 7q3 0 2-4z" fill="#9fd3ee"/>` : "";
+  const mouth = mood === "eat" ? `<ellipse class="chew" cx="60" cy="86" rx="5" ry="3.2" fill="#8a4c4c"/>`
+    : mood === "sad" || mood === "hungry" ? `<path d="M55 87q5-3 10 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+    : mood === "sleep" ? "" : `<path d="M54 85q6 5 12 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  const sweat = mood === "hungry" ? `<path d="M90 44q4 6 0 9q-4-3 0-9z" fill="#9fd3ee"/>` : "";
+  // 成長ごとのアクセサリー
+  const sprout = st === 0 ? `<path d="M60 26q0-8 0-12" stroke="#6fbb9c" stroke-width="2.4" stroke-linecap="round"/><path d="M60 16q-9-6-12 2q8 4 12-2z" fill="#8fd1b3"/><path d="M60 14q8-8 12 0q-7 5-12 0z" fill="#a9ddc5"/>` : "";
+  const bandana = st >= 2 && st < 4 ? `<path d="M30 92q30 12 60 0l-4 9q-26 10-52 0z" fill="#f4a3b8"/><path d="M56 100l4 10l4-10z" fill="#e2809c"/><circle cx="46" cy="98" r="1.5" fill="#fff"/><circle cx="66" cy="99" r="1.5" fill="#fff"/><circle cx="76" cy="96" r="1.5" fill="#fff"/>` : "";
+  const bow = st === 3 ? `<g transform="translate(86 26) rotate(18)"><path d="M0 0l-9-6v12z" fill="#b8a6e6"/><path d="M0 0l9-6v12z" fill="#b8a6e6"/><circle r="3" fill="#9580d0"/></g>` : "";
+  const crown = st === 4 ? `<g><circle cx="38" cy="30" r="5" fill="#f9b6c7"/><circle cx="49" cy="24" r="5" fill="#fff3b0"/><circle cx="60" cy="22" r="5.5" fill="#f4a3b8"/><circle cx="71" cy="24" r="5" fill="#c7b8ef"/><circle cx="82" cy="30" r="5" fill="#bfe5d4"/><circle cx="38" cy="30" r="1.8" fill="#fff"/><circle cx="49" cy="24" r="1.8" fill="#f2c94c"/><circle cx="60" cy="22" r="2" fill="#fff"/><circle cx="71" cy="24" r="1.8" fill="#fff"/><circle cx="82" cy="30" r="1.8" fill="#fff"/></g>
+    <g fill="#f2c94c"><path d="M12 30l2 5l5 2l-5 2l-2 5l-2-5l-5-2l5-2z"/><path d="M106 52l1.5 4l4 1.5l-4 1.5l-1.5 4l-1.5-4l-4-1.5l4-1.5z"/><path d="M14 84l1.2 3l3 1.2l-3 1.2l-1.2 3l-1.2-3l-3-1.2l3-1.2z"/></g>` : "";
+  const scarf4 = st === 4 ? `<path d="M30 92q30 12 60 0l-4 9q-26 10-52 0z" fill="#c7b8ef"/><path d="M56 100l4 10l4-10z" fill="#9580d0"/>` : "";
+  const zzz = mood === "sleep" ? `<text x="88" y="30" font-size="13" font-weight="700" fill="#9580d0">z</text><text x="97" y="20" font-size="10" font-weight="700" fill="#b8a6e6">z</text>` : "";
+  return `<svg viewBox="0 0 120 120" class="urisvg" aria-hidden="true">
+    <defs><clipPath id="ub${st}"><ellipse cx="60" cy="66" rx="42" ry="40"/></clipPath></defs>
+    <ellipse cx="60" cy="112" rx="34" ry="5" fill="rgba(176,128,160,.18)"/>
+    <rect x="36" y="96" width="12" height="16" rx="6" fill="${dark}"/><rect x="72" y="96" width="12" height="16" rx="6" fill="${dark}"/>
+    <path d="M24 44q-6-20 8-22q10 4 12 16z" fill="${body}"/><path d="M28 40q-3-11 4-13q6 3 8 10z" fill="${snout}"/>
+    <path d="M96 44q6-20-8-22q-10 4-12 16z" fill="${body}"/><path d="M92 40q3-11-4-13q-6 3-8 10z" fill="${snout}"/>
+    ${bow}
+    <ellipse cx="60" cy="66" rx="42" ry="40" fill="${body}"/>
+    <g clip-path="url(#ub${st})" fill="${stripe}" opacity=".9">
+      <path d="M57 22h6v28q-3 4-6 0z"/><path d="M36 28q6-3 8-1q-6 14-4 30q-5 2-8-2q-2-14 4-27z"/><path d="M84 28q-6-3-8-1q6 14 4 30q5 2 8-2q2-14-4-27z"/>
+      <path d="M22 70q2 18 14 28q2-4 0-8q-8-8-10-22z"/><path d="M98 70q-2 18-14 28q-2-4 0-8q8-8 10-22z"/>
+    </g>
+    <ellipse cx="60" cy="90" rx="22" ry="12" fill="#e6c2a0" opacity=".55"/>
+    ${sprout}${crown}
+    <ellipse cx="33" cy="74" rx="7" ry="4.5" fill="#f4a3b8" opacity=".55"/><ellipse cx="87" cy="74" rx="7" ry="4.5" fill="#f4a3b8" opacity=".55"/>
+    ${brows}${eyes}${tear}${sweat}
+    <ellipse cx="60" cy="76" rx="14" ry="10" fill="${snout}"/><ellipse cx="55" cy="76" rx="2.6" ry="3.6" fill="${nose}"/><ellipse cx="65" cy="76" rx="2.6" ry="3.6" fill="${nose}"/>
+    ${mouth}${bandana}${scarf4}${zzz}
+  </svg>`;
+}
+
+/* =============== ふたりで育てるうり坊 =============== */
+const USTAGES = [[0, "ちびうり坊"], [40, "うり坊"], [120, "やんちゃうり坊"], [300, "おとなうり坊"], [600, "はなかんむりのウリ"]];
+const UFOODS = ["🍠", "🌰", "🍎", "🥕", "🍄"];
+const dayMs = s => new Date(ymd(s)).getTime();
+/* これまでの記録から「ごはん」の記録を作る */
+function uriEvents(){
+  const ev = [], mem = S.room?.members || [], add = (at, who, t, xp) => ev.push({ at: at || 0, who, t, xp });
+  Object.entries(S.qa || {}).forEach(([d, q]) => {
+    const a = Object.entries(q.a || {}).filter(([u]) => mem.includes(u));
+    a.forEach(([u, x]) => add(x.at || dayMs(d), u, "今日の質問に答えた", 5));
+    if (a.length >= 2) add(Math.max(...a.map(([, x]) => x.at || 0)), null, "ふたりとも質問に答えた", 5);
+  });
+  S.places.forEach(p => {
+    if (p.visited) add(p.visitedAt ? dayMs(p.visitedAt) : ms(p.updatedAt), null, `${p.title}に行った`, 20);
+    if (isBoth(p)) add(ms(p.updatedAt || p.createdAt), null, `${p.title}でマッチ`, 5);
+    Object.entries(p.notes || {}).forEach(([u, n]) => { if (mem.includes(u) && n?.t) add(n.at, u, `${p.title}にひとこと`, 5); });
+  });
+  S.dates.forEach(d => add(ms(d.createdAt), d.by, "デートの予定を入れた", 5));
+  S.tickets.forEach(t => { add(t.at, t.from, `「${t.t}」を贈った`, 3); if (t.status === "done") add(t.doneAt, t.from, `「${t.t}」をかなえた`, 10); });
+  Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { if (mem.includes(u) && f?.n) { add(f.at || dayMs(f.last), u, f.n > 1 ? `ごはんをあげた（これまで${f.n}回）` : "ごはんをあげた", 3 * f.n); } });
+  return ev.sort((a, b) => b.at - a.at);
+}
+function uriState(){
+  const ev = uriEvents(), xp = ev.reduce((a, e) => a + e.xp, 0);
+  let st = 0; USTAGES.forEach(([n], i) => { if (xp >= n) st = i; });
+  const next = USTAGES[st + 1]?.[0], cur = USTAGES[st][0];
+  const t = today(), last = ev.length ? ev[0].at : 0;
+  const idle = last ? Math.max(0, dayDiff(localDay(last), t)) : 1;
+  const fedMe = S.pet?.feeds?.[me()]?.last === t, pu = partnerUid(), fedHim = pu && S.pet?.feeds?.[pu]?.last === t;
+  let energy = Math.max(10, 100 - idle * 25);
+  if (!fedMe && !fedHim && idle === 0) energy = Math.min(energy, 85);
+  const h = new Date().getHours();
+  let mood = energy <= 50 ? "sad" : !fedMe ? "hungry" : (fedHim || !pu) ? "happy" : "normal";
+  if ((h >= 23 || h < 6) && !S.uriAwake) mood = "sleep";
+  return { ev, xp, st, next, cur, energy, mood, fedMe, fedHim, idle };
+}
+function localDay(at){ const d = new Date(at); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+const uriName = () => S.pet?.name || "ウリ";
+function uriLines(u){
+  const L = [], pu = partnerUid(), n = nextDate();
+  if (u.mood === "sleep") return ["むにゃ…", "すやすや…", "zzz…ぷぎ…"];
+  if (u.mood === "sad") L.push("さみしかったぷぎ…", "もっとかまってほしいぷぎ…");
+  if (!u.fedMe) L.push("おなかすいたぷぎ〜", "ごはん、ちょうだい？");
+  if (u.fedMe && pu && !u.fedHim) L.push(`${nameOf(pu)}からもごはんほしいな`);
+  if (n) { const l = dayDiff(today(), n.date); L.push(l === 0 ? "きょうはデートの日！たのしんでね" : `${l}日後のデート、たのしみぷぎ！`); }
+  if (!qaAns(today(), me())) L.push("きょうの質問、もう答えた？");
+  const an = annivs().map(a => ({ a, o: nextOcc(a.d) })).sort((x, y) => x.o.localeCompare(y.o))[0];
+  if (an && dayDiff(today(), an.o) <= 7) L.push(`もうすぐ${an.a.t}だよ！`);
+  if (tkGot().some(t => t.status === "new")) L.push("チケット、使ってみたら？");
+  if (pu) L.push(`${nameOf(me())}と${nameOf(pu)}、だいすき！`, `${nameOf(pu)}のこと、すき？`);
+  L.push("ぷぎっ！", "なでなでうれしい〜", "えへへ", "ぷぎぷぎ♪", "いっしょにおでかけしたいな");
+  return L;
+}
+function uriHtml(){
+  if (S.needRules) return "";
+  const u = uriState(), pu = partnerUid();
+  const pct = u.next ? Math.round((u.xp - u.cur) / (u.next - u.cur) * 100) : 100;
+  return `<div class="card uricard" id="uricard">
+    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())}</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><button class="linkbtn" data-a="uriInfo">くわしく ›</button></div>
+    <div class="ustage" id="ustage"><div class="ububble" id="ububble">${esc(S.uriSay || (u.mood === "sleep" ? "すやすや…" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
+      <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood)}</div></div>
+    <div class="ubars">
+      <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div><em>${u.energy}%</em></div>
+      <div class="ubar"><span>せいちょう</span><div class="tr"><i class="g" style="width:${pct}%"></i></div><em>${u.next ? `あと${u.next - u.xp}` : "MAX"}</em></div>
+    </div>
+    ${u.fedMe ? `<button class="btn ghost block" disabled>🍠 きょうはごはんをあげたよ</button>` : `<button class="btn block" data-a="uriFeed">🍠 ごはんをあげる</button>`}
+    ${pu ? `<div class="ufed"><span>${esc(nameOf(me()))} ${u.fedMe ? "✅" : "…"}</span><span>${esc(nameOf(pu))} ${u.fedHim ? "✅" : "…"}</span></div>` : ""}
+  </div>`;
+}
+function uriFx(emoji, n = 5){
+  const stg = document.getElementById("ustage"); if (!stg) return;
+  for (let i = 0; i < n; i++) { const f = document.createElement("span"); f.className = "ufx"; f.textContent = Array.isArray(emoji) ? emoji[i % emoji.length] : emoji; f.style.left = (30 + Math.random() * 40) + "%"; f.style.bottom = (40 + Math.random() * 40) + "px"; f.style.animationDelay = (i * 0.08) + "s"; stg.appendChild(f); setTimeout(() => f.remove(), 1500); }
+}
+function uriSay(t){ S.uriSay = t; const b = document.getElementById("ububble"); if (b) { b.textContent = t; b.style.animation = "none"; b.offsetWidth; b.style.animation = ""; } }
+let uriBusy = false;
+function uriTap(){
+  const el = document.getElementById("uri"); if (!el || uriBusy) return;
+  let u = uriState();
+  if (u.mood === "sleep") { S.uriAwake = true; u = uriState(); el.innerHTML = uriSvg(u.st, "happy"); el.className = `uri s${u.st} idle`; uriSay("…はっ！おはようぷぎ！"); uriFx("💤", 2); setTimeout(() => { const e2 = document.getElementById("uri"); if (e2) e2.innerHTML = uriSvg(u.st, u.mood); }, 1400); return; }
+  const acts = [["a-jump", ["💕", "✨"]], ["a-spin", ["⭐", "✨"]], ["a-wiggle", ["🎵", "🎶"]], ["a-roll", ["💫"]], ["a-squish", ["💗"]], ["a-dash", ["💨"]]];
+  const [cls, fx] = acts[Math.floor(Math.random() * acts.length)];
+  uriBusy = true;
+  el.innerHTML = uriSvg(u.st, "happy");
+  el.className = `uri s${u.st} ${cls}`;
+  uriFx(fx, 4);
+  const L = uriLines(u); uriSay(L[Math.floor(Math.random() * L.length)]);
+  setTimeout(() => { uriBusy = false; const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood); } }, 1000);
+}
+async function uriFeed(btn){
+  const u = uriState(); if (u.fedMe || uriBusy) return;
+  btn.disabled = true; uriBusy = true;
+  const stg = document.getElementById("ustage"), el = document.getElementById("uri");
+  const food = UFOODS[Math.floor(Math.random() * UFOODS.length)];
+  const f = document.createElement("span"); f.className = "ufood"; f.textContent = food; f.style.left = "calc(50% + 46px)"; stg.appendChild(f);
+  const t = today(), cur = S.pet?.feeds?.[me()] || {};
+  const val = { n: (cur.n || 0) + 1, last: t, at: Date.now() };
+  try {
+    await setDoc(doc(db, "rooms", S.roomId, "meta", "pet"), { feeds: { [me()]: val } }, { merge: true });
+    S.pet = { ...(S.pet || {}), feeds: { ...(S.pet?.feeds || {}), [me()]: val } };
+    setTimeout(() => { f.remove(); if (el) { el.className = `uri s${u.st} idle`; el.innerHTML = uriSvg(u.st, "eat"); } uriSay(`${food} もぐもぐ…おいしいぷぎ！`); }, 600);
+    setTimeout(() => { uriFx(["💕", "+3"], 4); uriBusy = false; render(); uriSay("ごちそうさまぷぎ！"); }, 2300);
+  } catch (e) {
+    f.remove(); uriBusy = false; btn.disabled = false;
+    toast(e.code === "permission-denied" ? "あげられませんでした。Firebaseのルール更新が必要です" : "あげられませんでした（" + (e.code || e.message) + "）");
+  }
+}
+function openUriInfo(){
+  const u = uriState();
+  const log = u.ev.slice(0, 10);
+  openSheet(`<h3>${esc(uriName())}のようす<button class="x" data-a="close">×</button></h3>
+  <div class="card" style="text-align:center">
+    <div style="font-size:13px;color:var(--muted)">いまのすがた</div>
+    <div style="font-size:18px;font-weight:700;color:var(--pink-d)">${esc(USTAGES[u.st][1])}</div>
+    <div class="muted">これまでのごはん ${u.xp}${u.next ? ` ・ 次のすがたまで あと${u.next - u.xp}` : " ・ さいごまで育ったよ！"}</div>
+  </div>
+  <div class="ustages">${USTAGES.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st && i === 4 ? "？？？" : esc(nm)}<br>${n}</div>`).join("")}</div>
+  <div class="sec">ごはんになること</div>
+  <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10</div>
+  <div class="sec">さいきんのごはん</div>
+  <div class="card" style="padding:4px 16px">${log.length ? log.map(e => `<div class="ulog"><div class="main">${e.who ? esc(nameOf(e.who)) + "：" : "ふたりで："}${esc(e.t)}<small>${e.at ? esc(fmtShort(localDay(e.at))) : ""}</small></div><b>+${e.xp}</b></div>`).join("") : `<p class="muted">まだありません</p>`}</div>
+  <p class="muted" style="text-align:center;font-size:12px">何日もかまわないと、げんきが減ってしょんぼりします。</p>`);
+}
+function openUriName(){
+  openSheet(`<h3>なまえをつける<button class="x" data-a="close">×</button></h3>
+  <form id="unf"><label class="f"><span>うり坊のなまえ</span><input class="in" name="n" maxlength="12" value="${esc(uriName())}" required></label><button class="btn block">決める</button></form>`);
+  document.getElementById("unf").onsubmit = async ev => {
+    ev.preventDefault(); const n = String(ev.target.n.value || "").trim().slice(0, 12); if (!n) return;
+    try { await setDoc(doc(db, "rooms", S.roomId, "meta", "pet"), { name: n }, { merge: true }); S.pet = { ...(S.pet || {}), name: n }; closeSheet(); render(); uriSay(`${n}になったぷぎ！うれしい！`); }
+    catch (e) { toast(e.code === "permission-denied" ? "保存できませんでした。Firebaseのルール更新が必要です" : "保存できませんでした（" + (e.code || e.message) + "）"); }
+  };
 }
 
 /* =============== 今日の質問 =============== */
@@ -1993,6 +2223,10 @@ document.addEventListener("click", async ev => {
     case "qaEdit": S.qaEdit = true; render(); document.querySelector(".qaform textarea")?.focus(); break;
     case "qaCancel": S.qaEdit = false; render(); break;
     case "qaHist": openQaHist(); break;
+    case "uriTap": uriTap(); break;
+    case "uriFeed": uriFeed(el); break;
+    case "uriInfo": openUriInfo(); break;
+    case "uriName": openUriName(); break;
     case "planDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { plan: (d.plan || []).filter((_, i) => i !== +el.dataset.v) }); break; }
     case "itemToggle": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).map((x, i) => i === +el.dataset.v ? { ...x, done: !x.done } : x) }); break; }
     case "itemDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).filter((_, i) => i !== +el.dataset.v) }); break; }
