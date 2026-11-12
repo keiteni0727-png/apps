@@ -635,7 +635,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .isgv .sar{display:block;margin:1px 0 0;font-size:12px;color:var(--u-sub)}
 .isgv .dlb{padding:3px 11px;font-size:12px}
 .ilinks{display:flex;gap:8px;margin-bottom:6px}
-.ilk{flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--u-line);background:transparent;border-radius:var(--u-r);padding:10px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer}
+.ilk{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center;border:1px solid var(--u-line);background:transparent;border-radius:var(--u-r);padding:10px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer}
 .ilk.off{color:var(--u-sub);font-weight:500;border-style:dashed}
 /* 詳細：基本情報／話数タブ（PC・スマホ共通。上部のタイトル〜タブは固定） */
 .sheet:not(.form) .wrap{padding-top:0}
@@ -2545,6 +2545,12 @@ function epEditorHtml(it) {
     <div class="ffoot"><button type="button" class="u-btn ghost" id="erCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="erSave">話数を保存</button></div>`;
 }
 /* 基本情報：放送・主題歌・リンクのカード。各部分を押すと、その項目を開いた状態の編集画面へ */
+/* 配信ボタンの名前：配信サイトが1つだけならその名前、それ以外は「配信」 */
+function vodName(it) {
+  const m = mediaOf(it);
+  const l = [...new Set(m.media === "stream" ? m.plat : m.vods)];
+  return l.length === 1 ? l[0] : "配信";
+}
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
   const when = [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim();
@@ -2573,6 +2579,10 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     it.url
       ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener">公式サイト ↗</a>`
       : `<button type="button" class="ilk off" data-jump="f-url">公式サイト未設定</button>`
+  }${
+    it.vurl
+      ? `<a class="ilk" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
+      : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL未設定</button>`
   }</div>`;
   return bc + (songs ? `<div class="icard isongs">${songs}</div>` : "") + links;
 }
@@ -2692,6 +2702,14 @@ function renderDetail(it) {
         ? `<a class="ext" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a>`
         : "",
       "f-url",
+      1,
+    ],
+    [
+      "配信サイト",
+      it.vurl
+        ? `<a class="ext" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
+        : "",
+      "f-vurl",
       1,
     ],
   ].filter(r => r && (r[1] || r[3]));
@@ -2920,6 +2938,7 @@ const ONLY_A = {
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
   "f-url": ["公式サイト", ["url"]],
+  "f-vurl": ["配信サイトURL", ["vurl"]],
 };
 function formHtml() {
   const f = form;
@@ -2995,6 +3014,7 @@ function formHtml() {
         <div class="nosw">${(f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"]).map(t => `<label class="yr"><input type="checkbox" class="nos" value="${t}" ${(f.noSongs || []).includes(t) ? "checked" : ""}>${t}なし</label>`).join("")}</div>
         ${f.only ? `<p class="hint" style="margin:6px 0 0">話によって曲が変わるときは、使われた話の範囲を入れます</p>` : ""}</div>`,
     url: `<label class="field full"><span>公式サイト</span><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}"></label>`,
+    vurl: `<label class="field full"><span>配信サイト（見るページのURL）</span><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}"></label>`,
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
@@ -3008,7 +3028,7 @@ function formHtml() {
     ${sec("基本情報", P.title + P.kind + P.status + P.series)}
     ${sec("放送", P.media + P.from + P.time + P.sched + P.cours + P.n)}
     ${sec(f.k === "a" ? "OP・ED・主題歌" : "主題歌", P.songs, "話によって曲が変わるときは、使われた話の範囲を入れます")}
-    ${sec("リンク", P.url)}
+    ${sec("リンク", P.url + P.vurl)}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -3031,6 +3051,7 @@ function readForm() {
   v("#f-time", "time");
   v("#f-from", "from");
   v("#f-url", "url");
+  v("#f-vurl", "vurl");
   v("#f-n", "n");
   v("#f-sernew", "serNewName");
   const cy = g("#f-cy");
@@ -3082,6 +3103,7 @@ function openForm(it, target) {
       noSongs: [...(it.noSongs || [])],
       series: it.series || "",
       url: it.url || "",
+      vurl: it.vurl || "",
       cours: [...coursOf(it)],
       cy: yearOf(it) || y,
     };
@@ -3102,6 +3124,7 @@ function openForm(it, target) {
       songs: [],
       series: state.series.length === 1 ? state.series[0] : "",
       url: "",
+      vurl: "",
       cours: [],
       cy: y,
     };
@@ -3151,6 +3174,7 @@ async function submitForm() {
     noSongs: (f.noSongs || []).filter(t => !songs.some(x => x.type === t)),
     series: (f.series || "").trim(),
     url: (f.url || "").trim(),
+    vurl: (f.vurl || "").trim(),
   };
   if (f.id) {
     const id = f.id;
