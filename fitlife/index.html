@@ -142,6 +142,14 @@ svg.chart{width:100%;height:auto;display:block}
 .pickgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .pickgrid button{border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:6px;cursor:pointer}
 .pickgrid button svg,.pickgrid button img{width:100%;aspect-ratio:1;object-fit:contain}
+.cropbox{position:relative;overflow:hidden;border-radius:14px;touch-action:none;user-select:none;-webkit-user-select:none;background:#f3eef0}
+.cropbox img{width:100%;display:block;pointer-events:none}
+.cropbox .sel{position:absolute;border:2.5px solid #fff;border-radius:10px;box-shadow:0 0 0 9999px rgba(91,59,71,.45);pointer-events:none}
+.cropbox .hd{position:absolute;right:-13px;bottom:-13px;width:26px;height:26px;border-radius:50%;background:var(--pink-d);border:3px solid #fff}
+.cropfoot{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
+.cropfoot canvas{width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)}
+.filebtn{position:relative;overflow:hidden;display:block;text-align:center}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 </style>
 </head>
 <body>
@@ -756,14 +764,79 @@ function ownerCharCard(){
   const list = [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
   return `<div class="card"><h2>🎁 ガチャのキャラを登録<span class="sub">${list.length}体</span></h2>
     <p class="muted" style="margin-top:0">ここで登録した画像が、彼女のガチャから出てくるようになります。最初から入っているオリジナルキャラ${BUILTIN.length}体といっしょに出ます。</p>
-    <form data-form="gchar">
-      <label class="f">画像</label><input class="in" type="file" name="img" accept="image/*" required>
-      <div class="f2"><div><label class="f">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：にこにこver."></div>
-      <div><label class="f">レア度</label><select class="in" name="rarity"><option>N</option><option>R</option><option>SR</option></select></div></div>
-      <button class="btn block" style="margin-top:12px">登録する</button></form>
+    <label class="btn block filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop></label>
+    <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
     ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
       <button class="del" data-a="delchar" data-id="${c.docId}" aria-label="削除">×</button></li>`).join('')}</ul>` : ''}</div>`;
 }
+/* ===== キャラ画像の切り抜き＋シール風加工 ===== */
+let CROP = null;
+function openCrop(file){
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const W = img.naturalWidth, H = img.naturalHeight, size = Math.round(Math.min(W, H) * 0.8);
+    CROP = { img, url, sx:(W-size)/2, sy:(H-size)/2, size, count:0 };
+    $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet"><h3>キャラを切り抜く<button class="del" data-a="cropclose" aria-label="閉じる">×</button></h3>
+      <p class="muted" style="margin:0 0 8px">枠を動かして1体を囲んでね。右下の●で大きさを変えられます。</p>
+      <div class="cropbox"><img src="${url}" alt=""><div class="sel"><div class="hd"></div></div></div>
+      <form data-form="gchar"><div class="cropfoot"><canvas width="400" height="400"></canvas>
+        <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：パンダ">
+        <label class="f">レア度</label><select class="in" name="rarity"><option>N</option><option>R</option><option>SR</option></select></div></div>
+        <p class="muted" id="cropcount" style="margin:8px 0 0"></p>
+        <button class="btn block" style="margin-top:10px">このキャラを登録</button></form></div></div>`;
+    bindCrop(); drawSel(); drawPreview();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('画像を読み込めませんでした'); };
+  img.src = url;
+}
+function clampCrop(){
+  const W = CROP.img.naturalWidth, H = CROP.img.naturalHeight;
+  CROP.size = Math.max(Math.min(W, H) * 0.08, Math.min(CROP.size, W, H));
+  CROP.sx = Math.max(0, Math.min(W - CROP.size, CROP.sx));
+  CROP.sy = Math.max(0, Math.min(H - CROP.size, CROP.sy));
+}
+function drawSel(){
+  const W = CROP.img.naturalWidth, H = CROP.img.naturalHeight, el = $sheet.querySelector('.sel');
+  if(!el) return;
+  Object.assign(el.style, { left:CROP.sx/W*100+'%', top:CROP.sy/H*100+'%', width:CROP.size/W*100+'%', height:CROP.size/H*100+'%' });
+}
+function bindCrop(){
+  const box = $sheet.querySelector('.cropbox');
+  box.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const r = box.getBoundingClientRect(), k = CROP.img.naturalWidth / r.width;
+    const pt = ev => [(ev.clientX - r.left) * k, (ev.clientY - r.top) * k];
+    const [x, y] = pt(e), { sx, sy, size } = CROP;
+    let mode = Math.hypot(x - (sx+size), y - (sy+size)) < 30*k ? 'resize'
+      : (x >= sx && x <= sx+size && y >= sy && y <= sy+size) ? 'move' : 'jump';
+    if(mode === 'jump'){ CROP.sx = x - size/2; CROP.sy = y - size/2; clampCrop(); drawSel(); mode = 'move'; }
+    const st = { x, y, sx:CROP.sx, sy:CROP.sy, size:CROP.size };
+    box.setPointerCapture(e.pointerId);
+    const mv = ev => { const [X, Y] = pt(ev);
+      if(mode === 'move'){ CROP.sx = st.sx + X - st.x; CROP.sy = st.sy + Y - st.y; }
+      else CROP.size = st.size + Math.max(X - st.x, Y - st.y);
+      clampCrop(); drawSel(); };
+    const up = () => { box.removeEventListener('pointermove', mv); box.removeEventListener('pointerup', up); box.removeEventListener('pointercancel', up); drawPreview(); };
+    box.addEventListener('pointermove', mv); box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
+  });
+}
+function makeSticker(cv = document.createElement('canvas')){
+  const N = 400; cv.width = N; cv.height = N;
+  const g = cv.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, N, N); bg.addColorStop(0, '#ffe3ee'); bg.addColorStop(1, '#fff6dc');
+  g.fillStyle = bg; g.fillRect(0, 0, N, N);
+  g.font = '700 34px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  [['♡',46,52,'#ff9fc0'],['✦',356,58,'#ffcf4d'],['✦',50,350,'#b9a6ff'],['♡',352,346,'#ff9fc0'],['✦',372,200,'#ffcf4d']].forEach(([ch,x,y,c]) => { g.fillStyle = c; g.fillText(ch, x, y); });
+  g.save(); g.shadowColor = 'rgba(228,111,152,.35)'; g.shadowBlur = 18; g.shadowOffsetY = 6;
+  g.beginPath(); g.arc(N/2, N/2, 172, 0, Math.PI*2); g.fillStyle = '#fff'; g.fill(); g.restore();
+  g.save(); g.beginPath(); g.arc(N/2, N/2, 160, 0, Math.PI*2); g.clip();
+  g.fillStyle = '#fff'; g.fill();
+  g.drawImage(CROP.img, CROP.sx, CROP.sy, CROP.size, CROP.size, N/2-160, N/2-160, 320, 320);
+  g.restore();
+  return cv;
+}
+const drawPreview = () => { const cv = $sheet.querySelector('.cropfoot canvas'); if(cv && CROP) makeSticker(cv); };
+
 function greet(){ const h = new Date().getHours(); return h < 11 ? 'おはよう' : h < 18 ? 'こんにちは' : 'おつかれさま'; }
 
 function viewMeals(){
@@ -1046,9 +1119,12 @@ async function handleForm(kind, f){
       break;
     }
     case 'gchar': {
-      const img = await compress(f.img.files[0], 600, 0.85, 300000);
+      if(!CROP) throw new Error('画像をえらんでね');
+      const img = makeSticker().toDataURL('image/jpeg', 0.88);
       await addDoc(collection(db,'gachaChars'), { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img, ts: serverTimestamp() });
-      f.reset();
+      CROP.count++;
+      f.name.value = '';
+      $sheet.querySelector('#cropcount').textContent = `${CROP.count}体 登録しました。続けて別のキャラを囲めます`;
       break;
     }
     case 'regmail': {
@@ -1105,13 +1181,18 @@ document.addEventListener('submit', async e => {
   const btn = f.querySelector('button:not([type=button]):last-of-type'); if(btn){ btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = '保存中…'; }
   try{
     await handleForm(f.dataset.form, f);
-    if(f.closest('.sheet')) closeSheet();
+    if(f.closest('.sheet') && f.dataset.form !== 'gchar') closeSheet();
     toast({ gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
     toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : (err.message || '保存できませんでした')));
   }finally{ if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = btn.dataset.t; } }
+});
+
+document.addEventListener('change', e => {
+  const el = e.target.closest('input[data-crop]'); if(!el || !el.files[0]) return;
+  openCrop(el.files[0]); el.value = '';
 });
 
 document.addEventListener('click', async e => {
@@ -1148,6 +1229,7 @@ document.addEventListener('click', async e => {
         if(!confirm('このメッセージを削除しますか？')) return;
         await deleteDoc(doc(db,'cheers',el.dataset.id)); toast('削除しました'); break;
       case 'lock': await lockNow(); toast('ロックしました'); break;
+      case 'cropclose': if(CROP) URL.revokeObjectURL(CROP.url); CROP = null; closeSheet(); break;
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
       case 'pull': await pullGacha(); break;
