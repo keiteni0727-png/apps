@@ -743,6 +743,7 @@ function ownerCharCard(){
     <p class="muted" style="margin:6px 0 0">サイトの画像を長押しして「コピー」したら、「貼り付け」を押してね。</p>
     <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
     ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
+      <button class="btn ghost sm" data-a="editchar" data-id="${c.docId}">編集</button>
       <button class="del" data-a="delchar" data-id="${c.docId}" aria-label="削除">×</button></li>`).join('')}</ul>` : ''}</div>`;
 }
 /* ===== キャラ画像の切り抜き＋シール風加工 ===== */
@@ -1100,6 +1101,12 @@ async function handleForm(kind, f){
       URL.revokeObjectURL(CROP.url); CROP = null;
       break;
     }
+    case 'editchar': {
+      const name = v.name.trim();
+      if(!name) throw new Error('名前を入れてね');
+      await setDoc(doc(db,'gachaChars',v.id), { name, rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N' }, { merge:true });
+      break;
+    }
     case 'regmail': {
       const email = v.email.trim().toLowerCase();
       if(email === (S.user.email||'').toLowerCase()) throw new Error('自分のアドレスは登録できません');
@@ -1155,7 +1162,7 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ editchar:'保存しました', gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -1224,6 +1231,16 @@ document.addEventListener('click', async e => {
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
       case 'pull': await pullGacha(); break;
+      case 'editchar': {
+        const c = S.gchars.find(x => x.docId === el.dataset.id); if(!c) break;
+        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>キャラを編集<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+          <form data-form="editchar"><input type="hidden" name="id" value="${c.docId}">
+          <div class="cropfoot" style="margin-top:0"><img src="${c.img}" alt="" style="width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)">
+            <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" value="${esc(c.name)}">
+            <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${r === c.rarity ? 'selected' : ''}>${r}</option>`).join('')}</select></div></div>
+          <button class="btn block" style="margin-top:14px">保存</button></form></div></div>`;
+        break;
+      }
       case 'delchar':
         if(!confirm('このキャラを削除しますか？（彼女のずかんからも消えます）')) return;
         await deleteDoc(doc(db,'gachaChars',el.dataset.id)); toast('削除しました'); break;
