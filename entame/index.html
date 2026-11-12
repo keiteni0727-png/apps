@@ -637,8 +637,18 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .ilinks{display:flex;gap:8px;margin-bottom:6px}
 .ilk{flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--u-line);background:transparent;border-radius:var(--u-r);padding:10px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer}
 .ilk.off{color:var(--u-sub);font-weight:500;border-style:dashed}
-/* 詳細：基本情報／話数タブ（スマホのみ。PCは今まで通り縦に並べる） */
-.dtabs{display:none}
+/* 詳細：基本情報／話数タブ（PC・スマホ共通。上部のタイトル〜タブは固定） */
+.sheet:not(.form) .wrap{padding-top:0}
+.sheet:not(.form) .dhead{position:sticky;top:0;z-index:4;background:var(--u-surface);margin:0 -16px;padding:14px 16px 0}
+.dtabs{display:flex;margin:0 -16px;border-bottom:1px solid var(--u-line)}
+.dtabs button{flex:1;border:0;background:none;color:var(--u-sub);font-size:14px;font-weight:700;padding:11px 0 9px;border-bottom:2.5px solid transparent;margin-bottom:-1px;cursor:pointer}
+.dtabs small{font-family:var(--u-num);font-weight:600;font-size:12px}
+.sheet.t-info .dtabs [data-dtab="info"],.sheet.t-ep .dtabs [data-dtab="ep"]{color:var(--u-ink);border-bottom-color:var(--st-now)}
+.sheet.t-info .dp-ep,.sheet.t-ep .dp-info{display:none}
+.sheet:not(.form) .dp-info{padding-top:12px}
+.sheet:not(.form) .dp-ep>h4{margin:12px 0 8px}
+.sheet:not(.form) .dp-ep .h4l{display:none}
+@media (hover:hover){.dtabs button:hover{color:var(--u-ink)}}
 .nxt{margin-left:8px;color:var(--st-now);font-weight:700}
 .ep.next{background:color-mix(in srgb,var(--st-now) 13%,transparent)}
 .ep.next .epn{color:var(--st-now)}
@@ -655,14 +665,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .sheet:not(.form) h3{font-size:18px}
   .sheet:not(.form) .seg{margin:8px 0 6px}
   .sheet:not(.form) .seg button{padding:7px 2px;font-size:13px}
-  .dtabs{display:flex;margin:0 -14px;border-bottom:1px solid var(--u-line)}
-  .dtabs button{flex:1;border:0;background:none;color:var(--u-sub);font-size:14px;font-weight:700;padding:11px 0 9px;border-bottom:2.5px solid transparent;margin-bottom:-1px}
-  .dtabs small{font-family:var(--u-num);font-weight:600;font-size:12px}
-  .sheet.t-info .dtabs [data-dtab="info"],.sheet.t-ep .dtabs [data-dtab="ep"]{color:var(--u-ink);border-bottom-color:var(--st-now)}
-  .sheet.t-info .dp-ep,.sheet.t-ep .dp-info{display:none}
+  .dtabs{margin:0 -14px}
   .sheet:not(.form) .dp-info{padding-top:10px}
-  .sheet:not(.form) .dp-ep>h4{margin:12px 0 8px;font-size:12.5px}
-  .sheet:not(.form) .dp-ep .h4l{display:none}
+  .sheet:not(.form) .dp-ep>h4{font-size:12.5px}
   .sheet:not(.form) dl{grid-template-columns:84px 1fr;gap:10px 8px;font-size:13px}
   .sheet:not(.form) dt{font-size:12.5px}
   .sheet:not(.form) .edl dd{padding-right:0}
@@ -2723,7 +2728,7 @@ function openDetail(id) {
   setDTab("info");
   if (!TOUCH) $(".sheet .close").focus({ preventScroll: true });
 }
-/* スマホ：詳細を「基本情報／話数」タブで切り替え（タブの状態はシート自体のクラスで持つ） */
+/* 詳細を「基本情報／話数」タブで切り替え（PC・スマホ共通）（タブの状態はシート自体のクラスで持つ） */
 function setDTab(t) {
   const sh = $("#layer .sheet");
   if (!sh) return;
@@ -2733,7 +2738,7 @@ function setDTab(t) {
   if (t === "ep")
     requestAnimationFrame(() => {
       const n = sh.querySelector(".dp-ep .ep.next");
-      if (n && matchMedia("(max-width:600px)").matches) {
+      if (n) {
         const hd = sh.querySelector(".dhead");
         const sr = sh.getBoundingClientRect(),
           nr = n.getBoundingClientRect();
