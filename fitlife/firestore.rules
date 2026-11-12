@@ -92,11 +92,13 @@ service cloud.firestore {
         && request.resource.data.img is string
         && request.resource.data.img.size() <= 500000;
       allow update: if isOwner()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'rarity'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'rarity', 'img'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 20
-        && request.resource.data.rarity in ['N', 'R', 'SR'];
+        && request.resource.data.rarity in ['N', 'R', 'SR']
+        && request.resource.data.img is string
+        && request.resource.data.img.size() <= 500000;
       allow delete: if isOwner();
     }
 

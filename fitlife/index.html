@@ -748,18 +748,19 @@ function ownerCharCard(){
 }
 /* ===== キャラ画像の切り抜き＋シール風加工 ===== */
 let CROP = null;
-function openCrop(file){
+function openCrop(file, editId = ''){
   const url = URL.createObjectURL(file), img = new Image();
   img.onload = () => {
     const W = img.naturalWidth, H = img.naturalHeight, size = Math.round(Math.min(W, H) * 0.8);
-    CROP = { img, url, sx:(W-size)/2, sy:(H-size)/2, size, count:0 };
+    const ed = editId ? S.gchars.find(x => x.docId === editId) : null;
+    CROP = { img, url, sx:(W-size)/2, sy:(H-size)/2, size, editId: ed ? editId : '' };
     $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet"><h3>キャラを切り抜く<button class="del" data-a="cropclose" aria-label="閉じる">×</button></h3>
       <p class="muted" style="margin:0 0 8px">枠を動かして1体を囲んでね。右下の●で大きさを変えられます。</p>
       <div class="cropbox"><img src="${url}" alt=""><div class="sel"><div class="hd"></div></div></div>
       <form data-form="gchar"><div class="cropfoot"><canvas width="400" height="400"></canvas>
-        <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：パンダ">
-        <label class="f">レア度</label><select class="in" name="rarity"><option>N</option><option>R</option><option>SR</option></select></div></div>
-        <button class="btn block" style="margin-top:10px">このキャラを登録</button></form></div></div>`;
+        <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：パンダ" value="${esc(ed?.name || '')}">
+        <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${ed?.rarity === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div></div>
+        <button class="btn block" style="margin-top:10px">${ed ? '画像を差し替えて保存' : 'このキャラを登録'}</button></form></div></div>`;
     bindCrop(); drawSel(); drawPreview();
   };
   img.onerror = () => { URL.revokeObjectURL(url); toast('画像を読み込めませんでした'); };
@@ -1097,7 +1098,9 @@ async function handleForm(kind, f){
     case 'gchar': {
       if(!CROP) throw new Error('画像をえらんでね');
       const img = makeSticker().toDataURL('image/jpeg', 0.88);
-      await addDoc(collection(db,'gachaChars'), { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img, ts: serverTimestamp() });
+      const data = { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img };
+      if(CROP.editId) await setDoc(doc(db,'gachaChars',CROP.editId), data, { merge:true });
+      else await addDoc(collection(db,'gachaChars'), { ...data, ts: serverTimestamp() });
       URL.revokeObjectURL(CROP.url); CROP = null;
       break;
     }
@@ -1179,7 +1182,7 @@ document.addEventListener('paste', e => {
 
 document.addEventListener('change', e => {
   const el = e.target.closest('input[data-crop]'); if(!el || !el.files[0]) return;
-  openCrop(el.files[0]); el.value = '';
+  openCrop(el.files[0], el.dataset.edit || ''); el.value = '';
 });
 
 document.addEventListener('click', async e => {
@@ -1226,7 +1229,7 @@ document.addEventListener('click', async e => {
           }
         }catch(err){ console.error(err); toast('貼り付けできませんでした。もう一度ためしてね'); break; }
         if(!blob){ toast('コピーした画像が見つからないよ。画像を長押しして「コピー」してね'); break; }
-        openCrop(blob); break;
+        openCrop(blob, el.dataset.edit || ''); break;
       }
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
@@ -1238,7 +1241,10 @@ document.addEventListener('click', async e => {
           <div class="cropfoot" style="margin-top:0"><img src="${c.img}" alt="" style="width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)">
             <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" value="${esc(c.name)}">
             <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${r === c.rarity ? 'selected' : ''}>${r}</option>`).join('')}</select></div></div>
-          <button class="btn block" style="margin-top:14px">保存</button></form></div></div>`;
+          <button class="btn block" style="margin-top:14px">保存</button></form>
+          <p class="muted" style="margin:16px 0 6px">画像を変える</p>
+          <div class="f2"><label class="btn sub filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop data-edit="${c.docId}"></label>
+            <button class="btn sub" data-a="pasteimg" data-edit="${c.docId}">📋 貼り付け</button></div></div></div>`;
         break;
       }
       case 'delchar':
