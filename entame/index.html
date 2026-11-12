@@ -598,6 +598,41 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .fsdrop #seriesQ{padding:3px 8px}
   .ftools input::placeholder,.fsdrop #seriesQ::placeholder{font-size:12px}
 }
+/* 詳細：基本情報／話数タブ（スマホのみ。PCは今まで通り縦に並べる） */
+.dtabs{display:none}
+.nxt{margin-left:8px;color:var(--st-now);font-weight:700}
+.ep.next{background:color-mix(in srgb,var(--st-now) 13%,transparent)}
+.ep.next .epn{color:var(--st-now)}
+.epmore{position:relative;display:inline-flex}
+.epset #epMore{padding-left:14px;padding-right:14px;letter-spacing:.1em}
+.epmenu{position:absolute;right:0;top:calc(100% + 4px);z-index:5;display:grid;min-width:190px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r);box-shadow:var(--u-shadow);padding:4px}
+.epmenu[hidden]{display:none}
+.epset .epmenu button{border:0;background:transparent;text-align:left;padding:10px 12px;font-weight:700}
+.epset .epmenu button:active{background:var(--u-chip)}
+@media (max-width:600px){
+  .sheet:not(.form){width:calc(100% - 20px);height:calc(100% - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-height:none}
+  .sheet:not(.form) .wrap{padding:0 14px}
+  .sheet:not(.form) .dhead{position:sticky;top:0;z-index:4;background:var(--u-surface);margin:0 -14px;padding:12px 14px 0}
+  .sheet:not(.form) h3{font-size:18px}
+  .sheet:not(.form) .seg{margin:8px 0 6px}
+  .sheet:not(.form) .seg button{padding:7px 2px;font-size:13px}
+  .dtabs{display:flex;margin:0 -14px;border-bottom:1px solid var(--u-line)}
+  .dtabs button{flex:1;border:0;background:none;color:var(--u-sub);font-size:14px;font-weight:700;padding:11px 0 9px;border-bottom:2.5px solid transparent;margin-bottom:-1px}
+  .dtabs small{font-family:var(--u-num);font-weight:600;font-size:12px}
+  .sheet.t-info .dtabs [data-dtab="info"],.sheet.t-ep .dtabs [data-dtab="ep"]{color:var(--u-ink);border-bottom-color:var(--st-now)}
+  .sheet.t-info .dp-ep,.sheet.t-ep .dp-info{display:none}
+  .sheet:not(.form) .dp-info{padding-top:10px}
+  .sheet:not(.form) .dp-ep>h4{margin:12px 0 8px;font-size:12.5px}
+  .sheet:not(.form) .dp-ep .h4l{display:none}
+  .sheet:not(.form) dl{grid-template-columns:84px 1fr;gap:10px 8px;font-size:13px}
+  .sheet:not(.form) dt{font-size:12.5px}
+  .sheet:not(.form) .edl dd{padding-right:0}
+  .sheet:not(.form) .edl .pen{display:none}
+  .sheet:not(.form) .epset button{padding:7px 12px;font-size:12.5px}
+  .sheet:not(.form) .epset>button{flex:1}
+  .sheet:not(.form) .ep{grid-template-columns:24px 46px 1fr auto;padding:10px 12px;font-size:13px}
+  .sheet:not(.form) .ep .epd{font-size:11.5px}
+}
 /* 最終回の印 */
 .fin{display:inline-block;vertical-align:1px;margin-right:6px;font-size:10.5px;font-weight:900;letter-spacing:.04em;line-height:1.5;padding:0 7px;border-radius:4px;background:var(--u-accent);color:var(--u-on);white-space:nowrap}
 .eps-sub .fin{font-size:9.5px}
@@ -2403,6 +2438,11 @@ function subPasteHtml(it) {
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
 }
+/* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
+function nextIdx(eps) {
+  const a = eps.findIndex(e => !e.w && aired(e));
+  return a >= 0 ? a : eps.findIndex(e => !e.w);
+}
 function epListHtml(it, eps) {
   if (subPaste) return subPasteHtml(it);
   const A = it.k === "a";
@@ -2410,16 +2450,17 @@ function epListHtml(it, eps) {
     return (
       (needEps(it) ? `<p class="noeps-box">話数リストが未登録です</p>` : "") +
       (A
-        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加するか、各話リストを貼り付けてください。</p><div class="epset"><button type="button" id="spOpen">各話リストを貼り付け</button></div>`
-        : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加できます。</p>`)
+        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加するか、各話リストを貼り付けてください。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button><button type="button" id="spOpen">各話リストを貼り付け</button></div>`
+        : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加できます。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`)
     );
   const w = eps.filter(e => e.w).length;
-  return `<div class="epset"><button type="button" id="allAired">放送済みを全部 ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}${A ? `<button type="button" id="spOpen">サブタイトルを貼り付け</button>` : ""}</div>
+  const nx = nextIdx(eps);
+  return `<div class="epset"><button type="button" id="allAired">放送済みを全部 ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<span class="epmore"><button type="button" id="epMore" aria-label="その他の操作" aria-expanded="false">…</button><span class="epmenu" id="epMenu" hidden>${A ? `<button type="button" id="spOpen">サブタイトルを貼り付け</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button></span></span></div>
     <div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps" role="list">${(() => {
       return eps
         .map((e, i) => {
           const fut = !aired(e);
-          return `<button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button>`;
+          return `<button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button>`;
         })
         .join("");
     })()}</div>`;
@@ -2566,13 +2607,15 @@ function renderDetail(it) {
   ].filter(r => r && (r[1] || r[3]));
   const eps = episodes(it);
   const w = eps.filter(e => e.w).length;
-  return `<div class="hdrow"><div class="meta">${kindTag(it)}</div><div class="hdrow"><button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  const nx = eps[nextIdx(eps)];
+  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}</div><div class="hdrow"><button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}</h3>
     <div class="seg" role="group" aria-label="ステータス">${STATUSES.map(s => `<button type="button" data-set="${s}" aria-pressed="${it.s === s}" class="${it.s === s ? "s-" + s : ""}">${stLabel(s)}</button>`).join("")}</div>
-    <dl class="edl">${rows.map(r => editRow(r[0].trim(), r[1], `data-jump="${r[2]}"`)).join("")}</dl>
-    <h4>話数 <span class="hdrow"><small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済` : ""}</small>${epEdit ? "" : `<button type="button" class="editbtn" id="epEditBtn">話数を編集</button>`}</span></h4>
-    <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div>
-    <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div>`;
+    <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
+    <div class="dpane dp-info"><dl class="edl">${rows.map(r => editRow(r[0].trim(), r[1], `data-jump="${r[2]}"`)).join("")}</dl>
+    <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
+    <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
+    <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
 }
 function refreshSheet() {
   const it = items.find(x => x.id === openId);
@@ -2592,7 +2635,26 @@ function openDetail(id) {
   subPaste = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
+  setDTab(it.s === "視聴中" || it.s === "視聴済み" ? "ep" : "info");
   if (!TOUCH) $(".sheet .close").focus({ preventScroll: true });
+}
+/* スマホ：詳細を「基本情報／話数」タブで切り替え（タブの状態はシート自体のクラスで持つ） */
+function setDTab(t) {
+  const sh = $("#layer .sheet");
+  if (!sh) return;
+  sh.classList.toggle("t-info", t === "info");
+  sh.classList.toggle("t-ep", t === "ep");
+  sh.scrollTop = 0;
+  if (t === "ep")
+    requestAnimationFrame(() => {
+      const n = sh.querySelector(".dp-ep .ep.next");
+      if (n && matchMedia("(max-width:600px)").matches) {
+        const hd = sh.querySelector(".dhead");
+        const sr = sh.getBoundingClientRect(),
+          nr = n.getBoundingClientRect();
+        if (nr.bottom > sr.bottom - 20) sh.scrollTop += nr.top - sr.top - (hd ? hd.offsetHeight : 0) - 110;
+      }
+    });
 }
 function fail(e) {
   toast("保存できませんでした。もう一度お試しください");
@@ -4448,6 +4510,20 @@ function onDetailClick(e) {
         return true;
       }
     }
+    const dt = e.target.closest("[data-dtab]");
+    if (dt) {
+      setDTab(dt.dataset.dtab);
+      return true;
+    }
+    if (e.target.closest("#epMore")) {
+      const m = $("#epMenu");
+      if (m) {
+        m.hidden = !m.hidden;
+        $("#epMore").setAttribute("aria-expanded", String(!m.hidden));
+      }
+      return true;
+    }
+    if ($("#epMenu") && !$("#epMenu").hidden) $("#epMenu").hidden = true;
     const st = e.target.closest("[data-set]");
     if (st) {
       setStatus(it, st.dataset.set);
