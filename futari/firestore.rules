@@ -86,6 +86,16 @@ service cloud.firestore {
         allow read, delete: if isMember(roomId);
       }
 
+      // 今日の質問の答え。ふたりだけ
+      match /qa/{day} {
+        allow read, write: if isMember(roomId);
+      }
+
+      // お願いチケット。ふたりだけ
+      match /tickets/{ticketId} {
+        allow read, write: if isMember(roomId);
+      }
+
       // 相性テストの答え。ふたりだけ
       match /quiz/{setId} {
         allow read, write: if isMember(roomId);

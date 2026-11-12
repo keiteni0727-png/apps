@@ -335,6 +335,50 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .aitem .s{font-size:12px;color:var(--muted)}
 .aitem .tag{flex:none}
 .cal-d .dots i.a{background:var(--lav-d)}
+.qday .q{font-size:17px;font-weight:700;line-height:1.5;margin:2px 0 10px}
+.qday .hint{font-size:12px;color:var(--pink-d);font-weight:700;margin:0 0 8px}
+.qday textarea{min-height:60px}
+.qday .ans{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line)}
+.qday .ans:first-of-type{border-top:0}
+.qday .ans .nb{flex:1;min-width:0}
+.qday .ans b{font-size:13px}
+.qday .ans p{margin:2px 0 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.qday .ans p.none{color:var(--muted);font-size:13px}
+.qday .ans .lock{filter:blur(5px);user-select:none}
+.qday .foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.qday .foot .linkbtn{padding:0;font-size:12px}
+.qday.wait{box-shadow:0 0 0 2px #f7c6d3,var(--shadow)}
+.qh{background:#fff;border-radius:18px;padding:10px 14px;margin-bottom:10px}
+.qh .d{font-size:11px;color:var(--muted)}
+.qh .q{font-size:14px;font-weight:700;margin:2px 0 4px}
+.qh .ans{border-top:0;padding:4px 0}
+.shiori{background:#fff;border-radius:18px;padding:8px 14px 12px;margin-bottom:12px}
+.shiori .ttl2{font-size:14px;font-weight:700;color:var(--pink-d);margin:4px 0 2px}
+.shiori .sub{font-size:12px;color:var(--muted);margin:10px 0 2px}
+.prow{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.prow .tm{flex:none;width:48px;font-weight:700;color:var(--lav-d);font-size:13px}
+.prow .tx{flex:1;min-width:0;word-break:break-word}
+.prow .del{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;flex:none}
+.prow input[type=checkbox]{width:20px;height:20px;accent-color:var(--pink-d);flex:none;margin:0}
+.prow.done .tx{text-decoration:line-through;color:var(--muted)}
+.sform{display:flex;gap:6px;margin-top:8px}
+.sform .in{padding:8px 10px;font-size:14px;border-radius:12px;min-width:0}
+.sform .in[type=time]{flex:none;width:96px;-webkit-appearance:none;appearance:none}
+.sform .in.t{flex:1}
+.sform .btn{flex:none}
+.stag{font-size:11px;margin-left:4px}
+.ticket{position:relative;display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fff8f0,#fde8ee);border:2px dashed #f4b6c6;border-radius:18px;padding:12px 14px;margin-bottom:10px}
+.ticket.done{background:#faf7f8;border-color:#e6dde2;opacity:.75}
+.ticket .e{font-size:30px;flex:none}
+.ticket .main{flex:1;min-width:0}
+.ticket .t{font-weight:700;font-size:15px}
+.ticket .s{font-size:12px;color:var(--muted)}
+.ticket .m{font-size:13px;margin-top:4px;white-space:pre-wrap;word-break:break-word}
+.ticket .act{flex:none;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.tpick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.tpick button{border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 4px;cursor:pointer;font-size:11.5px;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.3}
+.tpick button b{font-size:24px;font-weight:400}
+.tpick button.on{border-color:var(--pink);background:var(--pink-l);color:var(--pink-d);font-weight:700}
 .akind{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .akind button{border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 2px;cursor:pointer;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .akind button b{font-size:22px;font-weight:400}
@@ -473,7 +517,7 @@ const db = getFirestore(fbApp);
 
 /* ---------- 状態 ---------- */
 const S = {
-  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, extraErr:null, subs:[], noteEdit:null,
+  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, qa:{}, tickets:[], needRules:false, tkTab:"got", extraErr:null, subs:[], noteEdit:null,
   calY:null, calM:null, calSel:null, qv:null,
   tab:"home", cat:"all", who:"all", sort:"new", q:"",
   authMode:"login", busy:false
@@ -748,6 +792,19 @@ function openRoom(roomId, fresh){
     if (gotRoom && gotPlaces) render();
   }, extraErr));
   cleanupPosts(roomId);
+  // 今日の質問・お願いチケット（ルールが未更新でも、ほかの機能は止めない）
+  S.qa = {}; S.tickets = []; S.needRules = false;
+  const needRules = e => { if (e.code === "permission-denied") { S.needRules = true; if (gotRoom && gotPlaces) render(); } };
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "qa"), snap => {
+    S.qa = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
+    if (gotRoom && gotPlaces && !document.activeElement?.closest?.(".qaform")) render();
+    if (document.getElementById("qhist")) document.getElementById("qhist").innerHTML = qaHistHtml();
+  }, needRules));
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "tickets"), snap => {
+    S.tickets = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0));
+    if (gotRoom && gotPlaces && !document.activeElement?.closest?.(".qaform")) render();
+    if (document.getElementById("tklist")) document.getElementById("tklist").innerHTML = ticketListHtml();
+  }, needRules));
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "quiz"), snap => {
     S.quiz = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
     if (gotRoom && gotPlaces) render();
@@ -766,6 +823,11 @@ async function lostRoom(){
 /* =============== メイン画面 =============== */
 function render(){
   if (!S.room) return;
+  const qta = document.querySelector(".qaform textarea"), qkeep = qta ? { v: qta.value, f: document.activeElement === qta } : null;
+  renderMain();
+  if (qkeep) { const n = document.querySelector(".qaform textarea"); if (n) { n.value = qkeep.v; if (qkeep.f) n.focus(); } }
+}
+function renderMain(){
   const paired = isPaired();
   const both = S.places.filter(p => !p.visited && isBoth(p)).length;
   $app.innerHTML = `
@@ -979,11 +1041,15 @@ function whoOk(p){
 function viewHome(){
   const matches = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
   const nn = notesNew();
-  return `${S.extraErr ? "" : countdownHtml()}${annivHtml()}${annivUpcomingHtml()}
+  return `${S.extraErr ? "" : countdownHtml()}${annivHtml()}
+  ${ticketAlertsHtml()}
+  ${qaHtml()}
+  ${annivUpcomingHtml()}
   ${nn.length ? `<div class="card swipebar" data-a="tab" data-v="memo"><span class="ic">💬</span><div class="main"><b>${esc(pName())}がおもいでにひとこと</b><span class="muted">${esc(nn.map(p => p.title).slice(0, 2).join("、"))}${nn.length > 2 ? ` ほか${nn.length - 2}件` : ""}</span></div><span class="go">›</span></div>` : ""}
   ${isPaired() ? `<div class="secrow"><div class="sec">ふたりとも行きたい♡ ・ ${matches.length}件</div>${matches.length > 3 ? `<button class="linkbtn" data-a="goWho" data-v="both">すべて見る ›</button>` : ""}</div>
   ${matches.length ? matches.slice(0, 3).map(placeCard).join("") : `<div class="card anniv-empty"><span style="font-size:22px">💞</span><span class="muted">ふたりとも♡をつけた場所がここに出ます</span></div>`}` : ""}
   ${swipeBar()}
+  ${ticketCta()}
   ${quizCta()}`;
 }
 
@@ -1177,6 +1243,141 @@ async function saveNote(id, text){
   S.noteEdit = null; refreshNotes(id);
 }
 
+/* =============== 今日の質問 =============== */
+const QS = ["最近いちばんうれしかったことは？","無人島にひとつだけ持っていくなら？","相手のいちばん好きなところは？","いま一番食べたいものは？","子どものころの夢は？","生まれ変わったら何になりたい？","もし宝くじで1億円当たったら？","ふたりで行ってみたい国は？","最近ハマっていることは？","休みの日の理想の過ごし方は？","はじめて会ったときの印象は？","相手にしてもらってうれしかったことは？","好きな季節とその理由は？","最近見た夢を教えて","ふたりの思い出で一番好きなのは？","いま欲しいものは？","最後の晩餐に食べたいものは？","落ち込んだときの元気の出し方は？","自分の好きなところは？","10年後どうなっていたい？","もし1日だけ透明人間になれたら？","好きなおにぎりの具は？","最近笑ったことは？","ふたりで挑戦してみたいことは？","相手に似合いそうな服は？","好きな映画やドラマは？","小さいころの得意なことは？","自分を動物にたとえると？","相手を動物にたとえると？","朝型？夜型？","ストレス発散方法は？","もし時間を巻き戻せるなら、いつに戻りたい？","いまの自分に点数をつけると何点？","ふたりの家に絶対ほしいものは？","今年中にやりたいことは？","好きなお寿司のネタは？","つい買ってしまうものは？","尊敬している人は？","人生で一番おいしかったものは？","もし超能力がひとつ使えたら？","ふたりで住むならどんな街？","好きな言葉や座右の銘は？","実は苦手なものは？","相手に直してほしいところを、やさしく言うと？","いまの気分を色で表すと？","雨の日にしたいことは？","最近がんばったことは？","相手のクセで好きなものは？","行ってみたい温泉は？","小さな幸せを感じる瞬間は？","カラオケの十八番は？","もしお店を開くなら何のお店？","好きなお菓子は？","人に自慢できる特技は？","ふたりでおそろいにしたいものは？","理想のデートプランは？","初デートで覚えていることは？","最近ありがとうと思ったことは？","1週間休みがあったら何する？","好きなラーメンの味は？","学生時代の思い出は？","いま会いたい人は？","もしペットを飼うなら？","明日世界が終わるなら何をする？","好きな香りは？","最近買ってよかったものは？","ふたりの記念日にしたいことは？","子どものころ好きだったアニメは？","自分の口ぐせは？","相手の口ぐせは？","好きなパンは？","人生で一番びっくりしたことは？","ひとりの時間に何してる？","苦手な食べ物は？","相手の好きな表情は？","寝る前に必ずすることは？","好きな飲み物は？","挑戦してみたい習いごとは？","いまの仕事・勉強で楽しいことは？","ふたりで作ってみたい料理は？","旅行は計画派？気まま派？","好きな花は？","昔のあだ名は？","ドキッとした相手の行動は？","もし1日入れ替われたら何する？","好きな天気は？","宝物にしているものは？","最近知ってびっくりしたことは？","ふたりで行きたいテーマパークは？","相手に伝えたい「ありがとう」は？","自分の第一印象、よく何て言われる？","好きなアイスの味は？","クリスマスにしたいことは？","おうちデートで何したい？","相手の好きな食べ物、当てられる？","最近のマイブームは？","老後はどう過ごしたい？","好きな数字とその理由は？","ふたりのテーマソングを決めるなら？","今日あったいいことは？"];
+function hashStr(t){ let h = 2166136261; for (const c of t) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+let qOrderCache = null;
+function qOrder(){
+  if (qOrderCache && qOrderCache.room === S.roomId) return qOrderCache.o;
+  let seed = hashStr(S.roomId || "uri") || 1; const rnd = () => (seed = Math.imul(seed ^ (seed >>> 15), 2246822507) + 0x9e3779b9 >>> 0) / 4294967296;
+  const o = QS.map((_, i) => i); for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+  qOrderCache = { room: S.roomId, o }; return o;
+}
+function qOf(day){ const doc0 = S.qa[day]; if (doc0?.q) return doc0.q; const n = dayDiff("2026-01-01", day); const o = qOrder(); return QS[o[((n % o.length) + o.length) % o.length]]; }
+const qaAns = (day, uid) => uid && S.qa[day]?.a?.[uid];
+const rulesNote = what => `<div class="card" style="background:var(--butter-l)"><h2 style="color:#c79a2c">⚙️ ${what}はもう少しで使えます</h2><p class="muted" style="margin:0">Firebaseのルールを更新すると使えるようになります。</p></div>`;
+function qaHtml(){
+  if (S.needRules) return rulesNote("今日の質問");
+  const day = today(), q = qOf(day), pu = partnerUid(), mine = qaAns(day, me()), his = qaAns(day, pu);
+  const editing = !mine || S.qaEdit;
+  const ansRow = (u, a, lock) => `<div class="ans">${avHtml(u)}<div class="nb"><b>${esc(nameOf(u))}</b>${a ? `<p class="${lock ? "lock" : ""}">${esc(lock ? "ないしょ　ないしょ　ないしょ" : a.t)}</p>` : `<p class="none">まだ答えていないみたい</p>`}</div></div>`;
+  return `<div class="card qday ${!mine && his ? "wait" : ""}">
+    <h2>💭 今日の質問</h2>
+    <div class="q">${esc(q)}</div>
+    ${!mine && his ? `<p class="hint">${esc(pName())}はもう答えたよ！答えると見られます</p>` : ""}
+    ${editing ? `<form class="qaform"><textarea class="in" name="t" maxlength="200" placeholder="ここに答えを書いてね">${esc(mine?.t || "")}</textarea>
+      <div class="row end" style="margin-top:8px">${mine ? `<button type="button" class="btn ghost sm" data-a="qaCancel">やめる</button>` : ""}<button class="btn sm">${mine ? "保存" : "答える"}</button></div></form>`
+      : `<div class="ans">${avHtml(me())}<div class="nb"><b>${esc(nameOf(me()))}</b><p>${esc(mine.t)}</p></div><button class="ned" data-a="qaEdit" style="border:0;background:var(--pink-l);color:var(--pink-d);border-radius:99px;padding:4px 10px;font-size:12px;cursor:pointer">編集</button></div>`}
+    ${pu ? (mine ? ansRow(pu, his, false) : his ? ansRow(pu, his, true) : "") : ""}
+    <div class="foot"><span class="muted" style="font-size:12px">${mine && pu && !his ? `${esc(pName())}の答えを待っています` : ""}</span><button class="linkbtn" data-a="qaHist">これまでの質問 ›</button></div>
+  </div>`;
+}
+function qaHistHtml(){
+  const t = today(), pu = partnerUid();
+  const days = Object.keys(S.qa).filter(d => d < t && (S.qa[d].a && Object.keys(S.qa[d].a).length)).sort().reverse();
+  if (!days.length) return `<div class="empty" style="padding:24px 10px"><div class="big">💭</div><p>答えた質問がここにたまっていきます</p></div>`;
+  return days.map(d => `<div class="qh"><div class="d">${esc(fmtShort(d))}</div><div class="q">${esc(qOf(d))}</div>
+    ${[me(), pu].filter(Boolean).map(u => { const a = qaAns(d, u); return `<div class="qday"><div class="ans">${avHtml(u)}<div class="nb"><b>${esc(nameOf(u))}</b>${a ? `<p>${esc(a.t)}</p>` : `<p class="none">答えなかった日</p>`}</div></div></div>`; }).join("")}</div>`).join("");
+}
+function openQaHist(){ openSheet(`<h3>💭 これまでの質問<button class="x" data-a="close">×</button></h3><div id="qhist">${qaHistHtml()}</div>`); }
+async function saveQa(text){
+  const t = String(text || "").trim().slice(0, 200); if (!t) return;
+  const day = today();
+  await setDoc(doc(db, "rooms", S.roomId, "qa", day), { q: qOf(day), a: { [me()]: { t, at: Date.now() } } }, { merge: true });
+  S.qa[day] = { ...(S.qa[day] || {}), q: qOf(day), a: { ...(S.qa[day]?.a || {}), [me()]: { t, at: Date.now() } } };
+  S.qaEdit = false; render();
+}
+
+/* =============== デートのしおり =============== */
+const hasShiori = d => (d.plan || []).length + (d.items || []).length > 0;
+function shioriHtml(d){
+  const plan = (d.plan || []).map((x, i) => ({ ...x, i })).sort((a, b) => (a.tm || "99").localeCompare(b.tm || "99"));
+  const items = d.items || [], done = items.filter(x => x.done).length;
+  return `<div class="shiori" id="shiori">
+    <div class="ttl2">📝 しおり</div>
+    <div class="sub">🕘 当日の流れ</div>
+    ${plan.length ? plan.map(x => `<div class="prow"><span class="tm">${esc(x.tm || "")}</span><span class="tx">${esc(x.tx)}</span><button class="del" data-a="planDel" data-id="${d.id}" data-v="${x.i}" aria-label="消す">×</button></div>`).join("") : `<p class="muted" style="margin:4px 0;font-size:12px">例：10:00 名古屋駅に集合 → 11:00 水族館</p>`}
+    <form class="sform" data-k="plan" data-id="${d.id}"><input class="in" type="time" name="tm"><input class="in t" name="tx" maxlength="60" placeholder="やること・行き先" required><button class="btn sub sm">追加</button></form>
+    <div class="sub">🎒 持ち物${items.length ? `（${done}/${items.length}）` : ""}</div>
+    ${items.map((x, i) => `<div class="prow ${x.done ? "done" : ""}"><input type="checkbox" data-a="itemToggle" data-id="${d.id}" data-v="${i}" ${x.done ? "checked" : ""}><span class="tx">${esc(x.tx)}</span><button class="del" data-a="itemDel" data-id="${d.id}" data-v="${i}" aria-label="消す">×</button></div>`).join("")}
+    <form class="sform" data-k="items" data-id="${d.id}"><input class="in t" name="tx" maxlength="40" placeholder="例：モバイルバッテリー" required><button class="btn sub sm">追加</button></form>
+  </div>`;
+}
+async function saveShiori(id, patch){
+  const d = S.dates.find(x => x.id === id); if (!d) return;
+  Object.assign(d, patch);
+  const el = document.getElementById("shiori"); if (el) el.outerHTML = shioriHtml(d);
+  try { await updateDoc(doc(db, "rooms", S.roomId, "dates", id), patch); }
+  catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+}
+
+/* =============== お願いチケット =============== */
+const TKTS = [["💆", "肩もみ券"], ["🍜", "好きなごはんおごる券"], ["👑", "1日わがまま券"], ["🧹", "家事代わる券"], ["🎬", "映画えらぶ券"], ["🤗", "ぎゅー券"], ["🚗", "送り迎え券"], ["🍰", "スイーツ買ってくる券"], ["✏️", "自分でつくる"]];
+const tkGot = () => S.tickets.filter(t => t.to === me());
+const tkGave = () => S.tickets.filter(t => t.from === me());
+const tkSeenKey = () => "uri_tk_seen_" + S.roomId;
+function tkSeenAt(){ try { const v = localStorage.getItem(tkSeenKey()); if (v == null) { localStorage.setItem(tkSeenKey(), String(Date.now())); return Date.now(); } return Number(v) || 0; } catch { return Date.now(); } }
+function ticketAlertsHtml(){
+  if (S.needRules || !S.tickets.length) return "";
+  const used = tkGave().filter(t => t.status === "used"), fresh = tkGot().filter(t => t.status === "new" && (t.at || 0) > tkSeenAt());
+  return [
+    ...used.map(t => `<div class="card swipebar" data-a="tickets" data-v="gave"><span class="ic">${esc(t.e || "🎟")}</span><div class="main"><b>「${esc(t.t)}」が使われたよ！</b><span class="muted">${esc(pName())}のお願いをかなえてあげてね</span></div><span class="go">›</span></div>`),
+    fresh.length ? `<div class="card swipebar" data-a="tickets" data-v="got"><span class="ic">🎟</span><div class="main"><b>${esc(pName())}からチケットが届いたよ！</b><span class="muted">${esc(fresh.map(t => t.t).slice(0, 2).join("、"))}${fresh.length > 2 ? ` ほか${fresh.length - 2}枚` : ""}</span></div><span class="go">›</span></div>` : ""
+  ].join("");
+}
+function ticketCta(){
+  if (S.needRules) return rulesNote("お願いチケット");
+  const n = tkGot().filter(t => t.status === "new").length;
+  return `<div class="card swipebar" data-a="tickets" data-v="got"><span class="ic">🎟</span><div class="main"><b>お願いチケット</b><span class="muted">${n ? `使えるチケット ${n}枚` : "相手にチケットを贈ってみよう"}</span></div><span class="go">›</span></div>`;
+}
+function ticketCard(t){
+  const got = t.to === me();
+  const who = got ? `${esc(nameOf(t.from))}から` : `${esc(nameOf(t.to))}へ`;
+  const st = t.status === "done" ? "かなえてもらった♡" : t.status === "used" ? (got ? "使ったよ・かなえてもらうのを待ってる" : "使われたよ！") : (got ? "" : "まだ使われていません");
+  let act = "";
+  if (got && t.status === "new") act = `<button class="btn sm" data-a="tkUse" data-id="${t.id}">使う</button>`;
+  if (!got && t.status === "used") act = `<button class="btn mint sm" data-a="tkDone" data-id="${t.id}">かなえた</button>`;
+  if (!got && t.status === "new") act = `<button class="linkbtn" style="padding:0;font-size:12px" data-a="tkDel" data-id="${t.id}">取り消す</button>`;
+  return `<div class="ticket ${t.status === "done" ? "done" : ""}"><span class="e">${esc(t.e || "🎟")}</span><div class="main"><div class="t">${esc(t.t)}</div><div class="s">${who}${st ? " ・ " + st : ""}</div>${t.msg ? `<div class="m">${esc(t.msg)}</div>` : ""}</div><div class="act">${act}</div></div>`;
+}
+function ticketListHtml(){
+  const arr = (S.tkTab === "gave" ? tkGave() : tkGot()).slice().sort((a, b) => (a.status === "done") - (b.status === "done") || (b.at || 0) - (a.at || 0));
+  if (!arr.length) return `<div class="empty" style="padding:24px 10px"><div class="big">🎟</div><p>${S.tkTab === "gave" ? "まだチケットを贈っていません" : "まだチケットをもらっていません"}</p></div>`;
+  return arr.map(ticketCard).join("");
+}
+function openTickets(tab){
+  if (tab) S.tkTab = tab;
+  if (S.tkTab === "got") try { localStorage.setItem(tkSeenKey(), String(Date.now())); } catch {}
+  openSheet(`<h3>🎟 お願いチケット<button class="x" data-a="close">×</button></h3>
+  <div class="seg"><button class="${S.tkTab === "got" ? "on" : ""}" data-a="tkTab" data-v="got">もらった</button><button class="${S.tkTab === "gave" ? "on" : ""}" data-a="tkTab" data-v="gave">贈った</button></div>
+  <div id="tklist">${ticketListHtml()}</div>
+  <button class="btn block" data-a="tkNew" ${isPaired() ? "" : "disabled"}>＋ チケットを贈る</button>
+  ${isPaired() ? "" : `<p class="muted" style="text-align:center">恋人が参加すると贈れます</p>`}`);
+}
+function openTicketNew(){
+  let k = 0;
+  openSheet(`<h3>🎟 チケットを贈る<button class="x" data-a="close">×</button></h3>
+  <form id="tf">
+    <div class="tpick">${TKTS.map(([e, n], i) => `<button type="button" data-i="${i}" class="${i === 0 ? "on" : ""}"><b>${e}</b>${n}</button>`).join("")}</div>
+    <label class="f" id="tfc" style="display:none"><span>チケットの名前 *</span><input class="in" name="t" maxlength="30" placeholder="例：朝ごはん作る券"></label>
+    <label class="f"><span>ひとことメッセージ（なくてもOK）</span><textarea class="in" name="m" maxlength="120" placeholder="例：いつもありがとう！"></textarea></label>
+    <div class="err" id="terr"></div>
+    <button class="btn block">${esc(pName())}に贈る</button>
+  </form>`);
+  const f = document.getElementById("tf"), c = document.getElementById("tfc");
+  f.querySelectorAll(".tpick button").forEach(b => b.onclick = () => { k = +b.dataset.i; f.querySelectorAll(".tpick button").forEach(x => x.classList.toggle("on", x === b)); c.style.display = k === TKTS.length - 1 ? "" : "none"; if (k === TKTS.length - 1) f.t.focus(); });
+  f.onsubmit = async ev => {
+    ev.preventDefault();
+    const custom = k === TKTS.length - 1, t = custom ? String(f.t.value || "").trim().slice(0, 30) : TKTS[k][1];
+    if (!t) return document.getElementById("terr").textContent = "チケットの名前を入れてね";
+    const btn = f.querySelector("button.btn.block"); btn.disabled = true;
+    try {
+      await addDoc(collection(db, "rooms", S.roomId, "tickets"), { from: me(), to: partnerUid(), t, e: custom ? "🎟" : TKTS[k][0], msg: String(f.m.value || "").trim().slice(0, 120), status: "new", at: Date.now() });
+      toast("チケットを贈りました🎟"); openTickets("gave");
+    } catch (e) { document.getElementById("terr").textContent = e.code === "permission-denied" ? "贈れませんでした。Firebaseのルール更新が必要です" : "贈れませんでした（" + (e.code || e.message) + "）"; btn.disabled = false; }
+  };
+}
+
 /* =============== 記念日（誕生日など） =============== */
 const AKINDS = [["bd", "🎂", "誕生日"], ["an", "💝", "記念日"], ["ot", "⭐", "その他"]];
 const akindOf = k => AKINDS.find(x => x[0] === k) || AKINDS[2];
@@ -1284,7 +1485,7 @@ function countdownHtml(){
     <div>${left === 0
       ? `<div class="lbl">今日は</div><div class="num" style="font-size:24px">デートの日！</div>`
       : `<div class="lbl">次のデートまで</div><div class="num"><small>あと</small>${left}<small>日</small></div>`}</div>
-    <div class="next"><b>${esc(dateTitle(n))}</b>${esc(fmtShort(n.date))}${n.time ? " " + esc(n.time) : ""}</div>
+    <div class="next"><b>${esc(dateTitle(n))}</b>${esc(fmtShort(n.date))}${n.time ? " " + esc(n.time) : ""}${hasShiori(n) ? " ・ 📝しおり" : ""}</div>
   </div>`;
 }
 
@@ -1292,7 +1493,7 @@ function dateItem(d){
   const left = dayDiff(today(), d.date), p = d.placeId && S.places.find(x => x.id === d.placeId);
   return `<div class="ditem ${left < 0 ? "past" : ""}" data-a="dateOpen" data-id="${d.id}">
     <div class="dd"><small>${+d.date.slice(5, 7)}月</small><b>${+d.date.slice(8, 10)}</b><small>${WD[wdOf(d.date)]}</small></div>
-    <div class="main"><div class="t">${p ? catOf(p.cat).e + " " : ""}${esc(dateTitle(d))}</div><div class="s">${esc([d.time, d.memo].filter(Boolean).join(" ・ ")) || "&nbsp;"}</div></div>
+    <div class="main"><div class="t">${p ? catOf(p.cat).e + " " : ""}${esc(dateTitle(d))}${hasShiori(d) ? `<span class="stag">📝</span>` : ""}</div><div class="s">${esc([d.time, d.memo].filter(Boolean).join(" ・ ")) || "&nbsp;"}</div></div>
     <span class="tag ${left < 0 ? "gray" : left === 0 ? "" : "lav"}">${left < 0 ? "おわり" : left === 0 ? "今日♡" : "あと" + left + "日"}</span>
   </div>`;
 }
@@ -1335,6 +1536,8 @@ function openDateEdit(id, pre = {}){
   openSheet(`
   <h3>${d ? "デートの予定" : "デートの予定を入れる"} 📅<button class="x" data-a="close">×</button></h3>
   ${d && left <= 0 && p && !p.visited ? `<div class="card" style="background:var(--mint-l);box-shadow:none"><p style="margin:0 0 8px;font-size:13px">${left === 0 ? "今日のデート、楽しんでね♡" : "このデート、どうだった？"}</p><button class="btn mint block sm" data-a="visit" data-id="${p.id}">行った！思い出に残す 📷</button></div>` : ""}
+  ${d ? shioriHtml(d) : `<p class="muted" style="margin:-6px 4px 12px;font-size:12px">予定を入れたあと、もう一度ひらくと📝しおり（当日の流れ・持ち物）を作れます。</p>`}
+  ${d ? `<div class="sec" style="margin-top:4px">予定の内容</div>` : ""}
   <form id="df">
     <label class="f"><span>日にち *</span><input class="in" type="date" name="date" required value="${esc(d?.date || pre.date || today())}" style="min-width:0;width:100%"></label>
     <label class="f"><span>行き先</span><select class="in" name="pid"><option value="">✏️ 自分で入力する</option>${opts.map(o => `<option value="${o.id}" ${o.id === pid ? "selected" : ""}>${catOf(o.cat).e} ${esc(o.title)}${isBoth(o) ? " ♡" : ""}</option>`).join("")}</select></label>
@@ -1748,7 +1951,7 @@ function confirmSheet(title, text, okLabel, act, danger = true){
 }
 
 /* =============== ボタンが押されたとき =============== */
-let pendingDel = null, pendingDate = null, pendingQuiz = null, pendingAnniv = null;
+let pendingDel = null, pendingDate = null, pendingQuiz = null, pendingAnniv = null, pendingTk = null;
 document.addEventListener("click", async ev => {
   const el = ev.target.closest("[data-a]"); if (!el) return;
   const a = el.dataset.a, id = el.dataset.id;
@@ -1787,6 +1990,29 @@ document.addEventListener("click", async ev => {
     case "noteCancel": S.noteEdit = null; refreshNotes(id); break;
     case "noteDel": try { await saveNote(id, ""); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
     case "annivs": openAnnivs(); break;
+    case "qaEdit": S.qaEdit = true; render(); document.querySelector(".qaform textarea")?.focus(); break;
+    case "qaCancel": S.qaEdit = false; render(); break;
+    case "qaHist": openQaHist(); break;
+    case "planDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { plan: (d.plan || []).filter((_, i) => i !== +el.dataset.v) }); break; }
+    case "itemToggle": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).map((x, i) => i === +el.dataset.v ? { ...x, done: !x.done } : x) }); break; }
+    case "itemDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).filter((_, i) => i !== +el.dataset.v) }); break; }
+    case "tickets": openTickets(el.dataset.v); break;
+    case "tkTab": openTickets(el.dataset.v); break;
+    case "tkNew": openTicketNew(); break;
+    case "tkUse": pendingTk = id; confirmSheet("このチケットを使う？", "使うと、" + esc(pName()) + "のホームにお知らせが出ます。", "使う！", "tkUseOk", false); break;
+    case "tkUseOk":
+      try { await updateDoc(doc(db, "rooms", S.roomId, "tickets", pendingTk), { status: "used", usedAt: Date.now() }); toast("チケットを使いました🎟"); openTickets("got"); }
+      catch (e) { toast("うまくいきませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "tkDone":
+      try { await updateDoc(doc(db, "rooms", S.roomId, "tickets", id), { status: "done", doneAt: Date.now() }); toast("かなえました♡"); }
+      catch (e) { toast("うまくいきませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "tkDel": pendingTk = id; confirmSheet("チケットを取り消す？", "まだ使われていないチケットを取り消します。", "取り消す", "tkDelOk"); break;
+    case "tkDelOk":
+      try { await deleteDoc(doc(db, "rooms", S.roomId, "tickets", pendingTk)); toast("取り消しました"); openTickets("gave"); }
+      catch (e) { toast("うまくいきませんでした（" + (e.code || e.message) + "）"); }
+      break;
     case "annivAdd": openAnnivEdit(null); break;
     case "annivEdit": openAnnivEdit(id); break;
     case "annivDel": pendingAnniv = id; confirmSheet("記念日を消しますか？", "ふたりの画面から消えます。", "消す", "annivDelOk"); break;
@@ -1897,6 +2123,21 @@ document.addEventListener("click", async ev => {
   }
 });
 document.addEventListener("submit", async ev => {
+  const qf = ev.target.closest(".qaform");
+  if (qf) {
+    ev.preventDefault(); const b = qf.querySelector("button:not([type=button])"); b.disabled = true;
+    try { await saveQa(qf.t.value); } catch (e) { toast(e.code === "permission-denied" ? "答えられませんでした。Firebaseのルール更新が必要です" : "答えられませんでした（" + (e.code || e.message) + "）"); b.disabled = false; }
+    return;
+  }
+  const sf = ev.target.closest(".sform");
+  if (sf) {
+    ev.preventDefault(); const d = S.dates.find(x => x.id === sf.dataset.id); if (!d) return;
+    const tx = String(sf.tx.value || "").trim(); if (!tx) return;
+    if (sf.dataset.k === "plan") await saveShiori(d.id, { plan: [...(d.plan || []), { tm: String(sf.tm.value || ""), tx: tx.slice(0, 60) }] });
+    else await saveShiori(d.id, { items: [...(d.items || []), { tx: tx.slice(0, 40), done: false }] });
+    document.querySelector(`#shiori .sform[data-k="${sf.dataset.k}"] input[name=tx]`)?.focus();
+    return;
+  }
   const f = ev.target.closest(".nform"); if (!f) return;
   ev.preventDefault();
   const b = f.querySelector("button:not([type=button])"); b.disabled = true;
