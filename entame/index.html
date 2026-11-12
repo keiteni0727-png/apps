@@ -1081,12 +1081,6 @@ function svDesc(f) {
   const so = f.sort && f.sort !== "new" ? (SORTS.find(x => x[0] === f.sort) || [, ""])[1] : "";
   return p.join("・") + (so ? `（${so}）` : "");
 }
-function svBarHtml() {
-  const l = svList();
-  if (!l.length) return "";
-  const cur = svCur();
-  return `<div class="svbar" role="group" aria-label="保存したフィルタ">${l.map(f => `<button type="button" data-svapply="${esc(f.id)}" aria-pressed="${f === cur}"><span class="st" aria-hidden="true">★</span>${esc(f.name)}</button>`).join("")}</div>`;
-}
 function svPanelHtml() {
   const l = svList();
   const cur = svCur();
@@ -1219,12 +1213,6 @@ function splitTA(s) {
   const m = /^[「『](.+?)[」』]\s*(.*)$/.exec(s);
   return m ? { st: m[1].trim(), ar: m[2].trim() } : { st: s, ar: "", raw: true };
 }
-/* 表示用：「曲名」アーティストの形でないもの（例：桑田佳祐「〇〇」）はそのまま出す */
-const songShow = (s, cls1, cls2) => {
-  const p = splitTA(s);
-  if (p.raw) return `<span class="${cls1}">${esc(p.st)}</span>`;
-  return `${p.st ? `<span class="${cls1}">「${esc(p.st)}」</span>` : ""}${p.ar ? `<span class="${cls2}">${esc(p.ar)}</span>` : ""}`;
-};
 /* 詳細のカード用：曲名とアーティストを2段で（かっこ無し） */
 const songCard = s => {
   const p = splitTA(s);
@@ -1896,15 +1884,6 @@ const ofKind = i =>
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
 const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
 const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
-function vodBarHtml() {
-  const used = new Set(items.filter(ofKind).flatMap(vodsOf));
-  const order = [...new Set([...VOD_TOP, ...M("vods"), ...used])];
-  const l = order.filter(v => used.has(v) || v === state.vod);
-  if (!l.length) return "";
-  const b = (v, lab) =>
-    `<button type="button" data-vod="${esc(v)}" aria-pressed="${state.vod === v}">${esc(lab)}</button>`;
-  return `<div class="vodbar" role="group" aria-label="配信サイトで絞り込み">${b("", "すべて")}${l.map(v => b(v, v)).join("")}</div>`;
-}
 /* ジャンル：a=アニメ d=ドラマ f=映画（ドラマと関係ない実写映画） r=配信（恋愛リアリティ・バラエティなど、アニメでもドラマでもない配信番組） */
 const KIND_LAB = { a: "アニメ", d: "ドラマ", f: "映画", r: "配信" };
 const kindTag = i => `<span class="kind ${i.k}">${KIND_LAB[i.k] || "ドラマ"}</span>`;
@@ -2241,12 +2220,6 @@ function groupedHtml(list) {
     out +
     (rest ? `<button type="button" class="more" id="more">さらに表示（残り${rest}件）</button>` : "")
   );
-}
-/* 検索欄の下：フィルタ／ソートの小さなボタン。押すと下に折りたたみが開く */
-function fsBar(open, nF, sortLab, fBody, sBody) {
-  return `<div class="fsbar"><button type="button" class="fsbtn${open === "f" ? " on" : ""}" data-ftog="f" aria-expanded="${open === "f"}"><span class="ico" aria-hidden="true">⚲</span>フィルタ${nF ? `<span class="n">${nF}</span>` : ""}<span class="chev" aria-hidden="true">${open === "f" ? "▴" : "▾"}</span></button>
-    <button type="button" class="fsbtn${open === "s" ? " on" : ""}" data-ftog="s" aria-expanded="${open === "s"}"><span class="ico" aria-hidden="true">⇅</span>ソート<small>${esc(sortLab)}</small><span class="chev" aria-hidden="true">${open === "s" ? "▴" : "▾"}</span></button></div>
-    ${open === "f" ? `<div class="fsdrop">${fBody}</div>` : open === "s" ? `<div class="fsdrop sort">${sBody}</div>` : ""}`;
 }
 /* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
 const FKEYS = ["sf", "vod", "time", "etc", "sort"];
@@ -2773,49 +2746,6 @@ function renderDetail(it) {
   const md = mediaOf(it).media,
     mv = md === "movie",
     ns = noSched(md);
-  const rows = [
-    [
-      "シリーズ",
-      it.series
-        ? `<button type="button" class="lab s" data-series="${esc(it.series)}" style="cursor:pointer">${esc(it.series)} の作品を見る</button>`
-        : "",
-      "fSeries",
-      1,
-    ],
-    ns ? null : ["放送", [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim(), "f-time", 1],
-    [
-      { tv: "放送局・配信", movie: "上映・配信", ova: "発売・配信", stream: "配信" }[md],
-      stv ? `<span class="labs">${stv}</span>` : "",
-      "fMedia",
-      1,
-    ],
-    [mv ? "公開日" : md === "ova" ? "発売期間" : "放送期間", esc(periodOf(it)), "f-from", 1],
-    ns ? null : ["放送クール", esc(cs.map(courLabel).join("・")), "coursBox", 1],
-    ...songRows.map(([k, v]) => {
-      const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
-      const no = (it.noSongs || []).includes(k);
-      if (!v && no) v = `<span class="nosong">なし</span>`;
-      else if (!v && main)
-        v = `<span class="unset">未設定</span><button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
-      return [k, v, "sgList", main];
-    }),
-    [
-      "公式サイト",
-      it.url
-        ? `<a class="ext" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url.replace(/^https?:\/\//, "").replace(/\/$/, ""))} ↗</a>`
-        : "",
-      "f-url",
-      1,
-    ],
-    [
-      "配信サイト",
-      it.vurl
-        ? `<a class="ext" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
-        : "",
-      "f-vurl",
-      1,
-    ],
-  ].filter(r => r && (r[1] || r[3]));
   const eps = episodes(it);
   const w = eps.filter(e => e.w).length;
   const nx = eps[nextIdx(eps)];
