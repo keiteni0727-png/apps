@@ -3085,14 +3085,7 @@ function formHtml() {
         ["r", "配信", "kr"],
       ],
       f.k,
-    )}</div><p class="khint">${
-      {
-        a: "表示される場所：アニメ（放送形態が映画なら映画、配信なら配信にも）",
-        d: "表示される場所：ドラマ（放送形態が映画なら映画、配信なら配信にも）",
-        f: "表示される場所：映画　ドラマと関係ない実写映画",
-        r: "表示される場所：配信　恋愛リアリティ・バラエティなど",
-      }[f.k] || ""
-    }</p></div>`,
+    )}</div></div>`,
     status: `<div class="field"><span>ステータス</span><div class="segc" role="group" aria-label="ステータス">${seg(
       "data-fs",
       STATUSES.map(s => [s, stLabel(s)]),
