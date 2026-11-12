@@ -94,9 +94,10 @@ service cloud.firestore {
       allow delete: if isOwner();
     }
 
-    // ガチャ・ミッションの記録（彼女だけ）
+    // ガチャ・ミッションの記録（書くのは彼女だけ、オーナーは見るだけ）
     match /game/main {
-      allow read, write: if isMember();
+      allow read: if isMember() || isOwner();
+      allow write: if isMember();
     }
 
     match /profile/main {

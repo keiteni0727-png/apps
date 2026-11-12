@@ -323,6 +323,7 @@ function startListeners(){
     S.gchars = s.docs.map(d => ({ id:'c_' + d.id, docId:d.id, ...d.data() })); render();
   }, ()=>{}));
   if(S.role === 'member') startColListeners();
+  else subs.push(onSnapshot(doc(db,'game','main'), s => { S.game = s.data()||{}; render(); }, () => { S.game = {}; }));
 }
 
 function startColListeners(){
@@ -343,7 +344,8 @@ function startColListeners(){
 /* ===== ミッション・ガチャのしくみ ===== */
 const allChars = () => [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
 const charPic = c => `<img src="${c.img}" alt="">`;
-const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, ...S.game });
+const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], ...S.game });
+const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.rarity, at:Date.now(), kind }, ...(g.history || [])].slice(0, 50); };
 async function saveGame(g){
   // 2週間より前の受け取り記録は消して、データを小さく保つ
   const cut = daysAgo(14);
@@ -385,6 +387,7 @@ async function pullGacha(){
   g.tickets--; g.pulls = (g.pulls || 0) + 1;
   g.coll = { ...g.coll, [c.id]: (g.coll[c.id] || 0) + 1 };
   if(had) g.shards = (g.shards || 0) + 1;
+  addHist(g, c, had ? 'dup' : 'new');
   $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet" style="text-align:center">${capsuleSVG()}<p class="muted">ガチャガチャ…</p></div></div>`;
   await saveGame(g);
   setTimeout(() => showResult(c, had), 1300);
@@ -677,7 +680,8 @@ function viewGacha(){
         <circle cx="60" cy="104" r="12" fill="#fff"/><rect x="56" y="96" width="8" height="16" rx="4" fill="#e46f98"/><rect x="44" y="122" width="32" height="7" rx="3.5" fill="#b8507a"/></svg>
       <div class="muted">もっているチケット</div><div class="tixbig">🎟️ ${g.tickets}<small style="font-size:14px"> 枚</small></div>
       <button class="btn block" data-a="pull" style="margin-top:10px${g.tickets < 1 ? ';opacity:.5' : ''}" ${g.tickets < 1 ? 'disabled' : ''}>ガチャをまわす（1枚）</button>
-      <p class="muted" style="margin:8px 0 0">出やすさ：N 70% ・ R 25% ・ SR 5%</p></div>
+      <p class="muted" style="margin:8px 0 0">出やすさ：N 70% ・ R 25% ・ SR 5%</p>
+      <p class="muted" style="margin:4px 0 0;font-size:12px">ガチャの結果とずかんは${FROM}にも見えるよ ♡</p></div>
     <div class="card"><h2>💎 かけら<span class="sub">${g.shards} / ${SHARD_NEED}</span></h2>
       <div class="bar"><i style="width:${Math.min(100, g.shards / SHARD_NEED * 100)}%"></i></div>
       <p class="muted" style="margin:6px 0 0">同じキャラが出るとかけらになるよ。${SHARD_NEED}個で好きなキャラと交換できます。</p>
@@ -704,6 +708,7 @@ function viewOwnerHome(){
       <textarea class="in" name="text" rows="4" maxlength="300" required placeholder="例：ジムおつかれさま！無理しすぎないでね"></textarea>
       <label class="row" style="margin-top:8px;font-size:14px"><input type="checkbox" name="ticket"> 🎟️ ガチャチケットを1枚そえる</label>
       <button class="btn block" style="margin-top:10px">送る ♡</button></form></div>`;
+  html += ownerGachaCard();
   html += ownerCharCard();
   html += `<div class="card"><h2>送ったメッセージ<span class="sub">最新のものが表示されます</span></h2>
     ${S.cheers.length ? `<ul class="list">${S.cheers.map((c,i) => `<li><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
@@ -711,6 +716,23 @@ function viewOwnerHome(){
       <button class="del" data-a="delcheer" data-id="${c.id}" aria-label="削除">×</button></li>`).join('')}</ul>` : '<p class="empty">まだ送っていません</p>'}
     <p class="muted">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
   return html;
+}
+function ownerGachaCard(){
+  const g = G(), chars = allChars();
+  const owned = chars.filter(c => g.coll[c.id] > 0).length;
+  const when = ms => { const d = new Date(ms); return `${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`; };
+  const KIND = { new:['NEW','var(--pink-d)'], dup:['ダブり','var(--muted)'], swap:['かけら交換','#a77a12'] };
+  return `<div class="card"><h2>🎰 彼女のガチャ<span class="sub"><span class="tix">🎟️ ${g.tickets}</span></span></h2>
+    <p class="muted" style="margin:0 0 10px">これまで ${g.pulls || 0}回 ・ かけら ${g.shards}/${SHARD_NEED}</p>
+    <div style="font-weight:700;color:var(--pink-d);margin-bottom:6px">📖 ずかん ${owned} / ${chars.length}</div>
+    ${chars.length ? `<div class="zukan">${chars.map(c => { const n = g.coll[c.id] || 0;
+      return `<div class="zk ${c.rarity} ${n ? '' : 'no'}">${n > 1 ? `<span class="cnt">×${n}</span>` : ''}<div class="pic">${charPic(c)}</div>
+        <div class="nm">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div>` : '<p class="empty">まだキャラを登録していません</p>'}
+    <div style="font-weight:700;color:var(--pink-d);margin:14px 0 2px">🕒 ガチャ履歴</div>
+    ${(g.history || []).length ? `<ul class="list">${g.history.map(h => { const c = chars.find(x => x.id === h.id), [kl, kc] = KIND[h.kind] || KIND.new;
+      return `<li>${c ? `<img class="thumb" src="${c.img}" alt="">` : '<div class="thumb"></div>'}<div class="main"><div class="t">${esc(c ? c.name : h.name)} <span class="rar ${h.rarity}">${h.rarity}</span></div>
+        <div class="s">${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>`
+      : '<p class="empty">まだ履歴がありません（これから引いた分が出ます）</p>'}</div>`;
 }
 function ownerCharCard(){
   const list = [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
@@ -1194,7 +1216,7 @@ document.addEventListener('click', async e => {
       case 'pick': {
         const g = G(), c = allChars().find(x => x.id === v);
         if(!c || g.shards < SHARD_NEED) break;
-        g.shards -= SHARD_NEED; g.coll = { ...g.coll, [c.id]: 1 };
+        g.shards -= SHARD_NEED; g.coll = { ...g.coll, [c.id]: 1 }; addHist(g, c, 'swap');
         await saveGame(g); showResult(c, false); break;
       }
       case 'delchar':
