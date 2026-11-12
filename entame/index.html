@@ -693,11 +693,48 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .row.lst .pwide .pill{font-size:12px;padding:4px 12px}
 .row.lst .pmob .pill{font-size:11px;padding:2px 9px;line-height:1.5}
 .row.lst .meta{align-items:center}
-/* 話数未登録のアラート */
-.noeps{color:var(--u-danger);font-weight:700;font-size:11px;white-space:nowrap}
-.noeps-box{margin:0 0 4px;padding:8px 12px;border-radius:var(--u-r);background:var(--u-danger2);color:var(--u-danger);font-weight:700;font-size:13px}
-@media (max-width:600px){
-  .ttl .noeps{font-size:10px}
+/* 未入力のアラート（PCだけ） */
+.miss{align-items:center;gap:5px;max-width:100%;vertical-align:1px;font-size:11px;font-weight:700;line-height:1.5;color:var(--u-warn);background:var(--u-warn2);border-radius:999px;padding:0 9px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help}
+.miss b{font-size:9.5px;font-weight:900;letter-spacing:.04em;background:var(--u-warn);color:var(--u-on);border-radius:999px;padding:0 6px;margin-right:5px}
+.miss.hot{color:var(--u-danger);background:var(--u-danger2)}
+.miss.hot b{background:var(--u-danger)}
+@media (min-width:900px){.miss.pconly{display:inline-flex}}
+/* 詳細：1行に畳んだアラート。開くと項目ごとのボタン（押すとその項目の編集へ） */
+.dmiss{display:none}
+@media (min-width:900px){
+  .dmiss{display:block;margin:10px 0 0;border-radius:var(--u-r);background:var(--u-warn2);color:var(--u-warn);font-size:12.5px}
+  .dmiss.hot{background:var(--u-danger2);color:var(--u-danger)}
+  .dmiss summary{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;list-style:none;font-weight:700}
+  .dmiss summary::-webkit-details-marker{display:none}
+  .dmiss summary .mn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;opacity:.9}
+  .dmiss summary .ar{font-size:11px;transition:transform .15s}
+  .dmiss[open] summary .ar{transform:rotate(180deg)}
+  .dmiss[open] summary .mn{display:none}
+  .dmiss .mbtns{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
+  .dmiss .mbtns button{border:1px solid currentColor;background:var(--u-surface);color:inherit;border-radius:999px;padding:3px 11px;font:inherit;font-size:12px;font-weight:700}
+  .dmiss .mbtns button:hover{background:currentColor}
+  .dmiss .mbtns button:hover span{color:var(--u-surface)}
+  .dmiss .mbtns .st{border-style:dashed;cursor:default;background:none}
+}
+/* 絞り込み：未入力ありスイッチ（番組表・ライブラリ）と項目ごとの絞り込み */
+.misw,.clock .misw{display:none}
+@media (min-width:900px){
+  .misw,.clock .misw{display:inline-flex}
+  .clock .misw{margin-left:0}
+  .clock .unsw.misw.on{border-color:var(--u-warn);color:var(--u-warn)}
+  .clock .unsw.misw.on .tr{background:var(--u-warn)}
+  .count .unsw{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:4px 6px 4px 12px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap}
+  .count .unsw small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);font-weight:600}
+  .count .unsw .tr{position:relative;width:32px;height:19px;border-radius:10px;background:var(--u-strong);transition:background .15s}
+  .count .unsw .tr i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s}
+  .count .unsw.on{border-color:var(--u-warn);color:var(--u-warn)}
+  .count .unsw.on .tr{background:var(--u-warn)}
+  .count .unsw.on .tr i{left:15px}
+  .count .unsw + .gbulk{margin-left:10px}
+  .mkeys{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+  .mkeys button{border:1px solid var(--u-line);background:var(--u-surface);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;color:var(--u-ink)}
+  .mkeys button small{font-family:var(--u-num);font-size:10.5px;opacity:.7;margin-left:3px}
+  .mkeys button[aria-pressed="true"]{border-color:var(--u-warn);background:var(--u-warn);color:var(--u-on)}
 }
 /* PC：検索窓の上の切り替え＋歯車（ヘッダーの番組表／ライブラリ・投稿者は出さない） */
 .vbar{display:flex;align-items:center;gap:10px;padding-top:14px}
@@ -739,7 +776,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .row.yrow .pwide{align-self:center}
   .ttl strong{font-size:16px}
   .slot .time{font-size:15px}
-  .ttl .lab,.ttl .noeps{font-size:11.5px}
+  .ttl .lab{font-size:11.5px}
   .ttl .next{font-size:12.5px}
 }
 .vseg button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
@@ -984,6 +1021,8 @@ if (!["a", "d", "m", "s", "yt"].includes(state.mode)) state.mode = "a";
 if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
 if (typeof state.vod !== "string") state.vod = "";
 state.unOnly = !!state.unOnly;
+state.missOnly = !!state.missOnly;
+if (typeof state.missKey !== "string") state.missKey = "";
 if (state.mode === "m") state.kind = state.mk;
 else if (state.mode === "s") state.kind = "all";
 else if (state.mode !== "yt") state.kind = state.mode;
@@ -995,6 +1034,8 @@ const saveUI = () =>
     mk: state.mk,
     vod: state.vod,
     unOnly: state.unOnly,
+    missOnly: state.missOnly,
+    missKey: state.missKey,
     view: state.view,
     sf: state.sf,
     era: state.era,
@@ -1682,8 +1723,43 @@ const finIdx = it => {
 };
 const FIN = '<span class="fin">最終回</span>';
 /* 話数リストが未登録（未視聴・視聴中の作品、映画以外） */
-const needEps = i => mediaOf(i).media !== "movie" && (i.s === "未視聴" || i.s === "視聴中") && !episodes(i).length;
-const NOEPS = '<span class="noeps">話数未登録</span>';
+/* ---------- 未入力チェック（PCだけで表示・絞り込み） ----------
+   編集画面の項目のうち、その作品に関係あるものだけを見る。シリーズは「なければ空欄」なので対象外。
+   j＝押したときに開く編集項目（data-jump）、dt＝詳細のタブ切り替え */
+const IS_PC = () => matchMedia("(min-width:900px)").matches;
+function missingOf(i) {
+  const m = mediaOf(i);
+  const md = m.media,
+    ns = noSched(md);
+  const irr = !ns && !!i.from && (i.dow ?? -1) < 0;
+  const sl = songsOf(i);
+  const no = i.noSongs || [];
+  const needSong = t => !no.includes(t) && !sl.some(x => x.type === t && (x.s || "").trim());
+  const out = [];
+  const add = (k, j, dt) => out.push({ k, j, dt });
+  if (!i.s) add("ステータス", "", "");
+  if (md !== "movie" && !episodes(i).length) add("話数", "", "ep");
+  if (!i.from) add({ movie: "公開日", ova: "発売日" }[md] || "開始日", "f-from");
+  if (!ns && !irr && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time");
+  if (md === "tv" && !m.stations.length) add("放送局", "fMedia");
+  if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia");
+  if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia");
+  if (!ns && !(i.cours || []).length) add("放送クール", "coursBox");
+  (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
+  if (!(i.url || "").trim()) add("公式サイト", "f-url");
+  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl");
+  return out;
+}
+const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "見られる配信", "放送クール", "OP", "ED", "主題歌", "公式サイト", "配信URL"];
+/* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
+function missBadge(i) {
+  const l = missingOf(i);
+  if (!l.length) return "";
+  const names = l.map(x => x.k);
+  const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
+  return `<span class="miss pconly${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b>${esc(head)}</span>`;
+}
+const missOk = i => !state.missOnly || !IS_PC() || (state.missKey ? missingOf(i).some(x => x.k === state.missKey) : missingOf(i).length > 0);
 const epNum = n => {
   const m = /\d+/.exec(n || "");
   return m ? +m[0] : null;
@@ -1887,7 +1963,9 @@ function clockHtml() {
   }
   const un = items.filter(i => ofKind(i) && i.s === "視聴中" && nextInfo(i).back.length).length;
   const sw = `<button type="button" class="unsw${state.unOnly ? " on" : ""}" data-unsw role="switch" aria-checked="${state.unOnly}">未視聴あり<small>${un}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
-  return `<div class="now"><time datetime="${d.toISOString()}">${hm}</time><span class="date">${date}</span></div>${sw}${soon}`;
+  const mn = items.filter(i => ofKind(i) && i.s === "視聴中" && (!state.unOnly || nextInfo(i).back.length) && missingOf(i).length).length;
+  const msw = `<button type="button" class="unsw misw${state.missOnly ? " on" : ""}" data-missw role="switch" aria-checked="${state.missOnly}">未入力あり<small>${mn}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
+  return `<div class="now"><time datetime="${d.toISOString()}">${hm}</time><span class="date">${date}</span></div>${sw}${msw}${soon}`;
 }
 setInterval(() => {
   const c = $("#clock");
@@ -1975,14 +2053,12 @@ function slotRow(i, week, dayKey) {
     const { back } = nextInfo(i);
     nx = back.length
       ? `<span class="next"><span class="backlog">未視聴 ${back.length}話</span></span>`
-      : needEps(i)
-        ? `<span class="next">${NOEPS}</span>`
-        : "";
+      : "";
     tick = `<button type="button" class="tick" data-tick="${i.id}" ${back.length ? "" : "disabled"} aria-label="${back[0] ? esc(i.t) + " " + esc(back[0].n) + "を視聴済にする" : "未視聴の話はありません"}"><span>✓</span>${back[0] ? esc(back[0].n) : "—"}</button>`;
   }
   return `<div class="row${!week && i.s === "視聴済み" ? " done" : ""}${week ? "" : " lst ls-" + esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
     <span class="time">${week ? `${esc(i.time || "")}${i.dow < 0 ? `<small>${{ movie: "映画", ova: "OVA" }[mediaOf(i).media] || "配信"}</small>` : ""}${stationTxt(i) ? `<span class="tst">${esc(stationTxt(i))}</span>` : ""}` : i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${state.kind === "all" ? kindTag(i) : ""}</span>
-    <span class="ttl"><strong>${week && dayKey && isFinOn(i, dayKey) ? FIN : ""}${esc(i.t)}</strong><span class="meta">${week ? pcCourPer(i) + labels(i, false, true) : `<span class="pmob">${stPill(i)}</span>${libLabels(i)}${needEps(i) ? NOEPS : ""}`}</span>${nx}</span>
+    <span class="ttl"><strong>${week && dayKey && isFinOn(i, dayKey) ? FIN : ""}${esc(i.t)}</strong><span class="meta">${week ? pcCourPer(i) + labels(i, false, true) + missBadge(i) : `<span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}`}</span>${nx}</span>
     ${pcInfo(i, week, dayKey)}${week ? "" : `<span class="pwide">${stPill(i)}</span>`}</button>${tick}</div>`;
 }
 /* 番組表：放送開始から1時間たった番組は、翌週の同じ曜日へ移す（深夜25時台などは前日の枠のまま） */
@@ -2014,7 +2090,7 @@ function isFinOn(i, day) {
 function renderWeek() {
   /* 番組表：配信の絞り込みは無し。「未視聴あり」スイッチがオンなら未視聴の話がある作品だけ */
   const pool = items.filter(
-    i => ofKind(i) && i.s === "視聴中" && (!state.unOnly || nextInfo(i).back.length),
+    i => ofKind(i) && i.s === "視聴中" && (!state.unOnly || nextInfo(i).back.length) && (!state.missOnly || !IS_PC() || missingOf(i).length),
   );
   let h = `<div class="clock" id="clock">${clockHtml()}</div>`;
   const now = new Date();
@@ -2049,13 +2125,14 @@ function renderWeek() {
   const free = pool.filter(i => i.dow < 0);
   if (free.length)
     h += `<section class="day"><div class="dayhd"><h2>配信・その他</h2><small>${free.length}本</small></div><div class="slots">${free.map(i => slotRow(i, true)).join("")}</div></section>`;
-  if (!pool.length && state.unOnly) h += `<p class="empty">未視聴の作品はありません。</p>`;
+  if (!pool.length && (state.unOnly || (state.missOnly && IS_PC())))
+    h += `<p class="empty">${state.unOnly ? "未視聴" : "未入力"}の作品はありません。</p>`;
   else if (!pool.length)
     h += `<p class="empty">視聴中の作品はありません。ライブラリで作品を開き「視聴中」にすると、ここに曜日ごとに並びます。</p>`;
   return h;
 }
 function filtered() {
-  let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i));
+  let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
   if (state.q) {
     const qq = state.q.toLowerCase();
     list = list.filter(i =>
@@ -2237,9 +2314,27 @@ function renderList() {
     etc: filterHtml("series") + filterHtml("type") + svPanelHtml(),
     sort: sortHtml,
   };
+  /* 未入力あり（PCだけ）：オンのときは項目ごとの件数ボタンで、さらに1項目に絞れる */
+  const mBase = (() => {
+    const keep = state.missOnly;
+    state.missOnly = false;
+    const l = filtered();
+    state.missOnly = keep;
+    return l;
+  })().map(missingOf);
+  const mN = mBase.filter(l => l.length).length;
+  const msw = `<button type="button" class="unsw misw${state.missOnly ? " on" : ""}" data-missw role="switch" aria-checked="${state.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
+  let mkeys = "";
+  if (state.missOnly) {
+    const cnt = {};
+    mBase.forEach(l => l.forEach(x => (cnt[x.k] = (cnt[x.k] || 0) + 1)));
+    const ks = MISS_KEYS.filter(k => cnt[k] || state.missKey === k);
+    if (ks.length)
+      mkeys = `<div class="mkeys misw" role="group" aria-label="未入力の項目で絞り込み"><button type="button" data-mkey="" aria-pressed="${!state.missKey}">すべて</button>${ks.map(k => `<button type="button" data-mkey="${esc(k)}" aria-pressed="${state.missKey === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`;
+  }
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
     <div class="fwrap">${fRowHtml(FKEYS)}${fPopHtml(panels)}</div>
-    <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}</p>
+    <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
     ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
 }
 let loaded = false;
@@ -2506,7 +2601,6 @@ function epListHtml(it, eps) {
   const A = it.k === "a";
   if (!eps.length)
     return (
-      (needEps(it) ? `<p class="noeps-box">話数リストが未登録です</p>` : "") +
       (A
         ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加するか、各話リストを貼り付けてください。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button><button type="button" id="spOpen">各話リストを貼り付け</button></div>`
         : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加できます。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`)
@@ -2719,11 +2813,25 @@ function renderDetail(it) {
   return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}</div><div class="hdrow"><button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}</h3>
     <div class="seg" role="group" aria-label="ステータス">${STATUSES.map(s => `<button type="button" data-set="${s}" aria-pressed="${it.s === s}" class="${it.s === s ? "s-" + s : ""}">${stLabel(s)}</button>`).join("")}</div>
+    ${missDetail(it)}
     <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
+}
+/* 詳細のアラート（PCだけ）：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */
+function missDetail(it) {
+  const l = missingOf(it);
+  if (!l.length) return "";
+  const hot = l.some(x => x.k === "話数");
+  const btn = x =>
+    x.dt
+      ? `<button type="button" data-dtab="${x.dt}"><span>${esc(x.k)}を登録</span></button>`
+      : x.j
+        ? `<button type="button" data-jump="${x.j}"><span>✎ ${esc(x.k)}</span></button>`
+        : `<button type="button" class="st" tabindex="-1"><span>${esc(x.k)}（上で選択）</span></button>`;
+  return `<details class="dmiss${hot ? " hot" : ""}"><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function refreshSheet() {
   const it = items.find(x => x.id === openId);
@@ -4255,6 +4363,21 @@ function onNavClick(e) {
     scrollTo(0, 0);
     return true;
   }
+  if (e.target.closest("[data-missw]")) {
+    state.missOnly = !state.missOnly;
+    state.missKey = "";
+    saveUI();
+    render();
+    return true;
+  }
+  const mkb = e.target.closest("[data-mkey]");
+  if (mkb) {
+    const k = mkb.dataset.mkey;
+    state.missKey = state.missKey === k ? "" : k;
+    saveUI();
+    render();
+    return true;
+  }
   if (e.target.closest("[data-unsw]")) {
     state.unOnly = !state.unOnly;
     saveUI();
@@ -4906,6 +5029,8 @@ uSwipe({
 matchMedia("(max-width:899px)").addEventListener("change", () => {
   setDrawer(false);
   renderSidebar();
+  /* 未入力の絞り込みはPCだけなので、幅が変わったら一覧を描き直す */
+  if (state.missOnly) render();
 });
 const CLICK_HANDLERS = [
   onDrawerClick,
