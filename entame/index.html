@@ -1438,6 +1438,30 @@ function M(key) {
     .sort((a, b) => c[b] - c[a] || a.localeCompare(b, "ja"));
   return [...base, ...rest];
 }
+/* 1回だけ：開始日が2024年より前で、放送時間・放送クールが空の作品に「なし」を付ける（済みの印は master に残す） */
+let migRan = false;
+function migNoF24() {
+  if (migRan || master.migNoF24) return;
+  migRan = true;
+  const ch = [];
+  items.forEach(it => {
+    if (!it.from || it.from >= "2024-01-01" || noSched(mediaOf(it).media)) return;
+    const nf = it.noF || [];
+    const add = [];
+    if (!(it.time || "").trim() && !nf.includes("time")) add.push("time");
+    if (!(it.cours || []).length && !nf.includes("cours")) add.push("cours");
+    if (!add.length || !over[it.id]) return;
+    over[it.id] = { ...over[it.id], noF: [...nf, ...add] };
+    ch.push(it.id);
+  });
+  master = { ...master, migNoF24: 1 };
+  saveMaster();
+  if (!ch.length) return;
+  rebuild();
+  render();
+  ch.forEach(id => saveDoc("titles", id, over[id]).catch(fail));
+  toast(`2024年より前の${ch.length}作品の放送時間・クールを「なし」にしました`);
+}
 async function saveMaster() {
   try {
     await saveDoc("master", "all", master);
@@ -1610,6 +1634,7 @@ async function initStore() {
     loaded = true;
     calcLastAt();
     rebuild();
+    migNoF24();
     ytRebuild();
     banner(
       "<b>この端末のブラウザに保存しています</b>サインインした状態でclaude.aiから開くと、アプリに保存した作品が表示され、どの端末でも同じ内容になります。",
@@ -1629,7 +1654,7 @@ async function initStore() {
       }
     })
     .catch(() => {});
-  const got = { titles: false, progress: false, yt: false };
+  const got = { titles: false, progress: false, yt: false, master: false };
   const done = () => {
     if (!got.titles || !got.progress) return;
     loaded = true;
@@ -1637,6 +1662,7 @@ async function initStore() {
     rebuild();
     render();
     if (openId && !epEdit) refreshSheet();
+    if (got.master) migNoF24();
   };
   const onErr = e =>
     banner(`<b>保存データを読み込めませんでした</b>${esc(e?.message || "")}　ページを開き直してください。`);
@@ -1657,8 +1683,10 @@ async function initStore() {
   db.collection("master").onSnapshot(s => {
     const d = s.docs.find(x => x.id === "all");
     master = d ? d.data() : {};
+    got.master = true;
     render();
     refreshSettings();
+    if (loaded) migNoF24();
   }, onErr);
   db.collection("yt").onSnapshot(s => {
     const m = {};
