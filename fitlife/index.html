@@ -103,6 +103,45 @@ svg.chart{width:100%;height:auto;display:block}
 .empty{text-align:center;color:var(--muted);font-size:13px;padding:18px 0}
 .lockbox{text-align:center}
 .lockbox svg{width:46px;height:46px;stroke:var(--pink-d)}
+/* ===== デイリーミッション・ガチャ ===== */
+.mis{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line)}
+.mis:first-of-type{border-top:0}
+.mis .ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;font-size:14px;color:#fff}
+.mis.done .ck{background:var(--ok);border-color:var(--ok)}
+.mis .main{flex:1}
+.mis .got{font-size:12px;color:var(--muted)}
+.tix{display:inline-flex;align-items:center;gap:4px;background:#fff3c9;color:#a77a12;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700}
+.gift{background:linear-gradient(135deg,#fff3c9,#fff9e8);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:10px}
+.gacha-top{text-align:center;background:linear-gradient(160deg,#ffd6e5,#fff4f8 55%,#fff)}
+.machine{width:150px;height:auto;margin:4px auto 6px;display:block}
+.tixbig{font-size:30px;font-weight:700;color:var(--pink-d)}
+.zukan{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.zk{background:var(--pink-xl);border-radius:16px;padding:8px 6px 6px;text-align:center;position:relative}
+.zk .pic{width:100%;aspect-ratio:1;display:grid;place-items:center}
+.zk .pic svg,.zk .pic img{width:88%;height:88%;object-fit:contain;border-radius:12px}
+.zk .nm{font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zk .cnt{position:absolute;top:4px;right:6px;font-size:11px;color:var(--pink-d);font-weight:700}
+.zk.no .pic svg,.zk.no .pic img{filter:brightness(0);opacity:.13}
+.zk.no .nm{color:var(--muted)}
+.rar{display:inline-block;font-size:10px;font-weight:700;border-radius:99px;padding:0 7px;margin-top:2px}
+.rar.N{background:#eee;color:#888}.rar.R{background:#dff0ff;color:#3d7fc0}.rar.SR{background:linear-gradient(90deg,#ffe58a,#ffb3cf);color:#8a4b00}
+.zk.SR{background:linear-gradient(160deg,#fff6d6,#ffe9f2)}
+.reveal{text-align:center;padding:10px 0 4px}
+.reveal .pic{width:190px;height:190px;margin:0 auto;display:grid;place-items:center;animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.reveal .pic svg,.reveal .pic img{width:100%;height:100%;object-fit:contain;border-radius:22px}
+.reveal .nm{font-size:22px;font-weight:700;margin-top:6px}
+.reveal .tag{display:inline-block;margin-top:6px;background:var(--pink-d);color:#fff;border-radius:99px;padding:3px 12px;font-weight:700;font-size:13px}
+.reveal .tag.dup{background:var(--pink-l);color:var(--pink-d)}
+.cap{width:120px;margin:24px auto;display:block;animation:shake .35s infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.sparkle{position:relative}
+.sparkle::before,.sparkle::after{content:"♡";position:absolute;color:var(--pink);font-size:22px;animation:float 1.6s ease-in-out infinite}
+.sparkle::before{left:18%;top:10%}.sparkle::after{right:18%;top:24%;animation-delay:.5s}
+@keyframes float{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-10px);opacity:1}}
+.pickgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pickgrid button{border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:6px;cursor:pointer}
+.pickgrid button svg,.pickgrid button img{width:100%;aspect-ratio:1;object-fit:contain}
 </style>
 </head>
 <body>
@@ -147,7 +186,69 @@ const IC = {
   gym: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/></svg>',
   body: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M4 18 9 12l4 3 7-8"/><path d="M15 7h5v5"/></svg>',
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  gacha: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.3"/></svg>',
 };
+
+/* ===== ガチャのキャラ（オリジナル） ===== */
+// 見た目のパーツを組み合わせて描くオリジナルキャラ
+function drawChara(c){
+  const { body, ear = 'none', acc = '', belly = '', blush = '#ffb3c8', id } = c;
+  const dark = '#5b3b47';
+  const ears = {
+    bunny: `<ellipse cx="36" cy="22" rx="8" ry="20" fill="${body}"/><ellipse cx="64" cy="22" rx="8" ry="20" fill="${body}"/><ellipse cx="36" cy="24" rx="4" ry="13" fill="${blush}" opacity=".7"/><ellipse cx="64" cy="24" rx="4" ry="13" fill="${blush}" opacity=".7"/>`,
+    cat: `<path d="M22 44 26 18 44 34Z" fill="${body}"/><path d="M78 44 74 18 56 34Z" fill="${body}"/><path d="M27 37 28.5 25 37 33Z" fill="${blush}" opacity=".7"/><path d="M73 37 71.5 25 63 33Z" fill="${blush}" opacity=".7"/>`,
+    bear: `<circle cx="27" cy="33" r="11" fill="${body}"/><circle cx="73" cy="33" r="11" fill="${body}"/><circle cx="27" cy="33" r="5.5" fill="${blush}" opacity=".6"/><circle cx="73" cy="33" r="5.5" fill="${blush}" opacity=".6"/>`,
+    pig: `<path d="M26 38 24 22 40 30Z" fill="${body}"/><path d="M74 38 76 22 60 30Z" fill="${body}"/>`,
+    chick: `<path d="M50 30c-3-8 2-12 6-10-4 1-3 5-1 8M50 30c0-7-6-10-9-7 3 0 4 3 3 6" fill="none" stroke="${body}" stroke-width="3" stroke-linecap="round"/>`,
+    heart: `<path d="M50 26c-4-8-16-8-16 1 0 6 8 10 16 15 8-5 16-9 16-15 0-9-12-9-16-1z" fill="#ff8fb3"/>`,
+    none: '',
+  }[ear];
+  const accs = {
+    ribbon: `<path d="M66 28 78 20 78 36Z M66 28 54 20 54 36Z" fill="#ff7aa8"/><circle cx="66" cy="28" r="3.5" fill="#ff5c93"/>`,
+    flower: `<g transform="translate(70 30)">${[0,72,144,216,288].map(r => `<ellipse cx="0" cy="-6" rx="4" ry="6" fill="#ffc2d6" transform="rotate(${r})"/>`).join('')}<circle r="3.5" fill="#ffd966"/></g>`,
+    star: `<path d="M72 18l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2-6.5-3.4-6.5 3.4 1.3-7.2-5.3-5.1 7.3-1z" fill="#ffd34d" stroke="#f0b400" stroke-width="1"/>`,
+    crown: `<path d="M34 30 38 14 46 24 50 10 54 24 62 14 66 30Z" fill="#ffd34d" stroke="#e9a800" stroke-width="1.2" stroke-linejoin="round"/><circle cx="50" cy="12" r="2.4" fill="#ff7aa8"/>`,
+    wings: `<g fill="#fff" stroke="#ffb3cf" stroke-width="1.8" stroke-linejoin="round"><path d="M24 52C10 50 2 38 6 30c6-2 14 4 20 14-8-2-12 0-14 4 4 0 8 2 12 4z"/><path d="M76 52c14-2 22-14 18-22-6-2-14 4-20 14 8-2 12 0 14 4-4 0-8 2-12 4z"/></g>`,
+    leaf: `<path d="M50 28c2-10 10-14 16-12-2 7-8 12-16 12z" fill="#8fd19e"/><path d="M50 28c1-4 4-7 8-9" stroke="#5fae73" stroke-width="1.4" fill="none"/>`,
+  };
+  const back = acc === 'wings' ? accs.wings : '';
+  const front = acc && acc !== 'wings' ? accs[acc] : '';
+  const face = ear === 'chick'
+    ? `<path d="M45 62 50 67 55 62Z" fill="#ffae42"/>`
+    : ear === 'pig' ? `<ellipse cx="50" cy="65" rx="8" ry="5.5" fill="${blush}"/><circle cx="47" cy="65" r="1.4" fill="${dark}" opacity=".6"/><circle cx="53" cy="65" r="1.4" fill="${dark}" opacity=".6"/>`
+    : `<path d="M46 64q2 3 4 0q2 3 4 0" fill="none" stroke="${dark}" stroke-width="1.8" stroke-linecap="round"/>`;
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    ${back}${ears}
+    <ellipse cx="50" cy="62" rx="33" ry="29" fill="${body}" stroke="rgba(91,59,71,.08)" stroke-width="1.5"/>
+    ${belly ? `<ellipse cx="50" cy="70" rx="20" ry="17" fill="${belly}"/>` : ''}
+    <ellipse cx="38" cy="57" rx="3.6" ry="4.2" fill="${dark}"/><ellipse cx="62" cy="57" rx="3.6" ry="4.2" fill="${dark}"/>
+    <circle cx="39.3" cy="55.5" r="1.3" fill="#fff"/><circle cx="63.3" cy="55.5" r="1.3" fill="#fff"/>
+    <ellipse cx="30" cy="66" rx="5" ry="3.2" fill="${blush}" opacity=".85"/><ellipse cx="70" cy="66" rx="5" ry="3.2" fill="${blush}" opacity=".85"/>
+    ${face}${front}
+  </svg>`;
+}
+const BUILTIN = [
+  { id:'b_mochiusa', name:'もちうさ', rarity:'N', body:'#ffffff', ear:'bunny' },
+  { id:'b_mikenyan', name:'みけにゃん', rarity:'N', body:'#ffe2c4', ear:'cat' },
+  { id:'b_korokuma', name:'ころくま', rarity:'N', body:'#d9b28c', ear:'bear' },
+  { id:'b_piyomaru', name:'ぴよまる', rarity:'N', body:'#ffe680', ear:'chick' },
+  { id:'b_kobutan', name:'こぶたん', rarity:'N', body:'#ffd1dc', ear:'pig', blush:'#ff9fb8' },
+  { id:'b_penchan', name:'ぺんちゃん', rarity:'N', body:'#8fa8c8', ear:'none', belly:'#ffffff' },
+  { id:'b_sakurausa', name:'さくらうさ', rarity:'R', body:'#ffd6e5', ear:'bunny', acc:'flower', blush:'#ff8fb3' },
+  { id:'b_hoshineko', name:'ほしねこ', rarity:'R', body:'#c9b8ff', ear:'cat', acc:'star' },
+  { id:'b_hachimitsu', name:'はちみつくま', rarity:'R', body:'#f6c26b', ear:'bear', acc:'ribbon' },
+  { id:'b_matcha', name:'まっちゃもち', rarity:'R', body:'#c6e8b8', ear:'none', acc:'leaf' },
+  { id:'b_ousama', name:'おうかんうさ', rarity:'SR', body:'#ffffff', ear:'bunny', acc:'crown', blush:'#ff8fb3' },
+  { id:'b_heartfairy', name:'ハートのようせい', rarity:'SR', body:'#ffe0ec', ear:'heart', acc:'wings', blush:'#ff7aa8' },
+];
+const RARITY_W = { N:70, R:25, SR:5 };
+const RARITY_ORDER = { SR:0, R:1, N:2 };
+const SHARD_NEED = 10;
+const MISSIONS = [
+  { k:'meal', label:'食事を1つ記録する', ok:t => S.data.meals.some(m => m.date === t) },
+  { k:'water', label:'お水を記録する', ok:t => S.data.water.some(x => x.date === t) },
+  { k:'body', label:'体重か睡眠を記録する', ok:t => S.data.weights.some(x => x.date === t) || S.data.sleep.some(x => x.date === t) },
+];
 
 const CHEERS = [
   '今日も自分の体をいたわってあげてね。',
@@ -176,6 +277,7 @@ const S = {
   user:null, role:null, cfg:{}, share:{}, profile:{}, cheers:[], invite:null,
   data:{ meals:[], gym:[], weights:[], water:[], sleep:[] }, denied:{},
   privMeta:undefined, key:null, priv:{ logs:[], photos:[] },
+  game:{}, gchars:[],
   tab:'home',
 };
 let subs = [], colSubs = [], privSubs = [];
@@ -217,7 +319,7 @@ if(!configured){
 
 async function onUser(user){
   unsub(subs); unsub(colSubs); unsub(privSubs);
-  Object.assign(S, { user, role:null, cheers:[], invite:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, tab:'home' });
+  Object.assign(S, { user, role:null, cheers:[], invite:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, game:{}, gchars:[], tab:'home' });
   S.data = { meals:[], gym:[], weights:[], water:[], sleep:[] };
   if(!user){ renderLogin(); return; }
   $app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<p class="muted">読み込み中…</p></div>`;
@@ -259,6 +361,10 @@ function startListeners(){
   subs.push(onSnapshot(query(collection(db,'cheers'), orderBy('ts','desc'), limit(60)), s => {
     S.cheers = s.docs.map(d => ({ id:d.id, ...d.data() })); render();
   }, ()=>{}));
+  // ガチャのキャラ（オーナーが登録した画像）
+  subs.push(onSnapshot(query(collection(db,'gachaChars'), orderBy('ts','desc')), s => {
+    S.gchars = s.docs.map(d => ({ id:'c_' + d.id, docId:d.id, ...d.data() })); render();
+  }, ()=>{}));
   if(S.role === 'member') startColListeners();
 }
 
@@ -274,7 +380,69 @@ function startColListeners(){
     }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
   }
   colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
+  colSubs.push(onSnapshot(doc(db,'game','main'), s => { S.game = s.data()||{}; render(); }, () => { S.game = {}; }));
 }
+
+/* ===== ミッション・ガチャのしくみ ===== */
+const allChars = () => [...BUILTIN, ...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
+const charPic = c => c.img ? `<img src="${c.img}" alt="">` : drawChara(c);
+const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, ...S.game });
+async function saveGame(g){
+  // 2週間より前の受け取り記録は消して、データを小さく保つ
+  const cut = daysAgo(14);
+  g.claimed = Object.fromEntries(Object.entries(g.claimed || {}).filter(([d]) => d >= cut));
+  g.cheerDone = (g.cheerDone || []).slice(-100);
+  S.game = g; render();
+  await setDoc(doc(db,'game','main'), g);
+}
+const claimedToday = () => G().claimed[today()] || [];
+const pendingGifts = () => { const done = new Set(G().cheerDone); return S.cheers.filter(c => c.ticket && !done.has(c.id)); };
+async function claim(k){
+  const g = G(), t = today(), got = [...(g.claimed[t] || [])];
+  if(got.includes(k)) return;
+  if(k !== 'rest'){ const m = MISSIONS.find(x => x.k === k); if(!m || !m.ok(t)) throw new Error('まだクリアしていないよ'); }
+  got.push(k); let add = 1, msg = 'チケット＋1 🎟️';
+  if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
+  g.claimed = { ...g.claimed, [t]: got }; g.tickets = (g.tickets || 0) + add;
+  await saveGame(g); toast(msg);
+}
+async function claimGifts(){
+  const gifts = pendingGifts(); if(!gifts.length) return;
+  const g = G(); g.cheerDone = [...g.cheerDone, ...gifts.map(c => c.id)]; g.tickets += gifts.length;
+  await saveGame(g); toast(`${FROM}からチケット＋${gifts.length} 🎟️`);
+}
+function rollChar(){
+  const chars = allChars();
+  const tot = Object.values(RARITY_W).reduce((a,b) => a+b, 0);
+  let r = Math.random() * tot, rar = 'N';
+  for(const [k,w] of Object.entries(RARITY_W)){ if((r -= w) < 0){ rar = k; break; } }
+  let pool = chars.filter(c => c.rarity === rar);
+  if(!pool.length) pool = chars;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+async function pullGacha(){
+  const g = G();
+  if(g.tickets < 1){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
+  const c = rollChar(), had = (g.coll[c.id] || 0) > 0;
+  g.tickets--; g.pulls = (g.pulls || 0) + 1;
+  g.coll = { ...g.coll, [c.id]: (g.coll[c.id] || 0) + 1 };
+  if(had) g.shards = (g.shards || 0) + 1;
+  $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet" style="text-align:center">${capsuleSVG()}<p class="muted">ガチャガチャ…</p></div></div>`;
+  await saveGame(g);
+  setTimeout(() => showResult(c, had), 1300);
+}
+function showResult(c, dup){
+  $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><div class="reveal sparkle">
+    <div class="rar ${c.rarity}" style="font-size:13px;padding:2px 12px">${c.rarity}</div>
+    <div class="pic">${charPic(c)}</div>
+    <div class="nm">${esc(c.name)}</div>
+    ${dup ? `<span class="tag dup">もう持ってる → かけら＋1</span>` : `<span class="tag">NEW！</span>`}
+    </div>
+    <div class="row" style="justify-content:center;margin-top:16px">
+      ${G().tickets > 0 ? `<button class="btn" data-a="pull">もう1回（のこり${G().tickets}枚）</button>` : ''}
+      <button class="btn sub" data-a="close">とじる</button></div></div></div>`;
+}
+const capsuleSVG = () => `<svg class="cap" viewBox="0 0 100 100"><path d="M10 50a40 40 0 0 1 80 0z" fill="#ff8fb3"/><path d="M10 50a40 40 0 0 0 80 0z" fill="#fff" stroke="#f6d6e1" stroke-width="2"/><rect x="8" y="46" width="84" height="8" rx="4" fill="#e46f98"/><circle cx="34" cy="30" r="6" fill="#fff" opacity=".6"/></svg>`;
 
 /* ===== 暗号化（センシティブな記録用） ===== */
 const TE = new TextEncoder(), TD = new TextDecoder();
@@ -448,9 +616,9 @@ function renderDenied(badInvite){
 function render(){
   if(!S.user || !S.role) return;
   const isM = S.role === 'member';
-  const tabs = isM ? [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body],['secret','ひみつ',IC.lock]]
+  const tabs = isM ? [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body],['gacha','ガチャ',IC.gacha],['secret','ひみつ',IC.lock]]
                    : [];
-  const views = isM ? { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, secret:viewSecret, settings:viewSettings }
+  const views = isM ? { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, gacha:viewGacha, secret:viewSecret, settings:viewSettings }
                     : { home:viewOwnerHome, settings:viewSettings };
   const fabTarget = isM ? ({ meals:'meal', gym:'gym', secret: S.key ? 'log' : null })[S.tab] : null;
   const y = window.scrollY;
@@ -481,6 +649,7 @@ function viewHome(){
     <div class="hello">${name ? esc(name)+'、' : ''}${greet()}♡</div>
     <p style="white-space:pre-wrap">${cheer}</p>
     ${latest ? `<p class="muted" style="text-align:right;margin-top:6px">${FROM}より♡ ${cheerDate(latest)}</p>` : ''}</div>`;
+  if(isM) html += missionCard();
 
   // 体重
   const w = S.data.weights;
@@ -524,6 +693,40 @@ function viewHome(){
   return html + pastCheers();
 }
 const FROM = 'Keisuke';
+function missionCard(){
+  const t = today(), got = claimedToday(), g = G(), gifts = pendingGifts();
+  const allDone = MISSIONS.every(m => got.includes(m.k));
+  return `<div class="card"><h2>🌟 今日のミッション<span class="sub"><span class="tix">🎟️ ${g.tickets}</span></span></h2>
+    ${MISSIONS.map(m => { const ok = m.ok(t), has = got.includes(m.k);
+      return `<div class="mis ${ok ? 'done' : ''}"><div class="ck">${ok ? '✓' : ''}</div>
+        <div class="main"><div>${m.label}</div><div class="got">チケット1枚</div></div>
+        ${has ? '<span class="got">受け取り済み</span>' : ok ? `<button class="btn sm" data-a="claim" data-v="${m.k}">受け取る</button>` : ''}</div>`; }).join('')}
+    <p class="muted" style="margin:8px 0 0">${allDone ? '🎉 ぜんぶクリア！ボーナス＋1枚もらったよ' : '3つぜんぶクリアで、ボーナス＋1枚'}</p>
+    ${got.includes('rest') ? '' : `<button class="btn ghost sm" data-a="claim" data-v="rest" style="margin-top:8px">😴 今日はおやすみ（チケット1枚）</button>`}
+    ${gifts.length ? `<div class="gift"><span style="font-size:22px">💌</span><div style="flex:1">${FROM}からチケットが${gifts.length}枚届いてるよ</div><button class="btn sm" data-a="gifts">受け取る</button></div>` : ''}
+    ${g.tickets > 0 ? `<button class="btn block" data-a="tab" data-v="gacha" style="margin-top:12px">ガチャをまわしにいく ♡</button>` : ''}
+  </div>`;
+}
+function viewGacha(){
+  const g = G(), chars = allChars();
+  const owned = chars.filter(c => g.coll[c.id] > 0).length;
+  const missing = chars.filter(c => !(g.coll[c.id] > 0));
+  return `<div class="card gacha-top">
+      <svg class="machine" viewBox="0 0 120 140"><rect x="22" y="78" width="76" height="56" rx="14" fill="#e46f98"/><circle cx="60" cy="50" r="42" fill="#fff" stroke="#f6d6e1" stroke-width="3"/>
+        <circle cx="42" cy="58" r="10" fill="#ff8fb3"/><circle cx="64" cy="66" r="10" fill="#ffd34d"/><circle cx="78" cy="48" r="10" fill="#9fd3ff"/><circle cx="50" cy="38" r="10" fill="#c9b8ff"/><circle cx="70" cy="30" r="9" fill="#8fd19e"/>
+        <circle cx="60" cy="104" r="12" fill="#fff"/><rect x="56" y="96" width="8" height="16" rx="4" fill="#e46f98"/><rect x="44" y="122" width="32" height="7" rx="3.5" fill="#b8507a"/></svg>
+      <div class="muted">もっているチケット</div><div class="tixbig">🎟️ ${g.tickets}<small style="font-size:14px"> 枚</small></div>
+      <button class="btn block" data-a="pull" style="margin-top:10px${g.tickets < 1 ? ';opacity:.5' : ''}" ${g.tickets < 1 ? 'disabled' : ''}>ガチャをまわす（1枚）</button>
+      <p class="muted" style="margin:8px 0 0">出やすさ：N 70% ・ R 25% ・ SR 5%</p></div>
+    <div class="card"><h2>💎 かけら<span class="sub">${g.shards} / ${SHARD_NEED}</span></h2>
+      <div class="bar"><i style="width:${Math.min(100, g.shards / SHARD_NEED * 100)}%"></i></div>
+      <p class="muted" style="margin:6px 0 0">同じキャラが出るとかけらになるよ。${SHARD_NEED}個で好きなキャラと交換できます。</p>
+      ${g.shards >= SHARD_NEED && missing.length ? `<button class="btn block" data-a="exchange" style="margin-top:10px">キャラと交換する</button>` : ''}</div>
+    <div class="card"><h2>📖 ずかん<span class="sub">${owned} / ${chars.length}</span></h2>
+      <div class="zukan">${chars.map(c => { const n = g.coll[c.id] || 0;
+        return `<div class="zk ${c.rarity} ${n ? '' : 'no'}">${n > 1 ? `<span class="cnt">×${n}</span>` : ''}<div class="pic">${charPic(c)}</div>
+          <div class="nm">${n ? esc(c.name) : '？？？'}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div></div>`;
+}
 const cheerDate = c => { const d = c.ts?.toDate ? c.ts.toDate() : new Date(); return `${d.getMonth()+1}/${d.getDate()}`; };
 function pastCheers(){
   const old = S.cheers.slice(1, 15);
@@ -539,13 +742,27 @@ function viewOwnerHome(){
   if(!joined) html += `<div class="card"><h2>はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
   html += `<div class="card"><h2>メッセージを送る</h2><form data-form="cheer">
       <textarea class="in" name="text" rows="4" maxlength="300" required placeholder="例：ジムおつかれさま！無理しすぎないでね"></textarea>
+      <label class="row" style="margin-top:8px;font-size:14px"><input type="checkbox" name="ticket"> 🎟️ ガチャチケットを1枚そえる</label>
       <button class="btn block" style="margin-top:10px">送る ♡</button></form></div>`;
+  html += ownerCharCard();
   html += `<div class="card"><h2>送ったメッセージ<span class="sub">最新のものが表示されます</span></h2>
     ${S.cheers.length ? `<ul class="list">${S.cheers.map((c,i) => `<li><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
       <div class="s">${cheerDate(c)}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div>
       <button class="del" data-a="delcheer" data-id="${c.id}" aria-label="削除">×</button></li>`).join('')}</ul>` : '<p class="empty">まだ送っていません</p>'}
     <p class="muted">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
   return html;
+}
+function ownerCharCard(){
+  const list = [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
+  return `<div class="card"><h2>🎁 ガチャのキャラを登録<span class="sub">${list.length}体</span></h2>
+    <p class="muted" style="margin-top:0">ここで登録した画像が、彼女のガチャから出てくるようになります。最初から入っているオリジナルキャラ${BUILTIN.length}体といっしょに出ます。</p>
+    <form data-form="gchar">
+      <label class="f">画像</label><input class="in" type="file" name="img" accept="image/*" required>
+      <div class="f2"><div><label class="f">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：にこにこver."></div>
+      <div><label class="f">レア度</label><select class="in" name="rarity"><option>N</option><option>R</option><option>SR</option></select></div></div>
+      <button class="btn block" style="margin-top:12px">登録する</button></form>
+    ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
+      <button class="del" data-a="delchar" data-id="${c.docId}" aria-label="削除">×</button></li>`).join('')}</ul>` : ''}</div>`;
 }
 function greet(){ const h = new Date().getHours(); return h < 11 ? 'おはよう' : h < 18 ? 'こんにちは' : 'おつかれさま'; }
 
@@ -824,7 +1041,13 @@ async function handleForm(kind, f){
     case 'cheer': {
       const text = v.text.trim();
       if(!text) throw new Error('メッセージを書いてね');
-      await addDoc(collection(db,'cheers'), { text, ts: serverTimestamp() });
+      await addDoc(collection(db,'cheers'), v.ticket ? { text, ticket:true, ts: serverTimestamp() } : { text, ts: serverTimestamp() });
+      f.reset();
+      break;
+    }
+    case 'gchar': {
+      const img = await compress(f.img.files[0], 600, 0.85, 300000);
+      await addDoc(collection(db,'gachaChars'), { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img, ts: serverTimestamp() });
       f.reset();
       break;
     }
@@ -883,7 +1106,7 @@ document.addEventListener('submit', async e => {
   try{
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    toast({ gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -925,6 +1148,24 @@ document.addEventListener('click', async e => {
         if(!confirm('このメッセージを削除しますか？')) return;
         await deleteDoc(doc(db,'cheers',el.dataset.id)); toast('削除しました'); break;
       case 'lock': await lockNow(); toast('ロックしました'); break;
+      case 'claim': await claim(v); break;
+      case 'gifts': await claimGifts(); break;
+      case 'pull': await pullGacha(); break;
+      case 'exchange': {
+        const g = G(), missing = allChars().filter(c => !(g.coll[c.id] > 0));
+        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>交換するキャラを選んでね<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+          <div class="pickgrid">${missing.map(c => `<button data-a="pick" data-v="${c.id}">${charPic(c)}<div style="font-size:12px">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></button>`).join('')}</div></div></div>`;
+        break;
+      }
+      case 'pick': {
+        const g = G(), c = allChars().find(x => x.id === v);
+        if(!c || g.shards < SHARD_NEED) break;
+        g.shards -= SHARD_NEED; g.coll = { ...g.coll, [c.id]: 1 };
+        await saveGame(g); showResult(c, false); break;
+      }
+      case 'delchar':
+        if(!confirm('このキャラを削除しますか？（彼女のずかんからも消えます）')) return;
+        await deleteDoc(doc(db,'gachaChars',el.dataset.id)); toast('削除しました'); break;
       case 'copy': await navigator.clipboard.writeText(v); toast('コピーしました'); break;
       case 'uninvite':
         if(!confirm('取り消しますか？（相手はログインできなくなります。記録は残ります）')) return;
