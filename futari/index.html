@@ -385,7 +385,11 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .uhead .linkbtn{margin-left:auto;padding:0;font-size:12px}
 .ustage{position:relative;height:168px;display:grid;place-items:end center;margin-top:-4px}
 .uri{width:150px;height:150px;cursor:pointer;transform-origin:50% 92%;-webkit-tap-highlight-color:transparent;transition:width .4s,height .4s}
-.uri.s0{width:104px;height:104px}.uri.s1{width:120px;height:120px}.uri.s2{width:134px;height:134px}.uri.s3{width:146px;height:146px}.uri.s4{width:156px;height:156px}
+.uri.s0{width:96px;height:96px}.uri.s1{width:106px;height:106px}.uri.s2{width:116px;height:116px}.uri.s3{width:126px;height:126px}.uri.s4{width:136px;height:136px}.uri.s5{width:146px;height:146px}.uri.s6{width:154px;height:154px}.uri.s7{width:160px;height:160px}
+.uri.a-evolve{animation:uevo 1.6s ease}
+@keyframes uevo{0%{transform:scale(.6);filter:brightness(3) saturate(0)}25%{transform:scale(1.15);filter:brightness(2.2)}45%{transform:scale(.92)}65%{transform:scale(1.08);filter:brightness(1.3)}100%{transform:scale(1);filter:none}}
+.uflash{position:absolute;left:50%;bottom:20px;width:200px;height:200px;margin-left:-100px;border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(255,243,176,.8) 35%,rgba(249,182,199,0) 70%);pointer-events:none;animation:uflash 1.6s ease-out forwards}
+@keyframes uflash{0%{transform:scale(.2);opacity:0}20%{opacity:1}100%{transform:scale(1.6);opacity:0}}
 .uri svg{width:100%;height:100%;display:block}
 .uri.idle{animation:ubreath 2.6s ease-in-out infinite}
 .uri.sleep{animation:ubreath 4s ease-in-out infinite}
@@ -423,9 +427,9 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .ulog .main{flex:1;min-width:0}
 .ulog small{color:var(--muted);font-size:11px;display:block}
 .ulog b{color:var(--mint-d);font-size:12px;flex:none}
-.ustages{display:flex;justify-content:space-between;gap:4px;margin:4px 0 12px}
+.ustages{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 4px;margin:4px 0 12px}
 .ustages div{flex:1;text-align:center;font-size:10px;color:var(--muted)}
-.ustages div .uri{width:52px;height:52px;margin:0 auto;cursor:default}
+.ustages div .uri{width:58px;height:58px;margin:0 auto;cursor:default}
 .ustages div.lock .uri{filter:brightness(0) opacity(.18)}
 .ustages div.on{color:var(--pink-d);font-weight:700}
 .akind{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
@@ -852,6 +856,7 @@ function openRoom(roomId, fresh){
   S.pet = null;
   S.subs.push(onSnapshot(doc(db, "rooms", roomId, "meta", "pet"), snap => {
     S.pet = snap.exists() ? snap.data() : {};
+    uriBirth(roomId);
     if (gotRoom && gotPlaces && !uriBusy && !document.activeElement?.closest?.(".qaform")) render();
   }, needRules));
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "tickets"), snap => {
@@ -1297,70 +1302,133 @@ async function saveNote(id, text){
   S.noteEdit = null; refreshNotes(id);
 }
 
-/* うり坊のイラスト（stage 0〜4、mood: happy / normal / hungry / sad / sleep / eat） */
+/* うり坊のイラスト（stage 0〜7、mood: happy / normal / hungry / sad / sleep / eat）
+   成長するほど体が大きく横に広がり、しましまが薄れて毛色が濃くなる（本物のイノシシと同じ） */
+const UPARTS = [
+  // c:毛色 d:足の色 hr:頭[rx,ry] hy:頭の中心 br:体[rx,ry] L:足の長さ e:目の大きさ sn:鼻[rx,ry] so:鼻の位置 ear:耳 sp:しましまの濃さ
+  { c:"#e2b68c", d:"#c09068", hr:[33,30], hy:62, br:[22,15], L:5,  e:6.4, sn:[10,7],  so:13, ear:.62, sp:1 },
+  { c:"#d9ab80", d:"#b8875f", hr:[32,29], hy:59, br:[26,18], L:8,  e:6,   sn:[11,7.5],so:13, ear:.7,  sp:1 },
+  { c:"#d1a176", d:"#ae7e57", hr:[31,28], hy:56, br:[30,21], L:10, e:5.6, sn:[12,8],  so:14, ear:.78, sp:.95 },
+  { c:"#c99a72", d:"#a77650", hr:[30,27], hy:53, br:[34,24], L:12, e:5.2, sn:[13,9],  so:15, ear:.86, sp:.85 },
+  { c:"#bb8b62", d:"#946644", hr:[29,26], hy:50, br:[38,26], L:13, e:4.8, sn:[14,9.5],so:16, ear:.92, sp:.65 },
+  { c:"#a5754f", d:"#7f5638", hr:[28,25], hy:47, br:[42,28], L:14, e:4.4, sn:[15,10], so:17, ear:1,   sp:.4 },
+  { c:"#8e6143", d:"#6a452e", hr:[28,25], hy:45, br:[46,30], L:15, e:4.1, sn:[16,10.5],so:18,ear:1.05,sp:.15 },
+  { c:"#946646", d:"#6a452e", hr:[28,25], hy:45, br:[46,30], L:15, e:4.1, sn:[16,10.5],so:18,ear:1.05,sp:.12 }
+];
 function uriSvg(stage, mood){
-  const st = Math.max(0, Math.min(4, stage));
-  // 体のパーツ
-  const body = "#c99a72", dark = "#a77650", stripe = "#f4e1c8", snout = "#f5b5ae", nose = "#c46f68";
+  const st = Math.max(0, Math.min(UPARTS.length - 1, stage | 0)), P = UPARTS[st];
+  const [hx, hy0] = [60, P.hy], [hrx, hry] = P.hr, [brx, bry] = P.br;
+  const hy = hy0, ground = 112, by = ground - P.L + 3 - bry;
+  const snout = "#f5b5ae", nose = "#c46f68", ink = "#4a3540", light = st >= 5 ? "#e8cfb0" : "#f7e6cf";
+  const top = hy - hry, sy = hy + P.so, ey = hy - 1, ex = Math.round(hrx * .42);
+  // 目
   let eyes;
-  if (mood === "happy" || mood === "eat") eyes = `<path d="M40 60q5-6 10 0M70 60q5-6 10 0" stroke="#4a3540" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  else if (mood === "sleep") eyes = `<path d="M40 60q5 4 10 0M70 60q5 4 10 0" stroke="#4a3540" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-  else eyes = `<ellipse cx="45" cy="59" rx="4.2" ry="5" fill="#4a3540"/><ellipse cx="75" cy="59" rx="4.2" ry="5" fill="#4a3540"/><circle cx="46.6" cy="57" r="1.6" fill="#fff"/><circle cx="76.6" cy="57" r="1.6" fill="#fff"/>`;
-  const brows = mood === "sad" ? `<path d="M38 50l10 3M82 50l-10 3" stroke="#7a5a48" stroke-width="2.4" stroke-linecap="round"/>` : "";
-  const tear = mood === "sad" ? `<path d="M41 66q-2 5 0 7q3 0 2-4z" fill="#9fd3ee"/>` : "";
-  const mouth = mood === "eat" ? `<ellipse class="chew" cx="60" cy="86" rx="5" ry="3.2" fill="#8a4c4c"/>`
-    : mood === "sad" || mood === "hungry" ? `<path d="M55 87q5-3 10 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
-    : mood === "sleep" ? "" : `<path d="M54 85q6 5 12 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
-  const sweat = mood === "hungry" ? `<path d="M90 44q4 6 0 9q-4-3 0-9z" fill="#9fd3ee"/>` : "";
-  // 成長ごとのアクセサリー
-  const sprout = st === 0 ? `<path d="M60 26q0-8 0-12" stroke="#6fbb9c" stroke-width="2.4" stroke-linecap="round"/><path d="M60 16q-9-6-12 2q8 4 12-2z" fill="#8fd1b3"/><path d="M60 14q8-8 12 0q-7 5-12 0z" fill="#a9ddc5"/>` : "";
-  const bandana = st >= 2 && st < 4 ? `<path d="M30 92q30 12 60 0l-4 9q-26 10-52 0z" fill="#f4a3b8"/><path d="M56 100l4 10l4-10z" fill="#e2809c"/><circle cx="46" cy="98" r="1.5" fill="#fff"/><circle cx="66" cy="99" r="1.5" fill="#fff"/><circle cx="76" cy="96" r="1.5" fill="#fff"/>` : "";
-  const bow = st === 3 ? `<g transform="translate(86 26) rotate(18)"><path d="M0 0l-9-6v12z" fill="#b8a6e6"/><path d="M0 0l9-6v12z" fill="#b8a6e6"/><circle r="3" fill="#9580d0"/></g>` : "";
-  const crown = st === 4 ? `<g><circle cx="38" cy="30" r="5" fill="#f9b6c7"/><circle cx="49" cy="24" r="5" fill="#fff3b0"/><circle cx="60" cy="22" r="5.5" fill="#f4a3b8"/><circle cx="71" cy="24" r="5" fill="#c7b8ef"/><circle cx="82" cy="30" r="5" fill="#bfe5d4"/><circle cx="38" cy="30" r="1.8" fill="#fff"/><circle cx="49" cy="24" r="1.8" fill="#f2c94c"/><circle cx="60" cy="22" r="2" fill="#fff"/><circle cx="71" cy="24" r="1.8" fill="#fff"/><circle cx="82" cy="30" r="1.8" fill="#fff"/></g>
-    <g fill="#f2c94c"><path d="M12 30l2 5l5 2l-5 2l-2 5l-2-5l-5-2l5-2z"/><path d="M106 52l1.5 4l4 1.5l-4 1.5l-1.5 4l-1.5-4l-4-1.5l4-1.5z"/><path d="M14 84l1.2 3l3 1.2l-3 1.2l-1.2 3l-1.2-3l-3-1.2l3-1.2z"/></g>` : "";
-  const scarf4 = st === 4 ? `<path d="M30 92q30 12 60 0l-4 9q-26 10-52 0z" fill="#c7b8ef"/><path d="M56 100l4 10l4-10z" fill="#9580d0"/>` : "";
-  const zzz = mood === "sleep" ? `<text x="88" y="30" font-size="13" font-weight="700" fill="#9580d0">z</text><text x="97" y="20" font-size="10" font-weight="700" fill="#b8a6e6">z</text>` : "";
-  return `<svg viewBox="0 0 120 120" class="urisvg" aria-hidden="true">
-    <defs><clipPath id="ub${st}"><ellipse cx="60" cy="66" rx="42" ry="40"/></clipPath></defs>
-    <ellipse cx="60" cy="112" rx="34" ry="5" fill="rgba(176,128,160,.18)"/>
-    <rect x="36" y="96" width="12" height="16" rx="6" fill="${dark}"/><rect x="72" y="96" width="12" height="16" rx="6" fill="${dark}"/>
-    <path d="M24 44q-6-20 8-22q10 4 12 16z" fill="${body}"/><path d="M28 40q-3-11 4-13q6 3 8 10z" fill="${snout}"/>
-    <path d="M96 44q6-20-8-22q-10 4-12 16z" fill="${body}"/><path d="M92 40q3-11-4-13q-6 3-8 10z" fill="${snout}"/>
-    ${bow}
-    <ellipse cx="60" cy="66" rx="42" ry="40" fill="${body}"/>
-    <g clip-path="url(#ub${st})" fill="${stripe}" opacity=".9">
-      <path d="M57 22h6v28q-3 4-6 0z"/><path d="M36 28q6-3 8-1q-6 14-4 30q-5 2-8-2q-2-14 4-27z"/><path d="M84 28q-6-3-8-1q6 14 4 30q5 2 8-2q2-14-4-27z"/>
-      <path d="M22 70q2 18 14 28q2-4 0-8q-8-8-10-22z"/><path d="M98 70q-2 18-14 28q-2-4 0-8q8-8 10-22z"/>
+  const w = P.e * 1.15;
+  if (mood === "happy" || mood === "eat") eyes = `<path d="M${hx-ex-w} ${ey+1}q${w} ${-w*1.2} ${w*2} 0M${hx+ex-w} ${ey+1}q${w} ${-w*1.2} ${w*2} 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else if (mood === "sleep") eyes = `<path d="M${hx-ex-w} ${ey}q${w} ${w*.9} ${w*2} 0M${hx+ex-w} ${ey}q${w} ${w*.9} ${w*2} 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else {
+    const r = P.e, big = st <= 2;
+    eyes = [hx - ex, hx + ex].map(x => `<ellipse cx="${x}" cy="${ey}" rx="${r*.85}" ry="${r}" fill="${ink}"/><circle cx="${x + r*.35}" cy="${ey - r*.4}" r="${r*.38}" fill="#fff"/>${big ? `<circle cx="${x - r*.35}" cy="${ey + r*.45}" r="${r*.18}" fill="#fff"/>` : ""}`).join("");
+  }
+  const brows = mood === "sad" ? `<path d="M${hx-ex-8} ${ey-10}l9 3M${hx+ex+8} ${ey-10}l-9 3" stroke="#7a5a48" stroke-width="2.4" stroke-linecap="round"/>` : "";
+  const tear = mood === "sad" ? `<path d="M${hx-ex-3} ${ey+6}q-2 5 0 7q3 0 2-4z" fill="#9fd3ee"/>` : "";
+  const sweat = mood === "hungry" ? `<path d="M${hx+hrx-4} ${ey-14}q4 6 0 9q-4-3 0-9z" fill="#9fd3ee"/>` : "";
+  const my = sy + P.sn[1] + 4;
+  const paci = st === 0 && mood !== "eat" && mood !== "sad";
+  const mouth = paci ? `<g transform="translate(${hx} ${my + 1})"><rect x="-8" y="-3.5" width="16" height="7" rx="3.5" fill="#bfe5d4"/><circle r="3" fill="#8fd1b3"/><circle cy="6" r="3.2" fill="none" stroke="#8fd1b3" stroke-width="2"/></g>`
+    : mood === "eat" ? `<ellipse class="chew" cx="${hx}" cy="${my}" rx="5" ry="3.2" fill="#8a4c4c" style="transform-origin:${hx}px ${my}px"/>`
+    : mood === "sad" || mood === "hungry" ? `<path d="M${hx-5} ${my+1}q5-3 10 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+    : mood === "sleep" ? "" : `<path d="M${hx-6} ${my-1}q6 5 12 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  const zzz = mood === "sleep" ? `<text x="${hx+hrx-2}" y="${top+6}" font-size="13" font-weight="700" fill="#9580d0">z</text><text x="${hx+hrx+7}" y="${top-4}" font-size="10" font-weight="700" fill="#b8a6e6">z</text>` : "";
+  // 耳
+  const ear = (x, flip) => `<g transform="translate(${x} ${top + hry*.32}) scale(${flip ? -P.ear : P.ear} ${P.ear})"><path d="M-12 6q-6-22 8-26q10 6 14 24z" fill="${P.c}"/><path d="M-8 3q-3-14 5-17q6 4 8 15z" fill="${snout}"/></g>`;
+  // しましま（頭・体）
+  const sp = P.sp > .05 ? `
+    <g clip-path="url(#uh${st})" fill="${light}" opacity="${P.sp}">
+      <path d="M${hx-3} ${top-2}h6v${hry*.55}q-3 4-6 0z"/>
+      <path d="M${hx-hrx*.55} ${top+4}q5-3 7-1q-5 12-3 ${hry*.7}q-5 2-7-2q-1-12 3-${hry*.7-6}z"/>
+      <path d="M${hx+hrx*.55} ${top+4}q-5-3-7-1q5 12 3 ${hry*.7}q5 2 7-2q1-12-3-${hry*.7-6}z"/>
     </g>
-    <ellipse cx="60" cy="90" rx="22" ry="12" fill="#e6c2a0" opacity=".55"/>
-    ${sprout}${crown}
-    <ellipse cx="33" cy="74" rx="7" ry="4.5" fill="#f4a3b8" opacity=".55"/><ellipse cx="87" cy="74" rx="7" ry="4.5" fill="#f4a3b8" opacity=".55"/>
+    <g clip-path="url(#ub${st})" fill="${light}" opacity="${P.sp}">
+      ${[-.72, -.32, .32, .72].map(k => `<path d="M${hx + brx*k - 2.5} ${by - bry}q${-k*6} ${bry} 0 ${bry*2}h5q${-k*6} ${-bry} 0 ${-bry*2}z"/>`).join("")}
+    </g>` : "";
+  // 成長ごとの小物
+  let back = "", acc = "", neck = "", headTop = "", deco = "";
+  const tuft = `<path d="M${hx-1} ${top+2}q-4-8 2-10q-3 5 3 8q0-6 5-6q-4 4-2 8z" fill="${P.d}"/>`;
+  const mane = `<path d="M${hx-14} ${top+5}l3-9l4 6l3-9l4 7l3-9l3 8l4-7l3 9l3-6l2 9q-17-5-32 0z" fill="#5a3a26"/>`;
+  const tusks = `<path d="M${hx-P.sn[0]+3} ${sy+P.sn[1]-2}q-9 0-9-13q4 8 11 8z" fill="#fffaf0" stroke="#d9c9ae" stroke-width="1"/><path d="M${hx+P.sn[0]-3} ${sy+P.sn[1]-2}q9 0 9-13q-4 8-11 8z" fill="#fffaf0" stroke="#d9c9ae" stroke-width="1"/>`;
+  const sparkle = (x, y, r, c) => `<path d="M${x} ${y-r}l${r*.28} ${r*.72}l${r*.72} ${r*.28}l${-r*.72} ${r*.28}l${-r*.28} ${r*.72}l${-r*.28} ${-r*.72}l${-r*.72} ${-r*.28}l${r*.72} ${-r*.28}z" fill="${c}"/>`;
+  const scarf = (c1, c2, tail) => `<path d="M${hx-hrx*.8} ${hy+hry*.72}q${hrx*.8} ${12} ${hrx*1.6} 0l-3 8q-${hrx*.75} 10-${hrx*1.5} 0z" fill="${c1}"/>${tail ? `<path d="M${hx+hrx*.45} ${hy+hry*.9}q10 4 18 16l-7 2q-6-8-14-12z" fill="${c2}"/>` : `<path d="M${hx-4} ${hy+hry+6}l4 10l4-10z" fill="${c2}"/>`}`;
+  if (st === 0) {
+    headTop = `<path d="M${hx-hrx-3} ${hy-2}Q${hx-hrx} ${top-12} ${hx} ${top-10}Q${hx+hrx} ${top-12} ${hx+hrx+3} ${hy-2}Q${hx} ${top+6} ${hx-hrx-3} ${hy-2}z" fill="#fbd3df"/>
+      ${Array.from({ length: 9 }, (_, i) => { const t = i / 8, x = hx - hrx - 3 + t * (hrx * 2 + 6), y = hy - 2 - Math.sin(t * Math.PI) * (hry - 4) * .55; return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.6" fill="#fff"/>`; }).join("")}
+      <path d="M${hx-hrx-2} ${hy}q-2 12 4 18M${hx+hrx+2} ${hy}q2 12-4 18" stroke="#f4a3b8" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <circle cx="${hx}" cy="${top-9}" r="4" fill="#f4a3b8"/>`;
+    deco = sparkle(16, 40, 5, "#fde68a") + sparkle(104, 70, 4, "#fbcfe8");
+  }
+  if (st === 1) {
+    headTop = tuft;
+    neck = `<path d="M${hx-16} ${hy+hry-4}q16 6 32 0q2 16-16 20q-18-4-16-20z" fill="#fff3b0"/><path d="M${hx} ${hy+hry+10}c-2-3-6-1-4 2l4 4l4-4c2-3-2-5-4-2z" fill="#f4a3b8"/>`;
+  }
+  if (st === 2) headTop = `<path d="M${hx} ${top+2}q0-8 0-12" stroke="#6fbb9c" stroke-width="2.4" stroke-linecap="round"/><path d="M${hx} ${top-8}q-9-6-12 2q8 4 12-2z" fill="#8fd1b3"/><path d="M${hx} ${top-10}q8-8 12 0q-7 5-12 0z" fill="#a9ddc5"/>`;
+  if (st === 3) neck = scarf("#f4a3b8", "#e2809c") + `<circle cx="${hx-12}" cy="${hy+hry+3}" r="1.5" fill="#fff"/><circle cx="${hx+10}" cy="${hy+hry+4}" r="1.5" fill="#fff"/>`;
+  if (st === 4) {
+    neck = scarf("#8fd1b3", "#6fbb9c", true);
+    acc = `<g transform="translate(${hx+hrx*.5} ${top+9}) rotate(-25)"><rect x="-9" y="-3.5" width="18" height="7" rx="3.5" fill="#fff4e4" stroke="#e8c9a0" stroke-width="1"/><rect x="-3" y="-3.5" width="6" height="7" fill="#f6d7ad"/></g>`;
+    deco = sparkle(100, 30, 5, "#fde68a");
+  }
+  if (st === 5) {
+    acc = `<g transform="translate(${hx-hrx*.78} ${top+5})">${[0,72,144,216,288].map(a => `<ellipse rx="3.4" ry="5.5" cy="-5" fill="#f9b6c7" transform="rotate(${a})"/>`).join("")}<circle r="3" fill="#fde68a"/></g>`;
+    neck = `<path d="M${hx} ${hy+hry+3}l-10-6v12zM${hx} ${hy+hry+3}l10-6v12z" fill="#b8a6e6"/><circle cx="${hx}" cy="${hy+hry+3}" r="3" fill="#9580d0"/>`;
+  }
+  if (st >= 6) { headTop = mane; acc = tusks; }
+  if (st === 6) neck = scarf("#c7b8ef", "#9580d0");
+  if (st === 7) {
+    back = `<path d="M${hx-30} ${hy+hry-6}Q${hx-brx-8} ${by} ${hx-brx+2} ${by+bry+2}Q${hx} ${by+bry+8} ${hx+brx-2} ${by+bry+2}Q${hx+brx+8} ${by} ${hx+30} ${hy+hry-6}z" fill="#f4a3b8"/><path d="M${hx-brx+2} ${by+bry+2}Q${hx} ${by+bry+8} ${hx+brx-2} ${by+bry+2}" stroke="#e2809c" stroke-width="3" fill="none"/>`;
+    headTop = mane + `<g>${[[-24,8,"#f9b6c7"],[-13,1,"#fff3b0"],[0,-2,"#f4a3b8"],[13,1,"#c7b8ef"],[24,8,"#bfe5d4"]].map(([dx, dy, c]) => `<circle cx="${hx+dx}" cy="${top+dy}" r="5.5" fill="${c}"/><circle cx="${hx+dx}" cy="${top+dy}" r="1.9" fill="${c === "#fff3b0" ? "#f2c94c" : "#fff"}"/>`).join("")}</g>`;
+    neck = `<circle cx="${hx}" cy="${hy+hry+4}" r="4" fill="#f2c94c"/><circle cx="${hx}" cy="${hy+hry+4}" r="1.8" fill="#fff"/>`;
+    deco = sparkle(12, 30, 6, "#f2c94c") + sparkle(108, 52, 5, "#f2c94c") + sparkle(14, 86, 4, "#fbcfe8") + sparkle(106, 96, 3.5, "#c7b8ef");
+  }
+  const legX = [hx - brx * .55, hx + brx * .55], legW = 8 + st * .9;
+  return `<svg viewBox="0 0 120 120" class="urisvg" aria-hidden="true">
+    <defs><clipPath id="uh${st}"><ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}"/></clipPath><clipPath id="ub${st}"><ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}"/></clipPath></defs>
+    <ellipse cx="60" cy="${ground}" rx="${Math.max(24, brx * .85)}" ry="5" fill="rgba(176,128,160,.18)"/>
+    ${deco}${back}
+    ${legX.map(x => `<rect x="${x - legW/2}" y="${ground - P.L - 6}" width="${legW}" height="${P.L + 6}" rx="${legW/2}" fill="${P.d}"/><rect x="${x - legW/2}" y="${ground - 4}" width="${legW}" height="4" rx="2" fill="#5a3a26" opacity=".55"/>`).join("")}
+    <ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}" fill="${P.c}"/>
+    <ellipse cx="${hx}" cy="${by + bry*.35}" rx="${brx*.55}" ry="${bry*.55}" fill="${light}" opacity=".55"/>
+    ${ear(hx - hrx * .62, false)}${ear(hx + hrx * .62, true)}
+    <ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}" fill="${P.c}"/>
+    ${sp}${neck}${headTop}${acc === tusks ? "" : acc}
+    <ellipse cx="${hx-hrx*.7}" cy="${sy-1}" rx="6.5" ry="4.2" fill="#f4a3b8" opacity=".55"/><ellipse cx="${hx+hrx*.7}" cy="${sy-1}" rx="6.5" ry="4.2" fill="#f4a3b8" opacity=".55"/>
     ${brows}${eyes}${tear}${sweat}
-    <ellipse cx="60" cy="76" rx="14" ry="10" fill="${snout}"/><ellipse cx="55" cy="76" rx="2.6" ry="3.6" fill="${nose}"/><ellipse cx="65" cy="76" rx="2.6" ry="3.6" fill="${nose}"/>
-    ${mouth}${bandana}${scarf4}${zzz}
+    <ellipse cx="${hx}" cy="${sy}" rx="${P.sn[0]}" ry="${P.sn[1]}" fill="${snout}"/><ellipse cx="${hx - P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="${nose}"/><ellipse cx="${hx + P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="${nose}"/>
+    ${st >= 6 ? tusks : ""}${mouth}${zzz}
   </svg>`;
 }
 
 /* =============== ふたりで育てるうり坊 =============== */
-const USTAGES = [[0, "ちびうり坊"], [40, "うり坊"], [120, "やんちゃうり坊"], [300, "おとなうり坊"], [600, "はなかんむりのウリ"]];
+const USTAGES = [[0, "ミニうりぼー"], [20, "よちよちうりぼー"], [50, "ちびうりぼー"], [100, "うりぼー"], [180, "やんちゃうりぼー"], [300, "わかウリ"], [450, "おとなウリ"], [650, "はなかんむりのウリ"]];
 const UFOODS = ["🍠", "🌰", "🍎", "🥕", "🍄"];
 const dayMs = s => new Date(ymd(s)).getTime();
 /* これまでの記録から「ごはん」の記録を作る */
 function uriEvents(){
-  const ev = [], mem = S.room?.members || [], add = (at, who, t, xp) => ev.push({ at: at || 0, who, t, xp });
+  // 生まれた時（bornAt）より前の記録は数えない。rec は「記録した時刻」
+  const born = S.pet?.bornAt || Date.now(), fb = S.pet?.feedBase || {};
+  const ev = [], mem = S.room?.members || [], add = (at, who, t, xp, rec) => { if ((rec ?? at ?? 0) >= born) ev.push({ at: at || 0, who, t, xp }); };
   Object.entries(S.qa || {}).forEach(([d, q]) => {
     const a = Object.entries(q.a || {}).filter(([u]) => mem.includes(u));
     a.forEach(([u, x]) => add(x.at || dayMs(d), u, "今日の質問に答えた", 5));
     if (a.length >= 2) add(Math.max(...a.map(([, x]) => x.at || 0)), null, "ふたりとも質問に答えた", 5);
   });
   S.places.forEach(p => {
-    if (p.visited) add(p.visitedAt ? dayMs(p.visitedAt) : ms(p.updatedAt), null, `${p.title}に行った`, 20);
+    if (p.visited) { const at = p.visitedAt ? dayMs(p.visitedAt) : ms(p.updatedAt); add(at, null, `${p.title}に行った`, 20, Math.max(at, p.updatedAt ? ms(p.updatedAt) : 0)); }
     if (isBoth(p)) add(ms(p.updatedAt || p.createdAt), null, `${p.title}でマッチ`, 5);
     Object.entries(p.notes || {}).forEach(([u, n]) => { if (mem.includes(u) && n?.t) add(n.at, u, `${p.title}にひとこと`, 5); });
   });
   S.dates.forEach(d => add(ms(d.createdAt), d.by, "デートの予定を入れた", 5));
   S.tickets.forEach(t => { add(t.at, t.from, `「${t.t}」を贈った`, 3); if (t.status === "done") add(t.doneAt, t.from, `「${t.t}」をかなえた`, 10); });
-  Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { if (mem.includes(u) && f?.n) { add(f.at || dayMs(f.last), u, f.n > 1 ? `ごはんをあげた（これまで${f.n}回）` : "ごはんをあげた", 3 * f.n); } });
+  Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { const n = (f?.n || 0) - (fb[u] || 0); if (mem.includes(u) && n > 0) ev.push({ at: f.at || dayMs(f.last), who: u, t: n > 1 ? `ごはんをあげた（これまで${n}回）` : "ごはんをあげた", xp: 3 * n }); });
   return ev.sort((a, b) => b.at - a.at);
 }
 function uriState(){
@@ -1376,6 +1444,31 @@ function uriState(){
   let mood = energy <= 50 ? "sad" : !fedMe ? "hungry" : (fedHim || !pu) ? "happy" : "normal";
   if ((h >= 23 || h < 6) && !S.uriAwake) mood = "sleep";
   return { ev, xp, st, next, cur, energy, mood, fedMe, fedHim, idle };
+}
+/* はじめて開いたとき、うり坊を生まれたてにする（それまでのごはんの回数は「生まれる前」の分として差し引く） */
+let uriBirthTried = null;
+function uriBirth(roomId){
+  if (!S.pet || S.pet.bornAt || uriBirthTried === roomId) return;
+  uriBirthTried = roomId;
+  const val = { bornAt: Date.now(), feedBase: Object.fromEntries(Object.entries(S.pet.feeds || {}).map(([u, f]) => [u, f?.n || 0])) };
+  S.pet = { ...S.pet, ...val };
+  setDoc(doc(db, "rooms", roomId, "meta", "pet"), val, { merge: true }).catch(() => {});
+}
+/* 段階が上がったら進化の演出 */
+function uriCheckEvolve(st){
+  if (!S.pet?.bornAt) return; // 生まれる前（読み込み中）は判定しない
+  const k = "uriSt2_" + S.roomId; let seen = null;
+  try { seen = localStorage.getItem(k); if (seen === null || st > +seen) localStorage.setItem(k, String(st)); } catch (e) { return; }
+  if (seen === null || +seen >= st) return;
+  setTimeout(() => {
+    const el = document.getElementById("uri"), stg = document.getElementById("ustage"); if (!el || !stg) return;
+    uriBusy = true;
+    const fl = document.createElement("div"); fl.className = "uflash"; stg.appendChild(fl);
+    el.className = `uri s${st} a-evolve`; el.innerHTML = uriSvg(st, "happy");
+    uriFx(["✨", "🌸", "⭐", "💖"], 8);
+    uriSay(`${USTAGES[st][1]}になったぷぎ！`);
+    setTimeout(() => { fl.remove(); uriBusy = false; const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood); } }, 1800);
+  }, 120);
 }
 function localDay(at){ const d = new Date(at); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
 const uriName = () => S.pet?.name || "ウリ";
@@ -1398,9 +1491,10 @@ function uriHtml(){
   if (S.needRules) return "";
   const u = uriState(), pu = partnerUid();
   const pct = u.next ? Math.round((u.xp - u.cur) / (u.next - u.cur) * 100) : 100;
+  uriCheckEvolve(u.st);
   return `<div class="card uricard" id="uricard">
     <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())}</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><button class="linkbtn" data-a="uriInfo">くわしく ›</button></div>
-    <div class="ustage" id="ustage"><div class="ububble" id="ububble">${esc(S.uriSay || (u.mood === "sleep" ? "すやすや…" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
+    <div class="ustage" id="ustage"><div class="ububble" id="ububble">${esc(S.uriSay || (u.mood === "sleep" ? "すやすや…" : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
       <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood)}</div></div>
     <div class="ubars">
       <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div><em>${u.energy}%</em></div>
@@ -1455,8 +1549,9 @@ function openUriInfo(){
     <div style="font-size:13px;color:var(--muted)">いまのすがた</div>
     <div style="font-size:18px;font-weight:700;color:var(--pink-d)">${esc(USTAGES[u.st][1])}</div>
     <div class="muted">これまでのごはん ${u.xp}${u.next ? ` ・ 次のすがたまで あと${u.next - u.xp}` : " ・ さいごまで育ったよ！"}</div>
+    ${S.pet?.bornAt ? `<div class="muted" style="font-size:12px">${esc(fmtShort(localDay(S.pet.bornAt)))}にうまれたよ（${dayDiff(localDay(S.pet.bornAt), today()) + 1}日目）</div>` : ""}
   </div>
-  <div class="ustages">${USTAGES.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st && i === 4 ? "？？？" : esc(nm)}<br>${n}</div>`).join("")}</div>
+  <div class="ustages">${USTAGES.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st + 1 ? "？？？" : esc(nm)}<br>${n}</div>`).join("")}</div>
   <div class="sec">ごはんになること</div>
   <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10</div>
   <div class="sec">さいきんのごはん</div>
