@@ -197,58 +197,7 @@ const IC = {
   gacha: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.3"/></svg>',
 };
 
-/* ===== ガチャのキャラ（オリジナル） ===== */
-// 見た目のパーツを組み合わせて描くオリジナルキャラ
-function drawChara(c){
-  const { body, ear = 'none', acc = '', belly = '', blush = '#ffb3c8', id } = c;
-  const dark = '#5b3b47';
-  const ears = {
-    bunny: `<ellipse cx="36" cy="22" rx="8" ry="20" fill="${body}"/><ellipse cx="64" cy="22" rx="8" ry="20" fill="${body}"/><ellipse cx="36" cy="24" rx="4" ry="13" fill="${blush}" opacity=".7"/><ellipse cx="64" cy="24" rx="4" ry="13" fill="${blush}" opacity=".7"/>`,
-    cat: `<path d="M22 44 26 18 44 34Z" fill="${body}"/><path d="M78 44 74 18 56 34Z" fill="${body}"/><path d="M27 37 28.5 25 37 33Z" fill="${blush}" opacity=".7"/><path d="M73 37 71.5 25 63 33Z" fill="${blush}" opacity=".7"/>`,
-    bear: `<circle cx="27" cy="33" r="11" fill="${body}"/><circle cx="73" cy="33" r="11" fill="${body}"/><circle cx="27" cy="33" r="5.5" fill="${blush}" opacity=".6"/><circle cx="73" cy="33" r="5.5" fill="${blush}" opacity=".6"/>`,
-    pig: `<path d="M26 38 24 22 40 30Z" fill="${body}"/><path d="M74 38 76 22 60 30Z" fill="${body}"/>`,
-    chick: `<path d="M50 30c-3-8 2-12 6-10-4 1-3 5-1 8M50 30c0-7-6-10-9-7 3 0 4 3 3 6" fill="none" stroke="${body}" stroke-width="3" stroke-linecap="round"/>`,
-    heart: `<path d="M50 26c-4-8-16-8-16 1 0 6 8 10 16 15 8-5 16-9 16-15 0-9-12-9-16-1z" fill="#ff8fb3"/>`,
-    none: '',
-  }[ear];
-  const accs = {
-    ribbon: `<path d="M66 28 78 20 78 36Z M66 28 54 20 54 36Z" fill="#ff7aa8"/><circle cx="66" cy="28" r="3.5" fill="#ff5c93"/>`,
-    flower: `<g transform="translate(70 30)">${[0,72,144,216,288].map(r => `<ellipse cx="0" cy="-6" rx="4" ry="6" fill="#ffc2d6" transform="rotate(${r})"/>`).join('')}<circle r="3.5" fill="#ffd966"/></g>`,
-    star: `<path d="M72 18l3.2 6.6 7.3 1-5.3 5.1 1.3 7.2-6.5-3.4-6.5 3.4 1.3-7.2-5.3-5.1 7.3-1z" fill="#ffd34d" stroke="#f0b400" stroke-width="1"/>`,
-    crown: `<path d="M34 30 38 14 46 24 50 10 54 24 62 14 66 30Z" fill="#ffd34d" stroke="#e9a800" stroke-width="1.2" stroke-linejoin="round"/><circle cx="50" cy="12" r="2.4" fill="#ff7aa8"/>`,
-    wings: `<g fill="#fff" stroke="#ffb3cf" stroke-width="1.8" stroke-linejoin="round"><path d="M24 52C10 50 2 38 6 30c6-2 14 4 20 14-8-2-12 0-14 4 4 0 8 2 12 4z"/><path d="M76 52c14-2 22-14 18-22-6-2-14 4-20 14 8-2 12 0 14 4-4 0-8 2-12 4z"/></g>`,
-    leaf: `<path d="M50 28c2-10 10-14 16-12-2 7-8 12-16 12z" fill="#8fd19e"/><path d="M50 28c1-4 4-7 8-9" stroke="#5fae73" stroke-width="1.4" fill="none"/>`,
-  };
-  const back = acc === 'wings' ? accs.wings : '';
-  const front = acc && acc !== 'wings' ? accs[acc] : '';
-  const face = ear === 'chick'
-    ? `<path d="M45 62 50 67 55 62Z" fill="#ffae42"/>`
-    : ear === 'pig' ? `<ellipse cx="50" cy="65" rx="8" ry="5.5" fill="${blush}"/><circle cx="47" cy="65" r="1.4" fill="${dark}" opacity=".6"/><circle cx="53" cy="65" r="1.4" fill="${dark}" opacity=".6"/>`
-    : `<path d="M46 64q2 3 4 0q2 3 4 0" fill="none" stroke="${dark}" stroke-width="1.8" stroke-linecap="round"/>`;
-  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-    ${back}${ears}
-    <ellipse cx="50" cy="62" rx="33" ry="29" fill="${body}" stroke="rgba(91,59,71,.08)" stroke-width="1.5"/>
-    ${belly ? `<ellipse cx="50" cy="70" rx="20" ry="17" fill="${belly}"/>` : ''}
-    <ellipse cx="38" cy="57" rx="3.6" ry="4.2" fill="${dark}"/><ellipse cx="62" cy="57" rx="3.6" ry="4.2" fill="${dark}"/>
-    <circle cx="39.3" cy="55.5" r="1.3" fill="#fff"/><circle cx="63.3" cy="55.5" r="1.3" fill="#fff"/>
-    <ellipse cx="30" cy="66" rx="5" ry="3.2" fill="${blush}" opacity=".85"/><ellipse cx="70" cy="66" rx="5" ry="3.2" fill="${blush}" opacity=".85"/>
-    ${face}${front}
-  </svg>`;
-}
-const BUILTIN = [
-  { id:'b_mochiusa', name:'もちうさ', rarity:'N', body:'#ffffff', ear:'bunny' },
-  { id:'b_mikenyan', name:'みけにゃん', rarity:'N', body:'#ffe2c4', ear:'cat' },
-  { id:'b_korokuma', name:'ころくま', rarity:'N', body:'#d9b28c', ear:'bear' },
-  { id:'b_piyomaru', name:'ぴよまる', rarity:'N', body:'#ffe680', ear:'chick' },
-  { id:'b_kobutan', name:'こぶたん', rarity:'N', body:'#ffd1dc', ear:'pig', blush:'#ff9fb8' },
-  { id:'b_penchan', name:'ぺんちゃん', rarity:'N', body:'#8fa8c8', ear:'none', belly:'#ffffff' },
-  { id:'b_sakurausa', name:'さくらうさ', rarity:'R', body:'#ffd6e5', ear:'bunny', acc:'flower', blush:'#ff8fb3' },
-  { id:'b_hoshineko', name:'ほしねこ', rarity:'R', body:'#c9b8ff', ear:'cat', acc:'star' },
-  { id:'b_hachimitsu', name:'はちみつくま', rarity:'R', body:'#f6c26b', ear:'bear', acc:'ribbon' },
-  { id:'b_matcha', name:'まっちゃもち', rarity:'R', body:'#c6e8b8', ear:'none', acc:'leaf' },
-  { id:'b_ousama', name:'おうかんうさ', rarity:'SR', body:'#ffffff', ear:'bunny', acc:'crown', blush:'#ff8fb3' },
-  { id:'b_heartfairy', name:'ハートのようせい', rarity:'SR', body:'#ffe0ec', ear:'heart', acc:'wings', blush:'#ff7aa8' },
-];
+/* ===== ガチャ ===== */
 const RARITY_W = { N:70, R:25, SR:5 };
 const RARITY_ORDER = { SR:0, R:1, N:2 };
 const SHARD_NEED = 10;
@@ -392,8 +341,8 @@ function startColListeners(){
 }
 
 /* ===== ミッション・ガチャのしくみ ===== */
-const allChars = () => [...BUILTIN, ...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
-const charPic = c => c.img ? `<img src="${c.img}" alt="">` : drawChara(c);
+const allChars = () => [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
+const charPic = c => `<img src="${c.img}" alt="">`;
 const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, ...S.game });
 async function saveGame(g){
   // 2週間より前の受け取り記録は消して、データを小さく保つ
@@ -430,6 +379,7 @@ function rollChar(){
 }
 async function pullGacha(){
   const g = G();
+  if(!allChars().length){ toast('まだキャラがいないよ'); return; }
   if(g.tickets < 1){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
   const c = rollChar(), had = (g.coll[c.id] || 0) > 0;
   g.tickets--; g.pulls = (g.pulls || 0) + 1;
@@ -717,6 +667,8 @@ function missionCard(){
 }
 function viewGacha(){
   const g = G(), chars = allChars();
+  if(!chars.length) return `<div class="card gacha-top"><p style="font-size:40px;margin:6px 0">🎁</p><p style="margin:0">ガチャのキャラを準備中だよ</p>
+    <p class="muted">${FROM}がキャラを入れてくれるのを待っててね。チケットはためておけます（いま 🎟️ ${g.tickets}枚）</p></div>`;
   const owned = chars.filter(c => g.coll[c.id] > 0).length;
   const missing = chars.filter(c => !(g.coll[c.id] > 0));
   return `<div class="card gacha-top">
@@ -763,7 +715,7 @@ function viewOwnerHome(){
 function ownerCharCard(){
   const list = [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
   return `<div class="card"><h2>🎁 ガチャのキャラを登録<span class="sub">${list.length}体</span></h2>
-    <p class="muted" style="margin-top:0">ここで登録した画像が、彼女のガチャから出てくるようになります。最初から入っているオリジナルキャラ${BUILTIN.length}体といっしょに出ます。</p>
+    <p class="muted" style="margin-top:0">ここで登録したキャラが、彼女のガチャから出てくるようになります。</p>
     <label class="btn block filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop></label>
     <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
     ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
