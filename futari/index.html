@@ -33,7 +33,7 @@ html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Zen Maru 
 body{background-image:radial-gradient(circle at 12% 8%,#fde8ee 0,transparent 32%),radial-gradient(circle at 92% 22%,#f0ebfb 0,transparent 30%),radial-gradient(circle at 20% 90%,#e7f6ef 0,transparent 30%);background-attachment:fixed;min-height:100vh}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--lav-d)}
-.wrap{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(var(--navb) + 94px)}
+.wrap{overflow-x:clip;max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 8px) 16px calc(var(--navb) + 94px)}
 .hide{display:none!important}
 
 /* ヘッダー */
@@ -314,10 +314,13 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .pc{background:#fff;border-radius:24px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:14px}
 .pc .top{display:flex;gap:10px;align-items:flex-start}
 .pc textarea{flex:1;border:0;outline:0;resize:none;font:inherit;font-size:15px;min-height:56px;background:transparent;color:var(--ink);padding:6px 0}
-.pc .att{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px 46px}
+.pc .att{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 6px 46px}
+.pc .pvw{position:relative}
+.pc .pvx{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(93,78,96,.85);color:#fff;font-size:14px;line-height:24px;padding:0;cursor:pointer}
 .pc .att img{width:84px;height:84px;object-fit:cover;border-radius:14px;display:block}
-.pc .bar{display:flex;align-items:center;gap:4px;border-top:1px solid var(--line);padding-top:8px;margin-left:46px}
-.pc .tool{white-space:nowrap;flex:none;border:0;background:var(--pink-l);color:var(--pink-d);border-radius:99px;padding:6px 12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.pc{overflow:hidden}
+.pc .bar{min-width:0;flex-wrap:wrap;row-gap:6px;display:flex;align-items:center;gap:4px;border-top:1px solid var(--line);padding-top:8px;margin-left:46px}
+.pc .tool{white-space:nowrap;flex:none;border:0;background:var(--pink-l);color:var(--pink-d);border-radius:99px;padding:6px 10px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .pc .cnt{white-space:nowrap;margin-left:auto;font-size:12px;color:var(--muted)}
 .pc .cnt.over{color:#d9534f;font-weight:700}
 .pc select{margin:0 0 8px 46px;width:calc(100% - 46px)}
@@ -1474,12 +1477,11 @@ function viewTl(){
   return `<div class="pc" id="pc">
     <div class="top">${avHtml(me())}<textarea id="pctext" maxlength="500" placeholder="${esc(isPaired() ? nameOf(partnerUid()) + "につぶやく…" : "いまどうしてる？")}">${esc(c.text || "")}</textarea></div>
     ${c.pick ? `<select class="in" id="pcsel"><option value="">行きたい場所・予定をえらぶ</option>${opts.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join("")}</select>` : ""}
-    <div class="att" id="pcatt">${c.preview ? `<img src="${c.preview}" alt="">` : ""}${attachChip(c, true)}</div>
+    <div class="att" id="pcatt">${c.preview ? `<div class="pvw"><img src="${c.preview}" alt=""><button type="button" class="pvx" data-a="pcNoPhoto" aria-label="写真をはずす">×</button></div>` : ""}${attachChip(c, true)}</div>
     <div class="bar">
-      <label class="tool">📷 ${c.file ? "変更" : "写真"}<input type="file" accept="image/*" id="pcfile" hidden></label>
-      ${c.file ? `<button class="tool" data-a="pcNoPhoto">写真×</button>` : ""}
+      <label class="tool">📷 写真<input type="file" accept="image/*" id="pcfile" hidden></label>
       <button class="tool" data-a="pcPick">📍 場所</button>
-      <span class="cnt" id="pccnt">${(c.text || "").length}/140</span>
+      <span class="cnt" id="pccnt">${(c.text || "").length >= 100 ? (c.text || "").length + "/140" : ""}</span>
       <button class="btn sm" data-a="pcSend" style="margin-left:6px;white-space:nowrap;flex:none">つぶやく</button>
     </div>
   </div>
@@ -1488,7 +1490,7 @@ function viewTl(){
 function bindTl(){
   const ta = document.getElementById("pctext"); if (!ta) return;
   const cnt = document.getElementById("pccnt");
-  ta.oninput = () => { S.pc.text = ta.value; cnt.textContent = ta.value.length + "/140"; cnt.classList.toggle("over", ta.value.length > 140); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 240) + "px"; };
+  ta.oninput = () => { S.pc.text = ta.value; cnt.textContent = ta.value.length >= 100 ? ta.value.length + "/140" : ""; cnt.classList.toggle("over", ta.value.length > 140); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 240) + "px"; };
   const f = document.getElementById("pcfile");
   f.onchange = () => { const file = f.files[0]; if (!file) return; S.pc.file = file; S.pc.preview = URL.createObjectURL(file); rerenderTl(true); };
   const sel = document.getElementById("pcsel");
