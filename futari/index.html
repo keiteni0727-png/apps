@@ -251,8 +251,9 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .anniv.cd{background:linear-gradient(135deg,#f0ebfb,#fde8ee 60%,#fff0ea)}
 .anniv.cd .num{color:var(--lav-d)}
 .anniv.cd .num small:first-child{margin:0 2px 0 0}
-.anniv.cd .next{min-width:0;max-width:58%}
-.anniv.cd .next b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--pink-d)}
+.anniv.cd>div:first-of-type{flex:none}
+.anniv.cd .next{flex:1;min-width:0;max-width:none}
+.anniv.cd .next b{color:var(--pink-d);line-height:1.35;margin-bottom:2px;word-break:break-word;overflow-wrap:anywhere}
 
 /* カレンダー */
 .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
