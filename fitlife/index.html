@@ -738,7 +738,9 @@ function ownerCharCard(){
   const list = [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
   return `<div class="card"><h2>🎁 ガチャのキャラを登録<span class="sub">${list.length}体</span></h2>
     <p class="muted" style="margin-top:0">ここで登録したキャラが、彼女のガチャから出てくるようになります。</p>
-    <label class="btn block filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop></label>
+    <div class="f2"><label class="btn filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop></label>
+      <button class="btn sub" data-a="pasteimg">📋 貼り付け</button></div>
+    <p class="muted" style="margin:6px 0 0">サイトの画像を長押しして「コピー」したら、「貼り付け」を押してね。</p>
     <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
     ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
       <button class="del" data-a="delchar" data-id="${c.docId}" aria-label="削除">×</button></li>`).join('')}</ul>` : ''}</div>`;
@@ -1164,6 +1166,13 @@ document.addEventListener('submit', async e => {
   }finally{ if(btn && btn.isConnected){ btn.disabled = false; btn.textContent = btn.dataset.t; } }
 });
 
+// パソコンでは Ctrl+V / ⌘+V でも貼り付けできる
+document.addEventListener('paste', e => {
+  if(S.role !== 'owner' || CROP || e.target.closest('input,textarea')) return;
+  const f = [...(e.clipboardData?.files || [])].find(x => x.type.startsWith('image/'));
+  if(f){ e.preventDefault(); openCrop(f); }
+});
+
 document.addEventListener('change', e => {
   const el = e.target.closest('input[data-crop]'); if(!el || !el.files[0]) return;
   openCrop(el.files[0]); el.value = '';
@@ -1204,6 +1213,17 @@ document.addEventListener('click', async e => {
         await deleteDoc(doc(db,'cheers',el.dataset.id)); toast('削除しました'); break;
       case 'lock': await lockNow(); toast('ロックしました'); break;
       case 'cropclose': if(CROP) URL.revokeObjectURL(CROP.url); CROP = null; closeSheet(); break;
+      case 'pasteimg': {
+        let blob = null;
+        try{
+          for(const item of await navigator.clipboard.read()){
+            const type = item.types.find(t => t.startsWith('image/'));
+            if(type){ blob = await item.getType(type); break; }
+          }
+        }catch(err){ console.error(err); toast('貼り付けできませんでした。もう一度ためしてね'); break; }
+        if(!blob){ toast('コピーした画像が見つからないよ。画像を長押しして「コピー」してね'); break; }
+        openCrop(blob); break;
+      }
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
       case 'pull': await pullGacha(); break;
