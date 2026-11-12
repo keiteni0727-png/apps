@@ -136,6 +136,22 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .clock .soon{font-size:12.5px;color:var(--u-sub);text-align:right;min-width:0}
 .clock .soon b{color:var(--u-ink);font-weight:700}
 .clock .soon .lbl{font-family:var(--u-num);font-size:10px;letter-spacing:.1em;color:var(--u-accent);margin-right:6px}
+.clock .unsw{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap;align-self:center}
+.clock .unsw small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);font-weight:600}
+.clock .unsw .tr{position:relative;width:32px;height:19px;border-radius:10px;background:var(--u-strong);transition:background .15s}
+.clock .unsw .tr i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s}
+.clock .unsw.on{border-color:var(--st-now);color:var(--st-now)}
+.clock .unsw.on .tr{background:var(--st-now)}
+.clock .unsw.on .tr i{left:15px}
+@media (max-width:600px){
+  .clock{gap:8px}
+  .clock .soon{flex-basis:100%;text-align:left}
+  .clock .unsw{font-size:12px;padding:4px 4px 4px 10px;gap:5px}
+  .clock .unsw small{display:none}
+  .clock .unsw .tr{width:30px;height:18px}
+  .clock .unsw .tr i{width:14px;height:14px}
+  .clock .unsw.on .tr i{left:14px}
+}
 /* library filter */
 .ftools{display:flex;gap:8px;padding-block:14px 0}
 .ftools input{flex:1;min-width:0;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
@@ -962,6 +978,7 @@ state.fOpen = "";
 if (!["a", "d", "m", "s", "yt"].includes(state.mode)) state.mode = "a";
 if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
 if (typeof state.vod !== "string") state.vod = "";
+state.unOnly = !!state.unOnly;
 if (state.mode === "m") state.kind = state.mk;
 else if (state.mode === "s") state.kind = "all";
 else if (state.mode !== "yt") state.kind = state.mode;
@@ -972,6 +989,7 @@ const saveUI = () =>
     kind: state.kind,
     mk: state.mk,
     vod: state.vod,
+    unOnly: state.unOnly,
     view: state.view,
     sf: state.sf,
     era: state.era,
@@ -1862,7 +1880,9 @@ function clockHtml() {
     const today = jst(now).day === j.day;
     soon = `<div class="soon"><span class="lbl">NEXT</span>${today ? "今日" : j.md + "(" + j.dow + ")"}${noTime(best.e, best.i) ? "" : " " + j.hm}　<b>${esc(best.i.t)}</b> ${esc(best.e.n)}</div>`;
   }
-  return `<div class="now"><time datetime="${d.toISOString()}">${hm}</time><span class="date">${date}</span></div>${soon}`;
+  const un = items.filter(i => ofKind(i) && i.s === "視聴中" && nextInfo(i).back.length).length;
+  const sw = `<button type="button" class="unsw${state.unOnly ? " on" : ""}" data-unsw role="switch" aria-checked="${state.unOnly}">未視聴あり<small>${un}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
+  return `<div class="now"><time datetime="${d.toISOString()}">${hm}</time><span class="date">${date}</span></div>${sw}${soon}`;
 }
 setInterval(() => {
   const c = $("#clock");
@@ -1987,8 +2007,11 @@ function isFinOn(i, day) {
   return !!j && j.day === day;
 }
 function renderWeek() {
-  const pool = items.filter(i => ofKind(i) && vodOk(i) && i.s === "視聴中");
-  let h = `<div class="fwrap">${fRowHtml(["vod"])}${fPopHtml({ vod: vodPanelHtml() })}</div><div class="clock" id="clock">${clockHtml()}</div>`;
+  /* 番組表：配信の絞り込みは無し。「未視聴あり」スイッチがオンなら未視聴の話がある作品だけ */
+  const pool = items.filter(
+    i => ofKind(i) && i.s === "視聴中" && (!state.unOnly || nextInfo(i).back.length),
+  );
+  let h = `<div class="clock" id="clock">${clockHtml()}</div>`;
   const now = new Date();
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const by = new Map();
@@ -2021,7 +2044,8 @@ function renderWeek() {
   const free = pool.filter(i => i.dow < 0);
   if (free.length)
     h += `<section class="day"><div class="dayhd"><h2>配信・その他</h2><small>${free.length}本</small></div><div class="slots">${free.map(i => slotRow(i, true)).join("")}</div></section>`;
-  if (!pool.length)
+  if (!pool.length && state.unOnly) h += `<p class="empty">未視聴の作品はありません。</p>`;
+  else if (!pool.length)
     h += `<p class="empty">視聴中の作品はありません。ライブラリで作品を開き「視聴中」にすると、ここに曜日ごとに並びます。</p>`;
   return h;
 }
@@ -4200,6 +4224,12 @@ function onNavClick(e) {
     } else state.view = v;
     render();
     scrollTo(0, 0);
+    return true;
+  }
+  if (e.target.closest("[data-unsw]")) {
+    state.unOnly = !state.unOnly;
+    saveUI();
+    render();
     return true;
   }
   const vb = e.target.closest("[data-vod]");
