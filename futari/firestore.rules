@@ -78,6 +78,19 @@ service cloud.firestore {
           && request.resource.data.title.size() <= 100;
       }
 
+      // つぶやき。ふたりだけ。消せるのは書いた本人だけ
+      match /posts/{postId} {
+        allow read, update: if isMember(roomId);
+        allow create: if isMember(roomId)
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() <= 500;
+        allow delete: if isMember(roomId) && resource.data.by == request.auth.uid;
+      }
+      match /postPhotos/{postId} {
+        allow read, write: if isMember(roomId);
+      }
+
       // 相性テストの答え。ふたりだけ
       match /quiz/{setId} {
         allow read, write: if isMember(roomId);

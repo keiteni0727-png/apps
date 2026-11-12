@@ -310,6 +310,43 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .qa span{width:64px;flex:none;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .qa b{font-weight:500}
 .qa em{margin-left:auto;font-style:normal;font-size:11px;background:var(--lav-l);color:var(--lav-d);border-radius:99px;padding:0 8px;white-space:nowrap}
+/* つぶやき */
+.pc{background:#fff;border-radius:24px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:14px}
+.pc .top{display:flex;gap:10px;align-items:flex-start}
+.pc textarea{flex:1;border:0;outline:0;resize:none;font:inherit;font-size:15px;min-height:56px;background:transparent;color:var(--ink);padding:6px 0}
+.pc .att{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px 46px}
+.pc .att img{width:84px;height:84px;object-fit:cover;border-radius:14px;display:block}
+.pc .bar{display:flex;align-items:center;gap:4px;border-top:1px solid var(--line);padding-top:8px;margin-left:46px}
+.pc .tool{white-space:nowrap;flex:none;border:0;background:var(--pink-l);color:var(--pink-d);border-radius:99px;padding:6px 12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.pc .cnt{white-space:nowrap;margin-left:auto;font-size:12px;color:var(--muted)}
+.pc .cnt.over{color:#d9534f;font-weight:700}
+.pc select{margin:0 0 8px 46px;width:calc(100% - 46px)}
+.av{width:36px;height:36px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff;background:linear-gradient(135deg,#f9b6c7,#e2809c)}
+.av.p{background:linear-gradient(135deg,#cfc2f2,#9d88dc)}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--lav-l);color:var(--lav-d);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0}
+.chip .xx{margin-left:2px;opacity:.7}
+.post{display:flex;gap:10px;background:#fff;border-radius:22px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px}
+.post .body{flex:1;min-width:0}
+.post .hd{display:flex;align-items:baseline;gap:6px;font-size:13px}
+.post .hd b{font-size:14px}
+.post .hd .tm{color:var(--muted);font-size:12px}
+.post .hd .more{margin-left:auto;border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px}
+.post .tx{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.6;margin:2px 0 6px}
+.post .pimg{width:100%;max-height:320px;object-fit:cover;border-radius:16px;display:block;margin:4px 0 6px;cursor:zoom-in;background:#f5f0f3}
+.post .acts{display:flex;gap:18px;margin-top:2px}
+.post .acts button{border:0;background:none;color:var(--muted);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:2px 0}
+.post .acts button.on{color:var(--pink-d);font-weight:700}
+.post .acts .hrt{font-size:16px;transition:transform .15s}
+.post .acts button.on .hrt{animation:pop .4s ease}
+.reps{margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.rep{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:14px}
+.rep .av{width:24px;height:24px;font-size:11px}
+.rep .rb{flex:1;min-width:0;background:var(--bg);border-radius:14px;padding:5px 10px;white-space:pre-wrap;word-break:break-word}
+.rep .rb small{display:block;color:var(--muted);font-size:11px}
+.rep .rdel{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer}
+.rform{display:flex;gap:6px;margin-top:6px}
+.rform input{flex:1;min-width:0;padding:8px 12px;font-size:14px}
+.newmark{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--pink-d);border-radius:99px;padding:0 6px;margin-left:4px}
 </style>
 </head>
 <body>
@@ -344,6 +381,7 @@ const IC = {
   both: '<svg viewBox="0 0 24 24" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.3 4.5 6.8 4.5c2.1 0 3.6 1.2 5.2 3.1 1.6-1.9 3.1-3.1 5.2-3.1 3.5 0 5.4 3.5 4.1 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/><path d="M9 11.5l2 2 4-4" stroke-linecap="round"/></svg>',
   dice: '<svg viewBox="0 0 24 24" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="8.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.1" fill="currentColor"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1.1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1.1" fill="currentColor"/></svg>',
   memo: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M4 15.5l4.5-4 3.5 3 2.5-2 5.5 4.5"/><circle cx="15" cy="8" r="1.6"/></svg>',
+  tl: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><path d="M4.5 6.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-5l-4.5 3.8v-3.8h-0.5a3 3 0 0 1-2-3z"/><path d="M8.5 9h7M8.5 12.2h4.5"/></svg>',
   cal: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="4"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 17.6s-2.6-1.6-3.2-3.1c-.4-1.1.3-2.1 1.3-2.1.8 0 1.3.5 1.9 1.2.6-.7 1.1-1.2 1.9-1.2 1 0 1.7 1 1.3 2.1-.6 1.5-3.2 3.1-3.2 3.1z" fill="currentColor" stroke="none"/></svg>'
 };
 
@@ -444,7 +482,7 @@ const db = getFirestore(fbApp);
 
 /* ---------- 状態 ---------- */
 const S = {
-  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, extraErr:null, subs:[],
+  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, posts:[], replyOpen:null, extraErr:null, subs:[],
   calY:null, calM:null, calSel:null, qv:null,
   tab:"list", cat:"all", sort:"new", q:"",
   rMode:"both", rCat:"all", rResult:null, rSpin:false,
@@ -719,6 +757,17 @@ function openRoom(roomId, fresh){
     S.dates = snap.docs.map(d => ({ id: d.id, ...d.data() })); S.extraErr = null;
     if (gotRoom && gotPlaces) render();
   }, extraErr));
+  S.posts = [];
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "posts"), snap => {
+    S.posts = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0));
+    if (!(gotRoom && gotPlaces)) return;
+    if (S.tab === "tl") { markTlSeen(); const v = document.getElementById("feed"); if (v) {
+      const ae = document.activeElement, rf = ae?.closest?.(".rform"), keep = rf ? { id: rf.dataset.id, val: ae.value } : null;
+      v.innerHTML = feedHtml();
+      if (keep) { const inp = document.querySelector(`#post-${keep.id} .rform input`); if (inp) { inp.value = keep.val; inp.focus(); } }
+      $nav.querySelector('[data-v="tl"] .n')?.remove(); return; } }
+    render();
+  }, () => {}));
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "quiz"), snap => {
     S.quiz = Object.fromEntries(snap.docs.map(d => [d.id, d.data()]));
     if (gotRoom && gotPlaces) render();
@@ -749,17 +798,19 @@ function render(){
   <div id="view">${view()}</div>`;
   const tabs = [
     ["list", IC.list, "行きたい"],
-    ["both", IC.both, "ふたりで♡", both],
+    ["both", IC.both, "ふたり♡", both],
     ["rand", IC.dice, "きめる"],
     ["cal", IC.cal, "よてい"],
+    ["tl", IC.tl, "つぶやき", S.tab === "tl" ? 0 : tlNew(), "NEW"],
     ["memo", IC.memo, "おもいで"]
   ];
   $nav.innerHTML = `
   ${S.tab === "list" || S.tab === "both" ? `<button class="fab" data-a="add" aria-label="候補を追加">${IC.plus}</button>` : ""}
   ${S.tab === "cal" ? `<button class="fab" data-a="dateAdd" aria-label="予定を追加">${IC.plus}</button>` : ""}
-  <nav class="tabs"><div class="in2">${tabs.map(([id, ic, n, c]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${ic}<span>${n}${c ? `<span class="n">${c}</span>` : ""}</span></button>`).join("")}</div></nav>`;
+  <nav class="tabs"><div class="in2">${tabs.map(([id, ic, n, c, lbl]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${ic}<span>${n}${c ? `<span class="n">${lbl || c}</span>` : ""}</span></button>`).join("")}</div></nav>`;
   const q = document.getElementById("q");
   if (q) q.oninput = () => { S.q = q.value; document.getElementById("plist").innerHTML = listHtml(filtered()); document.getElementById("cnt").textContent = filtered().length + "件"; };
+  if (S.tab === "tl") bindTl();
 }
 
 function view(){
@@ -767,6 +818,7 @@ function view(){
   if (S.tab === "rand") return viewRand();
   if (S.tab === "memo") return viewMemo();
   if (S.tab === "cal") return viewCal();
+  if (S.tab === "tl") { markTlSeen(); return viewTl(); }
   return viewList();
 }
 
@@ -1355,6 +1407,119 @@ function quizResultHtml(id){
   <div class="gap"></div><button class="btn ghost block" data-a="qreset" data-v="${id}">ふたりともやり直す</button>`;
 }
 
+/* =============== つぶやき（ふたりのタイムライン） =============== */
+const TL_MAX = 300;
+const tlKey = () => "futari_tlseen_" + S.roomId;
+function tlSeenAt(){ try { return Number(localStorage.getItem(tlKey()) || 0); } catch { return 0; } }
+function markTlSeen(){
+  const top = S.posts.filter(p => p.by !== me()).reduce((m, p) => Math.max(m, p.at || 0, ...(p.replies || []).filter(r => r.by !== me()).map(r => r.at || 0)), 0);
+  if (!S.tlPrevSeen) S.tlPrevSeen = tlSeenAt();
+  try { if (top > tlSeenAt()) localStorage.setItem(tlKey(), String(top)); } catch {}
+}
+function tlNew(){
+  const seen = tlSeenAt();
+  return S.posts.filter(p => (p.by !== me() && (p.at || 0) > seen) || (p.replies || []).some(r => r.by !== me() && (r.at || 0) > seen)).length;
+}
+function timeAgo(ms){
+  if (!ms) return "";
+  const s = (Date.now() - ms) / 1000;
+  if (s < 60) return "たった今";
+  if (s < 3600) return Math.floor(s / 60) + "分前";
+  if (s < 86400) return Math.floor(s / 3600) + "時間前";
+  const d = new Date(ms), t = new Date();
+  const y = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return "昨日";
+  return (d.getFullYear() !== t.getFullYear() ? d.getFullYear() + "/" : "") + (d.getMonth() + 1) + "/" + d.getDate();
+}
+const avHtml = uid => `<div class="av ${uid === me() ? "" : "p"}">${esc([...nameOf(uid)][0] || "?")}</div>`;
+function attachChip(post, removable){
+  if (post.placeId) {
+    const p = S.places.find(x => x.id === post.placeId);
+    const t = p ? catOf(p.cat).e + " " + p.title : "📍 " + (post.attTitle || "行きたい場所");
+    return `<button type="button" class="chip" ${removable ? 'data-a="pcClear"' : `data-a="${p ? "open" : ""}" data-id="${esc(post.placeId)}"`}>${esc(t)}${removable ? '<span class="xx">×</span>' : ""}</button>`;
+  }
+  if (post.dateId) {
+    const d = S.dates.find(x => x.id === post.dateId);
+    const t = "📅 " + (d ? `${+d.date.slice(5, 7)}/${+d.date.slice(8, 10)} ${dateTitle(d)}` : (post.attTitle || "デートの予定"));
+    return `<button type="button" class="chip" ${removable ? 'data-a="pcClear"' : `data-a="${d ? "dateOpen" : ""}" data-id="${esc(post.dateId)}"`}>${esc(t)}${removable ? '<span class="xx">×</span>' : ""}</button>`;
+  }
+  return "";
+}
+function postHtml(p){
+  const likes = Object.keys(p.likes || {}), liked = !!(p.likes || {})[me()], reps = p.replies || [], open = S.replyOpen === p.id;
+  const isNew = p.by !== me() && (p.at || 0) > (S.tlPrevSeen || 0);
+  return `<div class="post" id="post-${p.id}">${avHtml(p.by)}<div class="body">
+    <div class="hd"><b>${esc(nameOf(p.by))}</b><span class="tm">${timeAgo(p.at)}</span>${isNew ? '<span class="newmark">NEW</span>' : ""}${p.by === me() ? `<button class="more" data-a="postDel" data-id="${p.id}" aria-label="削除">⋯</button>` : ""}</div>
+    ${p.text ? `<div class="tx">${esc(p.text)}</div>` : ""}
+    ${p.thumb ? `<img class="pimg" src="${p.thumb}" alt="" data-a="pzoom" data-id="${p.id}">` : ""}
+    ${attachChip(p)}
+    <div class="acts">
+      <button class="${liked ? "on" : ""}" data-a="postLike" data-id="${p.id}"><span class="hrt">${liked ? "♥" : "♡"}</span>${likes.length || ""}${likes.length && !liked ? ` <small>${esc(nameOf(likes[0]))}</small>` : ""}</button>
+      <button class="${open ? "on" : ""}" data-a="postReply" data-id="${p.id}">💬 ${reps.length || "返信"}</button>
+    </div>
+    ${reps.length || open ? `<div class="reps">${reps.map((r, i) => `<div class="rep">${avHtml(r.by)}<div class="rb">${esc(r.text)}<small>${esc(nameOf(r.by))} ・ ${timeAgo(r.at)}</small></div>${r.by === me() ? `<button class="rdel" data-a="repDel" data-id="${p.id}" data-v="${i}" aria-label="返信を消す">×</button>` : ""}</div>`).join("")}
+      ${open ? `<form class="rform" data-id="${p.id}"><input class="in" name="r" maxlength="200" placeholder="返信する…" autocomplete="off"><button class="btn sm">送る</button></form>` : ""}</div>` : ""}
+  </div></div>`;
+}
+function feedHtml(){
+  if (!S.posts.length) return `<div class="empty"><div class="big">💬</div><p>まだつぶやきがありません</p><p>行きたい場所のこと、今日のこと、なんでもどうぞ</p></div>`;
+  return S.posts.slice(0, TL_MAX).map(postHtml).join("");
+}
+function viewTl(){
+  const c = S.pc || (S.pc = {});
+  const opts = [
+    ...sortPlaces(S.places.filter(p => !p.visited)).map(p => [`p:${p.id}`, `${catOf(p.cat).e} ${p.title}`]),
+    ...S.dates.filter(d => d.date >= addDays(today(), -30)).sort(dateSort).map(d => [`d:${d.id}`, `📅 ${+d.date.slice(5, 7)}/${+d.date.slice(8, 10)} ${dateTitle(d)}`])
+  ];
+  return `<div class="pc" id="pc">
+    <div class="top">${avHtml(me())}<textarea id="pctext" maxlength="500" placeholder="${esc(isPaired() ? nameOf(partnerUid()) + "につぶやく…" : "いまどうしてる？")}">${esc(c.text || "")}</textarea></div>
+    ${c.pick ? `<select class="in" id="pcsel"><option value="">行きたい場所・予定をえらぶ</option>${opts.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join("")}</select>` : ""}
+    <div class="att" id="pcatt">${c.preview ? `<img src="${c.preview}" alt="">` : ""}${attachChip(c, true)}</div>
+    <div class="bar">
+      <label class="tool">📷 ${c.file ? "変更" : "写真"}<input type="file" accept="image/*" id="pcfile" hidden></label>
+      ${c.file ? `<button class="tool" data-a="pcNoPhoto">写真×</button>` : ""}
+      <button class="tool" data-a="pcPick">📍 場所</button>
+      <span class="cnt" id="pccnt">${(c.text || "").length}/140</span>
+      <button class="btn sm" data-a="pcSend" style="margin-left:6px;white-space:nowrap;flex:none">つぶやく</button>
+    </div>
+  </div>
+  <div id="feed">${feedHtml()}</div>`;
+}
+function bindTl(){
+  const ta = document.getElementById("pctext"); if (!ta) return;
+  const cnt = document.getElementById("pccnt");
+  ta.oninput = () => { S.pc.text = ta.value; cnt.textContent = ta.value.length + "/140"; cnt.classList.toggle("over", ta.value.length > 140); ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 240) + "px"; };
+  const f = document.getElementById("pcfile");
+  f.onchange = () => { const file = f.files[0]; if (!file) return; S.pc.file = file; S.pc.preview = URL.createObjectURL(file); rerenderTl(true); };
+  const sel = document.getElementById("pcsel");
+  if (sel) sel.onchange = () => { const v = sel.value; S.pc.placeId = v.startsWith("p:") ? v.slice(2) : ""; S.pc.dateId = v.startsWith("d:") ? v.slice(2) : ""; S.pc.pick = false; rerenderTl(true); };
+}
+function rerenderTl(focus){
+  if (S.tab !== "tl") return;
+  document.getElementById("view").innerHTML = viewTl(); bindTl();
+  if (focus) { const ta = document.getElementById("pctext"); ta?.focus(); ta?.setSelectionRange(ta.value.length, ta.value.length); }
+}
+async function sendPost(btn){
+  const c = S.pc || {}, text = (c.text || "").trim();
+  if (!text && !c.file) return toast("ひとことか写真を入れてね");
+  if (text.length > 140) return toast("140文字までにしてね");
+  btn.disabled = true; btn.textContent = c.file ? "写真を保存中…" : "送信中…";
+  try {
+    const ref = doc(collection(db, "rooms", S.roomId, "posts"));
+    const data = { text, by: me(), at: Date.now(), createdAt: serverTimestamp(), likes: {}, replies: [] };
+    if (c.placeId) { data.placeId = c.placeId; data.attTitle = S.places.find(x => x.id === c.placeId)?.title || ""; }
+    if (c.dateId) { data.dateId = c.dateId; const d = S.dates.find(x => x.id === c.dateId); data.attTitle = d ? dateTitle(d) : ""; }
+    if (c.file) {
+      const im = await loadImg(c.file);
+      await setDoc(doc(db, "rooms", S.roomId, "postPhotos", ref.id), { img: shrink(im, 1280, 700000), by: me(), updatedAt: serverTimestamp() });
+      data.thumb = shrink(im, 720, 90000);
+    }
+    await setDoc(ref, data);
+    S.pc = {}; S.tab = "tl"; render(); toast("つぶやきました💬");
+  } catch (e) { toast("送れませんでした（" + (e.code || e.message) + "）"); btn.disabled = false; btn.textContent = "つぶやく"; }
+}
+function refreshPost(id){ const p = S.posts.find(x => x.id === id), el = document.getElementById("post-" + id); if (p && el) el.outerHTML = postHtml(p); }
+
 /* =============== シート：詳細 =============== */
 function openDetail(id){
   const p = S.places.find(x => x.id === id); if (!p) return closeSheet();
@@ -1382,6 +1547,7 @@ function openDetail(id){
       : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? "♡ 行きたいを取り消す" : "♡ 行きたい！"}</button><div class="gap"></div>
          <button class="btn mint block" data-a="visit" data-id="${p.id}">行った！</button><div class="gap"></div>
          <button class="btn lav block" data-a="dateAdd" data-pid="${p.id}">📅 デートの予定に入れる</button>`}
+         <div class="gap"></div><button class="btn ghost block" data-a="postAbout" data-pid="${p.id}">💬 この場所についてつぶやく</button>
     <div class="gap"></div>
     <div class="row"><button class="btn ghost sm" style="flex:1" data-a="edit" data-id="${p.id}">編集</button><button class="btn danger sm" style="flex:1" data-a="del" data-id="${p.id}">削除</button></div>
   </div>`);
@@ -1613,7 +1779,7 @@ function confirmSheet(title, text, okLabel, act, danger = true){
 }
 
 /* =============== ボタンが押されたとき =============== */
-let pendingDel = null, pendingDate = null, pendingQuiz = null;
+let pendingDel = null, pendingDate = null, pendingQuiz = null, pendingPost = null;
 document.addEventListener("click", async ev => {
   const el = ev.target.closest("[data-a]"); if (!el) return;
   const a = el.dataset.a, id = el.dataset.id;
@@ -1645,7 +1811,7 @@ document.addEventListener("click", async ev => {
     case "join": joinRoom(); break;
     case "joinCancel": S.skipInvite = S.invite?.roomId; S.invite = null; route(); break;
     case "recheck": { el.disabled = true; const inv = await findInvite(); if (inv && inv.roomId) renderJoin(inv); else { el.disabled = false; toast("まだ招待は届いていないみたい"); } break; }
-    case "tab": S.tab = el.dataset.v; if (S.tab !== "rand") S.rResult = null; render(); window.scrollTo(0, 0); break;
+    case "tab": S.tab = el.dataset.v; if (S.tab === "tl") S.tlPrevSeen = tlSeenAt(); if (S.tab !== "rand") S.rResult = null; render(); window.scrollTo(0, 0); break;
     case "cat": S.cat = el.dataset.v; render(); break;
     case "rmode": S.rMode = el.dataset.v; S.rResult = null; document.getElementById("view").innerHTML = viewRand(); break;
     case "rcat": S.rCat = el.dataset.v; S.rResult = null; document.getElementById("view").innerHTML = viewRand(); break;
@@ -1697,6 +1863,36 @@ document.addEventListener("click", async ev => {
       try { await updateDoc(doc(db, "rooms", S.roomId), { since: deleteField() }); closeSheet(); toast("消しました"); }
       catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
       break;
+    case "pcPick": S.pc ||= {}; S.pc.pick = !S.pc.pick; rerenderTl(); break;
+    case "pcClear": S.pc.placeId = ""; S.pc.dateId = ""; rerenderTl(true); break;
+    case "pcNoPhoto": S.pc.file = null; S.pc.preview = ""; rerenderTl(true); break;
+    case "pcSend": sendPost(el); break;
+    case "postAbout": closeSheet(); S.pc = { placeId: el.dataset.pid }; S.tab = "tl"; render(); window.scrollTo(0, 0); { const ta = document.getElementById("pctext"); ta?.focus(); } break;
+    case "postLike": {
+      const p = S.posts.find(x => x.id === id); if (!p) break;
+      const on = !(p.likes || {})[me()];
+      p.likes = { ...(p.likes || {}) }; if (on) p.likes[me()] = true; else delete p.likes[me()];
+      refreshPost(id);
+      updateDoc(doc(db, "rooms", S.roomId, "posts", id), { ["likes." + me()]: on ? true : deleteField() }).catch(e => toast("うまくいきませんでした（" + (e.code || e.message) + "）"));
+      break;
+    }
+    case "postReply": S.replyOpen = S.replyOpen === id ? null : id; refreshPost(id); if (S.replyOpen) document.querySelector(`#post-${id} .rform input`)?.focus(); break;
+    case "repDel": {
+      const p = S.posts.find(x => x.id === id); if (!p) break;
+      const reps = (p.replies || []).filter((_, i) => i !== Number(el.dataset.v));
+      try { await updateDoc(doc(db, "rooms", S.roomId, "posts", id), { replies: reps }); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    }
+    case "postDel": pendingPost = id; confirmSheet("つぶやきを消しますか？", "このつぶやきと、ついている返信・写真が消えます。", "消す", "postDelOk"); break;
+    case "postDelOk":
+      try { deleteDoc(doc(db, "rooms", S.roomId, "postPhotos", pendingPost)).catch(() => {}); await deleteDoc(doc(db, "rooms", S.roomId, "posts", pendingPost)); closeSheet(); toast("消しました"); }
+      catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
+      break;
+    case "pzoom": {
+      const z = document.createElement("div"); z.className = "zoom"; z.innerHTML = `<img src="${el.src}" alt="">`; z.onclick = () => z.remove(); document.body.appendChild(z);
+      getDoc(doc(db, "rooms", S.roomId, "postPhotos", id)).then(snap => { const im = z.querySelector("img"); if (snap.exists() && im) im.src = snap.data().img; }).catch(() => {});
+      break;
+    }
     case "dateAdd": openDateEdit(null, { placeId: el.dataset.pid || "", date: S.tab === "cal" && S.calSel >= today() ? S.calSel : "" }); break;
     case "dateOpen": openDateEdit(id); break;
     case "dateDel": {
@@ -1750,6 +1946,15 @@ document.addEventListener("click", async ev => {
       } catch (e) { toast("抜けられませんでした（" + (e.code || e.message) + "）"); if (S.profile.roomId) openRoom(S.profile.roomId); }
       break;
   }
+});
+document.addEventListener("submit", async ev => {
+  const f = ev.target.closest(".rform"); if (!f) return;
+  ev.preventDefault();
+  const id = f.dataset.id, inp = f.querySelector("input"), text = inp.value.trim(); if (!text) return;
+  const b = f.querySelector("button"); b.disabled = true;
+  try { await updateDoc(doc(db, "rooms", S.roomId, "posts", id), { replies: arrayUnion({ by: me(), text: text.slice(0, 200), at: Date.now() }) }); inp.value = ""; }
+  catch (e) { toast("送れませんでした（" + (e.code || e.message) + "）"); }
+  b.disabled = false;
 });
 document.addEventListener("change", ev => {
   if (ev.target.matches("select[data-a=sort]")) { S.sort = ev.target.value; render(); }
