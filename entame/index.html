@@ -595,6 +595,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 }
 .nosong{color:var(--u-sub);font-size:13px}
 .nob{margin-left:8px}
+.nofl{margin-top:2px;font-size:12px;color:var(--u-sub)}
 .nosw{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
 /* 番組表：時刻の下の放送局 */
 .time .tst{font-family:var(--u-f);font-size:9.5px;font-weight:700;color:var(--u-sub);line-height:1.3;white-space:nowrap;letter-spacing:-.02em}
@@ -715,6 +716,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .dmiss .mbtns button:hover{background:currentColor}
   .dmiss .mbtns button:hover span{color:var(--u-surface)}
   .dmiss .mbtns .st{border-style:dashed;cursor:default;background:none}
+  .dmiss .mi{display:inline-flex}
+  .dmiss .mi button:first-child:not(:last-child){border-radius:999px 0 0 999px}
+  .dmiss .mi .nb{border-left:0;border-radius:0 999px 999px 0;padding:3px 9px;font-weight:500;opacity:.85}
 }
 /* 絞り込み：未入力ありスイッチ（番組表・ライブラリ）と項目ごとの絞り込み */
 .misw,.clock .misw{display:none}
@@ -1735,21 +1739,27 @@ function missingOf(i) {
   const sl = songsOf(i);
   const no = i.noSongs || [];
   const needSong = t => !no.includes(t) && !sl.some(x => x.type === t && (x.s || "").trim());
+  const nf = i.noF || [];
   const out = [];
-  const add = (k, j, dt) => out.push({ k, j, dt });
+  const add = (k, j, dt, n) => (!n || !nf.includes(n)) && out.push({ k, j, dt, n });
   if (!i.s) add("ステータス", "", "");
   if (md !== "movie" && !episodes(i).length) add("話数", "", "ep");
   if (!i.from) add({ movie: "公開日", ova: "発売日" }[md] || "開始日", "f-from");
-  if (!ns && !irr && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time");
-  if (md === "tv" && !m.stations.length) add("放送局", "fMedia");
-  if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia");
-  if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia");
-  if (!ns && !(i.cours || []).length) add("放送クール", "coursBox");
+  if (!ns && !irr && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "", "time");
+  if (md === "tv" && !m.stations.length) add("放送局", "fMedia", "", "st");
+  if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "", "plat");
+  if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "", "vods");
+  if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "", "cours");
   (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
-  if (!(i.url || "").trim()) add("公式サイト", "f-url");
-  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl");
+  if (!(i.url || "").trim()) add("公式サイト", "f-url", "", "url");
+  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "", "vurl");
   return out;
 }
+/* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
+const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods: "見られる配信", cours: "放送クール", url: "公式サイト", vurl: "配信URL" };
+const nofHas = (i, k) => (i.noF || []).includes(k);
+const nofBox = (k, lab) =>
+  `<label class="yr nofl"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""}>${lab || NOF_LAB[k]}なし</label>`;
 const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "見られる配信", "放送クール", "OP", "ED", "主題歌", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
@@ -2647,15 +2657,16 @@ function vodName(it) {
 }
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
+  const nn = t => `<span class="nosong">${t}</span>`;
   const when = [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim();
   const per = periodOf(it);
   const cour = cs.map(courLabel).join("・");
   const head = { tv: "放送", movie: "上映", ova: "発売", stream: "配信" }[md] || "放送";
   const perLab = mv ? "公開日" : md === "ova" ? "発売期間" : "期間";
   const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
-    ${ns ? "" : `<div class="ibig"><span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
+    ${ns ? "" : `<div class="ibig"><span data-jump="f-time">${when ? esc(when) : nofHas(it, "time") ? nn("時間なし") : un("曜日・時間 未設定")}</span>${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
     <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
-    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${stv}</span>` : un("放送局・配信 未設定")}</div></div>`;
+    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${stv}</span>` : nofHas(it, md === "stream" ? "plat" : md === "tv" ? "st" : "vods") ? nn({ tv: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
   const songs = songRows
     .map(([k, v]) => {
       const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
@@ -2672,11 +2683,11 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   }${
     it.url
       ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener">公式サイト ↗</a>`
-      : `<button type="button" class="ilk off" data-jump="f-url">公式サイト未設定</button>`
+      : `<button type="button" class="ilk off" data-jump="f-url">公式サイト${nofHas(it, "url") ? "なし" : "未設定"}</button>`
   }${
     it.vurl
       ? `<a class="ilk" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
-      : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL未設定</button>`
+      : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL${nofHas(it, "vurl") ? "なし" : "未設定"}</button>`
   }</div>`;
   return bc + (songs ? `<div class="icard isongs">${songs}</div>` : "") + links;
 }
@@ -2821,17 +2832,21 @@ function renderDetail(it) {
     <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
 }
 /* 詳細のアラート（PCだけ）：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */
+let dmissKeep = false;
 function missDetail(it) {
   const l = missingOf(it);
   if (!l.length) return "";
   const hot = l.some(x => x.k === "話数");
+  const nb = x => (x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする"><span>なし</span></button>` : "");
   const btn = x =>
+    `<span class="mi">${btn1(x)}${nb(x)}</span>`;
+  const btn1 = x =>
     x.dt
       ? `<button type="button" data-dtab="${x.dt}"><span>${esc(x.k)}を登録</span></button>`
       : x.j
         ? `<button type="button" data-jump="${x.j}"><span>✎ ${esc(x.k)}</span></button>`
         : `<button type="button" class="st" tabindex="-1"><span>${esc(x.k)}（上で選択）</span></button>`;
-  return `<details class="dmiss${hot ? " hot" : ""}"><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+  return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function refreshSheet() {
   const it = items.find(x => x.id === openId);
@@ -2849,6 +2864,7 @@ function openDetail(id) {
   openId = id;
   epEdit = null;
   subPaste = null;
+  dmissKeep = false;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
   setDTab("info");
@@ -3092,14 +3108,14 @@ function formHtml() {
         }
       </div>`,
     media: `<div class="field full" id="fMedia"><span>放送形態</span><div class="segc" role="group" aria-label="放送形態">${seg("data-fm", MEDIA, f.media)}</div></div>
-      ${f.media === "tv" ? `<div class="field full"><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div></div>` : ""}
-      ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat)}</div></div>` : ""}
-      ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods)}</div></div>` : ""}`,
+      ${f.media === "tv" ? `<div class="field full"><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div>${nofBox("st")}</div>` : ""}
+      ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat)}</div>${nofBox("plat")}</div>` : ""}
+      ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods)}</div>${nofBox("vods", "見られる配信")}</div>` : ""}`,
     from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）" }[f.media] || "開始日（第1話）"}</span><input id="f-from" type="date" value="${esc(f.from)}"></label>`,
     time:
       noSched(f.media)
         ? ""
-        : `<label class="field"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}"></label>`,
+        : `<div class="field"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間" : "放送時間")}</div>`,
     sched: `<div class="field full"><div class="sched" id="schedHint">${schedText()}</div>
         ${noSched(f.media) ? "" : `<label class="yr"><input type="checkbox" id="f-irr" ${f.irregular ? "checked" : ""}>毎週の放送ではない（一挙配信・不定期など）</label>`}</div>`,
     cours:
@@ -3111,7 +3127,7 @@ function formHtml() {
         <details class="more-c"${f.courOpen || f.only ? " open" : ""}><summary>ほかのクールを追加・通年にする</summary>
           <div class="courpick"><select id="f-cy" aria-label="年">${years.map(k => `<option ${k === f.cy ? "selected" : ""}>${k}</option>`).join("")}</select><div class="segc" role="group" aria-label="季節を追加">${SEASONS.map(s => `<button type="button" data-couradd="${s}">${s}</button>`).join("")}</div></div>
           <label class="yr"><input type="checkbox" id="f-allyear" ${f.cours.includes(ALLYEAR) ? "checked" : ""}>通年（クールに関係なく放送している作品）</label>
-        </details></div>`,
+        </details>${nofBox("cours")}</div>`,
     n:
       f.id || f.media === "movie"
         ? ""
@@ -3121,8 +3137,8 @@ function formHtml() {
         <div class="chips" style="margin-top:4px">${songTypes.map(t => `<button type="button" data-sgadd="${t}">＋ ${t}</button>`).join("")}</div>
         <div class="nosw">${(f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"]).map(t => `<label class="yr"><input type="checkbox" class="nos" value="${t}" ${(f.noSongs || []).includes(t) ? "checked" : ""}>${t}なし</label>`).join("")}</div>
         ${f.only ? `<p class="hint" style="margin:6px 0 0">話によって曲が変わるときは、使われた話の範囲を入れます</p>` : ""}</div>`,
-    url: `<label class="field full"><span>公式サイト</span><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}"></label>`,
-    vurl: `<label class="field full"><span>配信サイト（見るページのURL）</span><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}"></label>`,
+    url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
+    vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信サイト（見るページのURL）</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
@@ -3164,6 +3180,10 @@ function readForm() {
   v("#f-sernew", "serNewName");
   const cy = g("#f-cy");
   if (cy) form.cy = +cy;
+  document.querySelectorAll("#titleF .nof").forEach(c => {
+    const l = (form.noF || []).filter(x => x !== c.value);
+    form.noF = c.checked ? [...l, c.value] : l;
+  });
   if ($("#sgList")) form.noSongs = [...document.querySelectorAll(".nos:checked")].map(x => x.value);
   if ($("#sgList"))
     form.songs = [...document.querySelectorAll("[data-sg]")].map(r => {
@@ -3209,6 +3229,7 @@ function openForm(it, target) {
       songs: songsOf(it).map(x => ({ ...x })),
       span: epSpan(it),
       noSongs: [...(it.noSongs || [])],
+      noF: [...(it.noF || [])],
       series: it.series || "",
       url: it.url || "",
       vurl: it.vurl || "",
@@ -3230,6 +3251,7 @@ function openForm(it, target) {
       plat: [],
       vods: [],
       songs: [],
+      noF: [],
       series: state.series.length === 1 ? state.series[0] : "",
       url: "",
       vurl: "",
@@ -3280,10 +3302,14 @@ async function submitForm() {
     cours: isMovie ? [] : f.cours,
     songs,
     noSongs: (f.noSongs || []).filter(t => !songs.some(x => x.type === t)),
+    noF: [],
     series: (f.series || "").trim(),
     url: (f.url || "").trim(),
     vurl: (f.vurl || "").trim(),
   };
+  /* 入力した項目の「なし」は自動で外す */
+  const filled = { time: patch.time, st: patch.stations.length, plat: patch.plat.length, vods: patch.vods.length, cours: patch.cours.length, url: patch.url, vurl: patch.vurl };
+  patch.noF = [...new Set(f.noF || [])].filter(k => k in filled && !filled[k]);
   if (f.id) {
     const id = f.id;
     close();
@@ -4720,6 +4746,13 @@ function onDetailClick(e) {
       openForm(it);
       return true;
     }
+    const nfb = e.target.closest("[data-nof]");
+    if (nfb) {
+      const k = nfb.dataset.nof;
+      dmissKeep = true;
+      saveTitle(it.id, { noF: [...new Set([...(it.noF || []), k])] }, `${NOF_LAB[k]}を「なし」にしました`);
+      return true;
+    }
     const nsb = e.target.closest("[data-nosong]");
     if (nsb) {
       const k = nsb.dataset.nosong;
@@ -5096,6 +5129,10 @@ document.addEventListener("change", e => {
   if (e.target.id === "spAdd" && subPaste) {
     subPaste.addMissing = e.target.checked;
     refreshSheet();
+    return;
+  }
+  if (e.target.classList?.contains("nof") && form) {
+    readForm();
     return;
   }
   if (e.target.id === "f-irr" && form) {
