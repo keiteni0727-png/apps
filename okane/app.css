@@ -1261,3 +1261,71 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .u-app .sb-foot{margin-top:auto;border-top:1px solid var(--u-line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
   .u-app .sb-st{font-size:11.5px;padding:4px 10px}
 }
+
+/* ===================== 見やすさの改善（2026-11） ===================== */
+/* ----- 家計簿：追加前の確認・明細の編集フォーム（スマホ・PC共通） -----
+  ・入力欄は白地＋はっきりした枠線。各欄の上に見出し
+  ・確認エリアは青い枠で囲み、入力中だとわかるようにする */
+.kb #review:not(:empty){background:var(--u-surface);border:1.5px solid var(--u-accent);border-radius:var(--u-rl);padding:12px 14px 14px;margin-top:10px;box-shadow:0 4px 16px rgba(47,111,237,.10)}
+.kb #review .rvh b{font-size:15px;color:var(--u-accent)}
+.kb .rv{background:var(--u-surface);gap:10px;padding:12px}
+.kb .rv label.fl{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--u-sub);min-width:0}
+.kb .rv .fl input,.kb .rv .fl select{background:var(--u-surface);border:1px solid var(--u-strong);min-height:44px;font-weight:500}
+.kb .rv .fl input:focus,.kb .rv .fl select:focus{outline:none;border-color:var(--u-accent);box-shadow:0 0 0 3px var(--u-accent2)}
+.kb .yen{position:relative;display:block}
+.kb .yen::before{content:"¥";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--u-sub);font-family:var(--u-num);font-weight:600;pointer-events:none}
+.kb .rv .yen input{padding-left:26px;font-family:var(--u-num);font-weight:600;font-size:18px}
+.kb .rv .mcs{margin-bottom:0}
+.kb .yen input::-webkit-outer-spin-button,.kb .yen input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.kb .yen input{-moz-appearance:textfield;appearance:textfield}
+.kb #review #ok{margin-top:4px;min-height:48px;font-size:16px}
+
+/* ----- 支払い：追加・編集の画面の入力欄も同じ見た目に ----- */
+.pay .sheet input:not([type=checkbox]):not([type=range]):not([type=radio]),.pay .sheet select,.pay .sheet textarea{background:var(--u-surface);border-color:var(--u-strong)}
+.pay .sheet input:focus,.pay .sheet select:focus,.pay .sheet textarea:focus{outline:none;border-color:var(--u-accent);box-shadow:0 0 0 3px var(--u-accent2)}
+.pay .field label{font-size:12px;font-weight:700}
+
+/* 支払いの上の段：スマホでは今までどおり縦に並べる */
+.pay .ptop{display:contents}
+
+@media (min-width:900px){
+  .kb .rv label.fl{font-size:13.5px}
+  .kb .rv .yen input{font-size:20px}
+  .pay .field label{font-size:13px}
+  /* 一覧の検索・絞り込みは1行に */
+  .kb .filters{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr)}
+  .kb .filters #fq{grid-column:auto}
+  /* 明細の1行を詰める（メモと分類・支払い方法を横に並べる） */
+  .kb #list .it{padding:7px 0}
+  .kb #list .it.on{padding:7px 16px}
+  .kb #list .itm{display:flex;align-items:center;gap:12px}
+  .kb #list .itm .memo{flex:1;min-width:0}
+  .kb #list .itm .tag{margin-top:0;flex:none;flex-wrap:nowrap}
+  .kb #list .ico{width:32px;height:32px;min-width:32px;border-radius:10px}
+}
+
+/* ----- PC（幅1100px以上）：横に広い画面を使って、縦のスクロールを減らす ----- */
+@media (min-width:1100px){
+  /* 家計簿：左に明細一覧、右にサマリと追加（右は画面に固定） */
+  .kb #v-list{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+  .kb #v-list>.card{grid-column:1;grid-row:1;margin:0}
+  .kb .kbside{grid-column:2;grid-row:1;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--abh) + 14px);max-height:calc(100vh - var(--abh) - 28px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:12px}
+  .kb .kbside>*{margin:0;flex-shrink:0}
+  .kb .kbside #review:not(:empty){box-shadow:none}
+  .kb .kbside .total{font-size:30px}
+  .kb .kbside .kpis b{font-size:15px}
+
+  /* 支払い：警告・次の支払い・集計期間を横1段に */
+  .pay .ptop{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:stretch}
+  .pay .ptop>:empty{display:none}
+  .pay .ptop>#cAlert:has(.alert){grid-column:1/-1}
+  .pay .ptop>#cAlert:not(:empty),.pay .ptop>#hNext:not(:empty){display:flex;flex-direction:column}
+  .pay .ptop .okline,.pay .ptop .nextpay{flex:1}
+  .pay .ptop .okline{display:flex;align-items:center;padding:14px 16px;border-radius:var(--u-rl)}
+  /* 左に支払い一覧、右にお金の流れ（右は画面に固定） */
+  .pay .cols-cycle{grid-template-columns:minmax(0,1fr) 340px}
+  .pay .cols-cycle>.stack14{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--abh) + 14px);max-height:calc(100vh - var(--abh) - 28px);overflow-y:auto;scrollbar-width:thin}
+  .pay .cols-cycle>.stack14>*{flex-shrink:0}
+}
+/* お金の流れ：最後の行の角を箱の角に合わせる */
+.pay .panel:has(>#cFlow){overflow:hidden}

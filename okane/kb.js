@@ -978,11 +978,11 @@ function renderList(mi) {
 }
 function editForm(i) {
   return `<div class="rv" data-e="${i.id}">
-  <input type="date" data-ef="date" value="${esc(ledger.draft.date)}" aria-label="日付">
-  <input type="number" data-ef="amount" value="${ledger.draft.amount}" inputmode="numeric" aria-label="金額">
-  <select data-ef="category" aria-label="分類">${opts(CATS, ledger.draft.category)}</select>
-  <select data-ef="method" aria-label="支払い方法">${opts(METHODS, ledger.draft.method)}</select>
-  ${memoChips(ledger.draft.category, ledger.draft.memo)}<input class="full" type="text" data-ef="memo" list="memos" value="${esc(ledger.draft.memo)}" placeholder="メモ（上の候補から選ぶか入力）">
+  <label class="fl">日付<input type="date" data-ef="date" value="${esc(ledger.draft.date)}"></label>
+  <label class="fl">金額<span class="yen"><input type="number" data-ef="amount" value="${ledger.draft.amount || ""}" placeholder="0" inputmode="numeric"></span></label>
+  <label class="fl">分類<select data-ef="category">${opts(CATS, ledger.draft.category)}</select></label>
+  <label class="fl">支払い方法<select data-ef="method">${opts(METHODS, ledger.draft.method)}</select></label>
+  ${memoChips(ledger.draft.category, ledger.draft.memo)}<label class="fl full">メモ<input type="text" data-ef="memo" list="memos" value="${esc(ledger.draft.memo)}" placeholder="上の候補から選ぶか入力"></label>
   <div class="row sp full"><button class="ghost" data-del="${i.id}">削除</button><div class="row"><button class="ghost" data-ecancel="1">キャンセル</button><button class="pri" data-esave="1">保存</button></div></div></div>`;
 }
 function renderReview() {
@@ -991,16 +991,16 @@ function renderReview() {
     return;
   }
   $("review").innerHTML =
-    `<div class="row sp mt12"><b>内容を確認（${ledger.pending.length}件）</b><button class="ghost" id="clr">破棄</button></div>` +
+    `<div class="row sp rvh"><b>内容を確認（${ledger.pending.length}件）</b><button class="ghost" id="clr">破棄</button></div>` +
     ledger.pending
       .map((p, k) => {
         const dup = items.some(i => i.date === p.date && i.amount === p.amount && (i.memo || "") === (p.memo || ""));
         return `<div class="rv${dup ? " dup" : ""}" data-k="${k}">
-  <input type="date" data-f="date" value="${esc(p.date)}" aria-label="日付">
-  <input type="number" data-f="amount" value="${p.amount}" inputmode="numeric" aria-label="金額">
-  <select data-f="category" aria-label="分類">${opts(CATS, p.category)}</select>
-  <select data-f="method" aria-label="支払い方法">${opts(METHODS, p.method)}</select>
-  ${memoChips(p.category, p.memo)}<input class="full" type="text" data-f="memo" list="memos" value="${esc(p.memo)}" placeholder="メモ（上の候補から選ぶか入力）">
+  <label class="fl">日付<input type="date" data-f="date" value="${esc(p.date)}"></label>
+  <label class="fl">金額<span class="yen"><input type="number" data-f="amount" value="${p.amount || ""}" placeholder="0" inputmode="numeric"></span></label>
+  <label class="fl">分類<select data-f="category">${opts(CATS, p.category)}</select></label>
+  <label class="fl">支払い方法<select data-f="method">${opts(METHODS, p.method)}</select></label>
+  ${memoChips(p.category, p.memo)}<label class="fl full">メモ<input type="text" data-f="memo" list="memos" value="${esc(p.memo)}" placeholder="上の候補から選ぶか入力"></label>
   <div class="row sp full"><span class="warn">${dup ? "同じ日付・金額の記録があります" : ""}</span><button class="ghost" data-rm="${k}">この行を外す</button></div></div>`;
       })
       .join("") +
@@ -2067,6 +2067,9 @@ function clickAdd(t, d) {
     ledger.pending.push(blank());
     renderReview();
     setMsg("");
+    /* 追加した行の金額欄にすぐ入力できるようにする */
+    const am = $("review").querySelectorAll('[data-f="amount"]');
+    if (am.length) am[am.length - 1].focus();
   } else if (d.rm) {
     ledger.pending.splice(+d.rm, 1);
     renderReview();

@@ -42,6 +42,7 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
 <div class="wrap anseg-w"><nav class="anseg" aria-label="分析の画面"><button data-tab="graph">グラフ</button><button data-tab="balance">残高と計画</button><button data-tab="ai">AI分析</button></nav></div>
 <div class="wrap layout">
   <section class="view" id="v-list">
+    <div class="kbside">
     <div class="card sum" id="summary"></div>
     <div class="card addcard">
       <div class="row">
@@ -52,6 +53,7 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
       <div class="mu mt8">カード明細・決済アプリ・レシートのスクショを複数枚まとめて選べます。</div>
       <div id="msg" class="mu"></div>
       <div id="review"></div>
+    </div>
     </div>
     <div class="card">
       <div id="lhead">
@@ -82,9 +84,11 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
 
   <!-- 支払い（概要＋毎月の支払い） -->
   <section id="v-home">
+    <div class="ptop">
     <div id="cAlert"></div>
     <div id="hNext"></div>
     <div class="pbox"><div class="prange"><span class="label">集計期間</span><b class="num" id="cRange"></b><span class="note" id="cPeriod"></span></div><div class="stats" id="hStats"></div></div>
+    </div>
     <div class="bar-row listbar">
       <div class="seg" id="cFilter"><button data-f="all" aria-pressed="true">すべて</button><button data-f="unpaid">未払</button><button data-f="late">延滞分</button></div>
       <button class="primary" id="cAdd">＋ 支払を追加</button>
