@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() == 'keiteni0727@gmail.com';
+    }
+    function appPath() {
+      return /databases/$(database)/documents/config/app;
+    }
+    function isMember() {
+      return signedIn()
+        && exists(appPath())
+        && (
+          (get(appPath()).data.get('memberUid', '') != ''
+            && get(appPath()).data.get('memberUid', '') == request.auth.uid)
+          || (get(appPath()).data.get('memberEmail', '') != ''
+            && request.auth.token.get('email_verified', false) == true
+            && request.auth.token.get('email', '').lower() == get(appPath()).data.get('memberEmail', ''))
+        );
+    }
+    function canJoin() {
+      let t = request.resource.data.inviteToken;
+      let inv = /databases/$(database)/documents/invites/$(t);
+      return signedIn() && !isOwner()
+        && resource.data.get('memberUid', '') == ''
+        && resource.data.get('memberEmail', '') == ''
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUid', 'inviteToken'])
+        && request.resource.data.memberUid == request.auth.uid
+        && t is string
+        && exists(inv)
+        && get(inv).data.used == false
+        && get(inv).data.expiresAt > request.time
+        && getAfter(inv).data.used == true
+        && getAfter(inv).data.usedBy == request.auth.uid;
+    }
+    function ownerCfgOk() {
+      return isOwner()
+        && request.resource.data.keys().hasOnly(['memberUid', 'inviteToken', 'memberEmail'])
+        && request.resource.data.get('memberUid', '') == ''
+        && request.resource.data.get('memberEmail', '') is string;
+    }
+
+    match /config/app {
+      allow read: if isOwner() || isMember();
+      allow create: if ownerCfgOk();
+      allow update: if ownerCfgOk() || canJoin();
+    }
+
+    match /invites/{token} {
+      allow list, delete: if isOwner();
+      allow get: if signedIn();
+      allow create: if isOwner()
+        && request.resource.data.keys().hasOnly(['used', 'usedBy', 'expiresAt', 'createdAt'])
+        && request.resource.data.used == false
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt <= request.time + duration.value(25, 'h');
+      allow update: if signedIn() && !isOwner()
+        && resource.data.used == false
+        && resource.data.expiresAt > request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy'])
+        && request.resource.data.used == true
+        && request.resource.data.usedBy == request.auth.uid
+        && getAfter(appPath()).data.memberUid == request.auth.uid;
+    }
+
+    match /cheers/{id} {
+      allow read: if isOwner() || isMember();
+      allow create: if isOwner()
+        && request.resource.data.keys().hasOnly(['text', 'ts', 'ticket'])
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 300
+        && request.resource.data.get('ticket', true) == true;
+      allow delete: if isOwner();
+    }
+
+    // ガチャのキャラ（オーナーが登録、ふたりとも見られる）
+    match /gachaChars/{id} {
+      allow read: if isOwner() || isMember();
+      allow create: if isOwner()
+        && request.resource.data.keys().hasOnly(['name', 'rarity', 'img', 'ts'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 20
+        && request.resource.data.rarity in ['N', 'R', 'SR']
+        && request.resource.data.img is string
+        && request.resource.data.img.size() <= 500000;
+      allow delete: if isOwner();
+    }
+
+    // ガチャ・ミッションの記録（彼女だけ）
+    match /game/main {
+      allow read, write: if isMember();
+    }
+
+    match /profile/main {
+      allow read: if isMember();
+      allow write: if isMember();
+    }
+
+    match /{col}/{id} {
+      allow read: if col in ['meals', 'gym', 'weights', 'water', 'sleep'] && isMember();
+      allow create, update: if col in ['meals', 'gym', 'weights', 'water', 'sleep']
+        && isMember()
+        && request.resource.data.date is string;
+      allow delete: if col in ['meals', 'gym', 'weights', 'water', 'sleep'] && isMember();
+    }
+
+    match /privateLogs/{id} {
+      allow read, write: if isMember();
+    }
+    match /privatePhotos/{id} {
+      allow read, write: if isMember();
+    }
+    match /privateMeta/{id} {
+      allow read, write: if isMember();
+    }
+  }
+}
