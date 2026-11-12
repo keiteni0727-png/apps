@@ -136,13 +136,14 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .clock .soon{font-size:12.5px;color:var(--u-sub);text-align:right;min-width:0}
 .clock .soon b{color:var(--u-ink);font-weight:700}
 .clock .soon .lbl{font-family:var(--u-num);font-size:10px;letter-spacing:.1em;color:var(--u-accent);margin-right:6px}
-.clock .unsw{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap;align-self:center}
-.clock .unsw small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);font-weight:600}
-.clock .unsw .tr{position:relative;width:32px;height:19px;border-radius:10px;background:var(--u-strong);transition:background .15s}
-.clock .unsw .tr i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s}
-.clock .unsw.on{border-color:var(--st-now);color:var(--st-now)}
-.clock .unsw.on .tr{background:var(--st-now)}
-.clock .unsw.on .tr i{left:15px}
+.clock .unsw{margin-left:auto}
+.unsw{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap;align-self:center}
+.unsw small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);font-weight:600}
+.unsw .tr{position:relative;width:32px;height:19px;border-radius:10px;background:var(--u-strong);transition:background .15s}
+.unsw .tr i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s}
+.unsw.on{border-color:var(--st-now);color:var(--st-now)}
+.unsw.on .tr{background:var(--st-now)}
+.unsw.on .tr i{left:15px}
 @media (max-width:600px){
   .clock{gap:8px}
   .clock .soon{flex-basis:100%;text-align:left}
@@ -713,27 +714,20 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .dmiss[open] summary .mn{display:none}
   .dmiss .mbtns{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
   .dmiss .mbtns button{border:1px solid currentColor;background:var(--u-surface);color:inherit;border-radius:999px;padding:3px 11px;font:inherit;font-size:12px;font-weight:700}
-  .dmiss .mbtns button:hover{background:currentColor}
-  .dmiss .mbtns button:hover span{color:var(--u-surface)}
+  .dmiss .mbtns button:not(.st):hover{background:var(--u-soft)}
   .dmiss .mbtns .st{border-style:dashed;cursor:default;background:none}
   .dmiss .mi{display:inline-flex}
   .dmiss .mi button:first-child:not(:last-child){border-radius:999px 0 0 999px}
   .dmiss .mi .nb{border-left:0;border-radius:0 999px 999px 0;padding:3px 9px;font-weight:500;opacity:.85}
 }
 /* 絞り込み：未入力ありスイッチ（番組表・ライブラリ）と項目ごとの絞り込み */
-.misw,.clock .misw{display:none}
+.misw{display:none}
 @media (min-width:900px){
-  .misw,.clock .misw{display:inline-flex}
+  .misw{display:inline-flex}
   .clock .misw{margin-left:0}
-  .clock .unsw.misw.on{border-color:var(--u-warn);color:var(--u-warn)}
-  .clock .unsw.misw.on .tr{background:var(--u-warn)}
-  .count .unsw{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:4px 6px 4px 12px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap}
-  .count .unsw small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);font-weight:600}
-  .count .unsw .tr{position:relative;width:32px;height:19px;border-radius:10px;background:var(--u-strong);transition:background .15s}
-  .count .unsw .tr i{position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s}
-  .count .unsw.on{border-color:var(--u-warn);color:var(--u-warn)}
-  .count .unsw.on .tr{background:var(--u-warn)}
-  .count .unsw.on .tr i{left:15px}
+  .unsw.misw.on{border-color:var(--u-warn);color:var(--u-warn)}
+  .unsw.misw.on .tr{background:var(--u-warn)}
+  .count .unsw{margin-left:auto;padding:4px 6px 4px 12px}
   .count .unsw + .gbulk{margin-left:10px}
   .mkeys{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
   .mkeys button{border:1px solid var(--u-line);background:var(--u-surface);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;color:var(--u-ink)}
@@ -1438,30 +1432,6 @@ function M(key) {
     .sort((a, b) => c[b] - c[a] || a.localeCompare(b, "ja"));
   return [...base, ...rest];
 }
-/* 1回だけ：開始日が2024年より前で、放送時間・放送クールが空の作品に「なし」を付ける（済みの印は master に残す） */
-let migRan = false;
-function migNoF24() {
-  if (migRan || master.migNoF24) return;
-  migRan = true;
-  const ch = [];
-  items.forEach(it => {
-    if (!it.from || it.from >= "2024-01-01" || noSched(mediaOf(it).media)) return;
-    const nf = it.noF || [];
-    const add = [];
-    if (!(it.time || "").trim() && !nf.includes("time")) add.push("time");
-    if (!(it.cours || []).length && !nf.includes("cours")) add.push("cours");
-    if (!add.length || !over[it.id]) return;
-    over[it.id] = { ...over[it.id], noF: [...nf, ...add] };
-    ch.push(it.id);
-  });
-  master = { ...master, migNoF24: 1 };
-  saveMaster();
-  if (!ch.length) return;
-  rebuild();
-  render();
-  ch.forEach(id => saveDoc("titles", id, over[id]).catch(fail));
-  toast(`2024年より前の${ch.length}作品の放送時間・クールを「なし」にしました`);
-}
 async function saveMaster() {
   try {
     await saveDoc("master", "all", master);
@@ -1634,7 +1604,6 @@ async function initStore() {
     loaded = true;
     calcLastAt();
     rebuild();
-    migNoF24();
     ytRebuild();
     banner(
       "<b>この端末のブラウザに保存しています</b>サインインした状態でclaude.aiから開くと、アプリに保存した作品が表示され、どの端末でも同じ内容になります。",
@@ -1654,7 +1623,7 @@ async function initStore() {
       }
     })
     .catch(() => {});
-  const got = { titles: false, progress: false, yt: false, master: false };
+  const got = { titles: false, progress: false, yt: false };
   const done = () => {
     if (!got.titles || !got.progress) return;
     loaded = true;
@@ -1662,7 +1631,6 @@ async function initStore() {
     rebuild();
     render();
     if (openId && !epEdit) refreshSheet();
-    if (got.master) migNoF24();
   };
   const onErr = e =>
     banner(`<b>保存データを読み込めませんでした</b>${esc(e?.message || "")}　ページを開き直してください。`);
@@ -1683,10 +1651,8 @@ async function initStore() {
   db.collection("master").onSnapshot(s => {
     const d = s.docs.find(x => x.id === "all");
     master = d ? d.data() : {};
-    got.master = true;
     render();
     refreshSettings();
-    if (loaded) migNoF24();
   }, onErr);
   db.collection("yt").onSnapshot(s => {
     const m = {};
@@ -1757,7 +1723,7 @@ const FIN = '<span class="fin">最終回</span>';
 /* 話数リストが未登録（未視聴・視聴中の作品、映画以外） */
 /* ---------- 未入力チェック（PCだけで表示・絞り込み） ----------
    編集画面の項目のうち、その作品に関係あるものだけを見る。シリーズは「なければ空欄」なので対象外。
-   j＝押したときに開く編集項目（data-jump）、dt＝詳細のタブ切り替え */
+   k＝表示名、j＝押したときに開く編集項目（data-jump）、n＝「なし」にできる項目のキー（noF） */
 const IS_PC = () => matchMedia("(min-width:900px)").matches;
 function missingOf(i) {
   const m = mediaOf(i);
@@ -1769,18 +1735,18 @@ function missingOf(i) {
   const needSong = t => !no.includes(t) && !sl.some(x => x.type === t && (x.s || "").trim());
   const nf = i.noF || [];
   const out = [];
-  const add = (k, j, dt, n) => (!n || !nf.includes(n)) && out.push({ k, j, dt, n });
-  if (!i.s) add("ステータス", "", "");
-  if (md !== "movie" && !episodes(i).length) add("話数", "", "ep");
+  const add = (k, j = "", n = "") => (!n || !nf.includes(n)) && out.push({ k, j, n });
+  if (!i.s) add("ステータス");
+  if (md !== "movie" && !episodes(i).length) add("話数");
   if (!i.from) add({ movie: "公開日", ova: "発売日" }[md] || "開始日", "f-from");
-  if (!ns && !irr && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "", "time");
-  if (md === "tv" && !m.stations.length) add("放送局", "fMedia", "", "st");
-  if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "", "plat");
-  if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "", "vods");
-  if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "", "cours");
+  if (!ns && !irr && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
+  if (md === "tv" && !m.stations.length) add("放送局", "fMedia", "st");
+  if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
+  if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "vods");
+  if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "cours");
   (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
-  if (!(i.url || "").trim()) add("公式サイト", "f-url", "", "url");
-  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "", "vurl");
+  if (!(i.url || "").trim()) add("公式サイト", "f-url", "url");
+  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "vurl");
   return out;
 }
 /* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
@@ -1797,7 +1763,11 @@ function missBadge(i) {
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
   return `<span class="miss pconly${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b>${esc(head)}</span>`;
 }
-const missOk = i => !state.missOnly || !IS_PC() || (state.missKey ? missingOf(i).some(x => x.k === state.missKey) : missingOf(i).length > 0);
+function missOk(i) {
+  if (!state.missOnly || !IS_PC()) return true;
+  const l = missingOf(i);
+  return state.missKey ? l.some(x => x.k === state.missKey) : l.length > 0;
+}
 const epNum = n => {
   const m = /\d+/.exec(n || "");
   return m ? +m[0] : null;
@@ -2865,15 +2835,15 @@ function missDetail(it) {
   const l = missingOf(it);
   if (!l.length) return "";
   const hot = l.some(x => x.k === "話数");
-  const nb = x => (x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする"><span>なし</span></button>` : "");
-  const btn = x =>
-    `<span class="mi">${btn1(x)}${nb(x)}</span>`;
-  const btn1 = x =>
-    x.dt
-      ? `<button type="button" data-dtab="${x.dt}"><span>${esc(x.k)}を登録</span></button>`
+  /* 項目ボタン（話数は話数タブへ、ステータスは上のボタンで選ぶ）＋「なし」ボタン */
+  const main = x =>
+    x.k === "話数"
+      ? `<button type="button" data-dtab="ep">話数を登録</button>`
       : x.j
-        ? `<button type="button" data-jump="${x.j}"><span>✎ ${esc(x.k)}</span></button>`
-        : `<button type="button" class="st" tabindex="-1"><span>${esc(x.k)}（上で選択）</span></button>`;
+        ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
+        : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
+  const btn = x =>
+    `<span class="mi">${main(x)}${x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする">なし</button>` : ""}</span>`;
   return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function refreshSheet() {
