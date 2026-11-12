@@ -758,7 +758,6 @@ function openCrop(file){
       <form data-form="gchar"><div class="cropfoot"><canvas width="400" height="400"></canvas>
         <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：パンダ">
         <label class="f">レア度</label><select class="in" name="rarity"><option>N</option><option>R</option><option>SR</option></select></div></div>
-        <p class="muted" id="cropcount" style="margin:8px 0 0"></p>
         <button class="btn block" style="margin-top:10px">このキャラを登録</button></form></div></div>`;
     bindCrop(); drawSel(); drawPreview();
   };
@@ -1098,9 +1097,7 @@ async function handleForm(kind, f){
       if(!CROP) throw new Error('画像をえらんでね');
       const img = makeSticker().toDataURL('image/jpeg', 0.88);
       await addDoc(collection(db,'gachaChars'), { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img, ts: serverTimestamp() });
-      CROP.count++;
-      f.name.value = '';
-      $sheet.querySelector('#cropcount').textContent = `${CROP.count}体 登録しました。続けて別のキャラを囲めます`;
+      URL.revokeObjectURL(CROP.url); CROP = null;
       break;
     }
     case 'regmail': {
@@ -1157,7 +1154,7 @@ document.addEventListener('submit', async e => {
   const btn = f.querySelector('button:not([type=button]):last-of-type'); if(btn){ btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = '保存中…'; }
   try{
     await handleForm(f.dataset.form, f);
-    if(f.closest('.sheet') && f.dataset.form !== 'gchar') closeSheet();
+    if(f.closest('.sheet')) closeSheet();
     toast({ gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
