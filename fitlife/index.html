@@ -200,7 +200,7 @@ const IC = {
 /* ===== ガチャ ===== */
 const RARITY_W = { N:70, R:25, SR:5 };
 const RARITY_ORDER = { SR:0, R:1, N:2 };
-const SHARD_NEED = 10;
+const SHARD_NEED = 3;
 const MISSIONS = [
   { k:'meal', label:'食事を1つ記録する', ok:t => S.data.meals.some(m => m.date === t) },
   { k:'water', label:'お水を記録する', ok:t => S.data.water.some(x => x.date === t) },
@@ -386,18 +386,20 @@ async function pullGacha(){
   const c = rollChar(), had = (g.coll[c.id] || 0) > 0;
   g.tickets--; g.pulls = (g.pulls || 0) + 1;
   g.coll = { ...g.coll, [c.id]: (g.coll[c.id] || 0) + 1 };
-  if(had) g.shards = (g.shards || 0) + 1;
+  let bonus = 0;
+  if(had){ g.shards = (g.shards || 0) + 1; while(g.shards >= SHARD_NEED){ g.shards -= SHARD_NEED; g.tickets++; bonus++; } }
   addHist(g, c, had ? 'dup' : 'new');
   $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet" style="text-align:center">${capsuleSVG()}<p class="muted">ガチャガチャ…</p></div></div>`;
   await saveGame(g);
-  setTimeout(() => showResult(c, had), 1300);
+  setTimeout(() => showResult(c, had, bonus), 1300);
 }
-function showResult(c, dup){
+function showResult(c, dup, bonus = 0){
   $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><div class="reveal sparkle">
     <div class="rar ${c.rarity}" style="font-size:13px;padding:2px 12px">${c.rarity}</div>
     <div class="pic">${charPic(c)}</div>
     <div class="nm">${esc(c.name)}</div>
-    ${dup ? `<span class="tag dup">もう持ってる → かけら＋1</span>` : `<span class="tag">NEW！</span>`}
+    ${dup ? `<span class="tag dup">もう持ってる → かけら＋1（${bonus ? SHARD_NEED : G().shards}/${SHARD_NEED}）</span>` : `<span class="tag">NEW！</span>`}
+    ${bonus ? `<div class="gift" style="justify-content:center;margin-top:12px">💎 かけらが${SHARD_NEED}個たまった！ <b>チケット＋${bonus} 🎟️</b></div>` : ''}
     </div>
     <div class="row" style="justify-content:center;margin-top:16px">
       ${G().tickets > 0 ? `<button class="btn" data-a="pull">もう1回（のこり${G().tickets}枚）</button>` : ''}
@@ -673,7 +675,6 @@ function viewGacha(){
   if(!chars.length) return `<div class="card gacha-top"><p style="font-size:40px;margin:6px 0">🎁</p><p style="margin:0">ガチャのキャラを準備中だよ</p>
     <p class="muted">${FROM}がキャラを入れてくれるのを待っててね。チケットはためておけます（いま 🎟️ ${g.tickets}枚）</p></div>`;
   const owned = chars.filter(c => g.coll[c.id] > 0).length;
-  const missing = chars.filter(c => !(g.coll[c.id] > 0));
   return `<div class="card gacha-top">
       <svg class="machine" viewBox="0 0 120 140"><rect x="22" y="78" width="76" height="56" rx="14" fill="#e46f98"/><circle cx="60" cy="50" r="42" fill="#fff" stroke="#f6d6e1" stroke-width="3"/>
         <circle cx="42" cy="58" r="10" fill="#ff8fb3"/><circle cx="64" cy="66" r="10" fill="#ffd34d"/><circle cx="78" cy="48" r="10" fill="#9fd3ff"/><circle cx="50" cy="38" r="10" fill="#c9b8ff"/><circle cx="70" cy="30" r="9" fill="#8fd19e"/>
@@ -684,8 +685,7 @@ function viewGacha(){
       <p class="muted" style="margin:4px 0 0;font-size:12px">ガチャの結果とずかんは${FROM}にも見えるよ ♡</p></div>
     <div class="card"><h2>💎 かけら<span class="sub">${g.shards} / ${SHARD_NEED}</span></h2>
       <div class="bar"><i style="width:${Math.min(100, g.shards / SHARD_NEED * 100)}%"></i></div>
-      <p class="muted" style="margin:6px 0 0">同じキャラが出るとかけらになるよ。${SHARD_NEED}個で好きなキャラと交換できます。</p>
-      ${g.shards >= SHARD_NEED && missing.length ? `<button class="btn block" data-a="exchange" style="margin-top:10px">キャラと交換する</button>` : ''}</div>
+      <p class="muted" style="margin:6px 0 0">同じキャラが出るとかけらになるよ。${SHARD_NEED}個たまるとチケット1枚に変わります。</p></div>
     <div class="card"><h2>📖 ずかん<span class="sub">${owned} / ${chars.length}</span></h2>
       <div class="zukan">${chars.map(c => { const n = g.coll[c.id] || 0;
         return `<div class="zk ${c.rarity} ${n ? '' : 'no'}">${n > 1 ? `<span class="cnt">×${n}</span>` : ''}<div class="pic">${charPic(c)}</div>
@@ -1224,18 +1224,6 @@ document.addEventListener('click', async e => {
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
       case 'pull': await pullGacha(); break;
-      case 'exchange': {
-        const g = G(), missing = allChars().filter(c => !(g.coll[c.id] > 0));
-        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>交換するキャラを選んでね<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
-          <div class="pickgrid">${missing.map(c => `<button data-a="pick" data-v="${c.id}">${charPic(c)}<div style="font-size:12px">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></button>`).join('')}</div></div></div>`;
-        break;
-      }
-      case 'pick': {
-        const g = G(), c = allChars().find(x => x.id === v);
-        if(!c || g.shards < SHARD_NEED) break;
-        g.shards -= SHARD_NEED; g.coll = { ...g.coll, [c.id]: 1 }; addHist(g, c, 'swap');
-        await saveGame(g); showResult(c, false); break;
-      }
       case 'delchar':
         if(!confirm('このキャラを削除しますか？（彼女のずかんからも消えます）')) return;
         await deleteDoc(doc(db,'gachaChars',el.dataset.id)); toast('削除しました'); break;
