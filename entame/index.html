@@ -1732,7 +1732,9 @@ function missingOf(i) {
   if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
   if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "vods");
   if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "cours");
-  (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
+  // OP・ED・主題歌のどれか1つでも入っていれば、曲の未入力は出さない
+  const anySong = sl.some(x => (x.s || "").trim());
+  if (!anySong) (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
   if (!(i.url || "").trim()) add("公式サイト", "f-url", "url");
   if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "vurl");
   return out;
