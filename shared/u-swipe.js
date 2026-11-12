@@ -1,6 +1,6 @@
 /* スマホのスワイプ（エンタメ管理・おかね手帳で共通）
    ・メニュー：開いているときは指に合わせて左へ引いて閉じる。左端から（またはページ送りの先頭で）右へ引くと開く
-   ・ページ送り（任意）：画面を指に合わせて横に動かし、離すと隣の画面へ切り替える
+   ・ページ送り（任意）：画面を指にぴったり付けて横に動かし、離すと端まで流して隣の画面を反対側から入れる
    uSwipe({ sb, scrim, setDrawer(on), edge, blocked(), pager: { el, block, can(dir), go(dir) } }) */
 (function () {
   window.uSwipe = function (o) {
@@ -31,29 +31,33 @@
         s.style.transform = s.style.visibility = c.style.opacity = "";
       });
     }
-    function page(x, anim) {
+    /* 画面を指にぴったり付けて動かす（薄くしない）。ms を渡すとその時間で滑らかに動かす */
+    function page(x, ms) {
       const m = q(o.pager.el);
       if (!m) return;
-      m.style.transition = anim ? "transform .18s cubic-bezier(.2,.8,.2,1), opacity .18s ease" : "none";
-      m.style.transform = x ? `translateX(${x}px)` : "";
-      m.style.opacity = x ? String(Math.max(0.35, 1 - Math.abs(x) / 420)) : "";
+      m.style.transition = ms ? `transform ${ms}ms cubic-bezier(.25,.9,.3,1)` : "none";
+      m.style.transform = x ? `translate3d(${x}px,0,0)` : "translate3d(0,0,0)";
+      m.style.willChange = "transform";
     }
     function pageClear() {
       const m = q(o.pager.el);
-      if (m) m.style.transition = m.style.transform = m.style.opacity = "";
+      if (m) m.style.transition = m.style.transform = m.style.willChange = "";
     }
-    function flip(dir) {
-      page(dir > 0 ? -70 : 70, true);
+    /* 離したら：今の画面をそのまま端まで流し、次の画面を反対側から続けて入れる */
+    function flip(dir, from) {
+      const w = innerWidth;
+      const out = Math.max(90, Math.round(170 * (1 - Math.min(1, Math.abs(from || 0) / w))));
+      page(dir > 0 ? -w : w, out);
       setTimeout(() => {
         o.pager.go(dir);
-        page(dir > 0 ? 70 : -70, false);
+        page(dir > 0 ? w * 0.6 : -w * 0.6, 0);
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
-            page(0, true);
-            setTimeout(pageClear, 200);
+            page(0, 260);
+            setTimeout(pageClear, 280);
           }),
         );
-      }, 120);
+      }, out);
     }
 
     document.addEventListener(
@@ -90,7 +94,7 @@
         g.dx = t.clientX - g.x;
         if (g.mode === "close") drag(Math.min(0, g.dx));
         else if (g.mode === "open") drag(-W() + Math.max(0, g.dx));
-        else page(o.pager.can(g.dx < 0 ? 1 : -1) ? g.dx * 0.7 : g.dx * 0.15, false);
+        else page(o.pager.can(g.dx < 0 ? 1 : -1) ? g.dx : g.dx * 0.15, 0);
       },
       { passive: true },
     );
@@ -105,10 +109,10 @@
       else if (mode === "open") settle(cancel ? false : dx > w * 0.3 || (fast && dx > 0));
       else {
         const dir = dx < 0 ? 1 : -1;
-        if (!cancel && (Math.abs(dx) > 70 || fast) && o.pager.can(dir)) flip(dir);
+        if (!cancel && (Math.abs(dx) > innerWidth * 0.25 || fast) && o.pager.can(dir)) flip(dir, dx);
         else {
-          page(0, true);
-          setTimeout(pageClear, 200);
+          page(0, 220);
+          setTimeout(pageClear, 240);
         }
       }
     }

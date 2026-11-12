@@ -598,6 +598,29 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .fsdrop #seriesQ{padding:3px 8px}
   .ftools input::placeholder,.fsdrop #seriesQ::placeholder{font-size:12px}
 }
+/* 基本情報カード */
+.icard{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:12px 14px;margin-bottom:10px}
+.icard [data-jump]{cursor:pointer;border-radius:6px}
+.icard [data-jump]:active{background:var(--u-chip)}
+.ilb{font-size:11.5px;font-weight:700;color:var(--u-sub);margin-bottom:4px}
+.ibig{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ibig>span:first-child{font-family:var(--u-num);font-size:21px;font-weight:700;letter-spacing:.01em}
+.ibig .unset{font-family:var(--u-f);font-size:14px}
+.icour{font-size:12px;font-weight:700;color:var(--u-sub);background:var(--u-chip);border-radius:6px;padding:1px 8px}
+.iper{font-family:var(--u-num);font-size:12.5px;color:var(--u-sub);margin:4px 0 8px}
+.icard .unset{color:var(--u-sub);font-size:12.5px}
+.isongs{padding-top:4px;padding-bottom:4px}
+.isg{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--u-line)}
+.isg:first-child{border-top:0}
+.itag{flex:none;min-width:34px;text-align:center;font-size:11px;font-weight:700;color:var(--u-sub);background:var(--u-chip);border-radius:6px;padding:2px 6px;margin-top:2px}
+.isgv{flex:1;min-width:0}
+.isgv .song{align-items:center}
+.isgv .stt{display:block;font-size:14px;font-weight:700;line-height:1.4}
+.isgv .sar{display:block;margin:1px 0 0;font-size:12px;color:var(--u-sub)}
+.isgv .dlb{padding:3px 11px;font-size:12px}
+.ilinks{display:flex;gap:8px;margin-bottom:6px}
+.ilk{flex:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--u-line);background:transparent;border-radius:var(--u-r);padding:10px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer}
+.ilk.off{color:var(--u-sub);font-weight:500;border-style:dashed}
 /* 詳細：基本情報／話数タブ（スマホのみ。PCは今まで通り縦に並べる） */
 .dtabs{display:none}
 .nxt{margin-left:8px;color:var(--st-now);font-weight:700}
@@ -610,7 +633,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .epset .epmenu button{border:0;background:transparent;text-align:left;padding:10px 12px;font-weight:700}
 .epset .epmenu button:active{background:var(--u-chip)}
 @media (max-width:600px){
-  .sheet:not(.form){width:calc(100% - 20px);height:calc(100% - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));max-height:none}
+  .sheet:not(.form){width:calc(100% - 20px);top:calc(56px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-height:calc(100% - 56px - 150px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
   .sheet:not(.form) .wrap{padding:0 14px}
   .sheet:not(.form) .dhead{position:sticky;top:0;z-index:4;background:var(--u-surface);margin:0 -14px;padding:12px 14px 0}
   .sheet:not(.form) h3{font-size:18px}
@@ -1139,6 +1162,12 @@ const songShow = (s, cls1, cls2) => {
   const p = splitTA(s);
   if (p.raw) return `<span class="${cls1}">${esc(p.st)}</span>`;
   return `${p.st ? `<span class="${cls1}">「${esc(p.st)}」</span>` : ""}${p.ar ? `<span class="${cls2}">${esc(p.ar)}</span>` : ""}`;
+};
+/* 詳細のカード用：曲名とアーティストを2段で（かっこ無し） */
+const songCard = s => {
+  const p = splitTA(s);
+  if (p.raw) return `<span class="stt">${esc(p.st)}</span>`;
+  return `${p.st ? `<span class="stt">${esc(p.st)}</span>` : ""}${p.ar ? `<span class="sar">${esc(p.ar)}</span>` : ""}`;
 };
 const joinTA = (st, ar) => {
   st = (st || "").trim();
@@ -2486,6 +2515,38 @@ function epEditorHtml(it) {
     <p class="hint" style="margin:8px 0 0">日付を変えると、その後の話も1週間おきに自動でずれます。時刻は${esc(it.time || "各話の時刻")}のままです。</p>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="erCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="erSave">話数を保存</button></div>`;
 }
+/* 基本情報：放送・主題歌・リンクのカード。各部分を押すと、その項目を開いた状態の編集画面へ */
+function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
+  const un = t => `<span class="unset">${t}</span>`;
+  const when = [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim();
+  const per = periodOf(it);
+  const cour = cs.map(courLabel).join("・");
+  const head = { tv: "放送", movie: "上映", ova: "発売", stream: "配信" }[md] || "放送";
+  const perLab = mv ? "公開日" : md === "ova" ? "発売期間" : "期間";
+  const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
+    ${ns ? "" : `<div class="ibig"><span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
+    <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
+    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${stv}</span>` : un("放送局・配信 未設定")}</div></div>`;
+  const songs = songRows
+    .map(([k, v]) => {
+      const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
+      const no = (it.noSongs || []).includes(k);
+      if (!v && no) v = `<span class="nosong">なし</span>`;
+      else if (!v && main) v = `${un("未設定")}<button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
+      return v ? `<div class="isg" data-jump="sgList"><span class="itag">${k}</span><div class="isgv">${v}</div></div>` : "";
+    })
+    .join("");
+  const links = `<div class="ilinks">${
+    it.series
+      ? `<button type="button" class="ilk" data-series="${esc(it.series)}">シリーズ作品</button>`
+      : `<button type="button" class="ilk off" data-jump="fSeries">シリーズ未設定</button>`
+  }${
+    it.url
+      ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener">公式サイト ↗</a>`
+      : `<button type="button" class="ilk off" data-jump="f-url">公式サイト未設定</button>`
+  }</div>`;
+  return bc + (songs ? `<div class="icard isongs">${songs}</div>` : "") + links;
+}
 /* 詳細のタップで編集：行全体を押すと、その項目を開いた状態の編集画面へ（inl＝その場で書き換え） */
 function editRow(k, v, attr) {
   return `<dt ${attr}>${k}</dt><dd ${attr}>${v || `<span class="unset">未設定</span>`}<span class="pen" aria-hidden="true">✎</span></dd>`;
@@ -2563,7 +2624,7 @@ function renderDetail(it) {
     return [
       tp,
       l.length
-        ? `<div class="songs">${l.map(([x, k]) => `<div class="song${x.dl ? " isdl" : ""}"><span class="stx">${songShow(x.s, "stt", "sar")}${l.length > 1 && rangeTxt(x) ? `<span class="rng">${rangeTxt(x)}</span>` : ""}</span><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button></div>`).join("")}</div>`
+        ? `<div class="songs">${l.map(([x, k]) => `<div class="song${x.dl ? " isdl" : ""}"><span class="stx">${songCard(x.s)}${l.length > 1 && rangeTxt(x) ? `<span class="rng">${rangeTxt(x)}</span>` : ""}</span><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button></div>`).join("")}</div>`
         : "",
     ];
   });
@@ -2612,7 +2673,7 @@ function renderDetail(it) {
     <h3>${esc(it.t)}</h3>
     <div class="seg" role="group" aria-label="ステータス">${STATUSES.map(s => `<button type="button" data-set="${s}" aria-pressed="${it.s === s}" class="${it.s === s ? "s-" + s : ""}">${stLabel(s)}</button>`).join("")}</div>
     <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
-    <div class="dpane dp-info"><dl class="edl">${rows.map(r => editRow(r[0].trim(), r[1], `data-jump="${r[2]}"`)).join("")}</dl>
+    <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
@@ -2635,7 +2696,7 @@ function openDetail(id) {
   subPaste = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
-  setDTab(it.s === "視聴中" || it.s === "視聴済み" ? "ep" : "info");
+  setDTab("info");
   if (!TOUCH) $(".sheet .close").focus({ preventScroll: true });
 }
 /* スマホ：詳細を「基本情報／話数」タブで切り替え（タブの状態はシート自体のクラスで持つ） */
