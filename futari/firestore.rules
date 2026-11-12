@@ -1,7 +1,7 @@
 rules_version = '2';
 // ウリログ：Firestoreのセキュリティルール
 // ・自分のプロフィールは本人だけ
-// ・ルームとおでかけ候補は、ルームのメンバー（最大2人）だけ
+// ・ルームとその中のデータは、ルームのメンバー（最大2人）だけ
 // ・参加できるのは、メンバーが登録した「恋人のメールアドレス」でログインした人だけ（1人まで）
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -59,59 +59,10 @@ service cloud.firestore {
           && request.resource.data.names.diff(resource.data.names).affectedKeys().hasOnly([uid()]))
       );
 
-      // 思い出の写真（大きいほう）。候補と同じく、ふたりだけ
-      match /photos/{placeId} {
-        allow read, delete: if isMember(roomId);
-        allow create, update: if isMember(roomId)
-          && request.resource.data.img is string
-          && request.resource.data.img.size() < 1000000;
-      }
-
-      // デートの予定。ふたりだけ
-      match /dates/{dateId} {
-        allow read, delete: if isMember(roomId);
-        allow create, update: if isMember(roomId)
-          && request.resource.data.date is string
-          && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-          && request.resource.data.title is string
-          && request.resource.data.title.size() > 0
-          && request.resource.data.title.size() <= 100;
-      }
-
-      // つぶやき（廃止）。残っている古いデータを消すためだけに、読むのと消すのを許可
-      match /posts/{postId} {
-        allow read, delete: if isMember(roomId);
-      }
-      match /postPhotos/{postId} {
-        allow read, delete: if isMember(roomId);
-      }
-
-      // 今日の質問の答え。ふたりだけ
-      match /qa/{day} {
+      // ルームの中のデータ（候補・写真・予定・ペット・チケットなど全部）は、ふたりなら自由に読み書きOK
+      // 新しい機能を足しても、ここは変えなくて大丈夫
+      match /{sub=**} {
         allow read, write: if isMember(roomId);
-      }
-
-      // うり坊（なまえ・ごはん）。ふたりだけ
-      match /meta/{docId} {
-        allow read, write: if isMember(roomId);
-      }
-
-      // お願いチケット。ふたりだけ
-      match /tickets/{ticketId} {
-        allow read, write: if isMember(roomId);
-      }
-
-      // 相性テストの答え。ふたりだけ
-      match /quiz/{setId} {
-        allow read, write: if isMember(roomId);
-      }
-
-      match /places/{placeId} {
-        allow read, delete: if isMember(roomId);
-        allow create, update: if isMember(roomId)
-          && request.resource.data.title is string
-          && request.resource.data.title.size() > 0
-          && request.resource.data.title.size() <= 100;
       }
     }
   }
