@@ -152,6 +152,12 @@ svg.chart{width:100%;height:auto;display:block}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .list li.editable{cursor:pointer}
 .list li.editable:active{background:var(--pink-xl)}
+form[data-gtype=time] .gstr, form[data-gtype=time] .gstr-i, form[data-gtype=str] .gtime{display:none}
+.gtype{margin-top:10px}
+.gtype button{background:var(--pink-xl)}
+.fchip.on{background:var(--pink-d);color:#fff;border-color:var(--pink-d)}
+.gk .gkv{font-size:24px;font-weight:700;color:var(--pink-d);margin:2px 0}
+.gk .gkv small{font-size:13px;margin-left:2px}
 .fchips{display:flex;flex-wrap:wrap;gap:6px}
 .fchip{border:1.5px solid var(--line);background:#fff;color:var(--text);border-radius:99px;padding:6px 11px;font-size:13px;cursor:pointer}
 .fchip small{color:var(--pink-d);font-weight:700}
@@ -176,6 +182,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { FOODS } from "./foods.js";
+import { EXERCISES, EX_CATS } from "./exercises.js";
 
 /* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
 const firebaseConfig = {
@@ -652,6 +659,7 @@ function viewHome(){
   const wGoal = num(p.waterGoal) || 1500, kGoal = num(p.kcalGoal);
   const sl = S.data.sleep[0];
   const weekGym = new Set(S.data.gym.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
+  const weekBurn = sumKcal(S.data.gym.filter(g => g.date >= daysAgo(6)));
   const cell = (col, label, val, unit, extra='') => S.denied[col]
     ? `<div class="card stat"><div class="label">${label}</div><div class="muted" style="margin-top:6px">共有されていません</div></div>`
     : `<div class="card stat"><div class="label">${label}</div><div class="val">${val}<small>${unit}</small></div>${extra}</div>`;
@@ -659,7 +667,7 @@ function viewHome(){
     ${cell('meals','今日のカロリー', kcal, kGoal ? ` / ${kGoal}kcal` : 'kcal', kGoal ? `<div class="bar"><i style="width:${Math.min(100,kcal/kGoal*100)}%"></i></div>` : '')}
     ${cell('water','今日のお水', water, ` / ${wGoal}ml`, `<div class="bar"><i style="width:${Math.min(100,water/wGoal*100)}%"></i></div>`)}
     ${cell('sleep','最近の睡眠', sl ? hm(sl.minutes) : '--', '', sl ? `<div class="muted">${fmtDate(sl.date)} ${esc(sl.bed)}→${esc(sl.wake)}</div>` : '')}
-    ${cell('gym','今週のジム', weekGym, '回', `<div class="muted">目安：週2回</div>`)}
+    ${cell('gym','今週のジム', weekGym, '回', `<div class="muted">目安：週2回${weekBurn ? ` ・ 🔥${weekBurn}kcal` : ''}</div>`)}
   </div>`;
 
   if(isM){
@@ -852,12 +860,15 @@ function viewGym(){
   if(S.denied.gym) return deniedCard('gym');
   const list = S.data.gym;
   if(!list.length) return `<div class="card"><p class="empty">まだジムの記録がありません${canEdit() ? '<br>右下の＋から記録してね' : ''}</p></div>`;
-  const weekGym = new Set(list.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
-  return `<div class="card stat"><div class="label">この7日間</div><div class="val">${weekGym}<small>回 / 目安 週2回</small></div></div>` +
-    groupByDate(list).slice(0,30).map(([date, items]) => `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${items.length}種目</span></div><ul class="list">
+  const week = list.filter(g => g.date >= daysAgo(6));
+  const weekGym = new Set(week.map(g => g.date)).size, weekKcal = sumKcal(week);
+  return `<div class="grid2" style="margin-bottom:14px"><div class="card stat"><div class="label">この7日間</div><div class="val">${weekGym}<small>回</small></div><div class="muted">目安：週2回</div></div>
+      <div class="card stat"><div class="label">7日間の消費</div><div class="val">${weekKcal}<small>kcal</small></div><div class="muted">ジムの記録から</div></div></div>` +
+    groupByDate(list).slice(0,30).map(([date, items]) => { const dk = sumKcal(items);
+      return `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${items.length}種目${dk ? ` ・ 🔥${dk}kcal` : ''}</span></div><ul class="list">
       ${items.map(g => `<li${editAttr('gym', g.id)}><div class="main"><div class="t">${esc(g.exercise)}</div>
-        <div class="s">${g.kg != null ? g.kg + 'kg × ' : ''}${g.reps ?? '-'}回 × ${g.sets ?? '-'}セット</div>${g.memo ? `<div class="s">${esc(g.memo)}</div>` : ''}</div>${delBtn('gym', g.id)}</li>`).join('')}
-    </ul></div>`).join('');
+        ${gymDetail(g) ? `<div class="s">${gymDetail(g)}</div>` : ''}${g.memo ? `<div class="s">${esc(g.memo)}</div>` : ''}</div>${delBtn('gym', g.id)}</li>`).join('')}
+    </ul></div>`; }).join('');
 }
 
 function viewBody(){
@@ -1033,7 +1044,7 @@ function viewSettings(){
 const KIND_COL = { meal:'meals', gym:'gym', weight:'weights', water:'water', sleep:'sleep' };
 let EDIT = null;
 function openSheet(kind, rec = null){
-  FPICK = null; FRES = [];
+  FPICK = null; FRES = []; GSEL = null; GRES = []; GMIN_TOUCHED = false;
   EDIT = rec && KIND_COL[kind] ? { col: KIND_COL[kind], id: rec.id, rec } : null;
   const t = today();
   const dateField = `<label class="f">日付</label><input class="in" type="date" name="date" value="${t}" required>`;
@@ -1053,11 +1064,18 @@ function openSheet(kind, rec = null){
       <label class="f">メモ</label><input class="in" name="memo">
       <p class="muted">カロリーは一般的な目安です。リストにない料理は手で入れてね（次から候補に出ます）。</p>`],
     gym: ['ジムを記録', `${dateField}
-      <label class="f">種目</label><input class="in" name="exercise" list="exlist" required placeholder="例：スクワット">
-      <datalist id="exlist">${[...new Set(S.data.gym.map(g => g.exercise))].slice(0,30).map(e => `<option value="${esc(e)}">`).join('')}</datalist>
-      <div class="f3"><div><label class="f">重さ(kg)</label><input class="in" type="number" step="0.5" inputmode="decimal" name="kg"></div>
+      <label class="f">種目をさがす</label><input class="in" name="gq" placeholder="例：レッグプレス、ウォーキング" autocomplete="off" enterkeyhint="search">
+      <div class="fchips gcats" style="margin-top:8px">${EX_CATS.map(c => `<button type="button" class="fchip" data-a="gcat" data-v="${c}">${c}</button>`).join('')}</div>
+      <div id="gresults"></div>
+      <div id="grecent">${recentExHtml()}</div>
+      <label class="f">種目</label><input class="in" name="exercise" required placeholder="例：スクワット">
+      <div class="fmult gtype"><button type="button" data-a="gtype" data-v="str">筋トレ（回数）</button><button type="button" data-a="gtype" data-v="time">有酸素など（時間）</button></div>
+      <div class="gstr"><div class="f3"><div><label class="f">重さ(kg)</label><input class="in" type="number" step="0.5" inputmode="decimal" name="kg"></div>
       <div><label class="f">回数</label><input class="in" type="number" inputmode="numeric" name="reps"></div>
-      <div><label class="f">セット</label><input class="in" type="number" inputmode="numeric" name="sets"></div></div>
+      <div><label class="f">セット</label><input class="in" type="number" inputmode="numeric" name="sets"></div></div></div>
+      <div class="f2"><div><label class="f">時間(分)<span class="gstr-i">・自動</span></label><input class="in" type="number" inputmode="numeric" name="min"></div>
+      <div class="gtime"><label class="f">距離(km・任意)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="km"></div></div>
+      <div id="gkcal"></div>
       <label class="f">メモ</label><input class="in" name="memo">`],
     weight: ['体重を記録', `${dateField}<label class="f">体重(kg)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="kg" required value="${S.data.weights[0]?.kg ?? ''}">`],
     water: ['お水を記録', `${dateField}<label class="f">量(ml)</label><input class="in" type="number" inputmode="numeric" name="ml" required>`],
@@ -1085,10 +1103,136 @@ function openSheet(kind, rec = null){
       if(rec.photo) f.photo.insertAdjacentHTML('afterend', `<p class="muted" style="margin:4px 0 0">今の写真はそのまま残ります。変えるときだけ選んでね。</p>`);
     }
   }
+  if(kind === 'gym') initGymForm(rec);
 }
 const closeSheet = () => { $sheet.innerHTML = ''; EDIT = null; };
-/* ===== 食事の検索 ===== */
+/* ===== ジムの種目と消費カロリー ===== */
 const kana = s => String(s||'').normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)).replace(/[\s・()（）]/g, '');
+const EX_IDX = EXERCISES.map(([name, yomi, cat, mets, type]) => ({ name, cat, mets, type, toks: [kana(name), ...yomi.split(/\s+/).map(kana)].filter(Boolean) }));
+const EX_DEF_METS = { str:4.0, time:5.0 };
+const MIN_PER_SET = 2; // 筋トレ1セットあたりの時間（休憩込み）の目安
+let GSEL = null, GRES = [], GMIN_TOUCHED = false;
+const bodyKg = () => S.data.weights[0]?.kg || S.profile.startWeight || 55;
+const burnKcal = (mets, min) => (min && mets) ? Math.round(mets * bodyKg() * min / 60 * 1.05) : null;
+const gymRecType = g => g.type || (g.reps != null || g.sets != null || g.kg != null ? 'str' : 'time');
+// 自分がやった種目（新しい順・名前ごと）
+function myExercises(){
+  const m = new Map();
+  S.data.gym.forEach((g, i) => {
+    const name = (g.exercise||'').trim(); if(!name) return;
+    const o = m.get(name);
+    if(o){ o.count++; return; }
+    const menu = EX_IDX.find(x => x.name === name);
+    const type = g.type || menu?.type || gymRecType(g);
+    m.set(name, { name, cat: menu?.cat || 'じぶんの種目', type, mets: g.mets || menu?.mets || EX_DEF_METS[type], toks:[kana(name)], count:1, order:i, last:g, mine:true });
+  });
+  return [...m.values()];
+}
+const exInfo = name => myExercises().find(x => x.name === name) || EX_IDX.find(x => x.name === name) || null;
+function searchEx(q){
+  const k = kana(q); if(!k) return [];
+  const hit = x => x.toks.some(t => t.includes(k));
+  const score = x => (x.toks[0].startsWith(k) || (x.toks[1] || '').startsWith(k)) ? 0 : x.toks.some(t => t.startsWith(k)) ? 1 : 2;
+  const mine = myExercises().filter(hit).sort((a,b) => score(a) - score(b) || a.order - b.order);
+  const names = new Set(mine.map(x => x.name));
+  return [...mine.slice(0,3), ...EX_IDX.filter(x => hit(x) && !names.has(x.name)).sort((a,b) => score(a) - score(b))].slice(0,12);
+}
+const exLine = (x, i) => `<button type="button" class="fitem" data-a="gpick" data-v="${i}"><span class="fn">${esc(x.name)}${x.mine ? '<span class="chip">前にやった</span>' : ''}</span><span class="fk" style="font-weight:500;font-size:12px">${esc(x.cat)}</span></button>`;
+function recentExHtml(){
+  const list = myExercises().sort((a,b) => a.order - b.order).slice(0,8);
+  if(!list.length) return '';
+  GRES = list;
+  return `<div class="muted" style="margin:8px 0 4px">最近やった種目</div><div class="fchips">${list.map((x,i) => `<button type="button" class="fchip" data-a="gpick" data-v="${i}">${esc(x.name)}</button>`).join('')}</div>`;
+}
+function showExList(list, msg){
+  const box = document.getElementById('gresults'), rec = document.getElementById('grecent'); if(!box) return;
+  GRES = list; if(rec) rec.innerHTML = '';
+  box.innerHTML = list.length ? `<div class="flist">${list.map(exLine).join('')}</div>` : `<p class="muted" style="margin:6px 0">${msg || '見つからなかったよ。下の「種目」に手で入れてね'}</p>`;
+}
+function showExSearch(q){
+  document.querySelectorAll('.gcats .fchip').forEach(b => b.classList.remove('on'));
+  if(!kana(q)){ document.getElementById('gresults').innerHTML = ''; const rec = document.getElementById('grecent'); if(rec) rec.innerHTML = recentExHtml(); return; }
+  showExList(searchEx(q));
+}
+function showExCat(cat){
+  const f = document.querySelector('form[data-form=gym]'); if(f) f.gq.value = '';
+  const btn = [...document.querySelectorAll('.gcats .fchip')].find(b => b.dataset.v === cat);
+  if(btn?.classList.contains('on')){ btn.classList.remove('on'); showExSearch(''); return; }
+  document.querySelectorAll('.gcats .fchip').forEach(b => b.classList.toggle('on', b === btn));
+  const mine = myExercises().filter(x => x.cat === cat && !EX_IDX.some(e => e.name === x.name));
+  showExList([...EX_IDX.filter(x => x.cat === cat), ...mine]);
+}
+function setGType(t){
+  const f = document.querySelector('form[data-form=gym]'); if(!f) return;
+  f.dataset.gtype = t;
+  f.querySelectorAll('.gtype button').forEach(b => b.classList.toggle('on', b.dataset.v === t));
+  if(GSEL && GSEL.custom){ GSEL.type = t; GSEL.mets = EX_DEF_METS[t]; }
+}
+function gymMets(){
+  const f = document.querySelector('form[data-form=gym]');
+  return GSEL?.mets || EX_DEF_METS[f?.dataset.gtype || 'str'];
+}
+function gymCalc(){
+  const f = document.querySelector('form[data-form=gym]'), box = document.getElementById('gkcal'); if(!f || !box) return;
+  const str = f.dataset.gtype !== 'time';
+  if(str && !GMIN_TOUCHED){ const sets = num(f.sets.value); f.min.value = sets ? sets * MIN_PER_SET : ''; }
+  const min = num(f.min.value), mets = gymMets(), kcal = burnKcal(mets, min);
+  const kgNote = S.data.weights[0]?.kg ? `体重${bodyKg()}kg` : `体重${bodyKg()}kg（体重を記録するともっと正確に）`;
+  box.innerHTML = `<div class="fpick gk">${kcal != null
+    ? `<div class="muted">消費カロリー（目安）</div><div class="gkv">🔥 約${kcal}<small>kcal</small></div><div class="muted" style="font-size:12px">${kgNote}・${min}分・強さ${mets}METsで計算${str && !GMIN_TOUCHED ? `（1セット${MIN_PER_SET}分で計算）` : ''}</div>`
+    : `<div class="muted">${str ? 'セット数' : '時間'}を入れると、消費カロリーが出るよ</div>`}</div>`;
+}
+function pickEx(i){
+  const x = GRES[i]; if(!x) return;
+  const f = document.querySelector('form[data-form=gym]'); if(!f) return;
+  GSEL = { name:x.name, mets:x.mets, type:x.type };
+  f.exercise.value = x.name; f.gq.value = '';
+  document.getElementById('gresults').innerHTML = ''; const rec = document.getElementById('grecent'); if(rec) rec.innerHTML = '';
+  document.querySelectorAll('.gcats .fchip').forEach(b => b.classList.remove('on'));
+  setGType(x.type);
+  // 前回の数字を入れる
+  const last = S.data.gym.find(g => (g.exercise||'').trim() === x.name);
+  for(const k of ['kg','reps','sets','min','km']) f[k].value = last?.[k] ?? '';
+  GMIN_TOUCHED = x.type === 'time' || (last?.min != null && last?.sets != null && last.min !== last.sets * MIN_PER_SET);
+  gymCalc();
+  if(last) toast('前回の数字を入れたよ');
+}
+function initGymForm(rec){
+  const f = document.querySelector('form[data-form=gym]'); if(!f) return;
+  if(rec){
+    const info = exInfo((rec.exercise||'').trim()), type = gymRecType(rec);
+    GSEL = { name: rec.exercise, type, mets: rec.mets || info?.mets || EX_DEF_METS[type], custom: !info };
+    GMIN_TOUCHED = rec.min != null && !(type === 'str' && rec.sets != null && rec.min === rec.sets * MIN_PER_SET);
+    const r = document.getElementById('grecent'); if(r) r.innerHTML = '';
+    setGType(type);
+  } else setGType('str');
+  gymCalc();
+}
+document.addEventListener('input', e => {
+  const f = e.target.closest('form[data-form=gym]'); if(!f) return;
+  const n = e.target.name;
+  if(n === 'gq'){ showExSearch(e.target.value); return; }
+  if(n === 'min') GMIN_TOUCHED = e.target.value !== '';
+  if(n === 'exercise'){
+    const name = e.target.value.trim(), info = exInfo(name);
+    if(info){ GSEL = { name, mets:info.mets, type:info.type }; setGType(info.type); }
+    else { GSEL = { name, custom:true, type: f.dataset.gtype || 'str', mets: EX_DEF_METS[f.dataset.gtype || 'str'] }; }
+  }
+  gymCalc();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.name === 'gq' && e.target.closest('form[data-form=gym]')){ e.preventDefault(); if(GRES.length && kana(e.target.value)) pickEx(0); else e.target.blur(); }
+});
+const gymDetail = g => {
+  const parts = gymRecType(g) === 'str'
+    ? [[g.kg != null ? `${g.kg}kg` : '', g.reps != null ? `${g.reps}回` : '', g.sets != null ? `${g.sets}セット` : ''].filter(Boolean).join(' × ')]
+    : [g.min != null ? `${g.min}分` : '', g.km != null ? `${g.km}km` : ''];
+  if(g.kcal != null) parts.push(`🔥${g.kcal}kcal`);
+  return parts.filter(Boolean).join(' ・ ');
+};
+const sumKcal = list => list.reduce((a, g) => a + (g.kcal || 0), 0);
+
+/* ===== 食事の検索 ===== */
 const FOOD_IDX = FOODS.map(([name, yomi, kcal, p, f, c]) => ({ name, toks: [kana(name), ...yomi.split(/\s+/).map(kana)].filter(Boolean), kcal, p, f, c }));
 let FPICK = null, FRES = [];
 // 自分が前に記録した料理（名前ごとに最新の値・回数）
@@ -1167,7 +1311,14 @@ async function handleForm(kind, f){
       await saveRec('meals', data);
       break;
     }
-    case 'gym': await saveRec('gym', { date:v.date, exercise:v.exercise.trim(), kg:num(v.kg), reps:num(v.reps), sets:num(v.sets), memo:v.memo.trim() }); break;
+    case 'gym': {
+      const type = f.dataset.gtype === 'time' ? 'time' : 'str', min = num(v.min), mets = gymMets();
+      const str = type === 'str';
+      await saveRec('gym', { date:v.date, exercise:v.exercise.trim(), type, mets,
+        kg: str ? num(v.kg) : null, reps: str ? num(v.reps) : null, sets: str ? num(v.sets) : null,
+        min, km: str ? null : num(v.km), kcal: burnKcal(mets, min), memo:v.memo.trim() });
+      break;
+    }
     case 'weight': await saveRec('weights', { date:v.date, kg:num(v.kg) }); break;
     case 'water': await saveRec('water', { date:v.date, ml:num(v.ml) }); break;
     case 'sleep': {
@@ -1313,6 +1464,9 @@ document.addEventListener('click', async e => {
       case 'tab': S.tab = v; window.scrollTo(0,0); render(); break;
       case 'open': openSheet(v); break;
       case 'fpick': pickFood(Number(v)); break;
+      case 'gpick': pickEx(Number(v)); break;
+      case 'gcat': showExCat(v); break;
+      case 'gtype': setGType(v); if(GSEL && !GSEL.custom && GSEL.type !== v){ GSEL = { ...GSEL, type:v }; } if(v === 'time') GMIN_TOUCHED = true; else GMIN_TOUCHED = false; gymCalc(); break;
       case 'edit': {
         const rec = (S.data[el.dataset.col] || []).find(r => r.id === el.dataset.id);
         if(rec) openSheet(Object.keys(KIND_COL).find(k => KIND_COL[k] === el.dataset.col), rec);
