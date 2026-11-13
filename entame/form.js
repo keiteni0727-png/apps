@@ -48,13 +48,13 @@ function serSugForm(q) {
   return h;
 }
 /* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
+const SONG_MAIN = ["OP", "ED", "主題歌"];
 function songRowsHtml() {
   const f = form;
-  /* ふだんの種類＋実際に入っている種類（映画でもOP・EDに変えた曲はその区切りに出す） */
-  const base = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
-  const types = SONG_TYPES.filter(t => base.includes(t) || f.songs.some(x => x.type === t));
-  const main = f.k === "a" ? ["OP", "ED"] : ["主題歌"];
-  const noable = f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"];
+  /* OP・ED・主題歌はジャンル・種別に関係なくいつも出す（挿入歌は追加したときだけ） */
+  const types = SONG_TYPES.filter(t => SONG_MAIN.includes(t) || t === "挿入歌" || f.songs.some(x => x.type === t));
+  const main = SONG_MAIN;
+  const noable = SONG_MAIN;
   const card = (x, k) => {
     return `<div class="sg" data-sg="${k}">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
@@ -188,7 +188,6 @@ function formHtml() {
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
-    if (f.only === "sgList" && f.k === "d") lab = "主題歌";
     return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3><button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
     <div class="ffoot"><button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
@@ -197,7 +196,7 @@ function formHtml() {
     <form id="titleF" novalidate>
     ${sec("基本情報", P.title + P.kind + P.status + P.series)}
     ${sec("放送", P.media + P.from + P.time + P.sched + P.cours + P.n)}
-    ${sec(f.k === "a" ? "OP・ED・主題歌" : "主題歌", P.songs, "話によって曲が変わるときは、使われた話の範囲を入れます")}
+    ${sec("OP・ED・主題歌", P.songs, "話によって曲が変わるときは、使われた話の範囲を入れます")}
     ${sec("リンク", P.url + P.vurl)}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;

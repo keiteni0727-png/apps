@@ -279,7 +279,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       /* 種類ごとにまとめ、色の帯と種類のラベルは最初の曲だけに出す */
       if (rows.length) return `<div class="isgrp ${SG_CLS[k]}">${rows.map((r, j) => `<div class="isg isg1" data-jump="sgList"><span class="itag ${SG_CLS[k]}"${j ? ' aria-hidden="true" style="visibility:hidden"' : ""}>${k}</span>${r}</div>`).join("")}</div>`;
       if (anySong) return ""; // どれか1曲でも入っていれば、ほかの種類の「なし」「未設定」は出さない
-      const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
+      const main = k === "OP" || k === "ED" || k === "主題歌";
       const no = (it.noSongs || []).includes(k);
       let v = "";
       if (no) v = `<span class="nosong">なし</span>`;
