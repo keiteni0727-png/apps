@@ -282,7 +282,7 @@ function openForm(it, target, inline) {
   } else
     form = {
       id: null,
-      k: state.mode === "s" ? "r" : state.mode === "m" ? (state.kind === "a" ? "a" : "f") : state.kind === "d" ? "d" : "a",
+      k: state.mode === "s" ? "r" : state.mode === "m" ? (state.sub === "a" ? "a" : "f") : state.mode === "d" ? "d" : "a",
       t: "",
       s: "未視聴",
       dow: -1,

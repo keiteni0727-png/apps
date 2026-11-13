@@ -18,14 +18,13 @@ const MODE_IC = {
   s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13M8.2 15.3a5.5 5.5 0 0 1 0-6.6M15.8 8.7a5.5 5.5 0 0 1 0 6.6"/><path d="M10.6 9.8v4.4l3.6-2.2z" fill="currentColor"/></svg>',
   yt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
 };
-const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "配信", yt: "YouTube" };
 /* PC：左の折りたためるメニュー */
 let sbCollapsed = !!ls.get("adb.v3.sbc");
 const sbFold = new Set(ls.get("adb.v3.sbf") || []); // 下の項目をたたんでいるメニュー
 /* メニューを押したら、そのメニューだけ開いてほかは自動でたたむ */
 function sbOnly(m) {
   sbFold.clear();
-  ["a", "d", "m", "s", "yt"].forEach(x => x !== m && sbFold.add(x));
+  MODE_KEYS.forEach(x => x !== "w" && x !== m && sbFold.add(x));
   ls.set("adb.v3.sbf", [...sbFold]);
 }
 /* メニューごとの対象（左メニューの件数用。ofKind と同じ考え方） */
@@ -45,15 +44,15 @@ function renderSidebar() {
     const l = items.filter(i => inMode(m, i));
     if (m === "m")
       return [
-        [`data-mk="all"`, "すべて", state.kind === "all", l.length],
-        [`data-mk="a"`, "アニメ映画", state.kind === "a", l.filter(i => i.k === "a").length],
-        [`data-mk="d"`, "実写映画", state.kind === "d", l.filter(i => i.k !== "a").length],
+        [`data-mk="all"`, "すべて", state.sub === "all", l.length],
+        [`data-mk="a"`, "アニメ映画", state.sub === "a", l.filter(i => i.k === "a").length],
+        [`data-mk="d"`, "実写映画", state.sub === "d", l.filter(i => i.k !== "a").length],
       ];
     if (m === "s")
       return [
-        [`data-skgo="all"`, "すべて", state.kind === "all", l.length],
-        [`data-skgo="a"`, "アニメ", state.kind === "a", l.filter(i => i.k === "a").length],
-        [`data-skgo="x"`, "ドラマ・バラエティ", state.kind === "x", l.filter(i => i.k !== "a").length],
+        [`data-skgo="all"`, "すべて", state.sub === "all", l.length],
+        [`data-skgo="a"`, "アニメ", state.sub === "a", l.filter(i => i.k === "a").length],
+        [`data-skgo="x"`, "ドラマ・バラエティ", state.sub === "x", l.filter(i => i.k !== "a").length],
       ];
     const by = md => l.filter(i => mediaOf(i).media === md).length;
     return [[`data-tygo=""`, "すべて", !oneT, l.length], ...MEDIA.filter(([md]) => by(md)).map(([md, lab]) => [`data-tygo="${md}"`, lab, oneT === md, by(md)])];
@@ -71,7 +70,7 @@ function renderSidebar() {
   sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${matchMedia("(max-width:899px)").matches ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : `<button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button>`}</div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
-    ${["w", "a", "d", "m", "s", "yt"].map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
+    ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
 function renderVbar() {
@@ -82,9 +81,9 @@ function renderVbar() {
     ? ytAuthors().map(a => [a, a, yst.author === a])
     : state.mode === "m"
       ? [
-          ["all", "すべて", state.kind === "all"],
-          ["a", "アニメ映画", state.kind === "a"],
-          ["d", "ドラマ・実写", state.kind === "d"],
+          ["all", "すべて", state.sub === "all"],
+          ["a", "アニメ映画", state.sub === "a"],
+          ["d", "ドラマ・実写", state.sub === "d"],
         ]
       : [];
   v.innerHTML = `<div class="vseg" role="tablist"${opts.length ? "" : " hidden"}>${opts.map(([k, l, on]) => `<button type="button" role="tab" data-tb="${esc(k)}" aria-selected="${on}">${esc(l)}</button>`).join("")}</div><button type="button" class="vgear" id="gearBtn" aria-label="設定（マスタ）">${GEAR}</button>`;
@@ -128,7 +127,7 @@ function renderTabbar() {
 const ofKind = i =>
   (state.xser && state.series.length && state.mode !== "w" && state.mode !== "yt") ||
   ((state.mode !== "w" || i.k === "a" || i.k === "d") &&
-  (state.kind === "all" || i.k === state.kind || (state.mode === "m" && state.kind === "d" && i.k === "f") || (state.kind === "x" && i.k !== "a")) &&
+  ((k => k === "all" || i.k === k || (state.mode === "m" && k === "d" && i.k === "f") || (k === "x" && i.k !== "a"))(curKind())) &&
   (state.mode !== "m" || mediaOf(i).media === "movie") &&
   (state.mode !== "s" || mediaOf(i).media === "stream"));
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
@@ -239,7 +238,7 @@ function pcInfo(i) {
 /* ライブラリの1行 */
 function slotRow(i) {
   return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
-    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${state.kind === "all" || state.xser ? kindTag(i) : ""}</span>
+    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || state.xser ? kindTag(i) : ""}</span>
     <span class="ttl"><strong>${esc(i.t)}</strong><span class="meta"><span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}</span></span>
     ${pcInfo(i)}<span class="pwide">${stPill(i)}</span></button></div>`;
 }
@@ -671,8 +670,8 @@ function setMain(html) {
 function hSubLab() {
   const m = state.mode;
   if (m === "a" || m === "d") return state.type.length === 1 ? (MEDIA.find(([md]) => md === state.type[0]) || [])[1] || "" : "";
-  if (m === "m") return { a: "アニメ映画", d: "実写映画" }[state.kind] || "";
-  if (m === "s") return { a: "アニメ", x: "ドラマ・バラエティ" }[state.kind] || "";
+  if (m === "m") return { a: "アニメ映画", d: "実写映画" }[state.sub] || "";
+  if (m === "s") return { a: "アニメ", x: "ドラマ・バラエティ" }[state.sub] || "";
   return "";
 }
 function render() {

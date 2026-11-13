@@ -49,7 +49,7 @@ function onSettingsClick(e) {
       const g = seriesMainMap().map[n];
       close();
       if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
-      Object.assign(state, { series: [n], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200, view: "list" });
+      Object.assign(state, { series: [n], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
       render();
       scrollTo(0, 0);
       return true;
@@ -119,21 +119,13 @@ function onSettingsClick(e) {
 function setMode(m) {
   if (state.mode === m) return;
   state.mode = m;
-  state.view = m === "w" ? "week" : "list";
+  state.sub = "all";
   state.wday = "";
   state.xser = false;
-  if (m === "w") {
-    state.kind = "all";
-  } else if (m === "m" || m === "s") {
-    state.kind = m === "m" ? state.mk : "all";
-    state.type = [];
-    state.limit = 200;
-    state.series = [];
-  } else if (m !== "yt") {
-    state.kind = m;
-    state.limit = 200;
-    state.series = [];
-  }
+  if (m === "w" || m === "yt") return;
+  if (m === "m" || m === "s") state.type = [];
+  state.limit = 200;
+  state.series = [];
 }
 function onNavClick(e) {
   const sf = e.target.closest("[data-sbfold]");
@@ -159,7 +151,7 @@ function onNavClick(e) {
   const skb = e.target.closest("[data-skgo]");
   if (skb) {
     setMode("s");
-    state.kind = skb.dataset.skgo;
+    state.sub = skb.dataset.skgo;
     state.limit = 200;
     render();
     scrollTo(0, 0);
@@ -168,7 +160,7 @@ function onNavClick(e) {
   const mkb2 = e.target.closest("[data-mk]");
   if (mkb2) {
     if (mkb2.dataset.go) setMode(mkb2.dataset.go);
-    state.mk = state.kind = mkb2.dataset.mk;
+    state.sub = mkb2.dataset.mk;
     state.limit = 200;
     render();
     return true;
@@ -181,7 +173,7 @@ function onNavClick(e) {
       yst.author = v;
       saveYtUI();
     } else if (state.mode === "m") {
-      state.mk = state.kind = v;
+      state.sub = v;
       state.limit = 200;
     } else if (state.mode === "w") {
       state.wday = v;
@@ -225,10 +217,10 @@ function onNavClick(e) {
     const m = md.dataset.mode;
     sbOnly(m);
     renderSidebar();
-    if (state.mode !== m || state.type.length || (m === "s" && state.kind !== "all") || (m === "m" && state.kind !== "all")) {
+    if (state.mode !== m || state.type.length || state.sub !== "all") {
       setMode(m);
       state.type = [];
-      if (m === "s" || m === "m") state.mk = state.kind = "all";
+      state.sub = "all";
       render();
       scrollTo(0, 0);
     }
@@ -365,7 +357,6 @@ function onFilterClick(e) {
       const it = items.find(x => x.id === openId);
       setMode(it && it.k === "d" ? "d" : "a");
     }
-    state.view = "list";
     Object.assign(state, { sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
     close();
     render();

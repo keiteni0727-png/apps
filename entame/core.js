@@ -1,4 +1,7 @@
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
+/* 左メニュー */
+const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "配信", yt: "YouTube" };
+const MODE_KEYS = Object.keys(MODE_NAME);
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 /* 表示の言い回し：保存データの値は「視聴済み」のまま、画面では「視聴済」と出す */
 const stLabel = s => String(s ?? "").replace(/視聴済み/g, "視聴済");
@@ -75,65 +78,63 @@ let over = {}, // titles：作品（1作品1件）
   prog = {}; // progress：話数リストと視聴チェック
 let items = [],
   eras = [];
+/* 画面の状態。mode＝左メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s 配信・yt YouTube）、
+   sub＝映画・配信の中の下の項目（映画：all/a アニメ映画/d 実写、配信：all/a アニメ/x ドラマ・バラエティ）。
+   そのほかは絞り込み（sf 視聴・era 放送年・type 種別・cour 放送クール・series シリーズ・vod 配信サイト）と並び順 */
+const SUBS = { m: ["all", "a", "d"], s: ["all", "a", "x"] };
 const state = Object.assign(
   {
-    kind: "all",
-    view: "week",
+    mode: "w",
+    sub: "all",
     q: "",
-    sf: "すべて",
-    era: "すべて",
-    type: "すべて",
-    cour: "すべて",
+    sf: [],
+    era: [],
+    type: [],
+    cour: [],
     courY: new Date().getFullYear(),
     sort: "new",
-    limit: 200,
+    grp: "cour",
+    vod: "",
+    unOnly: false,
+    missOnly: false,
+    missKey: "",
   },
   ls.get(K_UI) || {},
-  { q: "", series: "", limit: 200 },
+  { q: "", series: [], limit: 200, fOpen: "", wday: "", xser: false },
 );
 /* 端末に覚えた表示状態のうち、今は無い値は外す */
 const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
-["sf", "era", "cour", "series", "type"].forEach(k => (state[k] = arrOf(state[k])));
+["sf", "era", "cour", "type"].forEach(k => (state[k] = arrOf(state[k])));
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
 if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
-state.fOpen = "";
-if (!["w", "a", "d", "m", "s", "yt"].includes(state.mode)) state.mode = "w";
-if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
+if (!MODE_KEYS.includes(state.mode)) state.mode = "w";
+if (!(SUBS[state.mode] || ["all"]).includes(state.sub)) state.sub = "all";
 if (typeof state.vod !== "string") state.vod = "";
 state.unOnly = !!state.unOnly;
 state.missOnly = !!state.missOnly;
 if (typeof state.missKey !== "string") state.missKey = "";
-if (state.mode === "m") state.kind = state.mk;
-else if (state.mode === "s" || state.mode === "w") state.kind = "all";
-else if (state.mode !== "yt") state.kind = state.mode;
-/* 番組表はメニュー「番組表」だけ。アニメ・ドラマ・配信はライブラリ */
-state.view = state.mode === "w" ? "week" : "list";
-state.wday = ""; // スマホの番組表で選んでいる日
-state.xser = false;
+/* 今の一覧のジャンル：all＝すべて、a＝アニメ、d＝ドラマ（映画では実写映画も）、x＝アニメ以外 */
+const curKind = () => (state.mode === "a" || state.mode === "d" ? state.mode : SUBS[state.mode] ? state.sub : "all");
 const saveUI = () =>
   ls.set(K_UI, {
-    fOpen: state.fOpen || "",
     mode: state.mode,
-    kind: state.kind,
-    mk: state.mk,
+    sub: state.sub,
     vod: state.vod,
     unOnly: state.unOnly,
     missOnly: state.missOnly,
     missKey: state.missKey,
-    view: state.view,
     sf: state.sf,
     era: state.era,
     type: state.type,
     cour: state.cour,
     courY: state.courY,
-    series: state.series,
     sort: state.sort,
     grp: state.grp,
   });
 /* ---------- 保存したフィルタ（アニメ・ドラマで別々。マスタに保存するので端末をまたいで同じ） ---------- */
 const SVK = ["sf", "era", "type", "cour", "series"];
-const svKey = () => (state.mode === "m" || state.mode === "s" ? state.mode : state.kind);
+const svKey = () => (state.mode === "m" || state.mode === "s" ? state.mode : curKind());
 const svList = () => {
   const all = master.savedFilters || {};
   return Array.isArray(all[svKey()]) ? all[svKey()] : [];
