@@ -1566,8 +1566,7 @@ async function saveDoc(col, id, data) {
 /* ---------- マスタ（シリーズ・放送局・配信サイト・投稿者・グループ）：並び順と名前を保存 ---------- */
 let master = {};
 const MKEYS = [
-  ["seriesA", "アニメのシリーズ"],
-  ["seriesD", "ドラマのシリーズ"],
+  ["series", "シリーズ"],
   ["stations", "放送局"],
   ["vods", "配信サイト"],
   ["authors", "YouTube投稿者"],
@@ -1579,12 +1578,9 @@ function usedNames(key) {
   const add = n => {
     if (n) c[n] = (c[n] || 0) + 1;
   };
-  if (key === "seriesA" || key === "seriesD") {
-    const k = key === "seriesA" ? "a" : "d";
-    items.forEach(i => {
-      if (i.k === k) add(i.series);
-    });
-  } else if (key === "stations") items.forEach(i => mediaOf(i).stations.forEach(add));
+  /* シリーズはアニメ・ドラマ・映画・配信で共通の1つ（実写化などをまたいで同じ名前を使う） */
+  if (key === "series") items.forEach(i => add(i.series));
+  else if (key === "stations") items.forEach(i => mediaOf(i).stations.forEach(add));
   else if (key === "vods")
     items.forEach(i => {
       const m = mediaOf(i);
@@ -1599,7 +1595,12 @@ const MDEF = { stations: TV_STATIONS, vods: VODS, groups: COLLAB_SUBS_DEF, soloG
 /* マスタの並び（保存した順 → まだマスタにない使用中の名前を件数順で後ろに） */
 function M(key) {
   const c = usedNames(key);
-  const base = Array.isArray(master[key]) ? master[key] : MDEF[key] || [];
+  /* 前の版はシリーズをアニメ用・ドラマ用で別々に持っていたので、共通のものがまだなければ2つの並びをつなげて使う */
+  const base = Array.isArray(master[key])
+    ? master[key]
+    : key === "series" && (Array.isArray(master.seriesA) || Array.isArray(master.seriesD))
+      ? [...new Set([...(master.seriesA || []), ...(master.seriesD || [])])]
+      : MDEF[key] || [];
   const rest = Object.keys(c)
     .filter(n => !base.includes(n))
     .sort((a, b) => c[b] - c[a] || a.localeCompare(b, "ja"));
@@ -3390,9 +3391,9 @@ function serSugForm(q) {
   if (!nq) return "";
   const cnt = {};
   items.forEach(i => {
-    if (i.series && i.k === form.k) cnt[i.series] = (cnt[i.series] || 0) + 1;
+    if (i.series) cnt[i.series] = (cnt[i.series] || 0) + 1;
   });
-  (master[form.k === "d" ? "seriesD" : "seriesA"] || []).forEach(n => {
+  M("series").forEach(n => {
     if (!(n in cnt)) cnt[n] = 0;
   });
   let names = Object.keys(cnt).filter(n => n !== form.series);
@@ -3728,7 +3729,7 @@ function lockScroll(on) {
 }
 new MutationObserver(() => lockScroll(!!$("#layer").firstElementChild)).observe($("#layer"), { childList: true });
 /* ---------- 設定：各種マスタの追加・名前変更・削除・並び替え ---------- */
-let setKey = "seriesA",
+let setKey = "series",
   setQ = "",
   setDel = null,
   setRen = null;
@@ -3757,7 +3758,7 @@ function settingsHtml() {
   const list = M(setKey);
   const cnt = usedNames(setKey);
   const q = norm(setQ);
-  const big = setKey === "seriesA" || setKey === "seriesD";
+  const big = setKey === "series";
   const rows = list.map((n, i) => [n, i]).filter(([n]) => !q || norm(n).includes(q));
   return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
@@ -3874,8 +3875,8 @@ function propagate(key, from, to) {
   }
   const ch = [];
   items.forEach(i => {
-    if (key === "seriesA" || key === "seriesD") {
-      if (i.k === (key === "seriesA" ? "a" : "d") && i.series === from) ch.push([i.id, { series: to }]);
+    if (key === "series") {
+      if (i.series === from) ch.push([i.id, { series: to }]);
       return;
     }
     const m = mediaOf(i);
