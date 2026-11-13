@@ -171,6 +171,15 @@ const songText = i =>
 /* 曲名とアーティストは入力欄ごとに別々に保存（自動で分けたりつないだりしない）。
    s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
+/* 未入力チェック用：曲名欄が「曲名」アーティストの形（古い登録のしかた）なら、そこから曲名とアーティストを読む。
+   カッコのない古い曲は、詳細の表示と同じく「曲名だけ」とみなす */
+const songChk = x => {
+  let { st, ar } = songTA(x);
+  st = st.trim();
+  ar = ar.trim();
+  const m = !ar && /^[「『](.+?)[」』]\s*(.*)$/.exec(st);
+  return m ? { st: m[1].trim(), ar: m[2].trim() } : { st, ar };
+};
 const songJoin = (st, ar) => [st.trim(), ar.trim()].filter(Boolean).join(" ");
 /* 詳細のカード用：曲名とアーティストを2段で */
 const songCard = x => {
@@ -533,10 +542,10 @@ function missingOf(i) {
   // OP・ED・主題歌のどれか1つでも入っていれば、曲の未入力は出さない
   const anySong = sl.some(x => (x.s || "").trim());
   if (!anySong) (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
-  /* 曲名・アーティストのどちらかだけ入っている曲（曲名とアーティストを別々に入れた曲だけを見る） */
-  const half = sl.filter(x => x.st !== undefined);
-  if (half.some(x => (x.st || "").trim() && !(x.ar || "").trim())) add("アーティスト", "sgList");
-  if (half.some(x => !(x.st || "").trim() && (x.ar || "").trim())) add("曲名", "sgList");
+  /* 曲名・アーティストのどちらかだけ入っている曲（欄を分ける前に登録した古い曲も見る） */
+  const ta = sl.filter(x => (x.s || "").trim()).map(songChk);
+  if (ta.some(x => x.st && !x.ar)) add("アーティスト", "sgList");
+  if (ta.some(x => !x.st && x.ar)) add("曲名", "sgList");
   if (!(i.url || "").trim()) add("公式サイト", "f-url", "url");
   if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "vurl");
   return out;
