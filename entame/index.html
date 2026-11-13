@@ -175,7 +175,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
   .clock .unsw.on .tr i{left:14px}
 }
 /* library filter */
-.ftools{display:flex;gap:8px;padding-block:14px 0}
+.ftools{display:flex;gap:8px;padding-block:14px 10px}
 .ftools input{flex:1;min-width:0;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
 .active{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:12.5px}
 .active .tag{border:0;background:var(--u-chip);border-radius:999px;padding:4px 10px;font-size:12.5px}
@@ -434,7 +434,7 @@ h3 input.inl{font-size:18px;font-weight:800}
   .dscrim{display:block;position:fixed;inset:0;z-index:59;background:var(--u-scrim);opacity:0;pointer-events:none;transition:opacity .25s ease}
   body.drawer .dscrim{opacity:1;pointer-events:auto}
   #main{touch-action:pan-y}
-  .u-app .sb{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(280px,82vw);background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;box-shadow:var(--u-shadow);visibility:hidden}
+  .u-app .sb{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(280px,82vw);background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 8px calc(14px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;box-shadow:var(--u-shadow);visibility:hidden}
   body.drawer .u-app .sb{transform:none;visibility:visible;transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s}
   .u-app .sb-top{display:flex;align-items:center;gap:8px;padding:2px 4px 12px;border-bottom:1px solid var(--u-line);margin-bottom:10px}
   .u-app .sb-lamp{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.1em;line-height:1;color:var(--u-on);background:var(--u-accent);padding:4px 6px 3px;border-radius:4px;white-space:nowrap;flex:none}
@@ -1068,11 +1068,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 /* 左メニュー：U-NEXT風に、まとまりごとの角丸パネル */
 .u-app .sb .sbp{flex:none;background:var(--u-chip);border-radius:12px;margin:0 0 6px;overflow:hidden}
 .u-app .sb .sbp .sb-row{gap:0}
-.u-app .sb .sbp .sb-row>.sb-it{border-radius:0;background:none}
+.u-app .sb .sbp .sb-row>.sb-it{border-radius:0;background:none;padding-left:8px}
 .u-app .sb .sbp .sb-row>.sb-it.on{color:var(--u-accent)}
 .u-app .sb .sbp .sb-fold{width:38px;height:auto;align-self:stretch;border-radius:0;border-left:1px solid var(--u-line)}
 .u-app .sb .sbp .sb-sub{margin:0;padding:0 0 6px;border-left:0}
-.u-app .sb .sbp .sb-sub .sb-it{border-radius:0;padding-left:44px;background:none;border-left:3px solid transparent}
+.u-app .sb .sbp .sb-sub .sb-it{border-radius:0;padding-left:24px;background:none;border-left:3px solid transparent}
 .u-app .sb .sbp .sb-sub .sb-it.on{background:var(--u-surface);border-left-color:var(--u-accent);color:var(--u-ink);font-weight:700}
 .stseg{display:flex;gap:3px;background:var(--u-chip);border-radius:11px;padding:3px;margin:0 0 8px}
 .stseg button{flex:1;display:flex;align-items:baseline;justify-content:center;gap:5px;border:0;background:none;color:var(--u-sub);border-radius:8px;padding:7px 4px;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;min-width:0}
@@ -2049,6 +2049,12 @@ const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画",
 /* PC：左の折りたためるメニュー */
 let sbCollapsed = !!ls.get("adb.v3.sbc");
 const sbFold = new Set(ls.get("adb.v3.sbf") || []); // 下の項目をたたんでいるメニュー
+/* メニューを押したら、そのメニューだけ開いてほかは自動でたたむ */
+function sbOnly(m) {
+  sbFold.clear();
+  ["a", "d", "m", "s", "yt"].forEach(x => x !== m && sbFold.add(x));
+  ls.set("adb.v3.sbf", [...sbFold]);
+}
 /* メニューごとの対象（左メニューの件数用。ofKind と同じ考え方） */
 const inMode = (m, i) =>
   m === "a" ? i.k === "a" : m === "d" ? i.k === "d" : m === "m" ? mediaOf(i).media === "movie" : m === "s" ? mediaOf(i).media === "stream" : false;
@@ -4999,8 +5005,11 @@ function onNavClick(e) {
   const sf = e.target.closest("[data-sbfold]");
   if (sf) {
     const m = sf.dataset.sbfold;
-    sbFold.has(m) ? sbFold.delete(m) : sbFold.add(m);
-    ls.set("adb.v3.sbf", [...sbFold]);
+    if (sbFold.has(m)) sbOnly(m);
+    else {
+      sbFold.add(m);
+      ls.set("adb.v3.sbf", [...sbFold]);
+    }
     renderSidebar();
     return true;
   }
@@ -5080,6 +5089,8 @@ function onNavClick(e) {
   const md = e.target.closest("[data-mode]");
   if (md) {
     const m = md.dataset.mode;
+    sbOnly(m);
+    renderSidebar();
     if (state.mode !== m || state.type.length || (m === "s" && state.kind !== "all") || (m === "m" && state.kind !== "all")) {
       setMode(m);
       state.type = [];
