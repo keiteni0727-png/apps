@@ -150,6 +150,18 @@ svg.chart{width:100%;height:auto;display:block}
 .cropfoot canvas{width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)}
 .filebtn{position:relative;overflow:hidden;display:block;text-align:center}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.fchips{display:flex;flex-wrap:wrap;gap:6px}
+.fchip{border:1.5px solid var(--line);background:#fff;color:var(--text);border-radius:99px;padding:6px 11px;font-size:13px;cursor:pointer}
+.fchip small{color:var(--pink-d);font-weight:700}
+.flist{margin-top:6px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.fitem{display:flex;width:100%;justify-content:space-between;align-items:center;gap:8px;border:0;border-top:1px dashed var(--line);background:#fff;padding:11px 12px;font-size:14px;text-align:left;cursor:pointer;color:inherit}
+.fitem:first-child{border-top:0}
+.fitem .fk{color:var(--pink-d);font-weight:700;white-space:nowrap}
+.fitem .chip{margin-left:6px}
+.fpick{margin-top:10px;background:var(--pink-xl);border-radius:14px;padding:10px 12px}
+.fmult{display:flex;gap:6px;margin-top:8px}
+.fmult button{flex:1;border:0;border-radius:99px;padding:7px 0;background:#fff;color:var(--pink-d);font-weight:700;font-size:13px;cursor:pointer}
+.fmult button.on{background:var(--pink-d);color:#fff}
 </style>
 </head>
 <body>
@@ -161,6 +173,7 @@ svg.chart{width:100%;height:auto;display:block}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { FOODS } from "./foods.js";
 
 /* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
 const firebaseConfig = {
@@ -1015,11 +1028,16 @@ function viewSettings(){
 
 /* ===== 入力シート ===== */
 function openSheet(kind){
+  FPICK = null; FRES = [];
   const t = today();
   const dateField = `<label class="f">日付</label><input class="in" type="date" name="date" value="${t}" required>`;
   const forms = {
     meal: ['食事を記録', `${dateField}
       <label class="f">いつ</label><select class="in" name="slot">${SLOTS.map(s => `<option ${s === autoSlot() ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <label class="f">料理をさがす</label><input class="in" name="q" placeholder="例：からあげ、おにぎり、ラテ" autocomplete="off" enterkeyhint="search">
+      <div id="fresults"></div>
+      <div id="frecent">${recentFoodsHtml()}</div>
+      <div id="fpick"></div>
       <label class="f">料理名</label><input class="in" name="name" placeholder="例：鮭定食">
       <label class="f">写真（任意）</label><input class="in" type="file" name="photo" accept="image/*">
       <div class="f2"><div><label class="f">カロリー(kcal)</label><input class="in" type="number" inputmode="numeric" name="kcal"></div><div></div></div>
@@ -1027,7 +1045,7 @@ function openSheet(kind){
       <div><label class="f">脂質(g)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="f"></div>
       <div><label class="f">炭水化物(g)</label><input class="in" type="number" step="0.1" inputmode="decimal" name="c"></div></div>
       <label class="f">メモ</label><input class="in" name="memo">
-      <p class="muted">AIで写真からカロリーを出す機能は、あとで追加予定です。</p>`],
+      <p class="muted">カロリーは一般的な目安です。リストにない料理は手で入れてね（次から候補に出ます）。</p>`],
     gym: ['ジムを記録', `${dateField}
       <label class="f">種目</label><input class="in" name="exercise" list="exlist" required placeholder="例：スクワット">
       <datalist id="exlist">${[...new Set(S.data.gym.map(g => g.exercise))].slice(0,30).map(e => `<option value="${esc(e)}">`).join('')}</datalist>
@@ -1052,6 +1070,65 @@ function openSheet(kind){
     <form data-form="${kind}">${body}<button class="btn block" style="margin-top:16px">保存</button></form></div></div>`;
 }
 const closeSheet = () => { $sheet.innerHTML = ''; };
+/* ===== 食事の検索 ===== */
+const kana = s => String(s||'').normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)).replace(/[\s・()（）]/g, '');
+const FOOD_IDX = FOODS.map(([name, yomi, kcal, p, f, c]) => ({ name, toks: [kana(name), ...yomi.split(/\s+/).map(kana)].filter(Boolean), kcal, p, f, c }));
+let FPICK = null, FRES = [];
+// 自分が前に記録した料理（名前ごとに最新の値・回数）
+function myFoods(){
+  const m = new Map();
+  S.data.meals.forEach((x, i) => {
+    const name = (x.name||'').trim(); if(!name || x.kcal == null) return;
+    const o = m.get(name);
+    if(o) o.count++; else m.set(name, { name, toks: [kana(name)], kcal:x.kcal, p:x.p, f:x.f, c:x.c, count:1, order:i, mine:true });
+  });
+  return [...m.values()];
+}
+function searchFoods(q){
+  const k = kana(q); if(!k) return [];
+  const hit = x => x.toks.some(t => t.includes(k));
+  // 名前かよみの先頭が一致 → よみのどれかの先頭が一致 → 途中が一致 の順
+  const score = x => (x.toks[0].startsWith(k) || (x.toks[1] || '').startsWith(k)) ? 0 : x.toks.some(t => t.startsWith(k)) ? 1 : 2;
+  const mine = myFoods().filter(hit).sort((a,b) => score(a) - score(b) || b.count - a.count);
+  const names = new Set(mine.map(x => x.name));
+  const list = FOOD_IDX.filter(x => hit(x) && !names.has(x.name)).sort((a,b) => score(a) - score(b));
+  return [...mine.slice(0,3), ...list].slice(0,12);
+}
+const foodLine = (x, i) => `<button type="button" class="fitem" data-a="fpick" data-v="${i}"><span class="fn">${esc(x.name)}${x.mine ? '<span class="chip">前に食べた</span>' : ''}</span><span class="fk">${x.kcal}kcal</span></button>`;
+function recentFoodsHtml(){
+  const list = myFoods().sort((a,b) => b.count - a.count || a.order - b.order).slice(0,8);
+  if(!list.length) return '';
+  FRES = list;
+  return `<div class="muted" style="margin:8px 0 4px">最近・よく食べるもの</div><div class="fchips">${list.map((x,i) => `<button type="button" class="fchip" data-a="fpick" data-v="${i}">${esc(x.name)} <small>${x.kcal}</small></button>`).join('')}</div>`;
+}
+function showFoodResults(q){
+  const box = document.getElementById('fresults'), rec = document.getElementById('frecent'); if(!box) return;
+  if(!kana(q)){ box.innerHTML = ''; if(rec){ rec.innerHTML = recentFoodsHtml(); } return; }
+  if(rec) rec.innerHTML = '';
+  FRES = searchFoods(q);
+  box.innerHTML = FRES.length ? `<div class="flist">${FRES.map(foodLine).join('')}</div>` : `<p class="muted" style="margin:6px 0">見つからなかったよ。下に手で入れてね</p>`;
+}
+const MULTS = [[0.5,'半分'],[1,'ふつう'],[1.5,'1.5倍'],[2,'2倍']];
+function applyFood(){
+  const f = document.querySelector('form[data-form=meal]'); if(!f || !FPICK) return;
+  const m = FPICK.mult, r1 = v => v == null ? '' : Math.round(v * m * 10) / 10;
+  f.name.value = FPICK.name + (m === 1 ? '' : `（${MULTS.find(x => x[0] === m)[1]}）`);
+  f.kcal.value = Math.round(FPICK.kcal * m); f.p.value = r1(FPICK.p); f.f.value = r1(FPICK.f); f.c.value = r1(FPICK.c);
+  document.getElementById('fpick').innerHTML = `<div class="fpick"><div><b>${esc(FPICK.name)}</b><div class="muted">${Math.round(FPICK.kcal * m)}kcal ・ P${r1(FPICK.p)} F${r1(FPICK.f)} C${r1(FPICK.c)}</div></div>
+    <div class="fmult">${MULTS.map(([v,l]) => `<button type="button" class="${v === m ? 'on' : ''}" data-a="fmult" data-v="${v}">${l}</button>`).join('')}</div></div>`;
+}
+function pickFood(i){
+  const x = FRES[i]; if(!x) return;
+  FPICK = { name:x.name, kcal:x.kcal, p:x.p, f:x.f, c:x.c, mult:1 };
+  const f = document.querySelector('form[data-form=meal]'); if(f) f.q.value = '';
+  document.getElementById('fresults').innerHTML = ''; document.getElementById('frecent').innerHTML = '';
+  applyFood();
+}
+document.addEventListener('input', e => { if(e.target.name === 'q' && e.target.closest('form[data-form=meal]')) showFoodResults(e.target.value); });
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.name === 'q' && e.target.closest('form[data-form=meal]')){ e.preventDefault(); if(FRES.length && kana(e.target.value)) pickFood(0); else e.target.blur(); }
+});
+
 function autoSlot(){ const h = new Date().getHours(); return h < 10 ? '朝ごはん' : h < 15 ? '昼ごはん' : h < 21 ? '夜ごはん' : '間食'; }
 
 async function addRec(col, data){ await addDoc(collection(db,col), { ...data, ts: serverTimestamp() }); }
@@ -1210,6 +1287,8 @@ document.addEventListener('click', async e => {
       }
       case 'tab': S.tab = v; window.scrollTo(0,0); render(); break;
       case 'open': openSheet(v); break;
+      case 'fpick': pickFood(Number(v)); break;
+      case 'fmult': if(FPICK){ FPICK.mult = Number(v); applyFood(); } break;
       case 'close': case 'close-bg': closeSheet(); break;
       case 'water': await addRec('water', { date:today(), ml:Number(v) }); toast(`お水 ${v}ml ♡`); break;
       case 'del':
