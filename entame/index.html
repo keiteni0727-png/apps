@@ -519,6 +519,14 @@ h3 input.inl{font-size:18px;font-weight:800}
 }
 .onlyh small{display:block;font-size:11.5px;color:var(--u-sub);font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:62vw}
 .fgrid.only{margin-top:12px}
+/* 詳細画面のその場編集 */
+.ined{border:1.5px solid var(--u-accent);border-radius:var(--u-rl);padding:10px 12px 12px;margin:0 0 10px;background:var(--u-surface);box-shadow:var(--u-shadow)}
+.ined .hdrow{margin:0}
+.ined .onlyh{font-size:14px;margin:0}
+.ined .onlyh small{display:none}
+.ined .close{width:30px;height:30px}
+.ined .fgrid.only{margin-top:8px}
+.ined .ffoot{position:static;margin-top:10px;padding:10px 0 0;background:none}
 .fsdrop .clear{border:0;background:transparent;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;padding:4px 0}
 /* episode editor */
 .eped{border:1px solid var(--u-line);border-radius:10px;overflow:hidden}
@@ -3361,6 +3369,7 @@ function missDetail(it) {
   return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function refreshSheet() {
+  if (form && form.inline) return;
   const it = items.find(x => x.id === openId);
   const el = $("#sheetIn");
   if (it && el) el.innerHTML = renderDetail(it);
@@ -3753,12 +3762,12 @@ function readForm() {
     });
 }
 function redrawForm() {
-  const sh = $(".sheet.form");
+  const sh = $(".sheet.form") || $("#layer .sheet");
   const y = sh.scrollTop;
   $("#formIn").innerHTML = formHtml();
   sh.scrollTop = y;
 }
-function openForm(it, target) {
+function openForm(it, target, inline) {
   epEdit = null;
   const y = new Date().getFullYear();
   if (it) {
@@ -3809,7 +3818,6 @@ function openForm(it, target) {
       cours: [],
       cy: y,
     };
-  openId = null;
   if (form.span)
     form.songs.forEach(x => {
       if (x.a == null && x.b == null) {
@@ -3817,6 +3825,8 @@ function openForm(it, target) {
         x.b = form.span[1];
       }
     });
+  if (inline && it && ONLY_A[target]) return openInlineForm(target, inline instanceof Element ? inline : null);
+  openId = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form" role="dialog" aria-modal="true" aria-label="${form.id ? "作品を編集" : "作品を追加"}"><div class="wrap" id="formIn">${formHtml()}</div></div>`;
   if (target && ONLY_A[target]) {
@@ -3827,6 +3837,44 @@ function openForm(it, target) {
     if (i && !TOUCH) i.focus({ preventScroll: true });
   } else if (target) jumpTo(target);
   else if (!TOUCH) $("#f-t").focus({ preventScroll: true });
+}
+/* 作品の詳細画面で、押した項目をその場で編集する（編集画面は開かない）
+   Enter・保存で保存、詳細の別の場所を押すと保存して閉じる、✕・キャンセル・Escで取り消し */
+function inlineAnchor(target, el) {
+  /* 押した場所の下に出す。押した場所が描き直しで消えていたら、見えている同じ項目を探す */
+  if (!el || !el.isConnected) {
+    const l = [...document.querySelectorAll(`#sheetIn [data-jump="${target}"]`)];
+    el = l.find(x => x.offsetParent !== null) || l[0];
+  }
+  return el && (el.closest(".icard,.dmiss,.ilinks") || el);
+}
+function openInlineForm(target, el) {
+  const anc = inlineAnchor(target, el);
+  if (!anc) {
+    form = null;
+    return;
+  }
+  form.only = target;
+  form.inline = true;
+  document.querySelectorAll("#sheetIn .ined").forEach(x => x.remove());
+  anc.insertAdjacentHTML("afterend", `<div class="ined" id="formIn">${formHtml()}</div>`);
+  readForm();
+  form.init = JSON.stringify({ ...form, init: 0 });
+  const box = $("#formIn");
+  box.scrollIntoView({ block: "nearest" });
+  const i = box.querySelector(".fgrid.only input:not([type=date]):not([type=checkbox]):not([type=file])");
+  if (i && !TOUCH) i.focus({ preventScroll: true });
+}
+function closeInlineForm() {
+  form = null;
+  document.querySelectorAll("#sheetIn .ined").forEach(x => x.remove());
+}
+/* 変更があれば保存、なければ閉じるだけ */
+function commitInlineForm() {
+  if (!form || !form.inline) return;
+  readForm();
+  if (JSON.stringify({ ...form, init: 0 }) === form.init) closeInlineForm();
+  else submitForm();
 }
 async function submitForm() {
   readForm();
@@ -3871,6 +3919,11 @@ async function submitForm() {
   };
   patch.noF = [...new Set(f.noF || [])].filter(k => k in clr);
   patch.noF.forEach(k => clr[k]());
+  if (f.id && f.inline) {
+    form = null;
+    await saveTitle(f.id, patch, "保存しました");
+    return;
+  }
   if (f.id) {
     const id = f.id;
     close();
@@ -5338,6 +5391,25 @@ function onFilterClick(e) {
 }
 /* 作品の追加・編集画面 */
 function onTitleFormClick(e) {
+  if (form && form.inline) {
+    if (e.target.closest(".ined [data-back]")) {
+      closeInlineForm();
+      return true;
+    }
+    if (!e.target.closest(".ined")) {
+      const jp = e.target.closest("#sheetIn [data-jump]");
+      const tgt = jp && jp.dataset.jump;
+      commitInlineForm();
+      closeInlineForm();
+      /* 別の項目を押したときは、そのままその項目を編集 */
+      if (tgt && !e.target.closest("a,button:not([data-jump])")) {
+        const it = items.find(x => x.id === openId);
+        if (it) openForm(it, tgt, jp);
+        return true;
+      }
+      return false; // ほかのボタン（閉じる・タブなど）はそのまま動かす
+    }
+  }
   if (form) {
     const fm = e.target.closest("[data-fm]");
     if (fm) {
@@ -5542,7 +5614,7 @@ function onDetailClick(e) {
       }
       const jp = e.target.closest("[data-jump]");
       if (jp && !e.target.closest("a,button:not([data-jump])")) {
-        openForm(it, jp.dataset.jump);
+        openForm(it, jp.dataset.jump, jp);
         return true;
       }
     }
@@ -6145,6 +6217,10 @@ document.addEventListener("keydown", e => {
       e.preventDefault();
       commitInline(e.target, true);
     }
+    return;
+  }
+  if (e.key === "Escape" && form && form.inline) {
+    closeInlineForm();
     return;
   }
   if (e.key === "Escape") close();
