@@ -150,6 +150,8 @@ svg.chart{width:100%;height:auto;display:block}
 .cropfoot canvas{width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)}
 .filebtn{position:relative;overflow:hidden;display:block;text-align:center}
 .filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.list li.editable{cursor:pointer}
+.list li.editable:active{background:var(--pink-xl)}
 .fchips{display:flex;flex-wrap:wrap;gap:6px}
 .fchip{border:1.5px solid var(--line);background:#fff;color:var(--text);border-radius:99px;padding:6px 11px;font-size:13px;cursor:pointer}
 .fchip small{color:var(--pink-d);font-weight:700}
@@ -612,6 +614,7 @@ function render(){
 
 const deniedCard = col => `<div class="card"><p class="empty">${COL_LABEL[col]}は共有されていません ${IC.heart.replace('<svg','<svg style="width:14px;vertical-align:-2px"')}</p></div>`;
 const canEdit = () => S.role === 'member';
+const editAttr = (col,id) => canEdit() ? ` class="editable" data-a="edit" data-col="${col}" data-id="${id}"` : '';
 const delBtn = (col,id) => canEdit() ? `<button class="del" data-a="del" data-col="${col}" data-id="${id}" aria-label="削除">×</button>` : '';
 const groupByDate = list => { const m = new Map(); for(const r of list){ if(!m.has(r.date)) m.set(r.date, []); m.get(r.date).push(r); } return [...m.entries()]; };
 
@@ -837,7 +840,7 @@ function viewMeals(){
     const sum = items.reduce((a,m) => a + (m.kcal||0), 0);
     const ordered = [...items].sort((a,b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
     return `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${sum} kcal</span></div><ul class="list">
-      ${ordered.map(m => `<li>${m.photo ? `<img class="thumb" src="${m.photo}" alt="" data-a="zoom">` : `<div class="thumb" style="display:grid;place-items:center">${IC.meal.replace('<svg','<svg style="width:24px;stroke:#f48fb1"')}</div>`}
+      ${ordered.map(m => `<li${editAttr('meals', m.id)}>${m.photo ? `<img class="thumb" src="${m.photo}" alt="" data-a="zoom">` : `<div class="thumb" style="display:grid;place-items:center">${IC.meal.replace('<svg','<svg style="width:24px;stroke:#f48fb1"')}</div>`}
         <div class="main"><div class="t">${esc(m.name || m.slot)}</div>
         <div class="s">${esc(m.slot)}${m.kcal != null ? ` ・ ${m.kcal}kcal` : ''}${m.p != null || m.f != null || m.c != null ? ` ・ P${m.p ?? '-'} F${m.f ?? '-'} C${m.c ?? '-'}` : ''}</div>
         ${m.memo ? `<div class="s">${esc(m.memo)}</div>` : ''}</div>${delBtn('meals', m.id)}</li>`).join('')}
@@ -852,7 +855,7 @@ function viewGym(){
   const weekGym = new Set(list.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
   return `<div class="card stat"><div class="label">この7日間</div><div class="val">${weekGym}<small>回 / 目安 週2回</small></div></div>` +
     groupByDate(list).slice(0,30).map(([date, items]) => `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${items.length}種目</span></div><ul class="list">
-      ${items.map(g => `<li><div class="main"><div class="t">${esc(g.exercise)}</div>
+      ${items.map(g => `<li${editAttr('gym', g.id)}><div class="main"><div class="t">${esc(g.exercise)}</div>
         <div class="s">${g.kg != null ? g.kg + 'kg × ' : ''}${g.reps ?? '-'}回 × ${g.sets ?? '-'}セット</div>${g.memo ? `<div class="s">${esc(g.memo)}</div>` : ''}</div>${delBtn('gym', g.id)}</li>`).join('')}
     </ul></div>`).join('');
 }
@@ -865,7 +868,7 @@ function viewBody(){
     const w = S.data.weights;
     html += `<div class="card"><h2>体重の推移${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="weight">＋記録</button></span>` : ''}</h2>
       ${weightChart(w, num(S.profile.goalWeight))}
-      ${w.length ? `<ul class="list" style="margin-top:8px">${w.slice(0,10).map(r => `<li><div class="main"><span class="t">${r.kg.toFixed(1)}kg</span> <span class="s">${fmtDate(r.date)}</span></div>${delBtn('weights', r.id)}</li>`).join('')}</ul>` : ''}</div>`;
+      ${w.length ? `<ul class="list" style="margin-top:8px">${w.slice(0,10).map(r => `<li${editAttr('weights', r.id)}><div class="main"><span class="t">${r.kg.toFixed(1)}kg</span> <span class="s">${fmtDate(r.date)}</span></div>${delBtn('weights', r.id)}</li>`).join('')}</ul>` : ''}</div>`;
   }
   // 水分
   if(S.denied.water) html += deniedCard('water');
@@ -881,7 +884,7 @@ function viewBody(){
           <text x="${31+i*42}" y="125" font-size="10" text-anchor="middle" fill="#a8899a">${fmtDate(days[i]).replace(/\(.\)/,'')}</text>`).join('')}
       </svg><div class="muted">点線：目標 ${goal}ml</div>
       ${canEdit() ? `<div class="water-btns"><button class="btn sub sm" data-a="water" data-v="150">＋150ml</button><button class="btn sub sm" data-a="water" data-v="200">＋200ml</button><button class="btn sub sm" data-a="water" data-v="500">＋500ml</button></div>` : ''}
-      ${S.data.water.filter(x => x.date === today()).length && canEdit() ? `<ul class="list" style="margin-top:8px">${S.data.water.filter(x => x.date === today()).map(x => `<li><div class="main"><span class="t">${x.ml}ml</span> <span class="s">今日</span></div>${delBtn('water', x.id)}</li>`).join('')}</ul>` : ''}
+      ${S.data.water.filter(x => x.date === today()).length && canEdit() ? `<ul class="list" style="margin-top:8px">${S.data.water.filter(x => x.date === today()).map(x => `<li${editAttr('water', x.id)}><div class="main"><span class="t">${x.ml}ml</span> <span class="s">今日</span></div>${delBtn('water', x.id)}</li>`).join('')}</ul>` : ''}
     </div>`;
   }
   // 睡眠
@@ -892,7 +895,7 @@ function viewBody(){
     const avg = recent.length ? Math.round(recent.reduce((a,s) => a + s.minutes, 0) / recent.length) : null;
     html += `<div class="card"><h2>睡眠${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="sleep">＋記録</button></span>` : ''}</h2>
       ${avg != null ? `<div class="stat"><div class="label">7日間の平均</div><div class="val" style="font-size:20px">${hm(avg)}</div></div>` : ''}
-      ${sl.length ? `<ul class="list">${sl.slice(0,10).map(s => `<li><div class="main"><div class="t">${hm(s.minutes)}</div><div class="s">${fmtDate(s.date)} ・ ${esc(s.bed)} → ${esc(s.wake)}</div></div>${delBtn('sleep', s.id)}</li>`).join('')}</ul>` : '<p class="empty">まだ記録がありません</p>'}</div>`;
+      ${sl.length ? `<ul class="list">${sl.slice(0,10).map(s => `<li${editAttr('sleep', s.id)}><div class="main"><div class="t">${hm(s.minutes)}</div><div class="s">${fmtDate(s.date)} ・ ${esc(s.bed)} → ${esc(s.wake)}</div></div>${delBtn('sleep', s.id)}</li>`).join('')}</ul>` : '<p class="empty">まだ記録がありません</p>'}</div>`;
   }
   return html;
 }
@@ -1027,8 +1030,11 @@ function viewSettings(){
 }
 
 /* ===== 入力シート ===== */
-function openSheet(kind){
+const KIND_COL = { meal:'meals', gym:'gym', weight:'weights', water:'water', sleep:'sleep' };
+let EDIT = null;
+function openSheet(kind, rec = null){
   FPICK = null; FRES = [];
+  EDIT = rec && KIND_COL[kind] ? { col: KIND_COL[kind], id: rec.id, rec } : null;
   const t = today();
   const dateField = `<label class="f">日付</label><input class="in" type="date" name="date" value="${t}" required>`;
   const forms = {
@@ -1066,10 +1072,21 @@ function openSheet(kind){
       <label class="f">メモ</label><input class="in" name="memo"><p class="muted">暗号化して保存します。</p>`],
   };
   const [title, body] = forms[kind];
-  $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>${title}<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
-    <form data-form="${kind}">${body}<button class="btn block" style="margin-top:16px">保存</button></form></div></div>`;
+  $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>${EDIT ? title.replace('記録', '編集').replace('追加', '編集') : title}<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+    <form data-form="${kind}">${body}<button class="btn block" style="margin-top:16px">${EDIT ? '直して保存' : '保存'}</button></form></div></div>`;
+  if(EDIT){
+    const f = $sheet.querySelector('form');
+    for(const el of f.elements){
+      if(!el.name || el.type === 'file' || el.name === 'q' || !(el.name in rec)) continue;
+      el.value = rec[el.name] ?? '';
+    }
+    if(kind === 'meal'){
+      const rc = document.getElementById('frecent'); if(rc) rc.innerHTML = '';
+      if(rec.photo) f.photo.insertAdjacentHTML('afterend', `<p class="muted" style="margin:4px 0 0">今の写真はそのまま残ります。変えるときだけ選んでね。</p>`);
+    }
+  }
 }
-const closeSheet = () => { $sheet.innerHTML = ''; };
+const closeSheet = () => { $sheet.innerHTML = ''; EDIT = null; };
 /* ===== 食事の検索 ===== */
 const kana = s => String(s||'').normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60)).replace(/[\s・()（）]/g, '');
 const FOOD_IDX = FOODS.map(([name, yomi, kcal, p, f, c]) => ({ name, toks: [kana(name), ...yomi.split(/\s+/).map(kana)].filter(Boolean), kcal, p, f, c }));
@@ -1132,6 +1149,11 @@ document.addEventListener('keydown', e => {
 function autoSlot(){ const h = new Date().getHours(); return h < 10 ? '朝ごはん' : h < 15 ? '昼ごはん' : h < 21 ? '夜ごはん' : '間食'; }
 
 async function addRec(col, data){ await addDoc(collection(db,col), { ...data, ts: serverTimestamp() }); }
+// 編集中ならその記録を上書き、そうでなければ新しく追加
+async function saveRec(col, data){
+  if(EDIT && EDIT.col === col) await setDoc(doc(db, col, EDIT.id), data, { merge:true });
+  else await addRec(col, data);
+}
 async function addPriv(col, data){ await addDoc(collection(db,col), { ...(await encObj(data)), ts: serverTimestamp() }); }
 
 async function handleForm(kind, f){
@@ -1140,16 +1162,18 @@ async function handleForm(kind, f){
     case 'meal': {
       const file = f.photo.files[0];
       const photo = file ? await compress(file, 800, 0.7, 250000) : null;
-      await addRec('meals', { date:v.date, slot:v.slot, name:v.name.trim(), kcal:num(v.kcal), p:num(v.p), f:num(v.f), c:num(v.c), memo:v.memo.trim(), photo });
+      const data = { date:v.date, slot:v.slot, name:v.name.trim(), kcal:num(v.kcal), p:num(v.p), f:num(v.f), c:num(v.c), memo:v.memo.trim() };
+      if(photo || !EDIT) data.photo = photo; // 編集で写真を選ばなかったときは今の写真を残す
+      await saveRec('meals', data);
       break;
     }
-    case 'gym': await addRec('gym', { date:v.date, exercise:v.exercise.trim(), kg:num(v.kg), reps:num(v.reps), sets:num(v.sets), memo:v.memo.trim() }); break;
-    case 'weight': await addRec('weights', { date:v.date, kg:num(v.kg) }); break;
-    case 'water': await addRec('water', { date:v.date, ml:num(v.ml) }); break;
+    case 'gym': await saveRec('gym', { date:v.date, exercise:v.exercise.trim(), kg:num(v.kg), reps:num(v.reps), sets:num(v.sets), memo:v.memo.trim() }); break;
+    case 'weight': await saveRec('weights', { date:v.date, kg:num(v.kg) }); break;
+    case 'water': await saveRec('water', { date:v.date, ml:num(v.ml) }); break;
     case 'sleep': {
       const [bh,bm] = v.bed.split(':').map(Number), [wh,wm] = v.wake.split(':').map(Number);
       const minutes = ((wh*60+wm) - (bh*60+bm) + 1440) % 1440;
-      await addRec('sleep', { date:v.date, bed:v.bed, wake:v.wake, minutes });
+      await saveRec('sleep', { date:v.date, bed:v.bed, wake:v.wake, minutes });
       break;
     }
     case 'log': await addPriv('privateLogs', { date:v.date, type:v.type, conds:new FormData(f).getAll('conds'), memo:v.memo.trim() }); break;
@@ -1240,9 +1264,10 @@ document.addEventListener('submit', async e => {
   e.preventDefault();
   const btn = f.querySelector('button:not([type=button]):last-of-type'); if(btn){ btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = '保存中…'; }
   try{
+    const wasEdit = !!EDIT && !!f.closest('.sheet');
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    toast({ editchar:'保存しました', gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    if(wasEdit) toast('直しました ♡'); else toast({ editchar:'保存しました', gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -1288,6 +1313,11 @@ document.addEventListener('click', async e => {
       case 'tab': S.tab = v; window.scrollTo(0,0); render(); break;
       case 'open': openSheet(v); break;
       case 'fpick': pickFood(Number(v)); break;
+      case 'edit': {
+        const rec = (S.data[el.dataset.col] || []).find(r => r.id === el.dataset.id);
+        if(rec) openSheet(Object.keys(KIND_COL).find(k => KIND_COL[k] === el.dataset.col), rec);
+        break;
+      }
       case 'fmult': if(FPICK){ FPICK.mult = Number(v); applyFood(); } break;
       case 'close': case 'close-bg': closeSheet(); break;
       case 'water': await addRec('water', { date:today(), ml:Number(v) }); toast(`お水 ${v}ml ♡`); break;
