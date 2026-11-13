@@ -98,8 +98,6 @@ state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
 if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
 state.fOpen = "";
-/* 前の版で「アニメ／ドラマの番組表」を開いていたら、新しい「番組表」メニューへ */
-if ((state.mode === "a" || state.mode === "d") && state.view === "week") state.mode = "w";
 if (!["w", "a", "d", "m", "s", "yt"].includes(state.mode)) state.mode = "w";
 if (!["all", "a", "d"].includes(state.mk)) state.mk = "all";
 if (typeof state.vod !== "string") state.vod = "";
@@ -473,12 +471,7 @@ const MDEF = { stations: TV_STATIONS, vods: VODS, groups: COLLAB_SUBS_DEF, soloG
 /* マスタの並び（保存した順 → まだマスタにない使用中の名前を件数順で後ろに） */
 function M(key) {
   const c = usedNames(key);
-  /* 前の版はシリーズをアニメ用・ドラマ用で別々に持っていたので、共通のものがまだなければ2つの並びをつなげて使う */
-  const base = Array.isArray(master[key])
-    ? master[key]
-    : key === "series" && (Array.isArray(master.seriesA) || Array.isArray(master.seriesD))
-      ? [...new Set([...(master.seriesA || []), ...(master.seriesD || [])])]
-      : MDEF[key] || [];
+  const base = Array.isArray(master[key]) ? master[key] : MDEF[key] || [];
   const rest = Object.keys(c)
     .filter(n => !base.includes(n))
     .sort((a, b) => c[b] - c[a] || a.localeCompare(b, "ja"));
@@ -504,6 +497,34 @@ async function doLogout() {
 /* 設定のいちばん下：ログアウト */
 const accountHtml = () =>
   `<div class="bkbox"><div class="bkrow"><button type="button" class="u-btn sm svbtn" data-logout="1">ログアウト</button></div></div>`;
+/* 前の版の形で保存されているデータを、今の形に直して保存し直す（最初に読み込んだとき1回だけ。直すものがなければ何もしない）
+   ・シリーズの並び：アニメ用（seriesA）・ドラマ用（seriesD）の2つ → 共通の1つ（series）に。作品がないドラマ用のシリーズはメインのジャンルをドラマに
+   ・「毎週の放送ではない」作品（曜日なし・放送時間なしの印なし） → 「放送時間なし」に
+   最終変更の時刻（_at）は変えない */
+let oldFixed = false;
+function fixOldData() {
+  if (oldFixed) return;
+  oldFixed = true;
+  const put = (path, data) => write(() => db.doc(path).set(data)).catch(fail);
+  if (Array.isArray(master.seriesA) || Array.isArray(master.seriesD)) {
+    const { seriesA = [], seriesD = [], ...m } = master;
+    if (!Array.isArray(m.series)) m.series = [...new Set([...seriesA, ...seriesD])];
+    const used = new Set(Object.values(over).map(o => o && o.series));
+    const sm = { ...(m.seriesMain || {}) };
+    seriesD.forEach(n => !sm[n] && !used.has(n) && (sm[n] = "d"));
+    m.seriesMain = sm;
+    master = m;
+    put("master/all", m);
+  }
+  Object.entries(over).forEach(([id, o]) => {
+    if (!o || typeof o.t !== "string" || o.deleted) return;
+    const md = o.media || "tv";
+    if (noSched(md) || !o.from || (o.dow ?? -1) >= 0 || (o.noF || []).includes("time")) return;
+    over[id] = { ...o, noF: [...(o.noF || []), "time"] };
+    put("titles/" + id, over[id]);
+    if (loaded) rebuild();
+  });
+}
 /* 保存先につないで、作品・視聴記録・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
 async function initStore() {
   const conn = await U.store();
@@ -512,8 +533,9 @@ async function initStore() {
     return;
   }
   db = conn.db;
-  const got = { titles: false, progress: false };
+  const got = { titles: false, progress: false, master: false };
   const done = () => {
+    if (got.titles && got.master) fixOldData();
     if (!got.titles || !got.progress) return;
     loaded = true;
     calcLastAt();
@@ -541,6 +563,8 @@ async function initStore() {
   db.collection("master").onSnapshot(s => {
     const d = s.docs.find(x => x.id === "all");
     master = d ? d.data() : {};
+    got.master = true;
+    if (got.titles) fixOldData();
     render();
     refreshSettings();
   }, onErr);
@@ -616,7 +640,6 @@ function missingOf(i) {
   const m = mediaOf(i);
   const md = m.media,
     ns = noSched(md);
-  const irr = !ns && !!i.from && (i.dow ?? -1) < 0;
   const sl = songsOf(i);
   const no = i.noSongs || [];
   const needSong = t => !no.includes(t) && !sl.some(x => x.type === t && (x.s || "").trim());
@@ -626,7 +649,7 @@ function missingOf(i) {
   if (!i.s) add("ステータス");
   if (md !== "movie" && md !== "sp" && !episodes(i).length) add("話数");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
-  if (!ns && !irr && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
+  if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
   if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
   if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "vods");

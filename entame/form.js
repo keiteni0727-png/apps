@@ -5,7 +5,7 @@ const chipsHtml = (attr, opts, sel, color) =>
     .map(v => `<button type="button" ${attr}="${esc(v)}" aria-pressed="${sel.includes(v)}"${color && VOD_COLOR[v] ? ` class="vc"${vcStyle(v)}` : ""}>${esc(v)}</button>`)
     .join("");
 /* シリーズのメインのジャンル（裏で持つ）：a=アニメ、d=ドラマ・実写（ドラマ・実写映画・配信番組）
-   設定で決めたもの → 使っている作品で多い方 → 前の版のドラマ用マスタにあればドラマ → アニメ */
+   設定で決めたもの → 使っている作品で多い方 → アニメ */
 const serGroup = k => (k === "a" ? "a" : "d");
 const SER_GL = { a: "アニメ", d: "ドラマ・実写" };
 function seriesMainMap() {
@@ -19,7 +19,7 @@ function seriesMainMap() {
   const map = {};
   M("series").forEach(n => {
     const c = cnt[n];
-    map[n] = set[n] || (c && (c.a || c.d) ? (c.a >= c.d ? "a" : "d") : Array.isArray(master.seriesD) && master.seriesD.includes(n) ? "d" : "a");
+    map[n] = set[n] || (c && (c.a || c.d) ? (c.a >= c.d ? "a" : "d") : "a");
   });
   return { map, cnt };
 }
@@ -272,8 +272,7 @@ function openForm(it, target, inline) {
       songs: songsOf(it).map(x => ({ ...x })),
       span: epSpan(it),
       noSongs: [...(it.noSongs || [])],
-      /* 前の版の「毎週の放送ではない」は「放送時間なし」として扱う */
-      noF: [...new Set([...(it.noF || []), ...(!noSched(m.media) && !!it.from && (it.dow ?? -1) < 0 ? ["time"] : [])])],
+      noF: [...(it.noF || [])],
       series: it.series || "",
       url: it.url || "",
       vurl: it.vurl || "",
