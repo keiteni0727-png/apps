@@ -562,4 +562,345 @@ function nextEp(it, list) {
   const t = last ? (last.t && !ova ? last.t + WEEK : 0) : it.from ? dayTimeToT(it.from, it.time) : 0;
   return { n: `${n != null ? n + 1 : list.length + 1}話`, sub: "", t, w: false, nt: last ? !!last.nt : !hasTime(it) };
 }
-
+/* 貼り付けた各話リストを読み取り、登録済みの話と比べた一覧を出す */
+function readPaste(it) {
+  const text = $("#spText").value;
+  const parsed = parseSubtitles(text);
+  if (!parsed.length) {
+    subPaste = { text };
+    refreshSheet();
+    toast("話数とサブタイトルを読み取れませんでした。「第1話」「1話」などで始まる行が必要です");
+    return;
+  }
+  const eps = episodes(it);
+  const fy = yearOf(it) || new Date().getFullYear();
+  subPaste = {
+    text,
+    addMissing: false,
+    useDate: false,
+    rows: parsed.map(r => {
+      const idx = eps.findIndex(x => epNum(x.n) === r.n);
+      const cur = idx >= 0 ? eps[idx] : null;
+      let date = r.date;
+      if (!date && r.md) {
+        const y = cur && cur.t ? jst(cur.t).y : fy;
+        date = `${y}-${String(r.md[0]).padStart(2, "0")}-${String(r.md[1]).padStart(2, "0")}`;
+      }
+      const oldDay = cur && cur.t ? jst(cur.t).day : "";
+      return {
+        ...r,
+        date,
+        idx,
+        old: cur ? cur.sub || "" : "",
+        oldDay,
+        dateCh: !!(date && cur && date !== oldDay),
+      };
+    }),
+  };
+  refreshSheet();
+}
+/* 読み取った内容でサブタイトル（選んだときは日付も）を更新し、ない話は追加 */
+function applyPaste(it) {
+  const l = episodes(it);
+  let n = 0,
+    dn = 0;
+  const p = subPaste;
+  const at = (day, old) => {
+    const hm = old && old.t ? jst(old.t).hm : hasTime(it) ? it.time : "9:00";
+    return dayTimeToT(day, hm);
+  };
+  p.rows.forEach(r => {
+    if (r.idx < 0) return;
+    const x = l[r.idx];
+    if (x.sub !== r.sub) {
+      x.sub = r.sub;
+      n++;
+    }
+    if (p.useDate && r.dateCh) {
+      x.t = at(r.date, x);
+      if (!x.t || !hasTime(it)) x.nt = x.nt || !hasTime(it);
+      dn++;
+    }
+  });
+  if (p.addMissing) {
+    p.rows
+      .filter(r => r.idx < 0)
+      .sort((a, b) => a.n - b.n)
+      .forEach(r => {
+        const x = nextEp(it, l);
+        x.n = `${r.n}話`;
+        x.sub = r.sub;
+        if (r.date) {
+          x.t = at(r.date, null);
+          x.nt = !hasTime(it);
+        }
+        l.push(x);
+        n++;
+      });
+    l.sort((a, b) => (epNum(a.n) ?? 0) - (epNum(b.n) ?? 0));
+  }
+  subPaste = null;
+  saveEps(it, l, [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : ""].filter(Boolean).join("・") + "を更新しました");
+  refreshSheet();
+}
+/* 作品の詳細画面（it＝開いている作品） */
+const DETAIL_ACTIONS = [
+  ["#editItem", (el, it) => openForm(it)],
+  ["#copyTitle", (el, it) => U.copy(it.t).then(ok => toast(ok ? "タイトルをコピーしました" : "コピーできませんでした"))],
+  /* 未入力アラートの「なし」 */
+  [
+    "[data-nof]",
+    (el, it) => {
+      const k = el.dataset.nof;
+      dmissKeep = true;
+      saveTitle(it.id, { noF: [...new Set([...(it.noF || []), k])] }, `${NOF_LAB[k]}を「なし」にしました`);
+    },
+  ],
+  [
+    "[data-nosong]",
+    (el, it) => {
+      const k = el.dataset.nosong;
+      const cur = it.noSongs || [];
+      saveTitle(it.id, { noSongs: cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k] }, `${k}を「なし」にしました`);
+    },
+  ],
+  /* 曲のDL済み */
+  [
+    "[data-sgdl]",
+    (el, it) => {
+      const k = +el.dataset.sgdl;
+      const l = songsOf(it).map(x => ({ ...x }));
+      if (!l[k]) return;
+      l[k].dl = l[k].dl ? 0 : 1;
+      saveTitle(it.id, { songs: l }, l[k].dl ? "ダウンロード済みにしました" : "未ダウンロードに戻しました");
+    },
+  ],
+  /* 項目を押したら、その場で編集 */
+  [
+    "[data-inl]",
+    (el, it, e) => {
+      if (!e.target.closest("input")) startInline(el);
+    },
+  ],
+  [
+    "[data-jump]",
+    (el, it, e) => {
+      if (e.target.closest("a,button:not([data-jump])")) return false;
+      openForm(it, el.dataset.jump, el);
+    },
+  ],
+  ["[data-dtab]", el => setDTab(el.dataset.dtab)],
+  /* 話数の「…」メニュー。ほかの場所を押したら閉じる */
+  [
+    "#epMore",
+    () => {
+      const m = $("#epMenu");
+      if (!m) return;
+      m.hidden = !m.hidden;
+      $("#epMore").setAttribute("aria-expanded", String(!m.hidden));
+    },
+  ],
+  [
+    null,
+    () => {
+      const m = $("#epMenu");
+      if (m) m.hidden = true;
+      return false;
+    },
+  ],
+  ["[data-set]", (el, it) => setStatus(it, el.dataset.set)],
+  /* 話の視聴チェック */
+  [
+    "[data-ep]",
+    (el, it) => {
+      const i = +el.dataset.ep;
+      toggleEp(it, i, !episodes(it)[i].w);
+    },
+  ],
+  [
+    "#allAired",
+    (el, it) => {
+      const l = episodes(it);
+      l.forEach(x => {
+        if (aired(x)) x.w = true;
+      });
+      saveEps(it, l, "放送済みの話を全部チェックしました");
+    },
+  ],
+  [
+    "#clearAll",
+    (el, it) => {
+      const l = episodes(it);
+      l.forEach(x => (x.w = false));
+      saveEps(it, l, "チェックを全部外しました");
+    },
+  ],
+  /* 編（〇〇編）の登録 */
+  [
+    "#arcOpenEd",
+    (el, it) => {
+      arcEdit = arcsOf(it).map(r => ({ ...r }));
+      if (!arcEdit.length) arcEdit.push({ name: "", a: 1, b: null });
+      refreshSheet();
+    },
+  ],
+  [null, (el, it, e) => !!arcEdit && runActions(ARC_ACTIONS, e, it)],
+  /* 編の見出し：開く／たたむ */
+  [
+    "[data-arc]",
+    el => {
+      arcFold.set(el.dataset.arc, el.getAttribute("aria-expanded") !== "true");
+      refreshSheet();
+    },
+  ],
+  /* 各話リスト（サブタイトル）の貼り付け */
+  [
+    "#spOpen",
+    () => {
+      subPaste = { text: "" };
+      refreshSheet();
+      if (!TOUCH) $("#spText")?.focus({ preventScroll: true });
+    },
+  ],
+  [null, (el, it, e) => !!subPaste && runActions(PASTE_ACTIONS, e, it)],
+  /* 話数の編集 */
+  [
+    "#epEditBtn",
+    (el, it) => {
+      subPaste = null;
+      epEdit = { list: episodes(it).map(x => ({ ...x })) };
+      refreshSheet();
+    },
+  ],
+  [null, (el, it, e) => !!epEdit && runActions(EPEDIT_ACTIONS, e, it)],
+  /* 削除：もう一度押すと削除（元に戻せる） */
+  [
+    "#delItem",
+    (el, it) => {
+      if (!el.dataset.c) {
+        el.dataset.c = "1";
+        el.textContent = "もう一度押すと削除";
+        el.classList.add("armed");
+        return;
+      }
+      const id = it.id,
+        prev = { ...(over[id] || {}) };
+      delete over[id];
+      rebuild();
+      close();
+      render();
+      removeDoc("titles", id).catch(fail);
+      toastUndo(`「${it.t.slice(0, 18)}」を削除しました`, () => {
+        over[id] = prev;
+        rebuild();
+        render();
+        saveDoc("titles", id, prev).catch(fail);
+      });
+    },
+  ],
+];
+/* 編の編集中 */
+const ARC_ACTIONS = [
+  [
+    "#arCancel",
+    () => {
+      arcEdit = null;
+      refreshSheet();
+    },
+  ],
+  [
+    "#arAdd",
+    () => {
+      arcSync();
+      const last = arcEdit[arcEdit.length - 1];
+      arcEdit.push({ name: "", a: last ? (last.b != null ? last.b + 1 : null) : 1, b: null });
+      refreshSheet();
+      const ins = document.querySelectorAll(".ar-nm");
+      ins[ins.length - 1]?.focus();
+    },
+  ],
+  [
+    "[data-ardel]",
+    el => {
+      arcSync();
+      arcEdit.splice(+el.dataset.ardel, 1);
+      refreshSheet();
+    },
+  ],
+  [
+    "#arSave",
+    (el, it) => {
+      arcSync();
+      const l = arcEdit.map(r => ({ name: (r.name || "").trim(), a: r.a, b: r.b })).filter(r => r.name || r.a != null || r.b != null);
+      if (l.some(r => !r.name || r.a == null)) return toast("編の名前と最初の話を入れてください");
+      if (l.some(r => r.b != null && r.b < r.a)) return toast("最後の話が最初の話より前になっている編があります");
+      l.sort((x, y) => x.a - y.a);
+      arcEdit = null;
+      saveTitle(it.id, { arcs: l }, l.length ? "編を保存しました" : "編を消しました");
+    },
+  ],
+];
+/* 各話リストの貼り付け中 */
+const PASTE_ACTIONS = [
+  [
+    "#spCancel",
+    () => {
+      subPaste = null;
+      refreshSheet();
+    },
+  ],
+  [
+    "#spBack",
+    () => {
+      subPaste = { text: subPaste.text };
+      refreshSheet();
+    },
+  ],
+  ["#spRead", (el, it) => readPaste(it)],
+  ["#spApply", (el, it) => applyPaste(it)],
+];
+/* 話数の編集中 */
+const EPEDIT_ACTIONS = [
+  [
+    "#erCancel",
+    () => {
+      epEdit = null;
+      refreshSheet();
+    },
+  ],
+  [
+    "#erSave",
+    (el, it) => {
+      const l = epEdit.list.map(({ moved, ...x }) => x);
+      epEdit = null;
+      saveEps(it, l, "話数を保存しました");
+      refreshSheet();
+    },
+  ],
+  [
+    "#erAdd",
+    (el, it) => {
+      epEdit.list.push(nextEp(it, epEdit.list));
+      refreshEditor();
+    },
+  ],
+  [
+    "#erBulkGo",
+    (el, it) => {
+      const n = Math.min(200, +$("#erBulk").value || 0);
+      for (let k = 0; k < n; k++) epEdit.list.push(nextEp(it, epEdit.list));
+      refreshEditor();
+    },
+  ],
+  [
+    "[data-erdel]",
+    el => {
+      epEdit.list.splice(+el.dataset.erdel, 1);
+      refreshEditor();
+    },
+  ],
+];
+function onDetailClick(e) {
+  const it = openId && items.find(x => x.id === openId);
+  return !!it && runActions(DETAIL_ACTIONS, e, it);
+}

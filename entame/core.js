@@ -68,6 +68,15 @@ const K_UI = "adb.v3.ui";
 const ls = U.ls;
 const esc = U.esc;
 const $ = s => document.querySelector(s);
+/* クリックの割り当て表を上から順に試す。表は [目印のセレクタ, 処理(押した要素, 作品など, イベント)] の並び。
+   セレクタが null の行は毎回試す。処理が false を返したら「ここでは扱わない」として次の行へ。どれかが扱ったら true */
+function runActions(table, e, ctx) {
+  for (const [sel, fn] of table) {
+    const el = sel ? e.target.closest(sel) : e.target;
+    if (el && fn(el, ctx, e) !== false) return true;
+  }
+  return false;
+}
 const mins = t => {
   const m = /^(\d{1,2}):(\d{2})/.exec(t || "");
   return m ? +m[1] * 60 + +m[2] : 9999;
@@ -202,81 +211,92 @@ function svSubmit() {
   toast(`「${name}」を保存しました`);
 }
 /* 保存したフィルタの操作 */
-function onSavedFilterClick(e) {
-  if (state.mode === "yt") return false;
-  const ap = e.target.closest("[data-svapply]");
-  if (ap) {
-    const f = svList().find(x => x.id === ap.dataset.svapply);
-    if (!f) return true;
-    if (svMatch(f)) {
-      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], sort: "new", limit: 200 });
-    } else svApply(f);
-    render();
-    return true;
-  }
-  if (e.target.closest("[data-svnew]")) {
-    state.svMode = "new";
-    state.svName = null;
-    render();
-    const i = $("#svName");
-    if (i) {
-      i.focus();
-      i.select();
-    }
-    return true;
-  }
-  if (e.target.closest("[data-svedit]")) {
-    state.svMode = "edit";
-    render();
-    return true;
-  }
-  if (e.target.closest("[data-svcancel]")) {
-    state.svMode = "";
-    state.svName = null;
-    render();
-    return true;
-  }
-  const mv = e.target.closest("[data-svmove]");
-  if (mv) {
-    const [id, d] = mv.dataset.svmove.split(":");
-    const l = [...svList()];
-    const i = l.findIndex(x => x.id === id),
-      j = i + +d;
-    if (i < 0 || j < 0 || j >= l.length) return true;
-    [l[i], l[j]] = [l[j], l[i]];
-    setSv(l);
-    render();
-    return true;
-  }
-  const ov = e.target.closest("[data-svover]");
-  if (ov) {
-    const l = svList().map(x => {
-      if (x.id !== ov.dataset.svover) return x;
-      const n = { ...x, sort: state.sort };
-      SVK.forEach(k => (n[k] = [...state[k]]));
-      return n;
-    });
-    setSv(l);
-    render();
-    toast(`「${(l.find(x => x.id === ov.dataset.svover) || {}).name}」を今の条件で上書きしました`);
-    return true;
-  }
-  const dl = e.target.closest("[data-svdel]");
-  if (dl) {
-    const old = svList();
-    const f = old.find(x => x.id === dl.dataset.svdel);
-    if (!f) return true;
-    setSv(old.filter(x => x !== f));
-    if (!svList().length) state.svMode = "";
-    render();
-    toastUndo(`「${f.name}」を削除しました`, () => {
-      setSv(old);
+const SAVED_FILTER_ACTIONS = [
+  /* ★の名前：その条件にする（今その条件ならもう一度押すと解除） */
+  [
+    "[data-svapply]",
+    el => {
+      const f = svList().find(x => x.id === el.dataset.svapply);
+      if (!f) return;
+      if (svMatch(f)) Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], sort: "new", limit: 200 });
+      else svApply(f);
       render();
-    });
-    return true;
-  }
-  return false;
-}
+    },
+  ],
+  [
+    "[data-svnew]",
+    () => {
+      state.svMode = "new";
+      state.svName = null;
+      render();
+      const i = $("#svName");
+      if (i) {
+        i.focus();
+        i.select();
+      }
+    },
+  ],
+  [
+    "[data-svedit]",
+    () => {
+      state.svMode = "edit";
+      render();
+    },
+  ],
+  [
+    "[data-svcancel]",
+    () => {
+      state.svMode = "";
+      state.svName = null;
+      render();
+    },
+  ],
+  /* 並び替え（id:-1 で上へ、id:1 で下へ） */
+  [
+    "[data-svmove]",
+    el => {
+      const [id, d] = el.dataset.svmove.split(":");
+      const l = [...svList()];
+      const i = l.findIndex(x => x.id === id),
+        j = i + +d;
+      if (i < 0 || j < 0 || j >= l.length) return;
+      [l[i], l[j]] = [l[j], l[i]];
+      setSv(l);
+      render();
+    },
+  ],
+  /* 今の条件で上書き */
+  [
+    "[data-svover]",
+    el => {
+      const id = el.dataset.svover;
+      const l = svList().map(x => {
+        if (x.id !== id) return x;
+        const n = { ...x, sort: state.sort };
+        SVK.forEach(k => (n[k] = [...state[k]]));
+        return n;
+      });
+      setSv(l);
+      render();
+      toast(`「${(l.find(x => x.id === id) || {}).name}」を今の条件で上書きしました`);
+    },
+  ],
+  [
+    "[data-svdel]",
+    el => {
+      const old = svList();
+      const f = old.find(x => x.id === el.dataset.svdel);
+      if (!f) return;
+      setSv(old.filter(x => x !== f));
+      if (!svList().length) state.svMode = "";
+      render();
+      toastUndo(`「${f.name}」を削除しました`, () => {
+        setSv(old);
+        render();
+      });
+    },
+  ],
+];
 const TYPES = [
   ["すべて", "すべて"],
   ["tv", "TV"],

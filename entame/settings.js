@@ -243,4 +243,104 @@ function toastUndo(m, undo) {
 function toast(m) {
   U.toast(stLabel(m), { ms: 2000 });
 }
-
+/* 設定画面の中の操作 */
+const SETTINGS_ACTIONS = [
+  ["[data-logout]", () => doLogout()],
+  /* 上のタブ（シリーズ・放送局…） */
+  [
+    "[data-mkey]",
+    el => {
+      setKey = el.dataset.mkey;
+      setQ = "";
+      setDel = null;
+      setRen = null;
+      refreshSettings(false);
+    },
+  ],
+  /* シリーズ：ジャンルで分ける・並び順 */
+  [
+    "[data-serg]",
+    el => {
+      setSerG = el.dataset.serg;
+      refreshSettings(false);
+    },
+  ],
+  [
+    "[data-sersort]",
+    el => {
+      setSerSort = el.dataset.sersort;
+      refreshSettings(false);
+    },
+  ],
+  /* シリーズ名：その作品一覧を開く */
+  ["[data-seropen]", el => showSeries(el.dataset.seropen, seriesMainMap().map[el.dataset.seropen])],
+  /* シリーズのメインのジャンルを切り替え */
+  [
+    "[data-sermain]",
+    el => {
+      const n = el.dataset.sermain;
+      const cur = seriesMainMap().map[n] || "a";
+      master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: cur === "a" ? "d" : "a" } };
+      saveMaster();
+      refreshSettings();
+    },
+  ],
+  /* 名前の変更（入力欄を出す） */
+  [
+    "[data-mrename]",
+    el => {
+      setRen = el.dataset.mrename;
+      setDel = null;
+      refreshSettings();
+      const i = $(".mren");
+      if (i) {
+        i.focus();
+        i.select();
+      }
+    },
+  ],
+  /* 削除：もう一度押すと削除。使っている作品からも外す */
+  [
+    "[data-mdel]",
+    el => {
+      const n = el.dataset.mdel;
+      if (setDel !== n) {
+        setDel = n;
+        refreshSettings();
+        return;
+      }
+      setDel = null;
+      const k = propagate(setKey, n, "");
+      setMasterList(
+        setKey,
+        M(setKey).filter(x => x !== n),
+      );
+      toast(`「${n}」を削除しました${k ? `（${k}件から外しました）` : ""}`);
+    },
+  ],
+  [
+    "[data-madd]",
+    () => {
+      const v = ($("#maddIn")?.value || "").trim();
+      if (!v) return $("#maddIn")?.focus();
+      const l = M(setKey);
+      if (l.includes(v)) return toast(`「${v}」はすでにあります`);
+      setMasterList(setKey, [...l, v]);
+      toast(`「${v}」を追加しました`);
+      setTimeout(() => $("#maddIn")?.focus(), 0);
+    },
+  ],
+  /* ほかの場所を押したら、名前の変更を確定 */
+  [
+    null,
+    (el, x, e) => {
+      if (!e.target.closest(".mren") && setRen) commitRename();
+    },
+  ],
+];
+/* 設定画面の中のクリックは、ここで全部受ける（✕・外側は閉じる） */
+function onSettingsClick(e) {
+  if (!$("#setIn") || !e.target.closest("#setIn") || e.target.closest("[data-close]")) return false;
+  runActions(SETTINGS_ACTIONS, e);
+  return true;
+}

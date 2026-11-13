@@ -1,121 +1,20 @@
-/* ---------- events ---------- */
+/* ---------- クリック ----------
+   画面ごとの「割り当て表」（[ボタンの目印, 押したときの処理]）を上から順に試し、処理したところで止める（runActions は core.js） */
+
 /* PC：左メニューの開閉と設定の歯車 */
-function onShellClick(e) {
-  if (e.target.closest("#gearBtn,[data-gear]")) {
-    openSettings();
-    return true;
-  }
-  if (e.target.closest("[data-sbtog]")) {
-    sbCollapsed = !sbCollapsed;
-    ls.set("adb.v3.sbc", sbCollapsed);
-    document.body.classList.toggle("sbc", sbCollapsed);
-    renderSidebar();
-    return true;
-  }
-  return false;
-}
-/* 設定（マスタ）画面の中の操作 */
-function onSettingsClick(e) {
-  if ($("#setIn") && e.target.closest("#setIn") && !e.target.closest("[data-close]")) {
-    const t = e.target;
-    if (t.closest("[data-logout]")) {
-      doLogout();
-      return true;
-    }
-    const mk = t.closest("[data-mkey]");
-    if (mk) {
-      setKey = mk.dataset.mkey;
-      setQ = "";
-      setDel = null;
-      setRen = null;
-      refreshSettings(false);
-      return true;
-    }
-    const sgb = t.closest("[data-serg]");
-    if (sgb) {
-      setSerG = sgb.dataset.serg;
-      refreshSettings(false);
-      return true;
-    }
-    const ssb = t.closest("[data-sersort]");
-    if (ssb) {
-      setSerSort = ssb.dataset.sersort;
-      refreshSettings(false);
-      return true;
-    }
-    const sob = t.closest("[data-seropen]");
-    if (sob) {
-      const n = sob.dataset.seropen;
-      const g = seriesMainMap().map[n];
-      close();
-      if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
-      Object.assign(state, { series: [n], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
-      render();
-      scrollTo(0, 0);
-      return true;
-    }
-    const smb = t.closest("[data-sermain]");
-    if (smb) {
-      const n = smb.dataset.sermain;
-      const cur = seriesMainMap().map[n] || "a";
-      master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: cur === "a" ? "d" : "a" } };
-      saveMaster();
-      refreshSettings();
-      return true;
-    }
-    const rn = t.closest("[data-mrename]");
-    if (rn) {
-      setRen = rn.dataset.mrename;
-      setDel = null;
-      refreshSettings();
-      const i = $(".mren");
-      if (i) {
-        i.focus();
-        i.select();
-      }
-      return true;
-    }
-    const dl = t.closest("[data-mdel]");
-    if (dl) {
-      const n = dl.dataset.mdel;
-      if (setDel !== n) {
-        setDel = n;
-        refreshSettings();
-        return true;
-      }
-      setDel = null;
-      const k = propagate(setKey, n, "");
-      setMasterList(
-        setKey,
-        M(setKey).filter(x => x !== n),
-      );
-      toast(`「${n}」を削除しました${k ? `（${k}件から外しました）` : ""}`);
-      return true;
-    }
-    if (t.closest("[data-madd]")) {
-      const v = ($("#maddIn")?.value || "").trim();
-      if (!v) {
-        $("#maddIn")?.focus();
-        return true;
-      }
-      const l = M(setKey);
-      if (l.includes(v)) {
-        toast(`「${v}」はすでにあります`);
-        return true;
-      }
-      setMasterList(setKey, [...l, v]);
-      toast(`「${v}」を追加しました`);
-      setTimeout(() => $("#maddIn")?.focus(), 0);
-      return true;
-    }
-    if (!t.closest(".mren") && setRen) {
-      commitRename();
-    }
-    return true;
-  }
-  return false;
-}
-/* 画面の切り替え（番組表／ライブラリ・投稿者・アニメ／ドラマ／YouTube）と見出しの開閉 */
+const SHELL_ACTIONS = [
+  ["#gearBtn,[data-gear]", () => openSettings()],
+  [
+    "[data-sbtog]",
+    () => {
+      sbCollapsed = !sbCollapsed;
+      ls.set("adb.v3.sbc", sbCollapsed);
+      document.body.classList.toggle("sbc", sbCollapsed);
+      renderSidebar();
+    },
+  ],
+];
+/* 画面の切り替え：左メニュー（番組表・アニメ…）を選ぶ。絞り込みとシリーズは外す */
 function setMode(m) {
   if (state.mode === m) return;
   state.mode = m;
@@ -127,798 +26,205 @@ function setMode(m) {
   state.limit = 200;
   state.series = [];
 }
-function onNavClick(e) {
-  const sf = e.target.closest("[data-sbfold]");
-  if (sf) {
-    const m = sf.dataset.sbfold;
-    if (sbFold.has(m)) sbOnly(m);
-    else {
-      sbFold.add(m);
-      ls.set("adb.v3.sbf", [...sbFold]);
-    }
-    renderSidebar();
-    return true;
-  }
-  const tg = e.target.closest("[data-tygo]");
-  if (tg) {
-    setMode(tg.dataset.go);
-    state.type = tg.dataset.tygo ? [tg.dataset.tygo] : [];
-    state.limit = 200;
-    render();
-    scrollTo(0, 0);
-    return true;
-  }
-  const skb = e.target.closest("[data-skgo]");
-  if (skb) {
-    setMode("s");
-    state.sub = skb.dataset.skgo;
-    state.limit = 200;
-    render();
-    scrollTo(0, 0);
-    return true;
-  }
-  const mkb2 = e.target.closest("[data-mk]");
-  if (mkb2) {
-    if (mkb2.dataset.go) setMode(mkb2.dataset.go);
-    state.sub = mkb2.dataset.mk;
-    state.limit = 200;
-    render();
-    return true;
-  }
-  const tb = e.target.closest("[data-tb]");
-  if (tb) {
-    const v = tb.dataset.tb;
-    if (tb.dataset.go) setMode(tb.dataset.go);
-    if (state.mode === "yt") {
-      yst.author = v;
-      saveYtUI();
-    } else if (state.mode === "m") {
-      state.sub = v;
+/* 画面を変えて先頭から表示 */
+const go = () => {
+  render();
+  scrollTo(0, 0);
+};
+/* 左メニュー・上の切り替え・未視聴／未入力のスイッチ・見出しの開閉 */
+const NAV_ACTIONS = [
+  /* ▸▾：メニューの下の項目を開く（開くとほかはたたむ）／たたむ */
+  [
+    "[data-sbfold]",
+    el => {
+      const m = el.dataset.sbfold;
+      if (sbFold.has(m)) sbOnly(m);
+      else {
+        sbFold.add(m);
+        ls.set("adb.v3.sbf", [...sbFold]);
+      }
+      renderSidebar();
+    },
+  ],
+  /* アニメ・ドラマの下：TV・映画などの種別 */
+  [
+    "[data-tygo]",
+    el => {
+      setMode(el.dataset.go);
+      state.type = el.dataset.tygo ? [el.dataset.tygo] : [];
       state.limit = 200;
-    } else if (state.mode === "w") {
-      state.wday = v;
-      state.unOnly = false;
-    }
-    render();
-    scrollTo(0, 0);
-    return true;
-  }
-  if (e.target.closest("[data-missw]")) {
-    state.missOnly = !state.missOnly;
-    state.missKey = "";
-    saveUI();
-    render();
-    return true;
-  }
-  const mkb = e.target.closest("[data-mkey]");
-  if (mkb) {
-    const k = mkb.dataset.mkey;
-    state.missKey = state.missKey === k ? "" : k;
-    saveUI();
-    render();
-    return true;
-  }
-  if (e.target.closest("[data-unsw]")) {
-    state.unOnly = !state.unOnly;
-    saveUI();
-    render();
-    return true;
-  }
-  const vb = e.target.closest("[data-vod]");
-  if (vb) {
-    state.vod = vb.dataset.vod === "" ? "" : state.vod === vb.dataset.vod ? "" : vb.dataset.vod;
-    state.limit = 200;
-    state.fOpen = "";
-    render();
-    return true;
-  }
-  const md = e.target.closest("[data-mode]");
-  if (md) {
-    const m = md.dataset.mode;
-    sbOnly(m);
-    renderSidebar();
-    if (state.mode !== m || state.type.length || state.sub !== "all") {
+      go();
+    },
+  ],
+  /* 配信の下：アニメ／ドラマ・バラエティ */
+  [
+    "[data-skgo]",
+    el => {
+      setMode("s");
+      state.sub = el.dataset.skgo;
+      state.limit = 200;
+      go();
+    },
+  ],
+  /* 映画の下：アニメ映画／実写映画 */
+  [
+    "[data-mk]",
+    el => {
+      if (el.dataset.go) setMode(el.dataset.go);
+      state.sub = el.dataset.mk;
+      state.limit = 200;
+      render();
+    },
+  ],
+  /* 上の切り替え：YouTubeは投稿者、映画はアニメ映画／実写、番組表は曜日 */
+  [
+    "[data-tb]",
+    el => {
+      const v = el.dataset.tb;
+      if (el.dataset.go) setMode(el.dataset.go);
+      if (state.mode === "yt") {
+        yst.author = v;
+        saveYtUI();
+      } else if (state.mode === "m") {
+        state.sub = v;
+        state.limit = 200;
+      } else if (state.mode === "w") {
+        state.wday = v;
+        state.unOnly = false;
+      }
+      go();
+    },
+  ],
+  [
+    "[data-missw]",
+    () => {
+      state.missOnly = !state.missOnly;
+      state.missKey = "";
+      saveUI();
+      render();
+    },
+  ],
+  [
+    "[data-mkey]",
+    el => {
+      const k = el.dataset.mkey;
+      state.missKey = state.missKey === k ? "" : k;
+      saveUI();
+      render();
+    },
+  ],
+  [
+    "[data-unsw]",
+    () => {
+      state.unOnly = !state.unOnly;
+      saveUI();
+      render();
+    },
+  ],
+  [
+    "[data-vod]",
+    el => {
+      const v = el.dataset.vod;
+      state.vod = state.vod === v ? "" : v;
+      state.limit = 200;
+      state.fOpen = "";
+      render();
+    },
+  ],
+  /* 左メニューの名前：そのメニューの「すべて」 */
+  [
+    "[data-mode]",
+    el => {
+      const m = el.dataset.mode;
+      sbOnly(m);
+      renderSidebar();
+      if (state.mode === m && !state.type.length && state.sub === "all") return;
       setMode(m);
       state.type = [];
       state.sub = "all";
+      go();
+    },
+  ],
+  /* 見出しの開閉・すべて開く／閉じる */
+  [
+    "[data-gtog]",
+    el => {
+      const k = el.dataset.gtog;
+      collapsed.has(k) ? collapsed.delete(k) : collapsed.add(k);
+      saveCol();
       render();
-      scrollTo(0, 0);
-    }
-    return true;
-  }
-  const gt = e.target.closest("[data-gtog]");
-  if (gt) {
-    const k = gt.dataset.gtog;
-    collapsed.has(k) ? collapsed.delete(k) : collapsed.add(k);
-    saveCol();
-    render();
-    return true;
-  }
-  const ga = e.target.closest("[data-gall]");
-  if (ga) {
-    const ks = JSON.parse(ga.dataset.keys || "[]");
-    ks.forEach(k => (ga.dataset.gall === "close" ? collapsed.add(k) : collapsed.delete(k)));
-    saveCol();
-    render();
-    return true;
-  }
-  return false;
-}
+    },
+  ],
+  [
+    "[data-gall]",
+    el => {
+      JSON.parse(el.dataset.keys || "[]").forEach(k => (el.dataset.gall === "close" ? collapsed.add(k) : collapsed.delete(k)));
+      saveCol();
+      render();
+    },
+  ],
+];
 /* フィルタ・ソートの折りたたみは、外を押したら閉じる */
 function closeDropdownOnOutsideClick(e) {
-  if (!e.target.closest(".fsdrop,.fsbar,.svbar,.frow,#layer,#subPop,.u-toast") && e.target.isConnected) {
-    let shut = false;
-    if (state.mode === "yt" && yst.fp) {
-      yst.fp = "";
-      saveYtUI();
-      shut = true;
-    } else if (state.mode !== "yt" && state.fOpen) {
-      state.fOpen = "";
-      state.svMode = "";
-      state.svName = null;
-      saveUI();
-      shut = true;
-    }
-    if (shut) {
-      render();
-      if (!e.target.closest("header")) return true;
-    }
-  }
-  return false;
+  if (e.target.closest(".fsdrop,.fsbar,.svbar,.frow,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
+  if (state.mode === "yt" && yst.fp) {
+    yst.fp = "";
+    saveYtUI();
+  } else if (state.mode !== "yt" && state.fOpen) {
+    state.fOpen = "";
+    state.svMode = "";
+    state.svName = null;
+    saveUI();
+  } else return false;
+  render();
+  return !e.target.closest("header");
 }
 /* サブタイトル入力の小さな画面 */
 function onSubPopClick(e) {
-  if (e.target.closest("#subPop")) {
-    if (e.target.closest("[data-spopok]")) saveSub();
-    else if (e.target.closest("[data-spopx]")) closeSub();
-    return true;
-  }
-  return false;
+  if (!e.target.closest("#subPop")) return false;
+  if (e.target.closest("[data-spopok]")) saveSub();
+  else if (e.target.closest("[data-spopx]")) closeSub();
+  return true;
 }
 /* 番組表・ライブラリの行：✓ボタンで次の話を視聴済にする、行を押すと詳細 */
-function onRowClick(e) {
-  const tk = e.target.closest("[data-tick]");
-  if (tk) {
-    const it = items.find(x => x.id === tk.dataset.tick);
-    if (it) {
+const ROW_ACTIONS = [
+  [
+    "[data-tick]",
+    el => {
+      const it = items.find(x => x.id === el.dataset.tick);
+      if (!it) return;
       const l = episodes(it);
       const i = l.findIndex(x => !x.w && aired(x));
-      if (i >= 0) {
-        l[i].w = true;
-        saveEps(it, l, `${it.t.slice(0, 14)} ${l[i].n}を視聴済みにしました`);
-        askSub(it, i);
-      }
-    }
-    return true;
-  }
-  const s = e.target.closest("[data-id]");
-  if (s) {
-    openDetail(s.dataset.id);
-    return true;
-  }
-  return false;
-}
-/* ライブラリのフィルタ・ソート */
-function onFilterClick(e) {
-  const fp = e.target.closest("[data-fpop]");
-  if (fp) {
-    const v = fp.dataset.fpop;
-    state.fOpen = state.fOpen === v ? "" : v;
-    state.svMode = "";
-    state.svName = null;
-    render();
-    return true;
-  }
-  const cyb = e.target.closest("[data-couryear]");
-  if (cyb) {
-    const ks = SEASONS.map(se => cyb.dataset.couryear + se);
-    const all = ks.every(k => state.cour.includes(k));
-    state.cour = all ? state.cour.filter(c => !ks.includes(c)) : [...new Set([...state.cour, ...ks])];
-    state.limit = 200;
-    render();
-    return true;
-  }
-  const er = e.target.closest("[data-era]");
-  if (er) {
-    state.era = er.dataset.era === "すべて" ? [] : toggle(state.era, er.dataset.era);
-    state.limit = 200;
-    render();
-    return true;
-  }
-  const sa = e.target.closest("[data-seradd]");
-  if (sa) {
-    state.series = [...state.series, sa.dataset.seradd];
-    if (state.sort === "new") state.sort = "old";
-    state.limit = 200;
-    render();
-    const q = $("#seriesQ");
-    if (q) q.focus();
-    return true;
-  }
-  const sd = e.target.closest("[data-serdel]");
-  if (sd) {
-    state.series = state.series.filter(x => x !== sd.dataset.serdel);
-    state.limit = 200;
-    render();
-    return true;
-  }
-  const co = e.target.closest("[data-cour]");
-  if (co) {
-    state.cour = co.dataset.cour === "すべて" ? [] : toggle(state.cour, co.dataset.cour);
-    state.limit = 200;
-    render();
-    return true;
-  }
-  const se = e.target.closest("[data-series]");
-  if (se) {
-    state.series = [se.dataset.series];
-    state.xser = true;
-    if (state.mode === "w") {
-      const it = items.find(x => x.id === openId);
-      setMode(it && it.k === "d" ? "d" : "a");
-    }
-    Object.assign(state, { sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
-    close();
-    render();
-    scrollTo(0, 0);
-    return true;
-  }
-  const stb = e.target.closest("[data-stf]");
-  if (stb) {
-    const v = stb.dataset.stf;
-    state.sf = !v || (state.sf.length === 1 && state.sf[0] === v) ? [] : [v];
-    state.limit = 200;
-    saveUI();
-    render();
-    return true;
-  }
-  if (e.target.closest("[data-xseroff]")) {
-    state.xser = false;
-    render();
-    return true;
-  }
-  const gp = e.target.closest("[data-grp]");
-  if (gp) {
-    state.grp = gp.dataset.grp;
-    state.limit = 200;
-    state.fOpen = "";
-    saveUI();
-    render();
-    return true;
-  }
-  const so = e.target.closest("[data-sort]");
-  if (so) {
-    state.sort = so.dataset.sort;
-    state.fOpen = "";
-    saveUI();
-    render();
-    return true;
-  }
-  const un = e.target.closest("[data-unset]");
-  if (un) {
-    const u = un.dataset.unset;
-    const [g, v] = u.split(/:(.*)/s);
-    if (u === "all" || u === "filters") {
-      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [] });
-      if (u === "all") state.vod = "";
-    } else if (v !== undefined && Array.isArray(state[g])) state[g] = state[g].filter(x => x !== v);
-    else if (g === "sort") state.sort = "new";
-    else if (g === "type") state.type = [];
-    else if (Array.isArray(state[g])) state[g] = [];
-    state.limit = 200;
-    render();
-    return true;
-  }
-  return false;
-}
-/* 作品の追加・編集画面 */
-function onTitleFormClick(e) {
-  if (form && form.inline) {
-    if (e.target.closest(".ined [data-back]")) {
-      closeInlineForm();
-      return true;
-    }
-    if (!e.target.closest(".ined")) {
-      const jp = e.target.closest("#sheetIn [data-jump]");
-      const tgt = jp && jp.dataset.jump;
-      commitInlineForm();
-      closeInlineForm();
-      /* 別の項目を押したときは、そのままその項目を編集 */
-      if (tgt && !e.target.closest("a,button:not([data-jump])")) {
-        const it = items.find(x => x.id === openId);
-        if (it) openForm(it, tgt, jp);
-        return true;
-      }
-      return false; // ほかのボタン（閉じる・タブなど）はそのまま動かす
-    }
-  }
-  if (form) {
-    const fm = e.target.closest("[data-fm]");
-    if (fm) {
-      readForm();
-      form.media = fm.dataset.fm;
-      redrawForm();
-      return true;
-    }
-    const fst = e.target.closest("[data-fst]");
-    if (fst) {
-      readForm();
-      form.stations = toggle(form.stations, fst.dataset.fst);
-      redrawForm();
-      return true;
-    }
-    const fpl = e.target.closest("[data-fplat]");
-    if (fpl) {
-      readForm();
-      form.plat = toggle(form.plat, fpl.dataset.fplat);
-      redrawForm();
-      return true;
-    }
-    const fv = e.target.closest("[data-fvod]");
-    if (fv) {
-      readForm();
-      form.vods = toggle(form.vods, fv.dataset.fvod);
-      redrawForm();
-      return true;
-    }
-    if (e.target.closest("[data-fserall]")) {
-      form.serAll = true;
-      const b = $("#fSerSug");
-      if (b) b.innerHTML = serSugForm($("#f-serq")?.value || "");
-      return true;
-    }
-    const fse = e.target.closest("[data-fser]");
-    if (fse) {
-      readForm();
-      form.series = fse.dataset.fser;
-      redrawForm();
-      return true;
-    }
-    if (e.target.closest("[data-fserdel]")) {
-      readForm();
-      form.series = "";
-      redrawForm();
-      $("#f-serq")?.focus();
-      return true;
-    }
-    const fsn = e.target.closest("[data-fsernew]");
-    if (fsn) {
-      readForm();
-      form.serNew = fsn.dataset.fsernew === "1";
-      form.serNewName = $("#f-serq")?.value || "";
-      redrawForm();
-      const x = $("#f-sernew");
-      if (x) x.focus();
-      return true;
-    }
-    if (e.target.closest("[data-fsercreate]")) {
-      readForm();
-      const n = (form.serNewName || "").trim();
-      if (!n) {
-        toast("シリーズ名を入れてください");
-        return true;
-      }
-      form.series = n;
-      form.serNew = false;
-      /* 新しく作ったシリーズのメインのジャンルは、作った作品のジャンルにする */
-      if (!M("series").includes(n)) {
-        master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: serGroup(form.k) } };
-        saveMaster();
-      }
-      redrawForm();
-      toast(`シリーズ「${n}」を作りました`);
-      return true;
-    }
-    const sa = e.target.closest("[data-sgadd]");
-    if (sa) {
-      readForm();
-      const same = form.songs.filter(x => x.type === sa.dataset.sgadd);
-      const last = same[same.length - 1];
-      const sp = form.span || (+form.n ? [1, +form.n] : null);
-      const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
-      form.songs.push({ type: sa.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
-      redrawForm();
-      document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-st`)?.focus();
-      return true;
-    }
-    const sdl = e.target.closest("[data-sgdel]");
-    if (sdl) {
-      readForm();
-      form.songs.splice(+sdl.dataset.sgdel, 1);
-      redrawForm();
-      return true;
-    }
-    const fk = e.target.closest("[data-fk],[data-fs]");
-    if (fk) {
-      readForm();
-      if (fk.dataset.fk) {
-        form.k = fk.dataset.fk;
-        if (form.k === "f") form.media = "movie";
-        if (form.k === "r" && form.media !== "stream") form.media = "stream";
-      }
-      if (fk.dataset.fs) form.s = fk.dataset.fs;
-      redrawForm();
-      return true;
-    }
-    const ck = e.target.closest("[data-courkey]");
-    if (ck) {
-      readForm();
-      if (!form.cours.includes(ck.dataset.courkey)) form.cours.push(ck.dataset.courkey);
-      form.cours.sort();
-      redrawForm();
-      return true;
-    }
-    if (e.target.closest("[data-courall]")) {
-      readForm();
-      const on = form.cours.includes(ALLYEAR);
-      form.cours = form.cours.filter(c => c !== ALLYEAR);
-      if (!on) form.cours.unshift(ALLYEAR);
-      redrawForm();
-      return true;
-    }
-    if (e.target.closest("[data-courmore]")) {
-      readForm();
-      form.courOpen = !form.courOpen;
-      redrawForm();
-      return true;
-    }
-    const ca = e.target.closest("[data-couradd]");
-    if (ca) {
-      readForm();
-      form.courOpen = true;
-      const key = `${form.cy}${ca.dataset.couradd}`;
-      if (!form.cours.includes(key)) form.cours.push(key);
-      form.cours.sort();
-      redrawForm();
-      return true;
-    }
-    const cd = e.target.closest("[data-courdel]");
-    if (cd) {
-      readForm();
-      form.cours = form.cours.filter(c => c !== cd.dataset.courdel);
-      redrawForm();
-      return true;
-    }
-  }
-  return false;
-}
-/* 作品の詳細画面 */
-function onDetailClick(e) {
-  const it = openId && items.find(x => x.id === openId);
-  if (it) {
-    if (e.target.closest("#editItem")) {
-      openForm(it);
-      return true;
-    }
-    if (e.target.closest("#copyTitle")) {
-      U.copy(it.t).then(ok => toast(ok ? "タイトルをコピーしました" : "コピーできませんでした"));
-      return true;
-    }
-    const nfb = e.target.closest("[data-nof]");
-    if (nfb) {
-      const k = nfb.dataset.nof;
-      dmissKeep = true;
-      saveTitle(it.id, { noF: [...new Set([...(it.noF || []), k])] }, `${NOF_LAB[k]}を「なし」にしました`);
-      return true;
-    }
-    const nsb = e.target.closest("[data-nosong]");
-    if (nsb) {
-      const k = nsb.dataset.nosong;
-      const cur = it.noSongs || [];
-      saveTitle(
-        it.id,
-        { noSongs: cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k] },
-        `${k}を「なし」にしました`,
-      );
-      return true;
-    }
-    const sdb = e.target.closest("[data-sgdl]");
-    if (sdb) {
-      const k = +sdb.dataset.sgdl;
-      const l = songsOf(it).map(x => ({ ...x }));
-      if (l[k]) {
-        l[k].dl = l[k].dl ? 0 : 1;
-        saveTitle(it.id, { songs: l }, l[k].dl ? "ダウンロード済みにしました" : "未ダウンロードに戻しました");
-      }
-      return true;
-    }
-    {
-      const inl = e.target.closest("[data-inl]");
-      if (inl) {
-        if (!e.target.closest("input")) startInline(inl);
-        return true;
-      }
-      const jp = e.target.closest("[data-jump]");
-      if (jp && !e.target.closest("a,button:not([data-jump])")) {
-        openForm(it, jp.dataset.jump, jp);
-        return true;
-      }
-    }
-    const dt = e.target.closest("[data-dtab]");
-    if (dt) {
-      setDTab(dt.dataset.dtab);
-      return true;
-    }
-    if (e.target.closest("#epMore")) {
-      const m = $("#epMenu");
-      if (m) {
-        m.hidden = !m.hidden;
-        $("#epMore").setAttribute("aria-expanded", String(!m.hidden));
-      }
-      return true;
-    }
-    if ($("#epMenu") && !$("#epMenu").hidden) $("#epMenu").hidden = true;
-    const st = e.target.closest("[data-set]");
-    if (st) {
-      setStatus(it, st.dataset.set);
-      return true;
-    }
-    const ep = e.target.closest("[data-ep]");
-    if (ep) {
-      const i = +ep.dataset.ep;
-      const l = episodes(it);
-      toggleEp(it, i, !l[i].w);
-      return true;
-    }
-    if (e.target.closest("#allAired")) {
-      const l = episodes(it);
-      l.forEach(x => {
-        if (aired(x)) x.w = true;
-      });
-      saveEps(it, l, "放送済みの話を全部チェックしました");
-      return true;
-    }
-    if (e.target.closest("#clearAll")) {
-      const l = episodes(it);
-      l.forEach(x => (x.w = false));
-      saveEps(it, l, "チェックを全部外しました");
-      return true;
-    }
-    if (e.target.closest("#arcOpenEd")) {
-      arcEdit = arcsOf(it).map(r => ({ ...r }));
-      if (!arcEdit.length) arcEdit.push({ name: "", a: 1, b: null });
-      refreshSheet();
-      return true;
-    }
-    if (arcEdit) {
-      if (e.target.closest("#arCancel")) {
-        arcEdit = null;
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#arAdd")) {
-        arcSync();
-        const last = arcEdit[arcEdit.length - 1];
-        arcEdit.push({ name: "", a: last ? (last.b != null ? last.b + 1 : null) : 1, b: null });
-        refreshSheet();
-        const ins = document.querySelectorAll(".ar-nm");
-        ins[ins.length - 1]?.focus();
-        return true;
-      }
-      const ad = e.target.closest("[data-ardel]");
-      if (ad) {
-        arcSync();
-        arcEdit.splice(+ad.dataset.ardel, 1);
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#arSave")) {
-        arcSync();
-        const l = arcEdit.map(r => ({ name: (r.name || "").trim(), a: r.a, b: r.b })).filter(r => r.name || r.a != null || r.b != null);
-        if (l.some(r => !r.name || r.a == null)) {
-          toast("編の名前と最初の話を入れてください");
-          return true;
-        }
-        if (l.some(r => r.b != null && r.b < r.a)) {
-          toast("最後の話が最初の話より前になっている編があります");
-          return true;
-        }
-        l.sort((x, y) => x.a - y.a);
-        arcEdit = null;
-        saveTitle(it.id, { arcs: l }, l.length ? "編を保存しました" : "編を消しました");
-        return true;
-      }
-    }
-    const ah = e.target.closest("[data-arc]");
-    if (ah) {
-      arcFold.set(ah.dataset.arc, ah.getAttribute("aria-expanded") !== "true");
-      refreshSheet();
-      return true;
-    }
-    if (e.target.closest("#spOpen")) {
-      subPaste = { text: "" };
-      refreshSheet();
-      if (!TOUCH) $("#spText")?.focus({ preventScroll: true });
-      return true;
-    }
-    if (subPaste) {
-      if (e.target.closest("#spCancel")) {
-        subPaste = null;
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#spBack")) {
-        subPaste = { text: subPaste.text };
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#spRead")) {
-        const text = $("#spText").value;
-        const parsed = parseSubtitles(text);
-        if (!parsed.length) {
-          subPaste = { text };
-          refreshSheet();
-          toast("話数とサブタイトルを読み取れませんでした。「第1話」「1話」などで始まる行が必要です");
-          return true;
-        }
-        const eps = episodes(it);
-        const fy = yearOf(it) || new Date().getFullYear();
-        subPaste = {
-          text,
-          addMissing: false,
-          useDate: false,
-          rows: parsed.map(r => {
-            const idx = eps.findIndex(x => epNum(x.n) === r.n);
-            const cur = idx >= 0 ? eps[idx] : null;
-            let date = r.date;
-            if (!date && r.md) {
-              const y = cur && cur.t ? jst(cur.t).y : fy;
-              date = `${y}-${String(r.md[0]).padStart(2, "0")}-${String(r.md[1]).padStart(2, "0")}`;
-            }
-            const oldDay = cur && cur.t ? jst(cur.t).day : "";
-            return {
-              ...r,
-              date,
-              idx,
-              old: cur ? cur.sub || "" : "",
-              oldDay,
-              dateCh: !!(date && cur && date !== oldDay),
-            };
-          }),
-        };
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#spApply")) {
-        const l = episodes(it);
-        let n = 0,
-          dn = 0;
-        const p = subPaste;
-        const at = (day, old) => {
-          const hm = old && old.t ? jst(old.t).hm : hasTime(it) ? it.time : "9:00";
-          return dayTimeToT(day, hm);
-        };
-        p.rows.forEach(r => {
-          if (r.idx < 0) return;
-          const x = l[r.idx];
-          if (x.sub !== r.sub) {
-            x.sub = r.sub;
-            n++;
-          }
-          if (p.useDate && r.dateCh) {
-            x.t = at(r.date, x);
-            if (!x.t || !hasTime(it)) x.nt = x.nt || !hasTime(it);
-            dn++;
-          }
-        });
-        if (p.addMissing) {
-          p.rows
-            .filter(r => r.idx < 0)
-            .sort((a, b) => a.n - b.n)
-            .forEach(r => {
-              const x = nextEp(it, l);
-              x.n = `${r.n}話`;
-              x.sub = r.sub;
-              if (r.date) {
-                x.t = at(r.date, null);
-                x.nt = !hasTime(it);
-              }
-              l.push(x);
-              n++;
-            });
-          l.sort((a, b) => (epNum(a.n) ?? 0) - (epNum(b.n) ?? 0));
-        }
-        subPaste = null;
-        saveEps(
-          it,
-          l,
-          [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : ""].filter(Boolean).join("・") + "を更新しました",
-        );
-        refreshSheet();
-        return true;
-      }
-    }
-    if (e.target.closest("#epEditBtn")) {
-      subPaste = null;
-      epEdit = { list: episodes(it).map(x => ({ ...x })) };
-      refreshSheet();
-      return true;
-    }
-    if (epEdit) {
-      if (e.target.closest("#erCancel")) {
-        epEdit = null;
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#erSave")) {
-        const l = epEdit.list.map(({ moved, ...x }) => x);
-        epEdit = null;
-        saveEps(it, l, "話数を保存しました");
-        refreshSheet();
-        return true;
-      }
-      if (e.target.closest("#erAdd")) {
-        epEdit.list.push(nextEp(it, epEdit.list));
-        refreshEditor();
-        return true;
-      }
-      if (e.target.closest("#erBulkGo")) {
-        const n = Math.min(200, +$("#erBulk").value || 0);
-        for (let k = 0; k < n; k++) epEdit.list.push(nextEp(it, epEdit.list));
-        refreshEditor();
-        return true;
-      }
-      const d = e.target.closest("[data-erdel]");
-      if (d) {
-        epEdit.list.splice(+d.dataset.erdel, 1);
-        refreshEditor();
-        return true;
-      }
-    }
-    if (e.target.closest("#delItem")) {
-      const b = e.target.closest("#delItem");
-      if (b.dataset.c) {
-        const id = it.id,
-          t0 = it.t,
-          prev = { ...(over[id] || {}) };
-        delete over[id];
-        rebuild();
-        close();
-        render();
-        removeDoc("titles", id).catch(fail);
-        toastUndo(`「${t0.slice(0, 18)}」を削除しました`, () => {
-          over[id] = prev;
-          rebuild();
-          render();
-          saveDoc("titles", id, prev).catch(fail);
-        });
-      } else {
-        b.dataset.c = "1";
-        b.textContent = "もう一度押すと削除";
-        b.classList.add("armed");
-      }
-      return true;
-    }
-  }
-  return false;
-}
+      if (i < 0) return;
+      l[i].w = true;
+      saveEps(it, l, `${it.t.slice(0, 14)} ${l[i].n}を視聴済みにしました`);
+      askSub(it, i);
+    },
+  ],
+  ["[data-id]", el => openDetail(el.dataset.id)],
+];
 /* もっと見る・戻る・閉じる・追加 */
-function onCommonClick(e) {
-  if (e.target.closest("#more")) {
-    state.limit += 300;
-    render();
-    return true;
-  }
-  if (e.target.closest("[data-back]")) {
-    const id = form && form.id,
-      yid = yform && yform.id;
-    close();
-    if (id) openDetail(id);
-    else if (yid) ytOpenDetail(yid);
-    return true;
-  }
-  if (e.target.closest("[data-close]")) {
-    close();
-    return true;
-  }
-  if (e.target.closest("#addBtn,#sbAdd")) {
-    if (state.mode === "yt") ytOpenForm(null);
-    else openForm(null);
-    return true;
-  }
-  return false;
-}
-/* クリックは上から順に試し、処理したところで止める */
+const COMMON_ACTIONS = [
+  [
+    "#more",
+    () => {
+      state.limit += 300;
+      render();
+    },
+  ],
+  [
+    "[data-back]",
+    () => {
+      const id = form && form.id,
+        yid = yform && yform.id;
+      close();
+      if (id) openDetail(id);
+      else if (yid) ytOpenDetail(yid);
+    },
+  ],
+  ["[data-close]", () => close()],
+  ["#addBtn,#sbAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
+];
 /* スマホ：☰メニューの開閉。メニュー内で画面を選んだら閉じる */
 function setDrawer(on) {
   document.body.classList.toggle("drawer", on);
@@ -936,6 +242,124 @@ function onDrawerClick(e) {
     setDrawer(false);
   return false;
 }
+/* シリーズの作品一覧を開く（アニメ・ドラマ・映画・配信をまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
+function showSeries(name, g) {
+  close();
+  if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
+  Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
+  go();
+}
+/* ライブラリの絞り込み・並び順 */
+const FILTER_ACTIONS = [
+  /* 絞り込みボタン：押すとその項目の選択肢を出す／閉じる */
+  [
+    "[data-fpop]",
+    el => {
+      const v = el.dataset.fpop;
+      state.fOpen = state.fOpen === v ? "" : v;
+      state.svMode = "";
+      state.svName = null;
+      render();
+    },
+  ],
+  [
+    "[data-couryear]",
+    el => {
+      const ks = SEASONS.map(se => el.dataset.couryear + se);
+      const all = ks.every(k => state.cour.includes(k));
+      state.cour = all ? state.cour.filter(c => !ks.includes(c)) : [...new Set([...state.cour, ...ks])];
+      state.limit = 200;
+      render();
+    },
+  ],
+  [
+    "[data-era]",
+    el => {
+      state.era = el.dataset.era === "すべて" ? [] : toggle(state.era, el.dataset.era);
+      state.limit = 200;
+      render();
+    },
+  ],
+  [
+    "[data-seradd]",
+    el => {
+      state.series = [...state.series, el.dataset.seradd];
+      if (state.sort === "new") state.sort = "old";
+      state.limit = 200;
+      render();
+      $("#seriesQ")?.focus();
+    },
+  ],
+  [
+    "[data-serdel]",
+    el => {
+      state.series = state.series.filter(x => x !== el.dataset.serdel);
+      state.limit = 200;
+      render();
+    },
+  ],
+  [
+    "[data-cour]",
+    el => {
+      state.cour = el.dataset.cour === "すべて" ? [] : toggle(state.cour, el.dataset.cour);
+      state.limit = 200;
+      render();
+    },
+  ],
+  /* 作品詳細の「シリーズ作品」 */
+  [
+    "[data-series]",
+    el => {
+      const it = items.find(x => x.id === openId);
+      showSeries(el.dataset.series, it && it.k === "d" ? "d" : "a");
+    },
+  ],
+  /* 一覧の上の視聴ステータス（1つだけ選ぶ。同じものをもう一度押すと「すべて」） */
+  [
+    "[data-stf]",
+    el => {
+      const v = el.dataset.stf;
+      state.sf = !v || (state.sf.length === 1 && state.sf[0] === v) ? [] : [v];
+      state.limit = 200;
+      saveUI();
+      render();
+    },
+  ],
+  [
+    "[data-xseroff]",
+    () => {
+      state.xser = false;
+      render();
+    },
+  ],
+  [
+    "[data-grp]",
+    el => {
+      state.grp = el.dataset.grp;
+      state.limit = 200;
+      state.fOpen = "";
+      saveUI();
+      render();
+    },
+  ],
+  [
+    "[data-sort]",
+    el => {
+      state.sort = el.dataset.sort;
+      state.fOpen = "";
+      saveUI();
+      render();
+    },
+  ],
+  /* 条件をすべて解除 */
+  [
+    "[data-unset]",
+    () => {
+      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], vod: "", limit: 200 });
+      render();
+    },
+  ],
+];
 /* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉、画面は指に合わせて横に動かし、離すと番組表／ライブラリなど隣の画面へ */
 const segBtns = () => [...document.querySelectorAll("#hseg [data-tb]")];
 const segIdx = () => segBtns().findIndex(b => b.getAttribute("aria-selected") === "true");
@@ -966,18 +390,18 @@ matchMedia("(max-width:899px)").addEventListener("change", () => {
 });
 const CLICK_HANDLERS = [
   onDrawerClick,
-  onShellClick,
+  e => runActions(SHELL_ACTIONS, e),
   onSettingsClick,
-  onNavClick,
+  e => runActions(NAV_ACTIONS, e),
   closeDropdownOnOutsideClick,
   onSubPopClick,
-  e => state.mode === "yt" && ytClick(e),
-  onRowClick,
-  onSavedFilterClick,
-  onFilterClick,
+  e => state.mode === "yt" && runActions(YT_ACTIONS, e),
+  e => runActions(ROW_ACTIONS, e),
+  e => state.mode !== "yt" && runActions(SAVED_FILTER_ACTIONS, e),
+  e => runActions(FILTER_ACTIONS, e),
   onTitleFormClick,
   onDetailClick,
-  onCommonClick,
+  e => runActions(COMMON_ACTIONS, e),
 ];
 document.addEventListener("click", e => {
   for (const h of CLICK_HANDLERS) if (h(e)) return;

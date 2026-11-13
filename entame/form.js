@@ -446,3 +446,128 @@ function lockScroll(on) {
   }
 }
 new MutationObserver(() => lockScroll(!!$("#layer").firstElementChild)).observe($("#layer"), { childList: true });
+/* 作品の追加・編集画面：入力中の内容を読み取ってから変えて、描き直す */
+const formEdit = (fn, after) => el => {
+  readForm();
+  fn(el);
+  redrawForm();
+  if (after) after();
+};
+const FORM_ACTIONS = [
+  ["[data-fm]", formEdit(el => (form.media = el.dataset.fm))],
+  ["[data-fst]", formEdit(el => (form.stations = toggle(form.stations, el.dataset.fst)))],
+  ["[data-fplat]", formEdit(el => (form.plat = toggle(form.plat, el.dataset.fplat)))],
+  ["[data-fvod]", formEdit(el => (form.vods = toggle(form.vods, el.dataset.fvod)))],
+  /* シリーズ：別のジャンルのシリーズからも探す */
+  [
+    "[data-fserall]",
+    () => {
+      form.serAll = true;
+      const b = $("#fSerSug");
+      if (b) b.innerHTML = serSugForm($("#f-serq")?.value || "");
+    },
+  ],
+  ["[data-fser]", formEdit(el => (form.series = el.dataset.fser))],
+  ["[data-fserdel]", formEdit(() => (form.series = ""), () => $("#f-serq")?.focus())],
+  [
+    "[data-fsernew]",
+    formEdit(
+      el => {
+        form.serNew = el.dataset.fsernew === "1";
+        form.serNewName = $("#f-serq")?.value || "";
+      },
+      () => $("#f-sernew")?.focus(),
+    ),
+  ],
+  [
+    "[data-fsercreate]",
+    () => {
+      readForm();
+      const n = (form.serNewName || "").trim();
+      if (!n) return toast("シリーズ名を入れてください");
+      form.series = n;
+      form.serNew = false;
+      /* 新しく作ったシリーズのメインのジャンルは、作った作品のジャンルにする */
+      if (!M("series").includes(n)) {
+        master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: serGroup(form.k) } };
+        saveMaster();
+      }
+      redrawForm();
+      toast(`シリーズ「${n}」を作りました`);
+    },
+  ],
+  /* 曲を追加：前の曲の続きの話から最後の話まで */
+  [
+    "[data-sgadd]",
+    formEdit(
+      el => {
+        const same = form.songs.filter(x => x.type === el.dataset.sgadd);
+        const last = same[same.length - 1];
+        const sp = form.span || (+form.n ? [1, +form.n] : null);
+        const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
+        form.songs.push({ type: el.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
+      },
+      () => document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-st`)?.focus(),
+    ),
+  ],
+  ["[data-sgdel]", formEdit(el => form.songs.splice(+el.dataset.sgdel, 1))],
+  /* ジャンル・ステータス。映画は放送形態も映画に、配信番組は配信に */
+  [
+    "[data-fk],[data-fs]",
+    formEdit(el => {
+      if (el.dataset.fk) {
+        form.k = el.dataset.fk;
+        if (form.k === "f") form.media = "movie";
+        if (form.k === "r" && form.media !== "stream") form.media = "stream";
+      }
+      if (el.dataset.fs) form.s = el.dataset.fs;
+    }),
+  ],
+  /* 放送クール */
+  [
+    "[data-courkey]",
+    formEdit(el => {
+      if (!form.cours.includes(el.dataset.courkey)) form.cours.push(el.dataset.courkey);
+      form.cours.sort();
+    }),
+  ],
+  [
+    "[data-courall]",
+    formEdit(() => {
+      const on = form.cours.includes(ALLYEAR);
+      form.cours = form.cours.filter(c => c !== ALLYEAR);
+      if (!on) form.cours.unshift(ALLYEAR);
+    }),
+  ],
+  ["[data-courmore]", formEdit(() => (form.courOpen = !form.courOpen))],
+  [
+    "[data-couradd]",
+    formEdit(el => {
+      form.courOpen = true;
+      const key = `${form.cy}${el.dataset.couradd}`;
+      if (!form.cours.includes(key)) form.cours.push(key);
+      form.cours.sort();
+    }),
+  ],
+  ["[data-courdel]", formEdit(el => (form.cours = form.cours.filter(c => c !== el.dataset.courdel)))],
+];
+/* 詳細の中でその場で編集しているとき：✕で取り消し、外を押したら保存して閉じる（別の項目を押したらそのまま次を編集） */
+function onTitleFormClick(e) {
+  if (form && form.inline) {
+    if (e.target.closest(".ined [data-back]")) {
+      closeInlineForm();
+      return true;
+    }
+    if (!e.target.closest(".ined")) {
+      const jp = e.target.closest("#sheetIn [data-jump]");
+      const tgt = jp && jp.dataset.jump;
+      commitInlineForm();
+      closeInlineForm();
+      if (!tgt || e.target.closest("a,button:not([data-jump])")) return false; // ほかのボタン（閉じる・タブなど）はそのまま動かす
+      const it = items.find(x => x.id === openId);
+      if (it) openForm(it, tgt, jp);
+      return true;
+    }
+  }
+  return !!form && runActions(FORM_ACTIONS, e);
+}

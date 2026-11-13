@@ -537,140 +537,99 @@ async function ytSubmit() {
   if (f.id) ytOpenDetail(id);
 }
 
-/* events (returns true when handled) */
-function ytClick(e) {
-  {
-    const t = e.target;
-    const ft = t.closest("[data-ytpop]");
-    if (ft) {
-      const v = ft.dataset.ytpop;
-      yst.fp = yst.fp === v ? "" : v;
-      saveYtUI();
-      render();
-      return true;
-    }
-    const yg = t.closest("[data-ytgrp]");
-    if (yg) {
-      yst.grp = yg.dataset.ytgrp;
+/* YouTube の操作（YouTubeの画面を開いているときだけ） */
+const ytUI = fn => el => {
+  fn(el);
+  saveYtUI();
+  render();
+};
+const YT_ACTIONS = [
+  /* 絞り込み・並び順 */
+  ["[data-ytpop]", ytUI(el => (yst.fp = yst.fp === el.dataset.ytpop ? "" : el.dataset.ytpop))],
+  [
+    "[data-ytgrp]",
+    ytUI(el => {
+      yst.grp = el.dataset.ytgrp;
       yst.fp = "";
-      saveYtUI();
-      render();
-      return true;
-    }
-    const ys = t.closest("[data-ytsort]");
-    if (ys) {
-      yst.sort = ys.dataset.ytsort;
+    }),
+  ],
+  [
+    "[data-ytsort]",
+    ytUI(el => {
+      yst.sort = el.dataset.ytsort;
       yst.fp = "";
-      saveYtUI();
-      render();
-      return true;
-    }
-    if (t.closest("[data-ytreset]")) {
-      Object.assign(yst, { pri: [], genre: "すべて", sub: "すべて" });
-      saveYtUI();
-      render();
-      return true;
-    }
-  }
-  const t = e.target;
-  const g = t.closest("[data-ytg]");
-  if (g) {
-    yst.genre = g.dataset.ytg;
-    yst.sub = "すべて";
-    saveYtUI();
-    render();
-    return true;
-  }
-  const sb = t.closest("[data-ytsub]");
-  if (sb) {
-    yst.sub = sb.dataset.ytsub;
-    saveYtUI();
-    render();
-    return true;
-  }
-  const pr = t.closest("[data-ytpri]");
-  if (pr) {
-    const v = pr.dataset.ytpri;
-    yst.pri = v === "すべて" ? [] : toggle(yst.pri, v);
-    saveYtUI();
-    render();
-    return true;
-  }
-  const r = t.closest("[data-yt]");
-  if (r) {
-    ytOpenDetail(r.dataset.yt);
-    return true;
-  }
-  if (yform) {
-    const fa = t.closest("[data-yfa]");
-    if (fa) {
-      ytReadForm();
-      yform.a = fa.dataset.yfa;
+    }),
+  ],
+  ["[data-ytreset]", ytUI(() => Object.assign(yst, { pri: [], genre: "すべて", sub: "すべて" }))],
+  [
+    "[data-ytg]",
+    ytUI(el => {
+      yst.genre = el.dataset.ytg;
+      yst.sub = "すべて";
+    }),
+  ],
+  ["[data-ytsub]", ytUI(el => (yst.sub = el.dataset.ytsub))],
+  ["[data-ytpri]", ytUI(el => (yst.pri = el.dataset.ytpri === "すべて" ? [] : toggle(yst.pri, el.dataset.ytpri)))],
+  ["[data-yt]", el => ytOpenDetail(el.dataset.yt)],
+  [null, (el, x, e) => !!yform && runActions(YT_FORM_ACTIONS, e)],
+  [
+    null,
+    (el, x, e) => {
+      const it = ytOpen && ytItems.find(y => y.id === ytOpen);
+      return !!it && runActions(YT_DETAIL_ACTIONS, e, it);
+    },
+  ],
+];
+/* 追加・編集画面：入力中の内容を読み取ってから変えて、描き直す */
+const ytFormEdit = fn => el => {
+  ytReadForm();
+  fn(el);
+  ytRedrawForm();
+};
+const YT_FORM_ACTIONS = [
+  [
+    "[data-yfa]",
+    ytFormEdit(el => {
+      yform.a = el.dataset.yfa;
       const i = $("#y-anew");
       if (i) i.value = "";
-      ytRedrawForm();
-      return true;
-    }
-    const fg = t.closest("[data-yfg]");
-    if (fg) {
-      ytReadForm();
-      const v = fg.dataset.yfg;
+    }),
+  ],
+  [
+    "[data-yfg]",
+    ytFormEdit(el => {
+      const v = el.dataset.yfg;
       yform.g = ytCat(yform) === v ? "" : v === SOLO ? SOLO : ytSub(yform) || COLLAB;
-      ytRedrawForm();
-      return true;
-    }
-    const fsg = t.closest("[data-yfsg]");
-    if (fsg) {
-      ytReadForm();
-      yform.sg = ytSolo(yform) === fsg.dataset.yfsg ? "" : fsg.dataset.yfsg;
-      ytRedrawForm();
-      return true;
-    }
-    const fsb = t.closest("[data-yfsub]");
-    if (fsb) {
-      ytReadForm();
-      yform.g = ytSub(yform) === fsb.dataset.yfsub ? COLLAB : fsb.dataset.yfsub;
-      ytRedrawForm();
-      return true;
-    }
-    const fs = t.closest("[data-yfs]");
-    if (fs) {
-      ytReadForm();
-      yform.s = yform.s === fs.dataset.yfs ? "" : fs.dataset.yfs;
-      ytRedrawForm();
-      return true;
-    }
-  }
-  const x = ytOpen && ytItems.find(y => y.id === ytOpen);
-  if (x) {
-    if (t.closest("#ytEdit")) {
-      ytOpenForm(x);
-      return true;
-    }
-    {
-      const inl = t.closest("[data-inl]");
-      if (inl) {
-        if (!t.closest("input")) startInline(inl);
-        return true;
-      }
-      const jp = t.closest("[data-jump]");
-      if (jp) {
-        ytOpenForm(x, jp.dataset.jump);
-        return true;
-      }
-    }
-    const s = t.closest("[data-yts]");
-    if (s) {
-      const v = s.dataset.yts;
+    }),
+  ],
+  ["[data-yfsg]", ytFormEdit(el => (yform.sg = ytSolo(yform) === el.dataset.yfsg ? "" : el.dataset.yfsg))],
+  ["[data-yfsub]", ytFormEdit(el => (yform.g = ytSub(yform) === el.dataset.yfsub ? COLLAB : el.dataset.yfsub))],
+  ["[data-yfs]", ytFormEdit(el => (yform.s = yform.s === el.dataset.yfs ? "" : el.dataset.yfs))],
+];
+/* 詳細画面（x＝開いている再生リスト） */
+const YT_DETAIL_ACTIONS = [
+  ["#ytEdit", (el, x) => ytOpenForm(x)],
+  [
+    "[data-inl]",
+    (el, x, e) => {
+      if (!e.target.closest("input")) startInline(el);
+    },
+  ],
+  ["[data-jump]", (el, x) => ytOpenForm(x, el.dataset.jump)],
+  [
+    "[data-yts]",
+    (el, x) => {
+      const v = el.dataset.yts;
       if ((x.s || "") !== v) ytSave(x.id, { s: v }, v ? `「${v}」にしました` : "未視聴にしました");
-      return true;
-    }
-    const p = t.closest("[data-ytp]");
-    if (p) {
+    },
+  ],
+  /* 見たところ：−・＋・最後まで・リセット。最後まで見たら視聴済み、途中なら視聴中に */
+  [
+    "[data-ytp]",
+    (el, x) => {
       const n = +x.n || 0;
-      let pw = +x.pw || 0;
-      const v = p.dataset.ytp;
-      pw = v === "all" ? n : v === "reset" ? 0 : Math.max(0, Math.min(n, pw + +v));
+      const v = el.dataset.ytp;
+      const pw = v === "all" ? n : v === "reset" ? 0 : Math.max(0, Math.min(n, (+x.pw || 0) + +v));
       const patch = { pw };
       let msg = `${pw}本目まで見ました`;
       if (n && pw >= n && x.s !== "視聴済み") {
@@ -681,33 +640,31 @@ function ytClick(e) {
         msg = `${pw}本目まで見ました（視聴中にしました）`;
       }
       ytSave(x.id, patch, msg);
-      return true;
-    }
-    if (t.closest("#ytDel")) {
-      const b = t.closest("#ytDel");
-      if (b.dataset.c) {
-        const id = x.id,
-          t0 = x.t,
-          prev = { ...(ytOver[id] || {}) };
-        delete ytOver[id];
-        ytRebuild();
-        close();
-        render();
-        removeDoc("yt", id).catch(fail);
-        toastUndo(`「${t0.slice(0, 18)}」を削除しました`, () => {
-          ytOver[id] = prev;
-          ytRebuild();
-          render();
-          saveDoc("yt", id, prev).catch(fail);
-        });
-      } else {
-        b.dataset.c = "1";
-        b.textContent = "もう一度押すと削除";
-        b.classList.add("armed");
+    },
+  ],
+  /* 削除：もう一度押すと削除（元に戻せる） */
+  [
+    "#ytDel",
+    (el, x) => {
+      if (!el.dataset.c) {
+        el.dataset.c = "1";
+        el.textContent = "もう一度押すと削除";
+        el.classList.add("armed");
+        return;
       }
-      return true;
-    }
-  }
-  return false;
-}
-
+      const id = x.id,
+        prev = { ...(ytOver[id] || {}) };
+      delete ytOver[id];
+      ytRebuild();
+      close();
+      render();
+      removeDoc("yt", id).catch(fail);
+      toastUndo(`「${x.t.slice(0, 18)}」を削除しました`, () => {
+        ytOver[id] = prev;
+        ytRebuild();
+        render();
+        saveDoc("yt", id, prev).catch(fail);
+      });
+    },
+  ],
+];
