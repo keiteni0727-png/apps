@@ -3259,7 +3259,7 @@ async function submitForm() {
     noF: [],
     series: (f.series || "").trim(),
     url: (f.url || "").trim(),
-    vurl: (f.vurl || "").trim(),
+    vurl: normVurl(f.vurl),
   };
   /* 入力した項目の「なし」は自動で外す */
   const filled = { time: patch.time, st: patch.stations.length, plat: patch.plat.length, vods: patch.vods.length, cours: patch.cours.length, url: patch.url, vurl: patch.vurl };
@@ -5283,6 +5283,21 @@ document.addEventListener("keydown", e => {
 
 document.addEventListener("focusout", e => {
   if (e.target.classList && e.target.classList.contains("inl")) commitInline(e.target);
+});
+/* 配信URL：NetflixのURLは作品ページ（/title/番号）の形に直す
+   browse・検索・ジャンル画面の ?jbv=番号（PCで作品を開いたとき）・title/番号?…（共有リンク）を変換。watch/番号は1話分なのでそのまま */
+function normVurl(u) {
+  u = String(u || "").trim();
+  const m = /^(?:https?:\/\/)?(?:www\.)?netflix\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:title\/(\d+)|[^?#]*\?(?:.*&)?jbv=(\d+))/i.exec(u);
+  return m ? `https://www.netflix.com/title/${m[1] || m[2]}` : u;
+}
+document.addEventListener("input", e => {
+  if (e.target.id !== "f-vurl") return;
+  const v = normVurl(e.target.value);
+  if (v !== e.target.value.trim()) {
+    e.target.value = v;
+    toast("NetflixのURLを作品ページの形に直しました");
+  }
 });
 
 /* ================= 起動 ================= */
