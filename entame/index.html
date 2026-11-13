@@ -235,6 +235,10 @@ button.lab.s{font:inherit;font-size:12px;font-weight:700;padding:2px 8px;backgro
 .sernew input{flex:1;min-width:0}
 .sernew button{flex:none;border:1px solid var(--u-line);background:var(--u-bg);border-radius:10px;padding:0 14px;font-weight:700;font-size:14px}
 .field .chips button[aria-pressed="true"]{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
+.lab.v.vc{background:var(--vc);border-color:var(--vc);color:var(--vt);font-weight:700}
+.chips button.vc::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--vc);margin-right:5px;vertical-align:1px;box-shadow:0 0 0 1px var(--u-line)}
+.chips button.vc[aria-pressed="true"],.field .chips button.vc[aria-pressed="true"]{background:var(--vc);border-color:var(--vc);color:var(--vt)}
+.chips button.vc[aria-pressed="true"]::before{display:none}
 .field .chips{padding-top:0}
 .field .chips button{padding:5px 10px;font-size:13px}
 /* 小さいボタン */
@@ -957,6 +961,24 @@ const VODS = [
   "Lemino",
   "dアニメストア",
 ];
+/* 配信サイトの色（ブランドカラー）[背景, 文字]。ロゴが白黒のサイトは黒系 */
+const VOD_COLOR = {
+  Netflix: ["#E50914", "#fff"],
+  "Disney＋": ["#113CCF", "#fff"],
+  ABEMA: ["#000000", "#fff"],
+  "U-NEXT": ["#1F2A3A", "#fff"],
+  "Prime Video": ["#1A98FF", "#fff"],
+  hulu: ["#1CE783", "#0B0C0F"],
+  FOD: ["#3A3A3A", "#fff"],
+  TELASA: ["#2F3BD9", "#fff"],
+  Lemino: ["#7B2CE0", "#fff"],
+  dアニメストア: ["#F08300", "#fff"],
+};
+const vcStyle = v => {
+  const c = VOD_COLOR[v];
+  return c ? ` style="--vc:${c[0]};--vt:${c[1]}"` : "";
+};
+const vlab = v => `<span class="lab v${VOD_COLOR[v] ? " vc" : ""}"${vcStyle(v)}>${esc(v)}</span>`;
 const MEDIA = [
   ["tv", "TV"],
   ["movie", "映画"],
@@ -1905,14 +1927,14 @@ function stationTxt(i) {
 }
 function mediaLabels(i, noSt) {
   const m = mediaOf(i);
-  if (noSt) return m.media === "stream" ? "" : m.vods.map(v => `<span class="lab v">${esc(v)}</span>`).join("");
+  if (noSt) return m.media === "stream" ? "" : m.vods.map(v => `${vlab(v)}`).join("");
   if (m.media === "stream")
-    return `<span class="lab">配信</span>${m.plat.map(v => `<span class="lab v">${esc(v)}</span>`).join("")}`;
+    return `<span class="lab">配信</span>${m.plat.map(v => `${vlab(v)}`).join("")}`;
   return (
     (noSched(m.media)
       ? `<span class="lab">${MEDIA_LAB[m.media]}</span>`
       : m.stations.map(s => `<span class="lab">${esc(s)}</span>`).join("")) +
-    m.vods.map(v => `<span class="lab v">${esc(v)}</span>`).join("")
+    m.vods.map(v => `${vlab(v)}`).join("")
   );
 }
 const SEASON_CLS = { 冬: "wi", 春: "sp", 夏: "su", 秋: "au" };
@@ -1988,7 +2010,7 @@ function libLabels(i) {
   return (
     pc +
     (big ? `<span class="lab">${big}</span>` : "") +
-    sites.map(v => `<span class="lab v">${esc(v)}</span>`).join("")
+    sites.map(v => `${vlab(v)}`).join("")
   );
 }
 /* PCの一覧に出す追加の情報（放送クール・放送期間・OP/ED） */
@@ -2958,9 +2980,9 @@ function nextEp(it, list) {
 
 /* ---------- add / edit title ---------- */
 let form = null;
-const chipsHtml = (attr, opts, sel) =>
+const chipsHtml = (attr, opts, sel, color) =>
   opts
-    .map(v => `<button type="button" ${attr}="${esc(v)}" aria-pressed="${sel.includes(v)}">${esc(v)}</button>`)
+    .map(v => `<button type="button" ${attr}="${esc(v)}" aria-pressed="${sel.includes(v)}"${color && VOD_COLOR[v] ? ` class="vc"${vcStyle(v)}` : ""}>${esc(v)}</button>`)
     .join("");
 function serSugForm(q) {
   const nq = norm(q);
@@ -3068,8 +3090,8 @@ function formHtml() {
       </div>`,
     media: `<div class="field full" id="fMedia"><span>放送形態</span><div class="segc" role="group" aria-label="放送形態">${seg("data-fm", MEDIA, f.media)}</div></div>
       ${f.media === "tv" ? `<div class="field full"><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div>${nofBox("st")}</div>` : ""}
-      ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat)}</div>${nofBox("plat")}</div>` : ""}
-      ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods)}</div>${nofBox("vods", "見られる配信")}</div>` : ""}`,
+      ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat, true)}</div>${nofBox("plat")}</div>` : ""}
+      ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods, true)}</div>${nofBox("vods", "見られる配信")}</div>` : ""}`,
     from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）" }[f.media] || "開始日（第1話）"}</span><input id="f-from" type="date" value="${esc(f.from)}"></label>`,
     time:
       noSched(f.media)
@@ -3786,7 +3808,7 @@ const YT_SORTS = [
   ["title", "タイトル順"],
 ];
 const chipBtn = (attr, val, on, label, n, cls) =>
-  `<button type="button" ${attr}="${esc(val)}" aria-pressed="${on}" class="${on && cls ? "pri " + cls : ""}">${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
+  `<button type="button" ${attr}="${esc(val)}" aria-pressed="${on}" class="${on && cls ? "pri " + cls : ""}${attr === "data-vod" && VOD_COLOR[val] ? " vc" : ""}"${attr === "data-vod" ? vcStyle(val) : ""}>${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
 
 /* detail */
 let ytOpen = null;
