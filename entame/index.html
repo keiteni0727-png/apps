@@ -918,15 +918,25 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @keyframes swr{from{opacity:.4;transform:translateX(-24px)}to{opacity:1;transform:none}}
 /* メニューのアイコン */
 /* ===== 番組表（新） ===== */
-.wtop{display:grid;grid-template-columns:minmax(0,2fr) 1fr 1fr auto;gap:10px;align-items:stretch;padding-top:16px}
-.wtop>div{background:var(--u-surface);border:1px solid var(--u-line);border-radius:12px;padding:10px 14px;min-width:0}
-.wtop .wt-sw{display:flex;align-items:center;background:none;border:0;padding:0}
-.wt-l{display:block;font-family:var(--u-num);font-size:10px;letter-spacing:.1em;color:var(--u-accent);font-weight:700;margin-bottom:3px}
-.wt-next b{display:block;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wt-next .wt-when{font-family:var(--u-num);font-size:12px;color:var(--u-sub);font-weight:700;margin-right:6px}
-.wt-next .wt-ep{font-size:12px;color:var(--u-sub)}
-.wt-stat b{font-family:var(--u-num);font-size:20px;font-weight:700}
-.wt-stat small{font-size:11px;color:var(--u-sub);margin:0 2px;font-weight:600}
+.wtop{display:flex;gap:12px;align-items:stretch;padding-top:16px}
+.wt-clock{display:flex;align-items:baseline;gap:12px;flex:1;min-width:0;padding:4px 2px}
+.wt-clock time{font-family:var(--u-num);font-weight:600;font-size:44px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.wt-clock span{font-size:14px;font-weight:700;color:var(--u-sub)}
+.wt-l{display:block;font-family:var(--u-num);font-size:10px;letter-spacing:.1em;color:var(--st-now);font-weight:700;margin-bottom:2px}
+.wt-un{display:grid;justify-items:start;gap:1px;min-width:180px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:12px;padding:8px 14px;font:inherit;color:var(--u-ink);text-align:left}
+.wt-un b{font-family:var(--u-num);font-size:20px;font-weight:700;line-height:1.1}
+.wt-un small{font-size:11px;color:var(--u-sub);margin:0 2px;font-weight:600}
+.wt-un .wt-go{font-size:11.5px;color:var(--u-sub);font-weight:700}
+.wt-un.on{border:2px solid var(--st-now);background:color-mix(in srgb,var(--st-now) 10%,var(--u-surface))}
+.wt-un.on .wt-go{color:var(--st-now)}
+.wt-un:disabled{opacity:.6}
+.wcard{position:relative}
+.wc-badge{position:absolute;top:-1px;right:14px;font-family:var(--u-num);font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:0 0 6px 6px;color:#fff;z-index:1}
+.wc-badge.nx{background:var(--accent)}
+.wc-badge.live{background:var(--u-accent)}
+.wcard.live{border:2px solid var(--u-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--u-accent) 14%,transparent)}
+.wcard.nx .wc-vods,.wcard.live .wc-vods{margin-top:16px}
+@media (prefers-reduced-motion:no-preference){.wc-badge.live{animation:onair 1.6s ease-in-out infinite}@keyframes onair{50%{opacity:.55}}}
 .wday{margin-top:22px}
 .wdayhd{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
 .wdayhd h2{font-family:var(--u-f);font-size:19px;margin:0;font-weight:700}
@@ -986,8 +996,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .u-app .sb .sb-sub .sb-it{padding-top:5px;padding-bottom:5px}
 body.sbc .u-app .sb .sb-fold{display:none}
 @media (max-width:899px){
-  .wtop{grid-template-columns:minmax(0,1fr) auto;padding-top:10px;gap:8px}
-  .wtop>div{padding:8px 12px}
+  .wtop{padding-top:10px;gap:8px}
+  .wt-clock{flex-direction:column;gap:4px;justify-content:center}
+  .wt-clock time{font-size:36px}
+  .wt-clock span{font-size:12.5px}
+  .wt-un{min-width:0;flex:none;width:46%}
   .wday{margin-top:12px}
   .wgrid{grid-template-columns:1fr}
   .wc-time{font-size:26px}
@@ -2277,6 +2290,14 @@ function weekGroups() {
   if (free.length) g.push({ k: "free", day: null, list: free.sort((a, b) => a.t.localeCompare(b.t, "ja")) });
   return g;
 }
+/* 未視聴だけの表示中でも、曜日タブ・NEXT・ON AIR は全作品で決める */
+function weekGroupsAll() {
+  const keep = state.unOnly;
+  state.unOnly = false;
+  const g = weekGroups();
+  state.unOnly = keep;
+  return g;
+}
 const t0Today = () => {
   const n = new Date();
   return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime();
@@ -2289,14 +2310,14 @@ const dayName = g => {
 /* スマホ：上の帯の曜日タブ（未視聴がある日は点） */
 function weekDayTabs() {
   if (!loaded) return [];
-  const g = weekGroups();
+  const g = weekGroupsAll();
   if (!g.length) return [];
   const cur = g.some(x => x.k === state.wday) ? state.wday : g[0].k;
   return g.map(x => {
     const lab = x.day ? DOW[(x.day.getDay() + 6) % 7] : "他";
     const sub = x.day ? (x.day.getTime() === t0Today() ? "今日" : `${x.day.getDate()}`) : "";
     const dot = x.list.some(i => nextInfo(i).back.length);
-    return [x.k, lab, null, x.k === cur, `<b>${lab}</b>${sub ? `<small>${sub}</small>` : ""}${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}`];
+    return [x.k, lab, null, !state.unOnly && x.k === cur, `<b>${lab}</b>${sub ? `<small>${sub}</small>` : ""}${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}`];
   });
 }
 /* 次の放送（全作品の中でいちばん近い話） */
@@ -2310,27 +2331,18 @@ function nextAir() {
   });
   return best;
 }
+/* 番組表の上：今の時刻と、未視聴のまとめ（押すと曜日に関係なく未視聴の作品だけを出す） */
 function weekTopHtml() {
-  const nx = nextAir();
-  const pool = items.filter(i => ofKind(i) && i.s === "視聴中" && onAirNow(i));
-  const unI = pool.filter(i => nextInfo(i).back.length);
+  const d = new Date();
+  const hm = `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const date = `${d.getMonth() + 1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`;
+  const unI = items.filter(i => ofKind(i) && i.s === "視聴中" && onAirNow(i) && nextInfo(i).back.length);
   const unE = unI.reduce((n, i) => n + nextInfo(i).back.length, 0);
-  const g = weekGroups().filter(x => x.day);
-  const slots = g.reduce((n, x) => n + x.list.length, 0);
-  let nxt = "—";
-  if (nx) {
-    const j = jst(nx.e.t);
-    const today = jst(NOWMIN()).day === j.day;
-    nxt = `<span class="wt-when">${today ? "今日" : j.md + "（" + j.dow + "）"}${noTime(nx.e, nx.i) ? "" : " " + j.hm}</span><b>${esc(nx.i.t)}</b><span class="wt-ep">${esc(nx.e.n)}</span>`;
-  }
-  const sw = `<button type="button" class="unsw${state.unOnly ? " on" : ""}" data-unsw role="switch" aria-checked="${state.unOnly}">未視聴あり<small>${unI.length}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
-  return `<div class="wt-next"><span class="wt-l">NEXT</span>${nxt}</div>
-    <div class="wt-stat pconly"><span class="wt-l">未視聴</span><b>${unI.length}<small>作品</small> ${unE}<small>話</small></b></div>
-    <div class="wt-stat pconly"><span class="wt-l">今週の放送</span><b>${slots}<small>本</small></b></div>
-    <div class="wt-sw">${sw}</div>`;
+  return `<div class="wt-clock"><time datetime="${d.toISOString()}">${hm}</time><span>${date}</span></div>
+    <button type="button" class="wt-un${state.unOnly ? " on" : ""}" data-unsw aria-pressed="${state.unOnly}"${unI.length || state.unOnly ? "" : " disabled"}><span class="wt-l">未視聴</span><b>${unI.length}<small>作品</small> ${unE}<small>話</small></b><span class="wt-go">${state.unOnly ? "✕ 曜日に戻る" : unI.length ? "まとめて見る ›" : "なし"}</span></button>`;
 }
 /* カード1枚：時間・放送局・ジャンル・配信、タイトル、その日の話、進み具合、（PC）OP/ED・クール・期間、視聴ボタン */
-function weekCard(i, dayKey, isNext) {
+function weekCard(i, dayKey, isNext, onAir, preferBack) {
   const eps = episodes(i);
   const { back } = nextInfo(i);
   const w = eps.filter(e => e.w).length;
@@ -2340,8 +2352,7 @@ function weekCard(i, dayKey, isNext) {
         const j = jst(x.t);
         return j && j.day === dayKey;
       })) ||
-    nextInfo(i).up ||
-    back[0];
+    (preferBack ? back[0] || nextInfo(i).up : nextInfo(i).up || back[0]);
   const n = e ? epNum(e.n) : null;
   const m = mediaOf(i);
   const st = i.dow < 0 ? "" : stationTxt(i);
@@ -2362,7 +2373,7 @@ function weekCard(i, dayKey, isNext) {
   const tick = back[0]
     ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(back[0].n)}を視聴済にする"><span aria-hidden="true">✓</span> ${esc(back[0].n)}<span class="mo">を見た</span></button>`
     : `<span class="wc-ok">${eps.length && w === eps.length ? "全話視聴済み" : "未視聴なし"}</span>`;
-  return `<div class="wcard${isNext ? " nx" : ""}${back.length ? " un" : ""}">
+  return `<div class="wcard${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">${onAir ? `<span class="wc-badge live">● ON AIR</span>` : isNext ? `<span class="wc-badge nx">NEXT</span>` : ""}
     <button type="button" class="wc-main" data-id="${i.id}">
       <span class="wc-top"><span class="wc-time">${i.dow < 0 ? { movie: "映画", ova: "OVA" }[m.media] || "配信" : esc(i.time || "--:--")}</span>${st ? `<span class="wc-st">${esc(st)}</span>` : ""}${kindTag(i)}${fin ? FIN : ""}<span class="wc-vods">${vods.map(vlab).join("")}</span></span>
       <span class="wc-ttl">${esc(i.t)}</span>
@@ -2376,25 +2387,42 @@ function weekCard(i, dayKey, isNext) {
 }
 function renderWeek() {
   const g = weekGroups();
-  weekSig = g.map(x => x.k + ":" + x.list.map(i => i.id).join(",")).join("|");
-  let h = `<div class="wtop" id="clock">${weekTopHtml()}</div>`;
-  /* 次に放送される作品（今日以降でいちばん早い枠）を目立たせる */
+  const gAll = weekGroupsAll();
   const nowMs = Date.now();
-  let nxId = null;
-  for (const x of g) {
+  const startOf = (x, i) => x.day.getTime() + mins(i.time) * 60000;
+  const hasT = i => mins(i.time) < 9999;
+  /* 放送中（開始から30分）は ON AIR、その次に始まる枠を NEXT（どちらも今日以降の枠でいちばん近いもの） */
+  let liveIds = new Set(),
+    nxId = null;
+  for (const x of gAll) {
     if (!x.day) continue;
-    const hit = x.list.find(i => x.day.getTime() + Math.min(mins(i.time), 1440) * 60000 > nowMs);
-    if (hit) {
-      nxId = hit.id + "@" + x.k;
-      break;
+    for (const i of x.list) {
+      if (!hasT(i)) continue;
+      const st = startOf(x, i);
+      if (st <= nowMs && nowMs < st + 30 * 60000) liveIds.add(i.id + "@" + x.k);
+      else if (st > nowMs && !nxId) nxId = i.id + "@" + x.k;
     }
+    if (nxId) break;
   }
-  const sec = x =>
-    `<section class="wday"><div class="wdayhd"><h2>${dayName(x)}</h2>${x.day ? `<span>${x.day.getMonth() + 1}/${x.day.getDate()}（${DOW[(x.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${x.list.length}本</small></div><div class="wgrid">${x.list.map(i => weekCard(i, x.day ? dkey(x.day) : null, i.id + "@" + x.k === nxId)).join("")}</div></section>`;
+  weekSig = g.map(x => x.k + ":" + x.list.map(i => i.id).join(",")).join("|") + "#" + [...liveIds].join(",") + "#" + nxId;
+  let h = `<div class="wtop" id="clock">${weekTopHtml()}</div>`;
+  const card = (x, i, preferBack) => {
+    const key = i.id + "@" + x.k;
+    return weekCard(i, x.day && !preferBack ? dkey(x.day) : null, key === nxId, liveIds.has(key), preferBack);
+  };
   if (!g.length) {
     h += state.unOnly
       ? `<p class="empty">未視聴の作品はありません。</p>`
-      : `<p class="empty">視聴中の作品はありません。アニメ・ドラマのライブラリで作品を開き「視聴中」にすると、ここに曜日ごとに並びます。</p>`;
+      : `<p class="empty">放送中の視聴中の作品はありません。アニメ・ドラマのライブラリで作品を開き「視聴中」にすると、放送期間中はここに曜日ごとに並びます。</p>`;
+    return h;
+  }
+  /* 未視聴だけ：曜日に関係なく1つにまとめる（未視聴の多い順） */
+  if (state.unOnly) {
+    const seen = new Set();
+    const l = [];
+    g.forEach(x => x.list.forEach(i => !seen.has(i.id) && (seen.add(i.id), l.push([x, i]))));
+    l.sort((a, b) => nextInfo(b[1]).back.length - nextInfo(a[1]).back.length);
+    h += `<section class="wday"><div class="wdayhd"><h2>未視聴のある作品</h2><small>${l.length}本</small></div><div class="wgrid">${l.map(([x, i]) => card(x, i, true)).join("")}</div></section>`;
     return h;
   }
   /* PC・スマホとも1日ずつ。PCは曜日タブを画面の上に、スマホは上の帯に出す */
@@ -2403,7 +2431,7 @@ function renderWeek() {
       .map(([v, , , on, html]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${html}</button>`)
       .join("")}</div>`;
   const cur = g.find(x => x.k === state.wday) || g[0];
-  h += sec(cur);
+  h += `<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div><div class="wgrid">${cur.list.map(i => card(cur, i)).join("")}</div></section>`;
   return h;
 }
 function filtered() {
@@ -4725,7 +4753,10 @@ function onNavClick(e) {
     } else if (state.mode === "m") {
       state.mk = state.kind = v;
       state.limit = 200;
-    } else if (state.mode === "w") state.wday = v;
+    } else if (state.mode === "w") {
+      state.wday = v;
+      state.unOnly = false;
+    }
     render();
     scrollTo(0, 0);
     return true;
