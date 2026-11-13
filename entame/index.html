@@ -433,10 +433,10 @@ h3 input.inl{font-size:18px;font-weight:800}
 .eped.nosub .er{grid-template-columns:72px 1fr 30px}
 @media (max-width:520px){
   .eped.nosub .er{grid-template-columns:64px 1fr 30px}
-  .eped.nosub .er input[type=date]{grid-column:2}
+  .eped.nosub .er .er-d{grid-column:2}
   .eped.nosub .er .del{grid-column:3;grid-row:1}
   .er .er-s{grid-column:1/3;grid-row:2}
-  .er input[type=date]{grid-column:2}
+  .er .er-d{grid-column:2}
   .er .del{grid-column:3;grid-row:1}
 }
 /* season colours */
@@ -499,7 +499,13 @@ h3 input.inl{font-size:18px;font-weight:800}
 .er:first-child{border-top:0}
 .er input{min-width:0;width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:6px;padding:6px 7px;font:inherit;font-size:13.5px}
 .er .del{border:0;background:transparent;color:var(--u-sub);font-size:15px}
-.er.moved input[type=date]{border-color:var(--accent)}
+.er.moved .er-d{border-color:var(--accent)}
+.dtx{font-family:var(--u-num);letter-spacing:.02em}
+.dtw{display:flex;gap:6px;align-items:stretch;position:relative}
+.dtw .dtx{flex:1;min-width:0}
+.dtcal{flex:none;width:42px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-sub);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
+.dtcal svg{width:18px;height:18px}
+.dtpick{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
 /* 日付欄：iPhoneでは日付欄が枠からはみ出すので、標準の見た目を外して幅に収める */
 input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;display:block;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left}
@@ -3087,7 +3093,7 @@ function epEditorHtml(it) {
             return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}">
       <input class="er-n" value="${esc(e.n)}" aria-label="話数">
       ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
-      <input class="er-d" type="date" value="${j ? j.day : ""}" aria-label="放送日">
+      <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="20180825" value="${j ? j.day : ""}" aria-label="放送日（例：20180825）">
       <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button></div>`;
           })
           .join("")
@@ -3539,7 +3545,7 @@ function formHtml() {
       ${f.media === "tv" ? `<div class="field full"><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div>${nofBox("st")}</div>` : ""}
       ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat, true)}</div>${nofBox("plat")}</div>` : ""}
       ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods, true)}</div>${nofBox("vods", "見られる配信")}</div>` : ""}`,
-    from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）" }[f.media] || "開始日（第1話）"}</span><input id="f-from" type="date" value="${esc(f.from)}"></label>`,
+    from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）" }[f.media] || "開始日（第1話）"}</span><span class="dtw"><input id="f-from" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="20180825" value="${esc(f.from)}"><button type="button" class="dtcal" data-dtcal="f-from" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="f-from"></span></label>`,
     time:
       noSched(f.media)
         ? ""
@@ -5979,6 +5985,87 @@ document.addEventListener("keydown", e => {
 
 document.addEventListener("focusout", e => {
   if (e.target.classList && e.target.classList.contains("inl")) commitInline(e.target);
+});
+/* 日付の入力：20180825・2018/8/25・2018.8.25・2018年8月25日・8/25（今年）を打ち込むと 2018-08-25 に直す。
+   8けたの数字は打ち終わった時点で、それ以外は入力欄を離れたときに変換。正しくない日付は元に戻す */
+function normDate(v) {
+  v = zen(String(v || ""))
+    .trim()
+    .replace(/\s+/g, "");
+  if (!v) return "";
+  let y, m, d, x;
+  if ((x = /^(\d{4})(\d{2})(\d{2})$/.exec(v))) [, y, m, d] = x;
+  else if ((x = /^(\d{4})[\/.\-年](\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v))) [, y, m, d] = x;
+  else if ((x = /^(\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v))) {
+    y = new Date().getFullYear();
+    [, m, d] = x;
+  } else return null;
+  const dt = new Date(+y, +m - 1, +d);
+  if (dt.getFullYear() !== +y || dt.getMonth() !== +m - 1 || dt.getDate() !== +d) return null;
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+document.addEventListener("focusin", e => {
+  if (e.target.classList && e.target.classList.contains("dtx")) e.target.dataset.prev = e.target.value;
+});
+document.addEventListener(
+  "input",
+  e => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains("dtx")) return;
+    if (/^[0-9０-９]{8}$/.test(el.value.trim())) {
+      const n = normDate(el.value);
+      if (n) {
+        el.value = n;
+        el.dataset.prev = n;
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+  },
+  true,
+);
+document.addEventListener(
+  "change",
+  e => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains("dtx")) return;
+    const n = normDate(el.value);
+    if (n === null) {
+      e.stopImmediatePropagation();
+      toast("日付は 20180825 のように入力してください");
+      el.value = el.dataset.prev || "";
+      return;
+    }
+    if (n !== el.value) el.value = n;
+    if (n === el.dataset.prev && e.isTrusted === false) return;
+    el.dataset.prev = n;
+  },
+  true,
+);
+/* カレンダーのボタン：隠した日付入力のカレンダーを開き、選んだ日を入力欄へ */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-dtcal]");
+  if (!b) return;
+  const id = b.dataset.dtcal;
+  const t = document.getElementById(id);
+  const pk = b.parentElement.querySelector(`[data-dtfor="${id}"]`);
+  if (!t || !pk) return;
+  pk.value = normDate(t.value) || "";
+  try {
+    pk.showPicker();
+  } catch (_) {
+    pk.focus();
+    pk.click();
+  }
+});
+document.addEventListener("change", e => {
+  const pk = e.target.closest && e.target.closest("[data-dtfor]");
+  if (!pk) return;
+  const t = document.getElementById(pk.dataset.dtfor);
+  if (!t || !pk.value) return;
+  t.value = pk.value;
+  t.dataset.prev = "";
+  t.dispatchEvent(new Event("input", { bubbles: true }));
+  t.dispatchEvent(new Event("change", { bubbles: true }));
 });
 /* 配信URL：NetflixのURLは作品ページ（/title/番号）の形に直す
    browse・検索・ジャンル画面の ?jbv=番号（PCで作品を開いたとき）・title/番号?…（共有リンク）を変換。watch/番号は1話分なのでそのまま */
