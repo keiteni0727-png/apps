@@ -1453,7 +1453,7 @@ function rebuild() {
 /* ---------- 放送クール: "2026秋" style keys, plus 通年 for shows that run regardless of cour ---------- */
 const coursOf = i => i.cours || [];
 const courLabel = c =>
-  c === ALLYEAR ? "通年（クールなし）" : /^\d{4}/.test(c) ? `${c.slice(0, 4)}年${c.slice(4)}` : c;
+  c === ALLYEAR ? "通年" : /^\d{4}/.test(c) ? `${c.slice(0, 4)}年${c.slice(4)}` : c;
 
 /* ---------- era buckets: one per year, older years merged until each holds ~30 titles ---------- */
 const yearOf = i => +String(i.from || "").slice(0, 4) || 0;
@@ -2540,7 +2540,7 @@ const groupTitle = k =>
         : state.grp === "year" && k[0] === "Y"
           ? `${k.slice(1)}年`
           : k === ALLYEAR
-    ? "通年（クールなし）"
+    ? "通年"
     : k === "?"
       ? "時期不明"
       : k[0] === "Y"
