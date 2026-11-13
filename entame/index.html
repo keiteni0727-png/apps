@@ -3224,12 +3224,13 @@ function renderDetail(it) {
   );
   /* 1曲1行：種類・使われた話・曲名／アーティスト・DL。同じ種類が複数ある作品だけ話数の列を出す */
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
-  const showRng = byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeTxt(x)));
+  /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
+  const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeTxt(x)));
   const songRows = byType.map(([tp, l]) => [
     tp,
     l.map(
       ([x, k]) =>
-        `${showRng ? `<span class="irg">${l.length > 1 ? rangeTxt(x) : ""}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x.s)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
+        `${showRng ? `<span class="irg">${rangeTxt(x) || (l.length === 1 ? "全話" : "")}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x.s)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
     ),
   ]);
   const md = mediaOf(it).media,
