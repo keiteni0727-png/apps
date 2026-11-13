@@ -357,6 +357,8 @@ function startColListeners(){
       S.data[col] = s.docs.map(d => ({ id:d.id, ...d.data() }))
         .sort((a,b) => a.date === b.date ? ((b.ts?.seconds||9e9) - (a.ts?.seconds||9e9)) : (a.date < b.date ? 1 : -1));
       render();
+      LOADED.add(col);
+      if(LOADED.has('weights')) ['meals','gym'].filter(c => LOADED.has(c)).forEach(c => backfillKcal(c).catch(err => console.error(err)));
     }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
   }
   colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
@@ -1231,6 +1233,41 @@ const gymDetail = g => {
   return parts.filter(Boolean).join(' ・ ');
 };
 const sumKcal = list => list.reduce((a, g) => a + (g.kcal || 0), 0);
+
+/* ===== 過去の記録にカロリーを入れる（彼女が開いたときに1回だけ） ===== */
+const BACKFILLED = {}, LOADED = new Set();
+// 料理名がリストの料理とはっきり同じときだけ当てはめる（「ごはん」→「ごはん（茶碗1杯 150g）」など）
+function matchFood(name){
+  const k = kana(name), base = n => kana(n.replace(/（[^）]*）/g, ''));
+  return FOOD_IDX.find(x => x.toks[0] === k) || FOOD_IDX.find(x => base(x.name) === k) || null;
+}
+async function backfillKcal(col){
+  if(BACKFILLED[col] || S.role !== 'member') return;
+  BACKFILLED[col] = true;
+  const ups = [];
+  if(col === 'meals'){
+    for(const m of S.data.meals){
+      if(m.kcal != null || !(m.name||'').trim()) continue;
+      const x = matchFood(m.name.trim()); if(!x) continue;
+      ups.push([m.id, { kcal:x.kcal, p: m.p ?? x.p, f: m.f ?? x.f, c: m.c ?? x.c, kcalAuto:true }]);
+    }
+  } else {
+    for(const g of S.data.gym){
+      if(g.kcal != null) continue;
+      const info = exInfo((g.exercise||'').trim()), type = g.type || info?.type || gymRecType(g);
+      const memoMin = Number((String(g.memo||'').match(/(\d+(?:\.\d+)?)\s*分/) || [])[1]) || null;
+      const min = g.min ?? (type === 'str' ? (g.sets ? g.sets * MIN_PER_SET : null) : memoMin);
+      const mets = g.mets || info?.mets || EX_DEF_METS[type], kcal = burnKcal(mets, min);
+      if(kcal != null) ups.push([g.id, { type, mets, min, kcal, kcalAuto:true }]);
+    }
+  }
+  for(let i = 0; i < ups.length; i += 400){
+    const b = writeBatch(db);
+    ups.slice(i, i + 400).forEach(([id, d]) => b.set(doc(db, col, id), d, { merge:true }));
+    await b.commit();
+  }
+  if(ups.length) toast(`前の${col === 'meals' ? '食事' : 'ジム'}${ups.length}件にカロリーを入れたよ`);
+}
 
 /* ===== 食事の検索 ===== */
 const FOOD_IDX = FOODS.map(([name, yomi, kcal, p, f, c]) => ({ name, toks: [kana(name), ...yomi.split(/\s+/).map(kana)].filter(Boolean), kcal, p, f, c }));
