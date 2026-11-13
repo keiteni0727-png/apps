@@ -399,11 +399,11 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
 .sgsec{display:grid;border-left:4px solid var(--sgc);gap:6px;padding-left:8px}
 .sg{border:1px solid var(--u-line);border-radius:var(--u-rl);background:var(--u-bg);display:grid;padding:7px 8px;gap:5px}
 .sg-f{display:grid;grid-template-columns:1fr!important;gap:5px}
-.sg-f label{display:grid;min-width:0;grid-template-columns:4.6em 1fr;align-items:center;gap:6px}
+.sg-f label{display:grid;min-width:0;grid-template-columns:72px 1fr;align-items:center;gap:6px}
 .sg-f label span{font-size:11px}
 .sg .sg-f input,.sg .sg-r input,.sg .sg-r select{font-size:13px!important;padding:5px 8px;line-height:1.35;border-radius:7px}
 .sg .sg-r{gap:5px;font-size:12px;row-gap:4px}
-.sg .sg-r .sg-rl{width:4.6em;margin:0;font-size:11px}
+.sg .sg-r .sg-rl{width:72px;flex:none;margin:0 1px 0 0;font-size:11px} /* 曲名・アーティスト欄と左端をそろえる（ラベル72px＋すき間6px） */
 .sg .sg-r .sg-a,.sg .sg-r .sg-b{width:52px;padding:5px 6px}
 .sg .sg-r .sg-t{max-width:96px;padding:4px 4px;font-size:12px!important}
 .sg .sg-dlw{font-size:12px}
@@ -958,3 +958,8 @@ body.sbc .u-app .sb .sb-fold{display:none}
       .fab{display:grid;place-items:center;position:fixed;z-index:12;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border:0;border-radius:50%;background:var(--u-accent);color:var(--u-on);font-size:30px;font-weight:400;line-height:1;padding:0;box-shadow:0 8px 24px rgba(16,24,40,.28)}
   .u-app .totop{right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
 }
+
+/* 入力欄の例文（placeholder）：入力済みの文字と見分けやすいよう、薄く小さく */
+.sheet input::placeholder,.sheet textarea::placeholder{color:var(--u-sub);opacity:.45}
+.sg .sg-f input::placeholder{font-size:12px}
+.sg .sg-r .sg-a::placeholder,.sg .sg-r .sg-b::placeholder{font-size:11px}
