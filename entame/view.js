@@ -115,8 +115,6 @@ function renderTabbar() {
     const on = hs.querySelector('[aria-selected="true"]');
     if (on && hs.scrollWidth > hs.clientWidth) hs.scrollLeft = on.offsetLeft - (hs.clientWidth - on.offsetWidth) / 2;
   }
-  const hg = $("#hGear");
-  if (hg && !hg.firstChild) hg.innerHTML = GEAR;
   nav.innerHTML = items
     .map(
       ([v, l, ic, on]) =>
@@ -145,10 +143,9 @@ function stationTxt(i) {
   const l = m.media === "stream" ? m.plat : hasSt(m.media) ? m.stations : [];
   return l.join("・");
 }
-/* tag=true：作品詳細用。種別（TV・SP・映画・OVA・配信）を一覧と同じタグで先頭に出す */
-function mediaLabels(i, noSt, tag) {
+/* 放送局・配信サイトのラベル。tag=true：作品詳細用。種別（TV・SP・映画・OVA・配信）を一覧と同じタグで先頭に出す */
+function mediaLabels(i, tag) {
   const m = mediaOf(i);
-  if (noSt) return m.media === "stream" ? "" : m.vods.map(v => `${vlab(v)}`).join("");
   const head = tag ? mediaTag(i) : "";
   if (m.media === "stream")
     return `${head || `<span class="lab">配信</span>`}${m.plat.map(v => `${vlab(v)}`).join("")}`;
@@ -171,12 +168,6 @@ const courLab = c =>
       : "";
 const stPill = i =>
   `<span class="pill s-${esc(i.s)}" ${i.s ? "" : "style='background:var(--u-chip);color:var(--u-sub)'"}>${esc(stLabel(i.s || "未設定"))}</span>`;
-const labels = (i, withCour, noSt) =>
-  [
-    i.series ? `<span class="lab s">${esc(i.series)}</span>` : "",
-    ...(withCour ? coursOf(i).map(c => courLab(c)) : []),
-    mediaLabels(i, noSt),
-  ].join("");
 const fmtD = d => (d ? d.slice(0, 10).replace(/-/g, "/") : "");
 function periodOf(it) {
   if (mediaOf(it).media === "movie" || mediaOf(it).media === "sp") return fmtD(it.from || "");
@@ -187,30 +178,6 @@ function periodOf(it) {
   return fmtD(first) + " 〜 " + (last && last !== first ? fmtD(last) : "");
 }
 
-/* ---------- clock ---------- */
-function clockHtml() {
-  const d = new Date();
-  const hm = `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
-  const date = `${d.getMonth() + 1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`;
-  let best = null;
-  const now = NOWMIN();
-  items.forEach(i => {
-    if (i.s !== "視聴中" || !ofKind(i)) return;
-    const e = episodes(i).find(x => x.t > now);
-    if (e && (!best || e.t < best.e.t)) best = { i, e };
-  });
-  let soon = "";
-  if (best) {
-    const j = jst(best.e.t);
-    const today = jst(now).day === j.day;
-    soon = `<div class="soon"><span class="lbl">NEXT</span>${today ? "今日" : j.md + "(" + j.dow + ")"}${noTime(best.e, best.i) ? "" : " " + j.hm}　<b>${esc(best.i.t)}</b> ${esc(best.e.n)}</div>`;
-  }
-  const un = items.filter(i => ofKind(i) && i.s === "視聴中" && nextInfo(i).back.length).length;
-  const sw = `<button type="button" class="unsw${state.unOnly ? " on" : ""}" data-unsw role="switch" aria-checked="${state.unOnly}">未視聴あり<small>${un}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
-  const mn = items.filter(i => ofKind(i) && i.s === "視聴中" && (!state.unOnly || nextInfo(i).back.length) && missingOf(i).length).length;
-  const msw = `<button type="button" class="unsw misw${state.missOnly ? " on" : ""}" data-missw role="switch" aria-checked="${state.missOnly}">未入力あり<small>${mn}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
-  return `<div class="now"><time datetime="${d.toISOString()}">${hm}</time><span class="date">${date}</span></div>${sw}${msw}${soon}`;
-}
 setInterval(() => {
   const c = $("#clock");
   if (c) c.innerHTML = weekTopHtml();
@@ -256,56 +223,25 @@ function contCours(i) {
   }
   return best;
 }
-function songPick(i, type, n) {
-  const l = songsOf(i).filter(x => x.type === type && x.s);
-  if (!l.length) return null;
-  const hit = n == null ? null : l.find(x => (x.a == null || n >= x.a) && (x.b == null || n <= x.b));
-  return { x: hit || l[0], more: l.length - 1 };
-}
-function pcInfo(i, week, dayKey) {
-  let n = null;
-  if (week) {
-    const eps = episodes(i);
-    const e =
-      (dayKey &&
-        eps.find(e => {
-          const j = jst(e.t);
-          return j && j.day === dayKey;
-        })) ||
-      nextInfo(i).up;
-    n = e ? epNum(e.n) : null;
-  }
-  const types = ["OP", "ED", "主題歌"];
-  const song = types
+/* PCの一覧の右側：OP・ED・主題歌（種類ごとに最初の1曲。ほかにもあれば「ほかN曲」） */
+function pcInfo(i) {
+  const song = ["OP", "ED", "主題歌"]
     .map(t => {
-      const p = songPick(i, t, n);
-      if (!p) return "";
-      return `<span class="pci-r${p.x.dl ? " dl" : ""}"><b>${t}</b><span class="pci-v">${p.x.dl ? '<i class="pci-dl" aria-label="DL済み">♪</i>' : ""}${(({ st, ar }) => `${esc(st)}${ar ? `<small>${esc(ar)}</small>` : ""}`)(songTA(p.x))}</span>${!week && p.more ? `<em>ほか${p.more}曲</em>` : ""}</span>`;
+      const l = songsOf(i).filter(x => x.type === t && x.s);
+      if (!l.length) return "";
+      const x = l[0],
+        { st, ar } = songTA(x);
+      return `<span class="pci-r${x.dl ? " dl" : ""}"><b>${t}</b><span class="pci-v">${x.dl ? '<i class="pci-dl" aria-label="DL済み">♪</i>' : ""}${esc(st)}${ar ? `<small>${esc(ar)}</small>` : ""}</span>${l.length > 1 ? `<em>ほか${l.length - 1}曲</em>` : ""}</span>`;
     })
     .join("");
   return `<span class="pci">${song}</span>`;
 }
-/* 番組表（PC）：タイトル側に放送クールと放送期間 */
-function pcCourPer(i) {
-  const cs = coursOf(i);
-  const per = periodOf(i);
-  if (!cs.length && !per) return "";
-  return `<span class="pccp pconly">${cs.map(c => courLab(c)).join("")}${per ? `<span class="pci-per">${esc(per)}</span>` : ""}</span>`;
-}
-function slotRow(i, week, dayKey) {
-  let nx = "",
-    tick = "";
-  if (week) {
-    const { back } = nextInfo(i);
-    nx = back.length
-      ? `<span class="next"><span class="backlog">未視聴 ${back.length}話</span></span>`
-      : "";
-    tick = `<button type="button" class="tick" data-tick="${i.id}" ${back.length ? "" : "disabled"} aria-label="${back[0] ? esc(i.t) + " " + esc(back[0].n) + "を視聴済にする" : "未視聴の話はありません"}"><span>✓</span>${back[0] ? esc(back[0].n) : "—"}</button>`;
-  }
-  return `<div class="row${!week && i.s === "視聴済み" ? " done" : ""}${week ? "" : " lst ls-" + esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
-    <span class="time">${week ? `${esc(i.time || "")}${i.dow < 0 ? `<small>${ONE_LAB[mediaOf(i).media] || "配信"}</small>` : ""}${stationTxt(i) ? `<span class="tst">${esc(stationTxt(i))}</span>` : ""}` : `${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}`}${state.kind === "all" || state.xser ? kindTag(i) : ""}</span>
-    <span class="ttl"><strong>${week && dayKey && isFinOn(i, dayKey) ? FIN : ""}${esc(i.t)}</strong><span class="meta">${week ? pcCourPer(i) + labels(i, false, true) + missBadge(i) : `<span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}`}</span>${nx}</span>
-    ${pcInfo(i, week, dayKey)}${week ? "" : `<span class="pwide">${stPill(i)}</span>`}</button>${tick}</div>`;
+/* ライブラリの1行 */
+function slotRow(i) {
+  return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
+    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${state.kind === "all" || state.xser ? kindTag(i) : ""}</span>
+    <span class="ttl"><strong>${esc(i.t)}</strong><span class="meta"><span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}</span></span>
+    ${pcInfo(i)}<span class="pwide">${stPill(i)}</span></button></div>`;
 }
 /* 番組表：放送開始から1時間たった番組は、翌週の同じ曜日へ移す（深夜25時台などは前日の枠のまま） */
 function nextSlotDay(i, now) {
@@ -407,17 +343,6 @@ function weekDayTabs() {
     const dot = x.list.some(i => nextInfo(i).back.length);
     return [x.k, lab, null, !state.unOnly && x.k === cur, `<b>${lab}</b>${sub ? `<small>${sub}</small>` : ""}${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}`];
   });
-}
-/* 次の放送（全作品の中でいちばん近い話） */
-function nextAir() {
-  let best = null;
-  const now = NOWMIN();
-  items.forEach(i => {
-    if (i.s !== "視聴中" || !ofKind(i) || !onAirNow(i)) return;
-    const e = episodes(i).find(x => x.t > now);
-    if (e && (!best || e.t < best.e.t)) best = { i, e };
-  });
-  return best;
 }
 /* 番組表の上：今の時刻と、未視聴のまとめ（押すと曜日に関係なく未視聴の作品だけを出す） */
 function weekTopHtml() {
@@ -630,7 +555,7 @@ function groupedHtml(list) {
     out = "",
     rest = 0;
   const ck = keys.map(k => "tv:" + k);
-  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i, false)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
+  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
   for (const k of keys) {
     const l = g.get(k);
     const key = "tv:" + k;
@@ -645,7 +570,7 @@ function groupedHtml(list) {
     const shown = l.slice(0, budget);
     budget -= shown.length;
     rest += l.length - shown.length;
-    out += `<section class="cgroup">${gHead(key, groupTitle(k), l.length + "作品")}<div class="slots">${shown.map(i => slotRow(i, false)).join("")}</div></section>`;
+    out += `<section class="cgroup">${gHead(key, groupTitle(k), l.length + "作品")}<div class="slots">${shown.map(i => slotRow(i)).join("")}</div></section>`;
   }
   return (
     bulkBtns(ck) +
@@ -654,25 +579,19 @@ function groupedHtml(list) {
   );
 }
 /* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
-/* 絞り込みボタン：視聴ステータスは左のメニューで選ぶ。PCは「シリーズ」「種別」「保存」を別々に、スマホは幅が狭いので「その他」にまとめる */
-const fKeys = () => ["vod", "time", "series", "sv", "sort"];
+/* 絞り込みボタン（視聴ステータスは一覧の上の切り替え、種別は左のメニューで選ぶ） */
+const FKEYS = ["vod", "time", "series", "sv", "sort"];
+const FTITLE = { vod: "配信サイト", time: "時期", series: "シリーズ", sv: "保存したフィルタ", sort: "並び順・分け方" };
 const SORT_IC =
   '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
 function fBtnLab(k) {
   const many = (lab, l, one) => (!l.length ? [lab, false] : l.length === 1 ? [one(l[0]), true] : [`${lab} ${l.length}`, true]);
-  if (k === "sf") return many("視聴", state.sf, stLabel);
   if (k === "vod") return state.vod ? [state.vod, true] : ["配信", false];
   if (k === "time") return many("時期", [...state.cour, ...state.era], v => (/^\d{4}/.test(v) ? `${v.slice(2, 4)}年${v.slice(4)}` : v === ALLYEAR ? "通年" : v));
   if (k === "series") return many("シリーズ", state.series, v => v);
-  if (k === "type") return many("種別", state.type, v => (TYPES.find(t => t[0] === v) || [, v])[1]);
   if (k === "sv") {
     const cur = svCur();
     return cur ? ["★" + cur.name, true] : ["★保存", false];
-  }
-  if (k === "etc") {
-    const cur = svCur();
-    if (cur) return ["★" + cur.name, true];
-    return many("その他", state.type, v => (TYPES.find(t => t[0] === v) || [, v])[1]);
   }
   return ["", state.sort !== "new" || state.grp !== "cour"];
 }
@@ -688,11 +607,10 @@ function fRowHtml(keys) {
     .join("");
   return `<div class="frow${keys.length === 1 ? " one" : ""}" style="--fc:${Math.max(1, keys.filter(k => k !== "sort").length)}">${btns}</div>`;
 }
-function fPopHtml(panels) {
+function fPopHtml(body) {
   const k = state.fOpen;
-  if (!panels[k]) return "";
-  const T = { sf: "視聴", vod: "配信サイト", time: "時期", series: "シリーズ", type: "種別", sv: "保存したフィルタ", etc: "その他", sort: "並び順・分け方" };
-  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-fpop="${k}">完了</button></div>${panels[k]}</div>`;
+  if (!body) return "";
+  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${FTITLE[k]}"><div class="fpop-h"><b>${FTITLE[k]}</b><button type="button" class="u-btn sm" data-fpop="${k}">完了</button></div>${body}</div>`;
 }
 function vodPanelHtml() {
   const used = new Set(items.filter(ofKind).flatMap(vodsOf));
@@ -702,42 +620,11 @@ function vodPanelHtml() {
 }
 function renderList() {
   const list = filtered();
-  const act = [];
-  state.series.forEach(v => act.push(["series:" + v, v]));
-  state.type.forEach(v => act.push(["type:" + v, TYPES.find(t => t[0] === v)[1]]));
-  state.era.forEach(v => act.push(["era:" + v, v]));
-  state.cour.forEach(v => act.push(["cour:" + v, courLabel(v)]));
-  state.sf.forEach(v => act.unshift(["sf:" + v, "視聴：" + stLabel(v)]));
-  const sfBase = (() => {
-    const keep = state.sf;
-    state.sf = [];
-    const l = filtered();
-    state.sf = keep;
-    return l;
-  })();
-  const sfN = v => sfBase.filter(i => (v === "未設定" ? !i.s : i.s === v)).length;
-  const sfHtml = `<div class="fgroup"><h5>視聴 <span class="hint" style="font-weight:400">複数選べます</span></h5><div class="chips" role="group" aria-label="視聴ステータスで絞り込み">${chipBtn("data-sf", "すべて", !state.sf.length, "すべて")}${[
-    ...STATUSES,
-    "未設定",
-  ]
-    .map(v => {
-      const n = sfN(v);
-      return n || state.sf.includes(v) ? chipBtn("data-sf", v, state.sf.includes(v), stLabel(v), n, "s-" + v) : "";
-    })
-    .join("")}</div></div>`;
   const sortHtml = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
     <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${GROUPS.map(([v, l]) => `<button type="button" role="radio" data-grp="${v}" aria-checked="${state.grp === v}" aria-pressed="${state.grp === v}">${state.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
-  const anyF = act.length || state.vod;
-  const panels = {
-    sf: sfHtml,
-    vod: vodPanelHtml(),
-    time: filterHtml("time"),
-    series: filterHtml("series"),
-    type: filterHtml("type"),
-    sv: svPanelHtml(),
-    etc: filterHtml("type") + svPanelHtml(),
-    sort: sortHtml,
-  };
+  const anyF = ["series", "type", "era", "cour", "sf"].some(k => state[k].length) || state.vod;
+  /* 開いている絞り込みの中身だけ作る */
+  const panel = { vod: vodPanelHtml, time: timePanelHtml, series: seriesPanelHtml, sv: svPanelHtml, sort: () => sortHtml }[state.fOpen];
   /* 未入力あり（PCだけ）：オンのときは項目ごとの件数ボタンで、さらに1項目に絞れる */
   const mBase = (() => {
     const keep = state.missOnly;
@@ -759,7 +646,7 @@ function renderList() {
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
     ${stSegHtml()}
     ${state.xser && state.series.length ? `<div class="xser"><span><b>シリーズ「${esc(state.series.join("・"))}」</b>をアニメ・ドラマ・映画・配信まとめて表示しています</span><button type="button" class="u-btn sm" data-xseroff="1">${esc(MODE_NAME[state.mode])}だけにする</button></div>` : ""}
-    <div class="fwrap">${fRowHtml(fKeys())}${fPopHtml(panels)}</div>
+    <div class="fwrap">${fRowHtml(FKEYS)}${fPopHtml(panel ? panel() : "")}</div>
     <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
     ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
 }
@@ -846,12 +733,19 @@ function seriesSugHtml(q) {
     return nq ? `<span class="hint">「${esc(q)}」に一致するシリーズはありません</span>` : `<span class="hint">登録されているシリーズはありません</span>`;
   return `<span class="hint sershd">${nq ? `一致するシリーズ ${names.length}件` : `登録済みのシリーズ ${names.length}件（作品数の多い順）`}</span><div class="serbox">${names.map(n => `<button type="button" data-seradd="${esc(n)}">${esc(n)}<small>${cnt[n]}</small></button>`).join("")}</div>`;
 }
-function filterHtml(part) {
-  const base = items.filter(i => ofKind(i) && seriesOk(i));
+/* 絞り込みの中身：シリーズ */
+function seriesPanelHtml() {
   const cnt = seriesCounts();
+  return `<div class="fgroup"><h5>シリーズ <span class="hint" style="font-weight:400">複数選べます</span></h5>
+      ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
+      <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
+      <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
+}
+/* 絞り込みの中身：時期（放送クール・放送年） */
+function timePanelHtml() {
+  const tb = items.filter(i => ofKind(i) && seriesOk(i) && typeOk(i));
   const chip = (attr, val, cur, label, n) =>
-    `<button type="button" ${attr}="${esc(val)}" aria-pressed="${Array.isArray(cur) ? (val === "すべて" ? !cur.length : cur.includes(val)) : cur === val}">${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
-  const tb = base.filter(typeOk);
+    `<button type="button" ${attr}="${esc(val)}" aria-pressed="${val === "すべて" ? !cur.length : cur.includes(val)}">${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
   const courYears = [
     ...new Set(
       items
@@ -861,14 +755,8 @@ function filterHtml(part) {
     ),
   ].sort((a, b) => b - a);
   const cy = courYears.includes(state.courY) ? state.courY : courYears[0];
-  const P = {};
-  P.series = `<div class="fgroup"><h5>シリーズ <span class="hint" style="font-weight:400">複数選べます</span></h5>
-      ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
-      <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
-      <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
-  P.type = `${state.mode === "m" || state.mode === "s" ? "" : `<div class="fgroup"><h5>種別</h5><div class="chips">${TYPES.map(([v, l]) => chip("data-type", v, state.type, l, v === "すべて" ? null : base.filter(i => mediaOf(i).media === v).length)).join("")}</div></div>`}`;
   const yAll = SEASONS.every(se => state.cour.includes(cy + se));
-  P.time = `<div class="fgroup"><h5>放送クール</h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
+  return `<div class="fgroup"><h5>放送クール</h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
       <select id="courY" aria-label="クールの年">${courYears.map(y => `<option ${y === cy ? "selected" : ""}>${y}</option>`).join("")}</select>
       <button type="button" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button>
       ${SEASONS.map(se => {
@@ -881,20 +769,5 @@ function filterHtml(part) {
         return n ? chip("data-era", e.key, state.era, e.key, n) : "";
       })
       .join("")}</div></div>`;
-  if (part) return P[part] || "";
-  return `${P.series}${P.type}
-    <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">複数選べます</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
-      .map(e => {
-        const n = tb.filter(e.test).length;
-        return n ? chip("data-era", e.key, state.era, e.key, n) : "";
-      })
-      .join("")}</div></div>
-    <div class="fgroup"><h5>放送クール <span class="hint" style="font-weight:400">複数選べます</span></h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
-      <select id="courY" aria-label="クールの年">${courYears.map(y => `<option ${y === cy ? "selected" : ""}>${y}</option>`).join("")}</select>
-      ${SEASONS.map(s => {
-        const key = `${cy}${s}`;
-        return chip("data-cour", key, state.cour, s, tb.filter(i => coursOf(i).includes(key)).length);
-      }).join("")}</div></div>
-    <div class="fgroup"><button type="button" class="clear" data-unset="filters">フィルタをすべてリセット</button></div>`;
 }
 

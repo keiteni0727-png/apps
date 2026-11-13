@@ -22,14 +22,6 @@ function onSettingsClick(e) {
       doLogout();
       return true;
     }
-    if (t.closest("[data-moveout]")) {
-      moveOut();
-      return true;
-    }
-    if (t.closest("[data-movein]")) {
-      moveIn();
-      return true;
-    }
     const mk = t.closest("[data-mkey]");
     if (mk) {
       setKey = mk.dataset.mkey;
@@ -334,33 +326,9 @@ function onFilterClick(e) {
     render();
     return true;
   }
-  const ftg = e.target.closest("[data-ftog]");
-  if (ftg) {
-    const v = ftg.dataset.ftog;
-    state.fOpen = state.fOpen === v ? "" : v;
-    state.svMode = "";
-    state.svName = null;
-    saveUI();
-    render();
-    return true;
-  }
-  const f = e.target.closest("[data-sf]");
-  if (f) {
-    state.sf = f.dataset.sf === "すべて" ? [] : toggle(state.sf, f.dataset.sf);
-    state.limit = 200;
-    render();
-    return true;
-  }
   const er = e.target.closest("[data-era]");
   if (er) {
     state.era = er.dataset.era === "すべて" ? [] : toggle(state.era, er.dataset.era);
-    state.limit = 200;
-    render();
-    return true;
-  }
-  const ty = e.target.closest("[data-type]");
-  if (ty) {
-    state.type = ty.dataset.type === "すべて" ? [] : toggle(state.type, ty.dataset.type);
     state.limit = 200;
     render();
     return true;
@@ -632,13 +600,7 @@ function onDetailClick(e) {
       return true;
     }
     if (e.target.closest("#copyTitle")) {
-      const ok = copyText(it.t);
-      if (ok) toast("タイトルをコピーしました");
-      else
-        navigator.clipboard
-          .writeText(it.t)
-          .then(() => toast("タイトルをコピーしました"))
-          .catch(() => toast("コピーできませんでした"));
+      U.copy(it.t).then(ok => toast(ok ? "タイトルをコピーしました" : "コピーできませんでした"));
       return true;
     }
     const nfb = e.target.closest("[data-nof]");
@@ -1092,17 +1054,6 @@ document.addEventListener("change", e => {
     refreshSheet();
     return;
   }
-  if (e.target.classList?.contains("nof") && form) {
-    readForm();
-    return;
-  }
-  if (e.target.id === "f-irr" && form) {
-    readForm();
-    form.irregular = e.target.checked;
-    const h = $("#schedHint");
-    if (h) h.innerHTML = schedText();
-    return;
-  }
   if (e.target.id === "f-from" && form) {
     readForm();
     redrawForm();
@@ -1117,14 +1068,6 @@ document.addEventListener("change", e => {
   /* 曲の種類を変えたら、その種類の区切りへ移す */
   if (e.target.classList.contains("sg-t") && form) {
     readForm();
-    redrawForm();
-    return;
-  }
-  if (e.target.id === "f-allyear" && form) {
-    form.courOpen = true;
-    readForm();
-    form.cours = form.cours.filter(c => c !== ALLYEAR);
-    if (e.target.checked) form.cours.unshift(ALLYEAR);
     redrawForm();
     return;
   }
@@ -1446,6 +1389,6 @@ document.addEventListener("input", e => {
 })();
 render();
 initStore();
-if (FB_CONFIG && !window.claude && "serviceWorker" in navigator && location.protocol === "https:") {
+if ("serviceWorker" in navigator && location.protocol === "https:") {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }

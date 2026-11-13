@@ -4,6 +4,10 @@
     user … 利用者のIDを使うアプリは true（claude.ai で本人だけの保存場所 data/users/<id> を使うとき）
     fb   … Firebase の設定（firebaseConfig）。claude.ai の外で動かすときだけ入れる。無ければ null
     root … Firebase での保存場所。uid を受け取ってパスを返す関数（省略時は users/<uid>）
+  U.esc(文字) … HTMLに入れる文字をエスケープ
+  U.ls.get(キー) / U.ls.set(キー, 値) … 端末に覚える小さな設定（localStorage）
+  U.copy(文字) … クリップボードにコピー（できたら true）
+  U.toast(文, { html, undo, ms }) … 画面の下に短く通知
   U.store() … 保存先につなぐ。何度呼んでも接続は1回だけ
     返り値 { kind, db, uid, logout }
       kind … "db"＝claude.ai の保存先 / "fb"＝Firebase / "none"＝つながらない（この端末だけ）
@@ -13,6 +17,45 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
 (() => {
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   U.esc = esc;
+
+  /* ---------- 端末に覚える小さな設定（localStorage に JSON で）。使えない端末では何もしない ---------- */
+  U.ls = {
+    get(k) {
+      try {
+        return JSON.parse(localStorage.getItem(k) || "null");
+      } catch (e) {
+        return null;
+      }
+    },
+    set(k, v) {
+      try {
+        localStorage.setItem(k, JSON.stringify(v));
+      } catch (e) {}
+    },
+  };
+
+  /* ---------- 文字をコピー。iPhoneでも動くよう、まず選択してコピー → だめなら clipboard。できたら true ---------- */
+  U.copy = async text => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (e) {}
+    ta.remove();
+    if (ok) return true;
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   /* ---------- claude.ai の保存先 ---------- */
   async function claudeStore() {

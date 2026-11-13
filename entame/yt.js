@@ -160,13 +160,7 @@ function ytGenreGroups(list) {
         const [c, g] = k.split("|");
         const l = by.get(k).sort(ytSortFn());
         const key = "ytg:" + k;
-        const title = !c
-          ? "ジャンル未設定"
-          : g
-            ? `${c}・${g}`
-            : c === COLLAB
-              ? `${c}（グループなし）`
-              : `${c}（グループなし）`;
+        const title = !c ? "ジャンル未設定" : g ? `${c}・${g}` : `${c}（グループなし）`;
         return `<section class="cgroup">${gHead(key, title, l.length + "本")}${collapsed.has(key) ? "" : `<div class="slots">${l.map(ytRow).join("")}</div>`}</section>`;
       })
       .join("")
@@ -547,9 +541,9 @@ async function ytSubmit() {
 function ytClick(e) {
   {
     const t = e.target;
-    const ft = t.closest("[data-ftog],[data-ytpop]");
+    const ft = t.closest("[data-ytpop]");
     if (ft) {
-      const v = ft.dataset.ftog || ft.dataset.ytpop;
+      const v = ft.dataset.ytpop;
       yst.fp = yst.fp === v ? "" : v;
       saveYtUI();
       render();

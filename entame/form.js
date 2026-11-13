@@ -76,7 +76,7 @@ function songRowsHtml() {
           <button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button></div>
         ${l.length ? l.map(([x, k]) => card(x, k)).join("") : no ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
     })
-    .join("") + (types.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? "" : "");
+    .join("");
 }
 const dowOfDate = d => {
   if (!d) return -1;
@@ -269,7 +269,6 @@ function openForm(it, target, inline) {
       stations: [...m.stations],
       plat: [...m.plat],
       vods: [...m.vods],
-      irregular: !noSched(m.media) && !!it.from && (it.dow ?? -1) < 0,
       songs: songsOf(it).map(x => ({ ...x })),
       span: epSpan(it),
       noSongs: [...(it.noSongs || [])],
@@ -291,7 +290,6 @@ function openForm(it, target, inline) {
       time: "",
       from: "",
       media: state.mode === "m" ? "movie" : state.mode === "s" ? "stream" : "tv",
-      irregular: false,
       stations: [],
       plat: [],
       vods: [],

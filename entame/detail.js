@@ -272,7 +272,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
     ${ns || (!when && nofHas(it, "time") && !cour) ? "" : `<div class="ibig">${!when && nofHas(it, "time") ? "" : `<span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>`}${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
     <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
-    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${mediaLabels(it, false, true)}</span>` : `<span class="labs">${mediaTag(it)}</span>`}${stv ? "" : nofHas(it, md === "stream" ? "plat" : hasSt(md) ? "st" : "vods") ? nn({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
+    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${mediaLabels(it, true)}</span>` : `<span class="labs">${mediaTag(it)}</span>`}${stv ? "" : nofHas(it, md === "stream" ? "plat" : hasSt(md) ? "st" : "vods") ? nn({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
   const anySong = songRows.some(([, rows]) => rows.length);
   const songs = songRows
     .map(([k, rows]) => {

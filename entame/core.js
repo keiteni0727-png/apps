@@ -60,25 +60,11 @@ const GROUPS = [
   ["series", "シリーズ別"],
   ["none", "分けない"],
 ];
-const K_UI = "adb.v3.ui",
-  K_LOCAL = "adb.v3.local";
-const ls = {
-  get(k) {
-    try {
-      return JSON.parse(localStorage.getItem(k) || "null");
-    } catch (e) {
-      return null;
-    }
-  },
-  set(k, v) {
-    try {
-      localStorage.setItem(k, JSON.stringify(v));
-    } catch (e) {}
-  },
-};
+const K_UI = "adb.v3.ui";
+/* 共通部品（shared/u-core.js）：端末に覚える設定・エスケープ */
+const ls = U.ls;
+const esc = U.esc;
 const $ = s => document.querySelector(s);
-const esc = s =>
-  String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const mins = t => {
   const m = /^(\d{1,2}):(\d{2})/.exec(t || "");
   return m ? +m[1] * 60 + +m[2] : 9999;
@@ -397,12 +383,8 @@ const sfOk = i => !state.sf.length || state.sf.some(s => (s === "未設定" ? !i
 const eraOk = i => !state.era.length || eras.some(e => state.era.includes(e.key) && e.test(i));
 const toggle = (arr, v) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
 
-/* ---------- storage: artifact db, falling back to this browser ---------- */
-let db = null,
-  storeKind = "local";
-const local = ls.get(K_LOCAL) || { titles: {}, progress: {} };
-local.yt = local.yt || {};
-local.master = local.master || {};
+/* ---------- 保存（Firebase）。保存先への接続とログインは u-core.js（アプリ共通） ---------- */
+let db = null;
 /* 保存状況：保存中の件数・最後に変更した時刻（各データに _at として記録し、どの端末でも同じ時刻を出す） */
 let saving = 0,
   saveErr = false,
@@ -426,13 +408,7 @@ const fmtAt = t => {
     : `${d.getFullYear() !== n.getFullYear() ? d.getFullYear() + "/" : ""}${d.getMonth() + 1}/${d.getDate()} ${hm}`;
 };
 function saveNoteHtml() {
-  const st = saving
-    ? ["ing", "保存中…"]
-    : saveErr
-      ? ["err", "保存できませんでした"]
-      : storeKind === "db" || storeKind === "fb"
-        ? ["ok", "保存済み"]
-        : ["loc", "この端末に保存"];
+  const st = saving ? ["ing", "保存中…"] : saveErr ? ["err", "保存できませんでした"] : ["ok", "保存済み"];
   return `<span class="sv ${st[0]}"><i></i>${st[1]}</span>${lastAt ? `<span class="svat">最終変更 ${fmtAt(lastAt)}</span>` : ""}`;
 }
 function updateSaveNote() {
@@ -441,17 +417,13 @@ function updateSaveNote() {
   const b = $("#sbSave");
   if (b) b.innerHTML = saveNoteHtml();
 }
-async function removeDoc(col, id) {
-  lastAt = Date.now();
+/* 書き込み（保存・削除）を1回分：保存中の表示を出し、失敗したら「保存できませんでした」 */
+async function write(job) {
   saving++;
   saveErr = false;
   updateSaveNote();
   try {
-    if (db) await db.doc(`${col}/${id}`).delete();
-    else {
-      delete local[col][id];
-      ls.set(K_LOCAL, local);
-    }
+    await job();
   } catch (e) {
     saveErr = true;
     throw e;
@@ -460,25 +432,14 @@ async function removeDoc(col, id) {
     updateSaveNote();
   }
 }
-async function saveDoc(col, id, data) {
+function removeDoc(col, id) {
+  lastAt = Date.now();
+  return write(() => db.doc(`${col}/${id}`).delete());
+}
+function saveDoc(col, id, data) {
   data._at = Date.now();
   lastAt = data._at;
-  saving++;
-  saveErr = false;
-  updateSaveNote();
-  try {
-    if (db) await db.doc(`${col}/${id}`).set(data);
-    else {
-      local[col][id] = data;
-      ls.set(K_LOCAL, local);
-    }
-  } catch (e) {
-    saveErr = true;
-    throw e;
-  } finally {
-    saving = Math.max(0, saving - 1);
-    updateSaveNote();
-  }
+  return write(() => db.doc(`${col}/${id}`).set(data));
 }
 /* ---------- マスタ（シリーズ・放送局・配信サイト・投稿者・グループ）：並び順と名前を保存 ---------- */
 let master = {};
@@ -535,186 +496,23 @@ function banner(html) {
     ? `<div class="banner" role="status"><div style="flex:1;min-width:200px">${html}</div></div>`
     : "";
 }
-/* ---------- 保存先への接続とログインは u-core.js（アプリ共通）。Firebase の設定は window.U_APP.fb に入れる ---------- */
-const FB_CONFIG = U.app.fb;
 async function doLogout() {
   const s = await U.store();
   if (s.logout) await s.logout();
   else location.reload();
 }
-/* 設定のいちばん下：ログアウト（Firebaseで動かしているときだけ） */
-function accountHtml() {
-  if (storeKind === "fb")
-    return `<div class="bkbox"><p class="hint">claude.ai版で書き出したデータを、このアプリに取り込めます。</p><div class="bkrow"><button type="button" class="u-btn sm svbtn" data-movein="1">データを取り込む</button><button type="button" class="u-btn sm svbtn" data-logout="1">ログアウト</button></div></div>`;
-  if (storeKind === "db")
-    return `<div class="bkbox"><p class="hint">iPhone単独版への引っ越し用に、いまのデータをまるごと書き出します。</p><div class="bkrow"><button type="button" class="u-btn sm svbtn" data-moveout="1">引っ越し用に書き出す</button></div></div>`;
-  return "";
-}
-/* ---------- 引っ越し：claude.ai版から書き出し → iPhone単独版（Firebase）で取り込み ---------- */
-function moveText() {
-  return JSON.stringify({
-    app: "entame",
-    v: 1,
-    at: Date.now(),
-    data: { titles: over, progress: prog, yt: ytOver, master: { all: master }, meta: { schema: { v: 2, lastAt, at: Date.now() } } },
-  });
-}
-const moveCount = d => ["titles", "progress", "yt"].map(c => Object.keys((d && d[c]) || {}).length);
-function copyText(text) {
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.setAttribute("readonly", "");
-  ta.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0";
-  document.body.appendChild(ta);
-  ta.select();
-  ta.setSelectionRange(0, text.length);
-  let ok = false;
-  try {
-    ok = document.execCommand("copy");
-  } catch (e) {}
-  ta.remove();
-  return ok;
-}
-async function moveOut() {
-  const text = moveText();
-  const [a, b, c] = moveCount(JSON.parse(text).data);
-  const what = `作品${a}・視聴記録${b}・YouTube${c}件`;
-  /* まず「コピー」（押した直後でないと許可されないので最初に試す） */
-  let copied = copyText(text);
-  if (!copied) {
-    try {
-      await navigator.clipboard.writeText(text);
-      copied = true;
-    } catch (e) {}
-  }
-  /* 使えるときはファイルにも保存 */
-  let saved = false;
-  try {
-    const dl = window.claude?.use ? await claude.use("downloads") : null;
-    if (dl) {
-      await dl.save({ filename: "entame-hikkoshi.json", data: text });
-      saved = true;
-    }
-  } catch (e) {}
-  if (copied || saved)
-    U.toast(`${what}を${[copied ? "コピー" : "", saved ? "ファイルに保存" : ""].filter(Boolean).join("・")}しました`, { ms: 6000 });
-  else U.toast("書き出せませんでした。もう一度押してみてください", { ms: 6000 });
-}
-/* Firestoreに入らない形（配列の中に配列）がないか */
-const nestedArr = (v, inArr) =>
-  Array.isArray(v)
-    ? inArr || v.some(x => nestedArr(x, true))
-    : !!v && typeof v === "object" && Object.values(v).some(x => nestedArr(x, false));
-async function moveInRun(text, say) {
-  let j = null;
-  try {
-    j = JSON.parse(text);
-  } catch (e) {}
-  if (!j || j.app !== "entame" || !j.data || typeof j.data !== "object") {
-    say("データを読み取れませんでした。書き出したものをそのまま貼り付けてください（途中で切れていないか確かめてください）。", true);
-    return false;
-  }
-  const jobs = [],
-    skip = [];
-  ["titles", "progress", "yt", "master", "meta"].forEach(col =>
-    Object.entries(j.data[col] || {}).forEach(([id, d]) => {
-      if (!id || id.includes("/") || !d || typeof d !== "object" || Array.isArray(d) || nestedArr(d, false)) skip.push(`${col}/${id}`);
-      else jobs.push([`${col}/${id}`, d]);
-    }),
-  );
-  const s = await U.store();
-  if (s.kind !== "fb" || !s.db.setMany) {
-    say("ログインしてから取り込んでください。", true);
-    return false;
-  }
-  let n = 0;
-  try {
-    for (let i = 0; i < jobs.length; i += 200) {
-      say(`取り込み中… ${n} / ${jobs.length}件（このまま待ってください）`);
-      await s.db.setMany(jobs.slice(i, i + 200));
-      n = Math.min(jobs.length, i + 200);
-    }
-  } catch (e) {
-    say(`途中で止まりました（${n} / ${jobs.length}件まで完了）。電波のよい場所でもう一度「取り込む」を押してください。${e?.message || ""}`, true);
-    return false;
-  }
-  const [a, b, c] = moveCount(j.data);
-  say(`取り込みが終わりました：作品${a}・視聴記録${b}・YouTube${c}件${skip.length ? `（取り込めなかったもの ${skip.length}件：${skip.slice(0, 5).join("、")}）` : ""}`);
-  return true;
-}
-function moveIn() {
-  document.getElementById("moveBox")?.remove();
-  const host = document.createElement("div");
-  host.id = "moveBox";
-  host.className = "u-login";
-  host.innerHTML = `<form><h3>データを取り込む</h3>
-    <p>claude.ai版の「引っ越し用に書き出す」でコピーしたデータを下に貼り付けるか、保存したファイルを選んで「取り込む」を押してください。同じ作品は書き出したときの内容で上書きされます。</p>
-    <textarea placeholder="ここを長押しして「ペースト」" style="width:100%;height:90px;font:inherit;font-size:12px;padding:8px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-bg);color:var(--u-ink);box-sizing:border-box"></textarea>
-    <input type="file" accept=".json,application/json,text/plain" style="font-size:13px">
-    <p data-msg role="status" style="min-height:1.5em"></p>
-    <button type="submit">取り込む</button>
-    <button type="button" data-x style="background:none;border:1px solid var(--u-line);color:var(--u-ink)">閉じる</button></form>`;
-  document.body.appendChild(host);
-  const ta = host.querySelector("textarea"),
-    fi = host.querySelector("input"),
-    msg = host.querySelector("[data-msg]"),
-    go = host.querySelector("[type=submit]");
-  const say = (t, bad) => {
-    msg.textContent = t;
-    msg.className = bad ? "u-login-err" : "";
-  };
-  host.querySelector("[data-x]").onclick = () => host.remove();
-  host.querySelector("form").onsubmit = async ev => {
-    ev.preventDefault();
-    go.disabled = true;
-    let text = ta.value.trim();
-    try {
-      if (fi.files[0]) text = (await fi.files[0].text()).trim();
-    } catch (e) {}
-    if (!text) say("データを貼り付けるか、ファイルを選んでください。", true);
-    else if (await moveInRun(text, say)) ta.value = "";
-    go.disabled = false;
-  };
-}
+/* 設定のいちばん下：ログアウト */
+const accountHtml = () =>
+  `<div class="bkbox"><div class="bkrow"><button type="button" class="u-btn sm svbtn" data-logout="1">ログアウト</button></div></div>`;
+/* 保存先につないで、作品・視聴記録・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
 async function initStore() {
   const conn = await U.store();
-  db = conn.db;
-  if (conn.kind === "fb") {
-    storeKind = "fb";
-    $("#main").innerHTML = `<p class="loading">作品データを読み込み中…</p>`;
-  } else if (conn.error && FB_CONFIG) {
+  if (!conn.db) {
     banner(`<b>保存先に接続できませんでした</b>${esc(conn.error?.message || "")}　電波のよい場所で開き直してください。`);
     return;
   }
-  if (!db) {
-    over = local.titles;
-    prog = local.progress;
-    ytOver = local.yt;
-    master = local.master.all || {};
-    storeKind = "local";
-    loaded = true;
-    calcLastAt();
-    rebuild();
-    ytRebuild();
-    banner(
-      "<b>この端末のブラウザに保存しています</b>サインインした状態でclaude.aiから開くと、アプリに保存した作品が表示され、どの端末でも同じ内容になります。",
-    );
-    render();
-    return;
-  }
-  if (storeKind !== "fb") storeKind = "db";
-  /* 移行時に記録した「最終変更」の時刻（当時は削除の印にも時刻があったため） */
-  db.doc("meta/schema")
-    .get()
-    .then(s => {
-      const t = s.exists ? +s.data().lastAt || 0 : 0;
-      if (t > lastAt) {
-        lastAt = t;
-        updateSaveNote();
-      }
-    })
-    .catch(() => {});
-  const got = { titles: false, progress: false, yt: false };
+  db = conn.db;
+  const got = { titles: false, progress: false };
   const done = () => {
     if (!got.titles || !got.progress) return;
     loaded = true;
@@ -725,17 +523,18 @@ async function initStore() {
   };
   const onErr = e =>
     banner(`<b>保存データを読み込めませんでした</b>${esc(e?.message || "")}　ページを開き直してください。`);
-  db.collection("titles").onSnapshot(s => {
+  const docsOf = s => {
     const m = {};
     s.docs.forEach(d => (m[d.id] = d.data()));
-    over = m;
+    return m;
+  };
+  db.collection("titles").onSnapshot(s => {
+    over = docsOf(s);
     got.titles = true;
     done();
   }, onErr);
   db.collection("progress").onSnapshot(s => {
-    const m = {};
-    s.docs.forEach(d => (m[d.id] = d.data()));
-    prog = m;
+    prog = docsOf(s);
     got.progress = true;
     done();
   }, onErr);
@@ -746,16 +545,13 @@ async function initStore() {
     refreshSettings();
   }, onErr);
   db.collection("yt").onSnapshot(s => {
-    const m = {};
-    s.docs.forEach(d => (m[d.id] = d.data()));
-    ytOver = m;
+    ytOver = docsOf(s);
     calcLastAt();
     ytRebuild();
     render();
     if (ytOpen) ytRefresh();
   }, onErr);
 }
-
 /* ---------- episodes ---------- */
 const NOWMIN = () => Math.floor(Date.now() / 60000);
 const WEEK = 7 * 1440;

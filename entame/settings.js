@@ -62,38 +62,32 @@ function seriesSettingsHtml() {
         : `<p class="hint" style="padding:10px">${q ? "一致するシリーズはありません" : "まだありません"}</p>`
     }</div>`;
 }
-function settingsHtml() {
-  if (setKey === "series")
-    return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
-    <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
-    ${seriesSettingsHtml()}
-    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="追加するシリーズ名"><button type="button" data-madd="1">＋ 追加</button></div>
-    ${accountHtml()}`;
-  const list = M(setKey);
+/* 設定のシリーズ以外（放送局・配信サイト・投稿者・グループ）：⠿で並び替え、名前を押すと変更 */
+function masterListHtml() {
   const cnt = usedNames(setKey);
-  const q = norm(setQ);
-  const big = setKey === "series";
-  const smap = big ? seriesMainMap().map : {};
-  const rows = list.map((n, i) => [n, i]).filter(([n]) => !q || norm(n).includes(q));
-  return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
-    <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
-    <p class="hint" style="margin:8px 0">⠿をドラッグして並び順を変えると、編集画面の選択肢やフィルタの並びに反映されます。名前を押すと変更できます。名前を変えると、使っている作品もまとめて変わります。</p>
-    ${big ? `<input id="mq" type="search" class="mq" placeholder="名前で絞り込み" value="${esc(setQ)}" autocomplete="off">` : ""}
+  const unit = setKey === "authors" || setKey === "groups" || setKey === "soloGroups" ? "本" : "作品";
+  const rows = M(setKey);
+  return `<p class="hint" style="margin:8px 0">⠿をドラッグして並び順を変えると、編集画面の選択肢やフィルタの並びに反映されます。名前を押すと変更できます。名前を変えると、使っている作品もまとめて変わります。</p>
     <div class="mlist">${
       rows.length
         ? rows
             .map(
-              ([n, i]) => `<div class="mrow2" data-mi="${i}">
+              (n, i) => `<div class="mrow2" data-mi="${i}">
       <span class="mgrip" data-mgrip="1" aria-hidden="true">⠿</span>
       ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="mname" data-mrename="${esc(n)}">${esc(n)}</button>`}
-      ${setKey === "series" ? `<button type="button" class="smain sm-${smap[n]}" data-sermain="${esc(n)}" title="メインのジャンル（押すと切り替え）">${SER_GL[smap[n]]}</button>` : ""}
-      <small class="mcnt">${cnt[n] || 0}${setKey === "authors" || setKey === "groups" || setKey === "soloGroups" ? "本" : "作品"}</small>
+      <small class="mcnt">${cnt[n] || 0}${unit}</small>
       <button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button></div>`,
             )
             .join("")
-        : `<p class="hint">${q ? "一致するものはありません" : "まだありません"}</p>`
-    }</div>
-    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="追加する名前"><button type="button" data-madd="1">＋ 追加</button></div>
+        : `<p class="hint">まだありません</p>`
+    }</div>`;
+}
+function settingsHtml() {
+  const ser = setKey === "series";
+  return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
+    <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
+    ${ser ? seriesSettingsHtml() : masterListHtml()}
+    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>
     ${accountHtml()}`;
 }
 /* 設定の一覧：⠿を押さえたまま上下に動かして並び替え（マウス・指どちらでも） */
