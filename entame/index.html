@@ -254,6 +254,8 @@ button.lab.s{font:inherit;font-size:12px;font-weight:700;padding:2px 8px;backgro
 .sernew button{flex:none;border:1px solid var(--u-line);background:var(--u-bg);border-radius:10px;padding:0 14px;font-weight:700;font-size:14px}
 .field .chips button[aria-pressed="true"]{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
 .mtag{display:inline-block;vertical-align:2px;margin-right:7px;font-family:var(--u-f);font-size:10.5px;font-weight:700;line-height:1;padding:3px 5px 3px 6px;border-radius:3px;border-left:3px solid currentColor;letter-spacing:.04em;white-space:nowrap}
+.labs .mtag{margin:0;vertical-align:0}
+.imed{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .time .mtag{margin:0;vertical-align:0;font-size:10px;padding:3px 4px 3px 5px}
 .mtag.m-tv{color:#3d5a80;background:#e3eaf3}
 .mtag.m-movie{color:#7a3e9d;background:#f1e6f7}
@@ -1951,14 +1953,19 @@ function stationTxt(i) {
   const l = m.media === "stream" ? m.plat : noSched(m.media) ? [] : m.stations;
   return l.join("・");
 }
-function mediaLabels(i, noSt) {
+/* tag=true：作品詳細用。種別（TV・映画・OVA・配信）を一覧と同じタグで先頭に出す */
+function mediaLabels(i, noSt, tag) {
   const m = mediaOf(i);
   if (noSt) return m.media === "stream" ? "" : m.vods.map(v => `${vlab(v)}`).join("");
+  const head = tag ? mediaTag(i) : "";
   if (m.media === "stream")
-    return `<span class="lab">配信</span>${m.plat.map(v => `${vlab(v)}`).join("")}`;
+    return `${head || `<span class="lab">配信</span>`}${m.plat.map(v => `${vlab(v)}`).join("")}`;
   return (
+    head +
     (noSched(m.media)
-      ? `<span class="lab">${MEDIA_LAB[m.media]}</span>`
+      ? tag
+        ? ""
+        : `<span class="lab">${MEDIA_LAB[m.media]}</span>`
       : m.stations.map(s => `<span class="lab">${esc(s)}</span>`).join("")) +
     m.vods.map(v => `${vlab(v)}`).join("")
   );
@@ -2781,7 +2788,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
     ${ns || (!when && nofHas(it, "time") && !cour) ? "" : `<div class="ibig">${!when && nofHas(it, "time") ? "" : `<span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>`}${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
     <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
-    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${stv}</span>` : nofHas(it, md === "stream" ? "plat" : md === "tv" ? "st" : "vods") ? nn({ tv: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
+    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${mediaLabels(it, false, true)}</span>` : `<span class="labs">${mediaTag(it)}</span>`}${stv ? "" : nofHas(it, md === "stream" ? "plat" : md === "tv" ? "st" : "vods") ? nn({ tv: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
   const anySong = songRows.some(([, rows]) => rows.length);
   const songs = songRows
     .map(([k, rows]) => {
