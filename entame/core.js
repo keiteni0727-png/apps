@@ -141,162 +141,7 @@ const saveUI = () =>
     sort: state.sort,
     grp: state.grp,
   });
-/* ---------- 保存したフィルタ（アニメ・ドラマで別々。マスタに保存するので端末をまたいで同じ） ---------- */
-const SVK = ["sf", "era", "type", "cour", "series"];
-const svKey = () => (state.mode === "m" || state.mode === "s" ? state.mode : curKind());
-const svList = () => {
-  const all = master.savedFilters || {};
-  return Array.isArray(all[svKey()]) ? all[svKey()] : [];
-};
-function setSv(l) {
-  master = { ...master, savedFilters: { ...(master.savedFilters || {}), [svKey()]: l } };
-  saveMaster();
-}
-const sameSet = (a, b) => {
-  const x = [...arrOf(a)].sort(),
-    y = [...arrOf(b)].sort();
-  return x.length === y.length && x.every((v, i) => v === y[i]);
-};
-const svMatch = f => SVK.every(k => sameSet(f[k], state[k])) && (f.sort || "new") === state.sort;
-const svCur = () => svList().find(svMatch);
-const svEmpty = () => SVK.every(k => !state[k].length) && state.sort === "new";
-function svApply(f) {
-  SVK.forEach(k => (state[k] = [...arrOf(f[k])]));
-  state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
-  state.sort = SORTS.some(([v]) => v === f.sort) ? f.sort : "new";
-  const y = state.cour.find(c => /^\d{4}/.test(c));
-  if (y) state.courY = +y.slice(0, 4);
-  state.limit = 200;
-}
-/* 条件を短い文字に（保存名の候補・編集画面の説明） */
-function svDesc(f) {
-  const p = [];
-  arrOf(f.sf).forEach(v => p.push(stLabel(v)));
-  arrOf(f.series).forEach(v => p.push(v));
-  arrOf(f.type).forEach(v => p.push((TYPES.find(t => t[0] === v) || [, v])[1]));
-  arrOf(f.era).forEach(v => p.push(v));
-  arrOf(f.cour).forEach(v => p.push(courLabel(v)));
-  const so = f.sort && f.sort !== "new" ? (SORTS.find(x => x[0] === f.sort) || [, ""])[1] : "";
-  return p.join("・") + (so ? `（${so}）` : "");
-}
-function svPanelHtml() {
-  const l = svList();
-  const cur = svCur();
-  const head = `<h5>保存済み</h5>`;
-  if (state.svMode === "new") {
-    const def = state.svName ?? svDesc(state).slice(0, 24);
-    return `<div class="fgroup">${head}<form id="svF" class="svform" autocomplete="off"><input id="svName" maxlength="30" placeholder="名前（例：今期の視聴中）" value="${esc(def)}" aria-label="フィルタの名前"><button type="submit" class="u-btn sm svbtn pri">保存</button><button type="button" class="u-btn sm svbtn" data-svcancel="1">やめる</button><span class="hint">今の絞り込みと並び順を保存します</span></form></div>`;
-  }
-  if (state.svMode === "edit" && l.length) {
-    return `<div class="fgroup">${head}<div class="svlist">${l
-      .map(
-        (f, i) => `<div class="svrow"><input value="${esc(f.name)}" maxlength="30" data-svren="${esc(f.id)}" aria-label="名前を変更"><button type="button" class="u-btn sm svbtn" data-svmove="${esc(f.id)}:-1" ${i ? "" : "disabled"} aria-label="上へ">↑</button><button type="button" class="u-btn sm svbtn" data-svmove="${esc(f.id)}:1" ${i < l.length - 1 ? "" : "disabled"} aria-label="下へ">↓</button><button type="button" class="u-btn sm svbtn" data-svover="${esc(f.id)}" ${svEmpty() || f === cur ? "disabled" : ""}>今の条件で上書き</button><button type="button" class="u-btn sm svbtn del" data-svdel="${esc(f.id)}">削除</button><p class="cond">${esc(svDesc(f) || "条件なし")}</p></div>`,
-      )
-      .join("")}<div class="done"><button type="button" class="u-btn sm svbtn pri" data-svcancel="1">完了</button></div></div></div>`;
-  }
-  return `<div class="fgroup">${head}<div class="chips">${l.map(f => `<button type="button" data-svapply="${esc(f.id)}" aria-pressed="${f === cur}">★ ${esc(f.name)}</button>`).join("")}${cur || svEmpty() ? "" : `<button type="button" class="svadd" data-svnew="1">＋今の条件を保存</button>`}${l.length ? `<button type="button" class="svedit" data-svedit="1">編集</button>` : ""}</div></div>`;
-}
-function svSubmit() {
-  const inp = $("#svName");
-  const name = (inp ? inp.value : "").trim();
-  if (!name) return toast("名前を入れてください");
-  if (svEmpty()) return toast("絞り込みか並び順を選んでから保存してください");
-  if (svList().some(f => f.name === name)) return toast(`「${name}」はすでにあります`);
-  const f = { id: Date.now().toString(36), name, sort: state.sort };
-  SVK.forEach(k => (f[k] = [...state[k]]));
-  setSv([...svList(), f]);
-  state.svMode = "";
-  state.svName = null;
-  render();
-  toast(`「${name}」を保存しました`);
-}
-/* 保存したフィルタの操作 */
-const SAVED_FILTER_ACTIONS = [
-  /* ★の名前：その条件にする（今その条件ならもう一度押すと解除） */
-  [
-    "[data-svapply]",
-    el => {
-      const f = svList().find(x => x.id === el.dataset.svapply);
-      if (!f) return;
-      if (svMatch(f)) Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], sort: "new", limit: 200 });
-      else svApply(f);
-      render();
-    },
-  ],
-  [
-    "[data-svnew]",
-    () => {
-      state.svMode = "new";
-      state.svName = null;
-      render();
-      const i = $("#svName");
-      if (i) {
-        i.focus();
-        i.select();
-      }
-    },
-  ],
-  [
-    "[data-svedit]",
-    () => {
-      state.svMode = "edit";
-      render();
-    },
-  ],
-  [
-    "[data-svcancel]",
-    () => {
-      state.svMode = "";
-      state.svName = null;
-      render();
-    },
-  ],
-  /* 並び替え（id:-1 で上へ、id:1 で下へ） */
-  [
-    "[data-svmove]",
-    el => {
-      const [id, d] = el.dataset.svmove.split(":");
-      const l = [...svList()];
-      const i = l.findIndex(x => x.id === id),
-        j = i + +d;
-      if (i < 0 || j < 0 || j >= l.length) return;
-      [l[i], l[j]] = [l[j], l[i]];
-      setSv(l);
-      render();
-    },
-  ],
-  /* 今の条件で上書き */
-  [
-    "[data-svover]",
-    el => {
-      const id = el.dataset.svover;
-      const l = svList().map(x => {
-        if (x.id !== id) return x;
-        const n = { ...x, sort: state.sort };
-        SVK.forEach(k => (n[k] = [...state[k]]));
-        return n;
-      });
-      setSv(l);
-      render();
-      toast(`「${(l.find(x => x.id === id) || {}).name}」を今の条件で上書きしました`);
-    },
-  ],
-  [
-    "[data-svdel]",
-    el => {
-      const old = svList();
-      const f = old.find(x => x.id === el.dataset.svdel);
-      if (!f) return;
-      setSv(old.filter(x => x !== f));
-      if (!svList().length) state.svMode = "";
-      render();
-      toastUndo(`「${f.name}」を削除しました`, () => {
-        setSv(old);
-        render();
-      });
-    },
-  ],
-];
+/* ---------- 作品のデータ：放送形態・主題歌・並び ---------- */
 const TYPES = [
   ["すべて", "すべて"],
   ["tv", "TV"],
@@ -319,7 +164,6 @@ const songText = i =>
   songsOf(i)
     .map(x => x.type + " " + x.s)
     .join(" ");
-/* 詳細のカード用：入力したとおりに表示（曲名・アーティストの自動区分はしない） */
 /* 曲名とアーティストは入力欄ごとに別々に保存（自動で分けたりつないだりしない）。
    s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
@@ -401,6 +245,13 @@ const seriesOk = i => !state.series.length || state.series.includes(i.series);
 const sfOk = i => !state.sf.length || state.sf.some(s => (s === "未設定" ? !i.s : i.s === s));
 const eraOk = i => !state.era.length || eras.some(e => state.era.includes(e.key) && e.test(i));
 const toggle = (arr, v) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
+/* 検索用に文字をそろえる（大文字小文字・全角半角・カタカナ→ひらがな、記号や空白は無視） */
+const norm = t =>
+  String(t || "")
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .replace(/[\s・、。!！?？〜~\-－]/g, "");
 
 /* ---------- 保存（Firebase）。保存先への接続とログインは u-core.js（アプリ共通） ---------- */
 let db = null;

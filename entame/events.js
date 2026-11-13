@@ -14,23 +14,6 @@ const SHELL_ACTIONS = [
     },
   ],
 ];
-/* 画面の切り替え：左メニュー（番組表・アニメ…）を選ぶ。絞り込みとシリーズは外す */
-function setMode(m) {
-  if (state.mode === m) return;
-  state.mode = m;
-  state.sub = "all";
-  state.wday = "";
-  state.xser = false;
-  if (m === "w" || m === "yt") return;
-  if (m === "m" || m === "s") state.type = [];
-  state.limit = 200;
-  state.series = [];
-}
-/* 画面を変えて先頭から表示 */
-const go = () => {
-  render();
-  scrollTo(0, 0);
-};
 /* 左メニュー・上の切り替え・未視聴／未入力のスイッチ・見出しの開閉 */
 const NAV_ACTIONS = [
   /* ▸▾：メニューの下の項目を開く（開くとほかはたたむ）／たたむ */
@@ -242,124 +225,6 @@ function onDrawerClick(e) {
     setDrawer(false);
   return false;
 }
-/* シリーズの作品一覧を開く（アニメ・ドラマ・映画・配信をまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
-function showSeries(name, g) {
-  close();
-  if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
-  Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
-  go();
-}
-/* ライブラリの絞り込み・並び順 */
-const FILTER_ACTIONS = [
-  /* 絞り込みボタン：押すとその項目の選択肢を出す／閉じる */
-  [
-    "[data-fpop]",
-    el => {
-      const v = el.dataset.fpop;
-      state.fOpen = state.fOpen === v ? "" : v;
-      state.svMode = "";
-      state.svName = null;
-      render();
-    },
-  ],
-  [
-    "[data-couryear]",
-    el => {
-      const ks = SEASONS.map(se => el.dataset.couryear + se);
-      const all = ks.every(k => state.cour.includes(k));
-      state.cour = all ? state.cour.filter(c => !ks.includes(c)) : [...new Set([...state.cour, ...ks])];
-      state.limit = 200;
-      render();
-    },
-  ],
-  [
-    "[data-era]",
-    el => {
-      state.era = el.dataset.era === "すべて" ? [] : toggle(state.era, el.dataset.era);
-      state.limit = 200;
-      render();
-    },
-  ],
-  [
-    "[data-seradd]",
-    el => {
-      state.series = [...state.series, el.dataset.seradd];
-      if (state.sort === "new") state.sort = "old";
-      state.limit = 200;
-      render();
-      $("#seriesQ")?.focus();
-    },
-  ],
-  [
-    "[data-serdel]",
-    el => {
-      state.series = state.series.filter(x => x !== el.dataset.serdel);
-      state.limit = 200;
-      render();
-    },
-  ],
-  [
-    "[data-cour]",
-    el => {
-      state.cour = el.dataset.cour === "すべて" ? [] : toggle(state.cour, el.dataset.cour);
-      state.limit = 200;
-      render();
-    },
-  ],
-  /* 作品詳細の「シリーズ作品」 */
-  [
-    "[data-series]",
-    el => {
-      const it = items.find(x => x.id === openId);
-      showSeries(el.dataset.series, it && it.k === "d" ? "d" : "a");
-    },
-  ],
-  /* 一覧の上の視聴ステータス（1つだけ選ぶ。同じものをもう一度押すと「すべて」） */
-  [
-    "[data-stf]",
-    el => {
-      const v = el.dataset.stf;
-      state.sf = !v || (state.sf.length === 1 && state.sf[0] === v) ? [] : [v];
-      state.limit = 200;
-      saveUI();
-      render();
-    },
-  ],
-  [
-    "[data-xseroff]",
-    () => {
-      state.xser = false;
-      render();
-    },
-  ],
-  [
-    "[data-grp]",
-    el => {
-      state.grp = el.dataset.grp;
-      state.limit = 200;
-      state.fOpen = "";
-      saveUI();
-      render();
-    },
-  ],
-  [
-    "[data-sort]",
-    el => {
-      state.sort = el.dataset.sort;
-      state.fOpen = "";
-      saveUI();
-      render();
-    },
-  ],
-  /* 条件をすべて解除 */
-  [
-    "[data-unset]",
-    () => {
-      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], vod: "", limit: 200 });
-      render();
-    },
-  ],
-];
 /* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉、画面は指に合わせて横に動かし、離すと番組表／ライブラリなど隣の画面へ */
 const segBtns = () => [...document.querySelectorAll("#hseg [data-tb]")];
 const segIdx = () => segBtns().findIndex(b => b.getAttribute("aria-selected") === "true");
@@ -406,179 +271,222 @@ const CLICK_HANDLERS = [
 document.addEventListener("click", e => {
   for (const h of CLICK_HANDLERS) if (h(e)) return;
 });
+/* ---------- 入力欄 ----------
+   [入力欄のセレクタ, 処理(入力欄, イベント)] を上から順に試し、当てはまって処理した最初の1つで止める（null は毎回試す。false を返したら次へ） */
+function runInputs(table, e) {
+  const t = e.target;
+  if (!t || !t.matches) return;
+  for (const [sel, fn] of table) if ((!sel || t.matches(sel)) && fn(t, e) !== false) return;
+}
+const updSched = () => {
+  const h = $("#schedHint");
+  if (h) h.innerHTML = schedText();
+};
 document.addEventListener("submit", e => {
-  if (e.target.id === "svF") {
-    e.preventDefault();
-    svSubmit();
-    return;
-  }
-  if (e.target.id === "ytF") {
-    e.preventDefault();
-    ytSubmit();
-    return;
-  }
-  if (e.target.id === "titleF") {
-    e.preventDefault();
-    submitForm();
-  }
+  const f = { svF: svSubmit, ytF: ytSubmit, titleF: submitForm }[e.target.id];
+  if (!f) return;
+  e.preventDefault();
+  f();
 });
-document.addEventListener("change", e => {
-  if (e.target.id === "arcJump") {
-    const it = items.find(x => x.id === openId);
-    const k = +e.target.value;
-    const r = it && arcsOf(it)[k];
-    if (!r) return;
-    arcFold.set(arcKey(r), true);
-    refreshSheet();
-    const sh = $("#layer .sheet"),
-      h = $("#arc-" + k);
-    if (sh && h) {
-      const hd = sh.querySelector(".dhead");
-      sh.scrollTop += h.getBoundingClientRect().top - sh.getBoundingClientRect().top - (hd ? hd.offsetHeight : 0) - 8;
-    }
-    return;
-  }
-  if (e.target.dataset && e.target.dataset.svren) {
-    const id = e.target.dataset.svren,
-      name = e.target.value.trim();
-    const f = svList().find(x => x.id === id);
-    if (!f) return;
-    if (!name || svList().some(x => x.id !== id && x.name === name)) {
-      e.target.value = f.name;
-      toast(name ? `「${name}」はすでにあります` : "名前を入れてください");
-      return;
-    }
-    if (name !== f.name) {
+/* 値を決めたとき（選択・チェック・日付・入力欄を離れたとき） */
+const CHANGE_ACTIONS = [
+  /* 編へ移動：その編を開いて先頭までスクロール */
+  [
+    "#arcJump",
+    t => {
+      const it = items.find(x => x.id === openId);
+      const k = +t.value;
+      const r = it && arcsOf(it)[k];
+      if (!r) return;
+      arcFold.set(arcKey(r), true);
+      refreshSheet();
+      const sh = $("#layer .sheet"),
+        h = $("#arc-" + k);
+      if (sh && h) {
+        const hd = sh.querySelector(".dhead");
+        sh.scrollTop += h.getBoundingClientRect().top - sh.getBoundingClientRect().top - (hd ? hd.offsetHeight : 0) - 8;
+      }
+    },
+  ],
+  /* 保存したフィルタの名前を変更 */
+  [
+    "[data-svren]",
+    t => {
+      const id = t.dataset.svren,
+        name = t.value.trim();
+      const f = svList().find(x => x.id === id);
+      if (!f) return;
+      if (!name || svList().some(x => x.id !== id && x.name === name)) {
+        t.value = f.name;
+        return toast(name ? `「${name}」はすでにあります` : "名前を入れてください");
+      }
+      if (name === f.name) return;
       setSv(svList().map(x => (x.id === id ? { ...x, name } : x)));
       render();
       toast("名前を変更しました");
-    }
-    return;
-  }
-  if (e.target.classList.contains("inl") && e.target.type === "date") {
-    commitInline(e.target);
-    return;
-  }
-  if (e.target.id === "spDate" && subPaste) {
-    subPaste.useDate = e.target.checked;
-    refreshSheet();
-    return;
-  }
-  if (e.target.id === "spAdd" && subPaste) {
-    subPaste.addMissing = e.target.checked;
-    refreshSheet();
-    return;
-  }
-  if (e.target.id === "f-from" && form) {
-    readForm();
-    redrawForm();
-    return;
-  }
-  if (e.target.classList.contains("nof") && form) {
-    readForm();
-    const h = $("#schedHint");
-    if (h) h.innerHTML = schedText();
-    return;
-  }
-  /* 曲の種類を変えたら、その種類の区切りへ移す */
-  if (e.target.classList.contains("sg-t") && form) {
-    readForm();
-    redrawForm();
-    return;
-  }
-  if (e.target.id === "f-cy" && form) {
-    form.cy = +e.target.value;
-    return;
-  }
-  if (e.target.id === "courY") {
-    state.courY = +e.target.value;
-    saveUI();
-    render();
-    return;
-  }
-  if (e.target.classList.contains("er-d") && epEdit) {
-    const it = items.find(x => x.id === openId);
-    const i = +e.target.closest("[data-er]").dataset.er;
-    const l = epEdit.list;
-    if (!e.target.value) {
-      l[i].t = 0;
+    },
+  ],
+  ['input.inl[type="date"]', t => commitInline(t)],
+  /* 各話リストの貼り付け：日付も更新・ない話も追加 */
+  [
+    "#spDate",
+    t => {
+      if (!subPaste) return false;
+      subPaste.useDate = t.checked;
+      refreshSheet();
+    },
+  ],
+  [
+    "#spAdd",
+    t => {
+      if (!subPaste) return false;
+      subPaste.addMissing = t.checked;
+      refreshSheet();
+    },
+  ],
+  /* 編集画面：開始日（放送クールの候補が変わる）・「なし」・曲の種類（その種類の区切りへ移す）・クールの年 */
+  [
+    "#f-from,.sg-t",
+    () => {
+      if (!form) return false;
+      readForm();
+      redrawForm();
+    },
+  ],
+  [
+    ".nof",
+    () => {
+      if (!form) return false;
+      readForm();
+      updSched();
+    },
+  ],
+  [
+    "#f-cy",
+    t => {
+      if (!form) return false;
+      form.cy = +t.value;
+    },
+  ],
+  /* 絞り込み：放送クールの年 */
+  [
+    "#courY",
+    t => {
+      state.courY = +t.value;
+      saveUI();
+      render();
+    },
+  ],
+  /* 話数の編集：日付を変えたら、その後の話も1週間おきにずらす（時刻はそれぞれのまま） */
+  [
+    ".er-d",
+    t => {
+      if (!epEdit) return false;
+      const it = items.find(x => x.id === openId);
+      const i = +t.closest("[data-er]").dataset.er;
+      const l = epEdit.list;
+      if (!t.value) {
+        l[i].t = 0;
+        return refreshEditor();
+      }
+      const hm = l[i].t ? jst(l[i].t).hm : hasTime(it) ? it.time : "9:00";
+      if (!l[i].t) l[i].nt = !hasTime(it);
+      const t0 = dayTimeToT(t.value, hm);
+      l.forEach(x => (x.moved = false));
+      for (let k = i; k < l.length; k++) {
+        const keep = l[k].t ? jst(l[k].t).hm : hm;
+        l[k].t = t0 + WEEK * (k - i) - (mins(hm) - mins(keep));
+        l[k].moved = k > i;
+      }
       refreshEditor();
-      return;
-    }
-    const hm = l[i].t ? jst(l[i].t).hm : hasTime(it) ? it.time : "9:00";
-    if (!l[i].t) l[i].nt = !hasTime(it);
-    const t0 = dayTimeToT(e.target.value, hm);
-    l.forEach(x => (x.moved = false));
-    for (let k = i; k < l.length; k++) {
-      const keep = l[k].t ? jst(l[k].t).hm : hm; // each episode keeps its own time of day
-      l[k].t = t0 + WEEK * (k - i) - (mins(hm) - mins(keep));
-      l[k].moved = k > i;
-    }
-    refreshEditor();
-    return;
-  }
-});
-document.addEventListener("input", e => {
-  if (e.target.id === "svName") {
-    state.svName = e.target.value;
-    return;
-  }
-  if ((e.target.id === "f-time" || e.target.id === "f-from") && form) {
-    form[e.target.id === "f-time" ? "time" : "from"] = e.target.value;
-    const h = $("#schedHint");
-    if (h) h.innerHTML = schedText();
-    return;
-  }
-  if (e.target.id === "f-serq" && form) {
-    const b = $("#fSerSug");
-    if (b) b.innerHTML = serSugForm(e.target.value);
-    return;
-  }
-  if (e.target.id === "spText" && subPaste) {
-    subPaste.text = e.target.value;
-    return;
-  }
-  if (e.target.id === "seriesQ") {
-    const b = $("#serSug");
-    if (b) b.innerHTML = seriesSugHtml(e.target.value);
-    return;
-  }
-  if (e.target.id === "y-up") {
-    const p = parseDay(e.target.value);
-    const m = $("#yUpMsg");
-    if (m) m.textContent = e.target.value.trim() && p === null ? "日付を読み取れません（例：2024/03/08）" : "";
-    return;
-  }
-  if (e.target.id === "y-dur") {
-    const m = $("#yDurMsg");
-    if (m) {
-      const v = parseDur(e.target.value);
-      m.textContent = v && v !== e.target.value.trim() ? "→ " + v : "";
-    }
-    return;
-  }
-  if (e.target.id === "mq") {
-    setQ = e.target.value;
-    if (!e.isComposing) refreshSettings(false);
-    return;
-  }
-  if (e.target.id === "ytq") {
-    yst.q = e.target.value;
-    if (!e.isComposing) searchSoon();
-    return;
-  }
-  if (e.target.id === "q") {
-    state.q = e.target.value;
-    state.limit = 200;
-    if (!e.isComposing) searchSoon();
-    return;
-  }
-  if (epEdit && e.target.closest("[data-er]")) {
-    const i = +e.target.closest("[data-er]").dataset.er;
-    if (e.target.classList.contains("er-n")) epEdit.list[i].n = e.target.value;
-    if (e.target.classList.contains("er-s")) epEdit.list[i].sub = e.target.value;
-  }
-});
+    },
+  ],
+];
+document.addEventListener("change", e => runInputs(CHANGE_ACTIONS, e));
+/* 1文字打つごと */
+const INPUT_ACTIONS = [
+  ["#svName", t => void (state.svName = t.value)],
+  [
+    "#f-time,#f-from",
+    t => {
+      if (!form) return false;
+      form[t.id === "f-time" ? "time" : "from"] = t.value;
+      updSched();
+    },
+  ],
+  [
+    "#f-serq",
+    t => {
+      if (!form) return false;
+      const b = $("#fSerSug");
+      if (b) b.innerHTML = serSugForm(t.value);
+    },
+  ],
+  [
+    "#spText",
+    t => {
+      if (!subPaste) return false;
+      subPaste.text = t.value;
+    },
+  ],
+  [
+    "#seriesQ",
+    t => {
+      const b = $("#serSug");
+      if (b) b.innerHTML = seriesSugHtml(t.value);
+    },
+  ],
+  [
+    "#y-up",
+    t => {
+      const m = $("#yUpMsg");
+      if (m) m.textContent = t.value.trim() && parseDay(t.value) === null ? "日付を読み取れません（例：2024/03/08）" : "";
+    },
+  ],
+  [
+    "#y-dur",
+    t => {
+      const m = $("#yDurMsg");
+      if (!m) return;
+      const v = parseDur(t.value);
+      m.textContent = v && v !== t.value.trim() ? "→ " + v : "";
+    },
+  ],
+  /* 検索（日本語の変換中は待つ） */
+  [
+    "#mq",
+    (t, e) => {
+      setQ = t.value;
+      if (!e.isComposing) refreshSettings(false);
+    },
+  ],
+  [
+    "#ytq",
+    (t, e) => {
+      yst.q = t.value;
+      if (!e.isComposing) searchSoon();
+    },
+  ],
+  [
+    "#q",
+    (t, e) => {
+      state.q = t.value;
+      state.limit = 200;
+      if (!e.isComposing) searchSoon();
+    },
+  ],
+  /* 話数の編集：話数・サブタイトル */
+  [
+    "[data-er] input",
+    t => {
+      if (!epEdit) return false;
+      const i = +t.closest("[data-er]").dataset.er;
+      if (t.classList.contains("er-n")) epEdit.list[i].n = t.value;
+      if (t.classList.contains("er-s")) epEdit.list[i].sub = t.value;
+    },
+  ],
+];
+document.addEventListener("input", e => runInputs(INPUT_ACTIONS, e));
 let sTimer = 0;
 function searchSoon() {
   clearTimeout(sTimer);
@@ -595,72 +503,45 @@ document.addEventListener("compositionend", e => {
     searchSoon();
   }
 });
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && e.target.dataset && e.target.dataset.svren && !e.isComposing) {
+/* キー：Enter（日本語の変換中は除く）で決定、Escで取り消し・閉じる */
+const isEnter = e => e.key === "Enter" && !e.isComposing;
+/* Enter／Esc で別々の処理をする入力欄 */
+const enterEsc = (onEnter, onEsc) => (t, e) => {
+  if (isEnter(e)) {
     e.preventDefault();
-    e.target.blur();
-    return;
-  }
-  if (e.target.classList && e.target.classList.contains("mren")) {
-    if (e.key === "Enter" && !e.isComposing) {
-      e.preventDefault();
-      commitRename();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      commitRename(true);
-    }
-    return;
-  }
-  if (e.target.id === "maddIn" && e.key === "Enter" && !e.isComposing) {
+    onEnter(t);
+  } else if (e.key === "Escape") {
     e.preventDefault();
-    document.querySelector("[data-madd]")?.click();
-    return;
+    onEsc(t);
   }
-  if (e.target.id === "spopIn") {
-    if (e.key === "Enter" && !e.isComposing) {
+};
+/* Enter で、そのボタンを押したことにする */
+const enterClick = sel => (t, e) => {
+  if (!isEnter(e)) return false;
+  e.preventDefault();
+  document.querySelector(sel)?.click();
+};
+const KEY_ACTIONS = [
+  [
+    "[data-svren]",
+    (t, e) => {
+      if (!isEnter(e)) return false;
       e.preventDefault();
-      saveSub();
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      closeSub();
-    }
-    return;
-  }
-  if (e.key === "Escape" && subAsk) {
-    closeSub();
-    return;
-  }
-  if (e.target.classList && e.target.classList.contains("inl")) {
-    if (e.key === "Enter" && !e.isComposing) {
-      e.preventDefault();
-      commitInline(e.target);
-    } else if (e.key === "Escape") {
-      e.preventDefault();
-      commitInline(e.target, true);
-    }
-    return;
-  }
-  if (e.key === "Escape" && form && form.inline) {
-    closeInlineForm();
-    return;
-  }
-  if (e.key === "Escape") close();
-  if (e.key === "Enter" && e.target.id === "f-serq") {
-    e.preventDefault();
-    document.querySelector("#fSerSug [data-fser]")?.click();
-    return;
-  }
-  if (e.key === "Enter" && e.target.id === "f-sernew") {
-    e.preventDefault();
-    document.querySelector("[data-fsercreate]")?.click();
-    return;
-  }
-  if (e.key === "Enter" && e.target.id === "seriesQ") {
-    e.preventDefault();
-    const b = document.querySelector("#serSug [data-seradd]");
-    if (b) b.click();
-  }
-});
+      t.blur();
+    },
+  ],
+  [".mren", enterEsc(() => commitRename(), () => commitRename(true))],
+  ["#maddIn", enterClick("[data-madd]")],
+  ["#spopIn", enterEsc(saveSub, closeSub)],
+  [null, (t, e) => (e.key === "Escape" && subAsk ? closeSub() : false)],
+  [".inl", enterEsc(t => commitInline(t), t => commitInline(t, true))],
+  [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
+  [null, (t, e) => (e.key === "Escape" ? close() : false)],
+  ["#f-serq", enterClick("#fSerSug [data-fser]")],
+  ["#f-sernew", enterClick("[data-fsercreate]")],
+  ["#seriesQ", enterClick("#serSug [data-seradd]")],
+];
+document.addEventListener("keydown", e => runInputs(KEY_ACTIONS, e));
 
 document.addEventListener("focusout", e => {
   if (e.target.classList && e.target.classList.contains("inl")) commitInline(e.target);

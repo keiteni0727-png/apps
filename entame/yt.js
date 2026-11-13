@@ -275,6 +275,56 @@ const YT_SORTS = [
 const chipBtn = (attr, val, on, label, n, cls) =>
   `<button type="button" ${attr}="${esc(val)}" aria-pressed="${on}" class="${on && cls ? "pri " + cls : ""}${attr === "data-vod" && VOD_COLOR[val] ? " vc" : ""}"${attr === "data-vod" ? vcStyle(val) : ""}>${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
 
+/* 詳細の項目を押して編集。editRow：押すと編集画面（data-jump）、data-inl：その場で書き換え */
+function editRow(k, v, attr) {
+  return `<dt ${attr}>${k}</dt><dd ${attr}>${v || `<span class="unset">未設定</span>`}<span class="pen" aria-hidden="true">✎</span></dd>`;
+}
+function startInline(el) {
+  if (el.querySelector("input.inl")) return;
+  const key = el.dataset.inl,
+    type = el.dataset.inltype || "text",
+    val = el.dataset.inlv || "";
+  el.classList.add("editing");
+  el.innerHTML = `<input class="inl" data-inlkey="${key}" type="${type}" value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
+  const i = el.querySelector("input");
+  i.dataset.orig = val;
+  i.focus();
+  if (type === "text") {
+    try {
+      i.setSelectionRange(i.value.length, i.value.length);
+    } catch (_) {}
+  }
+}
+let inlBusy = false;
+function commitInline(i, cancel) {
+  if (inlBusy || !i.isConnected) return;
+  inlBusy = true;
+  const key = i.dataset.inlkey;
+  let v = i.value.trim();
+  const orig = i.dataset.orig || "";
+  const done = () => {
+    inlBusy = false;
+  };
+  if (cancel || v === orig || (key === "t" && !v)) {
+    ytRefresh();
+    done();
+    return;
+  }
+  if (key === "n") v = Math.max(0, parseInt(v, 10) || 0);
+  if (key === "up") {
+    const p = parseDay(v);
+    if (p === null) {
+      toast("日付を読み取れませんでした（例：2024/03/08）");
+      ytRefresh();
+      done();
+      return;
+    }
+    v = p;
+  }
+  if (key === "dur") v = parseDur(v);
+  if (ytOpen) ytSave(ytOpen, { [key]: v }, "保存しました");
+  done();
+}
 /* detail */
 let ytOpen = null;
 function ytDetailHtml(x) {
@@ -493,12 +543,11 @@ function ytOpenForm(x, target) {
   form = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form" role="dialog" aria-modal="true" aria-label="YouTubeを${yform.id ? "編集" : "追加"}"><div class="wrap" id="ytFormIn">${ytFormHtml()}</div></div>`;
-  if (target && ONLY_Y[target]) {
+  if (ONLY_Y[target]) {
     yform.only = target;
     $(".sheet.form").classList.add("mini");
     $("#ytFormIn").innerHTML = ytFormHtml();
-  } else if (target) jumpTo(target);
-  else if (!TOUCH) $("#y-t").focus({ preventScroll: true });
+  } else if (!TOUCH) $("#y-t").focus({ preventScroll: true });
 }
 async function ytSubmit() {
   {

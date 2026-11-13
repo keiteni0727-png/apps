@@ -302,71 +302,6 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   }</div>`;
   return bc + (songs ? `<div class="icard isongs">${songs}</div>` : "") + links;
 }
-/* 詳細のタップで編集：行全体を押すと、その項目を開いた状態の編集画面へ（inl＝その場で書き換え） */
-function editRow(k, v, attr) {
-  return `<dt ${attr}>${k}</dt><dd ${attr}>${v || `<span class="unset">未設定</span>`}<span class="pen" aria-hidden="true">✎</span></dd>`;
-}
-function jumpTo(target) {
-  requestAnimationFrame(() => {
-    const el = document.getElementById(target);
-    if (!el) return;
-    const box = el.closest(".field") || el;
-    box.scrollIntoView({ block: "center" });
-    box.classList.add("flash");
-    setTimeout(() => box.classList.remove("flash"), 1600);
-    const inp = el.matches("input,select,textarea") ? el : null;
-    if (inp && inp.type !== "date") inp.focus({ preventScroll: true });
-  });
-}
-function startInline(el) {
-  if (el.querySelector("input.inl")) return;
-  const key = el.dataset.inl,
-    type = el.dataset.inltype || "text",
-    val = el.dataset.inlv || "";
-  el.classList.add("editing");
-  el.innerHTML = `<input class="inl" data-inlkey="${key}" type="${type}" value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
-  const i = el.querySelector("input");
-  i.dataset.orig = val;
-  i.focus();
-  if (type === "text") {
-    try {
-      i.setSelectionRange(i.value.length, i.value.length);
-    } catch (_) {}
-  }
-}
-let inlBusy = false;
-function commitInline(i, cancel) {
-  if (inlBusy || !i.isConnected) return;
-  inlBusy = true;
-  const key = i.dataset.inlkey;
-  let v = i.value.trim();
-  const orig = i.dataset.orig || "";
-  const done = () => {
-    inlBusy = false;
-  };
-  if (cancel || v === orig || (key === "t" && !v)) {
-    if (ytOpen) ytRefresh();
-    else refreshSheet();
-    done();
-    return;
-  }
-  if (ytOpen) {
-    if (key === "n") v = Math.max(0, parseInt(v, 10) || 0);
-    if (key === "up") {
-      const p = parseDay(v);
-      if (p === null) {
-        toast("日付を読み取れませんでした（例：2024/03/08）");
-        ytRefresh();
-        done();
-        return;
-      }
-      v = p;
-    }
-    if (key === "dur") v = parseDur(v);
-    ytSave(ytOpen, { [key]: v }, "保存しました");
-  } else if (openId) saveTitle(openId, { [key]: v }, "保存しました");
-  done();
-}
 function renderDetail(it) {
   const cs = coursOf(it);
   const stv = mediaLabels(it);
@@ -675,13 +610,7 @@ const DETAIL_ACTIONS = [
       saveTitle(it.id, { songs: l }, l[k].dl ? "ダウンロード済みにしました" : "未ダウンロードに戻しました");
     },
   ],
-  /* 項目を押したら、その場で編集 */
-  [
-    "[data-inl]",
-    (el, it, e) => {
-      if (!e.target.closest("input")) startInline(el);
-    },
-  ],
+  /* 項目を押したら、その場で編集（作品の詳細では、その項目の入力欄を詳細の中に出す） */
   [
     "[data-jump]",
     (el, it, e) => {

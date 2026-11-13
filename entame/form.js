@@ -252,7 +252,8 @@ function redrawForm() {
   $("#formIn").innerHTML = formHtml();
   sh.scrollTop = y;
 }
-function openForm(it, target, inline) {
+/* 作品の追加・編集画面を開く。it＝編集する作品（なければ追加）、target・el＝詳細で押した項目（その項目だけ詳細の中で編集） */
+function openForm(it, target, el) {
   epEdit = null;
   const y = new Date().getFullYear();
   if (it) {
@@ -307,18 +308,12 @@ function openForm(it, target, inline) {
         x.b = form.span[1];
       }
     });
-  if (inline && it && ONLY_A[target]) return openInlineForm(target, inline instanceof Element ? inline : null);
+  /* 項目を指定したときは、作品の詳細の中でその項目だけ編集する */
+  if (it && ONLY_A[target]) return openInlineForm(target, el);
   openId = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form" role="dialog" aria-modal="true" aria-label="${form.id ? "作品を編集" : "作品を追加"}"><div class="wrap" id="formIn">${formHtml()}</div></div>`;
-  if (target && ONLY_A[target]) {
-    form.only = target;
-    $(".sheet.form").classList.add("mini");
-    $("#formIn").innerHTML = formHtml();
-    const i = $(".fgrid.only input:not([type=date]):not([type=checkbox]):not([type=file])");
-    if (i && !TOUCH) i.focus({ preventScroll: true });
-  } else if (target) jumpTo(target);
-  else if (!TOUCH) $("#f-t").focus({ preventScroll: true });
+  if (!TOUCH) $("#f-t").focus({ preventScroll: true });
 }
 /* 作品の詳細画面で、押した項目をその場で編集する（編集画面は開かない）
    Enter・保存で保存、詳細の別の場所を押すと保存して閉じる、✕・キャンセル・Escで取り消し */

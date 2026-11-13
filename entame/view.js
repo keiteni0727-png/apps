@@ -577,46 +577,6 @@ function groupedHtml(list) {
     (rest ? `<button type="button" class="more" id="more">さらに表示（残り${rest}件）</button>` : "")
   );
 }
-/* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
-/* 絞り込みボタン（視聴ステータスは一覧の上の切り替え、種別は左のメニューで選ぶ） */
-const FKEYS = ["vod", "time", "series", "sv", "sort"];
-const FTITLE = { vod: "配信サイト", time: "時期", series: "シリーズ", sv: "保存したフィルタ", sort: "並び順・分け方" };
-const SORT_IC =
-  '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
-function fBtnLab(k) {
-  const many = (lab, l, one) => (!l.length ? [lab, false] : l.length === 1 ? [one(l[0]), true] : [`${lab} ${l.length}`, true]);
-  if (k === "vod") return state.vod ? [state.vod, true] : ["配信", false];
-  if (k === "time") return many("時期", [...state.cour, ...state.era], v => (/^\d{4}/.test(v) ? `${v.slice(2, 4)}年${v.slice(4)}` : v === ALLYEAR ? "通年" : v));
-  if (k === "series") return many("シリーズ", state.series, v => v);
-  if (k === "sv") {
-    const cur = svCur();
-    return cur ? ["★" + cur.name, true] : ["★保存", false];
-  }
-  return ["", state.sort !== "new" || state.grp !== "cour"];
-}
-function fRowHtml(keys) {
-  const btns = keys
-    .map(k => {
-      const [lab, on] = fBtnLab(k);
-      const open = state.fOpen === k;
-      if (k === "sort")
-        return `<button type="button" class="fb srt${on ? " on" : ""}" data-fpop="sort" aria-expanded="${open}" aria-label="並び順：${esc(SORTS.find(x => x[0] === state.sort)[1])}">${SORT_IC}</button>`;
-      return `<button type="button" class="fb${on ? " on" : ""}" data-fpop="${k}" aria-expanded="${open}"><span class="v">${esc(lab)}</span><span class="chev" aria-hidden="true">▾</span></button>`;
-    })
-    .join("");
-  return `<div class="frow${keys.length === 1 ? " one" : ""}" style="--fc:${Math.max(1, keys.filter(k => k !== "sort").length)}">${btns}</div>`;
-}
-function fPopHtml(body) {
-  const k = state.fOpen;
-  if (!body) return "";
-  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${FTITLE[k]}"><div class="fpop-h"><b>${FTITLE[k]}</b><button type="button" class="u-btn sm" data-fpop="${k}">完了</button></div>${body}</div>`;
-}
-function vodPanelHtml() {
-  const used = new Set(items.filter(ofKind).flatMap(vodsOf));
-  const l = [...new Set([...VOD_TOP, ...M("vods"), ...used])].filter(v => used.has(v) || v === state.vod || VOD_TOP.includes(v));
-  const n = v => items.filter(i => ofKind(i) && vodsOf(i).includes(v)).length;
-  return `<div class="fgroup"><h5>配信</h5><div class="chips">${chipBtn("data-vod", "", !state.vod, "すべて")}${l.map(v => chipBtn("data-vod", v, state.vod === v, v, n(v))).join("")}</div></div>`;
-}
 function renderList() {
   const list = filtered();
   const sortHtml = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
@@ -703,70 +663,27 @@ function render() {
   const hd = document.querySelector("header");
   if (hd && hd.offsetHeight) document.documentElement.style.setProperty("--hdh", hd.offsetHeight + "px");
 }
-
-/* ---------- filter panel ---------- */
-function seriesCounts() {
-  const cnt = {};
-  items.forEach(i => {
-    if (i.series && ofKind(i)) cnt[i.series] = (cnt[i.series] || 0) + 1;
-  });
-  return cnt;
+/* 画面の切り替え：左メニュー（番組表・アニメ…）を選ぶ。絞り込みとシリーズは外す */
+function setMode(m) {
+  if (state.mode === m) return;
+  state.mode = m;
+  state.sub = "all";
+  state.wday = "";
+  state.xser = false;
+  if (m === "w" || m === "yt") return;
+  if (m === "m" || m === "s") state.type = [];
+  state.limit = 200;
+  state.series = [];
 }
-const norm = t =>
-  String(t || "")
-    .toLowerCase()
-    .normalize("NFKC")
-    .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
-    .replace(/[\s・、。!！?？〜~\-－]/g, "");
-/* シリーズの候補：入力がなければ登録済みのシリーズをすべて（作品数の多い順）、入力があれば一致するもの。枠は高さを決めて中でスクロール */
-function seriesSugHtml(q) {
-  const nq = norm(q);
-  const cnt = seriesCounts();
-  let names = Object.keys(cnt).filter(n => !state.series.includes(n));
-  if (nq)
-    names = names
-      .filter(n => norm(n).includes(nq))
-      .sort((a, b) => norm(a).indexOf(nq) - norm(b).indexOf(nq) || cnt[b] - cnt[a]);
-  else names.sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, "ja"));
-  if (!names.length)
-    return nq ? `<span class="hint">「${esc(q)}」に一致するシリーズはありません</span>` : `<span class="hint">登録されているシリーズはありません</span>`;
-  return `<span class="hint sershd">${nq ? `一致するシリーズ ${names.length}件` : `登録済みのシリーズ ${names.length}件（作品数の多い順）`}</span><div class="serbox">${names.map(n => `<button type="button" data-seradd="${esc(n)}">${esc(n)}<small>${cnt[n]}</small></button>`).join("")}</div>`;
+/* 画面を変えて先頭から表示 */
+const go = () => {
+  render();
+  scrollTo(0, 0);
+};
+/* シリーズの作品一覧を開く（アニメ・ドラマ・映画・配信をまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
+function showSeries(name, g) {
+  close();
+  if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
+  Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
+  go();
 }
-/* 絞り込みの中身：シリーズ */
-function seriesPanelHtml() {
-  const cnt = seriesCounts();
-  return `<div class="fgroup"><h5>シリーズ <span class="hint" style="font-weight:400">複数選べます</span></h5>
-      ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
-      <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
-      <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
-}
-/* 絞り込みの中身：時期（放送クール・放送年） */
-function timePanelHtml() {
-  const tb = items.filter(i => ofKind(i) && seriesOk(i) && typeOk(i));
-  const chip = (attr, val, cur, label, n) =>
-    `<button type="button" ${attr}="${esc(val)}" aria-pressed="${val === "すべて" ? !cur.length : cur.includes(val)}">${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
-  const courYears = [
-    ...new Set(
-      items
-        .flatMap(i => coursOf(i))
-        .filter(c => /^\d{4}/.test(c))
-        .map(c => +c.slice(0, 4)),
-    ),
-  ].sort((a, b) => b - a);
-  const cy = courYears.includes(state.courY) ? state.courY : courYears[0];
-  const yAll = SEASONS.every(se => state.cour.includes(cy + se));
-  return `<div class="fgroup"><h5>放送クール</h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
-      <select id="courY" aria-label="クールの年">${courYears.map(y => `<option ${y === cy ? "selected" : ""}>${y}</option>`).join("")}</select>
-      <button type="button" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button>
-      ${SEASONS.map(se => {
-        const key = `${cy}${se}`;
-        return chip("data-cour", key, state.cour, se, tb.filter(i => coursOf(i).includes(key)).length);
-      }).join("")}</div></div>
-    <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">クール未設定の作品も</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
-      .map(e => {
-        const n = tb.filter(e.test).length;
-        return n ? chip("data-era", e.key, state.era, e.key, n) : "";
-      })
-      .join("")}</div></div>`;
-}
-
