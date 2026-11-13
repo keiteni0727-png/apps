@@ -987,6 +987,12 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wtabs button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .wtabs .wdot{position:absolute;top:6px;right:calc(50% - 22px);width:7px;height:7px;border-radius:50%;background:var(--st-now)}
 .mkind{display:flex;gap:6px;margin:0 0 8px}
+.ser-all{border:1px dashed var(--u-line)!important;background:none!important;color:var(--accent)!important;font-weight:700}
+.ser-oh{width:100%;margin-top:4px}
+.ser-o em{font-style:normal;font-size:10px;color:var(--u-sub);margin-left:5px}
+.smain{flex:none;border:1px solid var(--u-line);background:var(--u-surface);border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700;margin-right:6px}
+.smain.sm-a{color:var(--anime);border-color:color-mix(in srgb,var(--anime) 40%,transparent)}
+.smain.sm-d{color:var(--drama);border-color:color-mix(in srgb,var(--drama) 40%,transparent)}
 .xser{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 9%,var(--u-surface));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:10px;padding:8px 12px;margin:0 0 8px;font-size:13px}
 .xser span{flex:1;min-width:0}
 .xser .u-btn{flex:none}
@@ -3386,26 +3392,48 @@ const chipsHtml = (attr, opts, sel, color) =>
   opts
     .map(v => `<button type="button" ${attr}="${esc(v)}" aria-pressed="${sel.includes(v)}"${color && VOD_COLOR[v] ? ` class="vc"${vcStyle(v)}` : ""}>${esc(v)}</button>`)
     .join("");
-function serSugForm(q) {
-  const nq = norm(q);
-  if (!nq) return "";
+/* シリーズのメインのジャンル（裏で持つ）：a=アニメ、d=ドラマ・実写（ドラマ・実写映画・配信番組）
+   設定で決めたもの → 使っている作品で多い方 → 前の版のドラマ用マスタにあればドラマ → アニメ */
+const serGroup = k => (k === "a" ? "a" : "d");
+const SER_GL = { a: "アニメ", d: "ドラマ・実写" };
+function seriesMainMap() {
   const cnt = {};
   items.forEach(i => {
-    if (i.series) cnt[i.series] = (cnt[i.series] || 0) + 1;
+    if (!i.series) return;
+    const c = (cnt[i.series] = cnt[i.series] || { a: 0, d: 0 });
+    c[serGroup(i.k)]++;
   });
+  const set = master.seriesMain || {};
+  const map = {};
   M("series").forEach(n => {
-    if (!(n in cnt)) cnt[n] = 0;
+    const c = cnt[n];
+    map[n] = set[n] || (c && (c.a || c.d) ? (c.a >= c.d ? "a" : "d") : Array.isArray(master.seriesD) && master.seriesD.includes(n) ? "d" : "a");
   });
-  let names = Object.keys(cnt).filter(n => n !== form.series);
-  names = nq
-    ? names
-        .filter(n => norm(n).includes(nq))
-        .sort((x, y) => norm(x).indexOf(nq) - norm(y).indexOf(nq) || cnt[y] - cnt[x])
-    : names.sort((x, y) => cnt[y] - cnt[x]);
-  const shown = names.slice(0, nq ? 20 : 8);
-  return shown.length
-    ? shown.map(n => `<button type="button" data-fser="${esc(n)}">${esc(n)}<small>${cnt[n]}</small></button>`).join("")
-    : `<span class="hint">「${esc(q)}」に一致するシリーズはありません</span>`;
+  return { map, cnt };
+}
+/* 編集画面のシリーズ検索：基本は同じジャンルのシリーズだけ。「○○のシリーズからも探す」で別ジャンルも出す */
+function serSugForm(q) {
+  const nq = norm(q);
+  const grp = serGroup(form.k),
+    other = grp === "a" ? "d" : "a";
+  const { map, cnt } = seriesMainMap();
+  const n0 = n => (cnt[n] ? cnt[n].a + cnt[n].d : 0);
+  const hit = n => n !== form.series && (!nq || norm(n).includes(nq));
+  const sort = l => (nq ? l.sort((x, y) => norm(x).indexOf(nq) - norm(y).indexOf(nq) || n0(y) - n0(x)) : l.sort((x, y) => n0(y) - n0(x)));
+  const mine = sort(Object.keys(map).filter(n => map[n] === grp && hit(n)));
+  const others = sort(Object.keys(map).filter(n => map[n] === other && hit(n)));
+  const btn = (n, o) => `<button type="button" data-fser="${esc(n)}"${o ? ' class="ser-o"' : ""}>${esc(n)}<small>${n0(n)}</small>${o ? `<em>${SER_GL[other]}</em>` : ""}</button>`;
+  let h = "";
+  if (nq || form.serAll) {
+    const shown = mine.slice(0, 20);
+    if (form.serAll) h += `<span class="hint ser-oh">${SER_GL[grp]}のシリーズ</span>`;
+    h += shown.length ? shown.map(n => btn(n)).join("") : `<span class="hint">${SER_GL[grp]}のシリーズに${nq ? `「${esc(q)}」は` : ""}ありません</span>`;
+  }
+  if (form.serAll) {
+    if (others.length) h += `<span class="hint ser-oh">${SER_GL[other]}のシリーズ</span>` + others.slice(0, 30).map(n => btn(n, true)).join("");
+    else h += `<span class="hint ser-oh">${SER_GL[other]}のシリーズに${nq ? `「${esc(q)}」は` : ""}ありません</span>`;
+  } else if (others.length) h += `<button type="button" class="ser-all" data-fserall="1">${SER_GL[other]}のシリーズからも探す（${nq ? "一致 " : ""}${others.length}件）</button>`;
+  return h;
 }
 function songRowsHtml() {
   return (
@@ -3487,7 +3515,7 @@ function formHtml() {
             ? `<div class="serpick"><span class="lab s">${esc(f.series)}</span><button type="button" class="u-btn sm ghost" data-fserdel="1">変更する</button></div>`
             : f.serNew
               ? `<div class="sernew"><input id="f-sernew" autocomplete="off" placeholder="新しいシリーズ名" value="${esc(f.serNewName || "")}"><button type="button" data-fsercreate="1">作成</button><button type="button" class="u-btn sm ghost" data-fsernew="0">やめる</button></div>`
-              : `<div class="sernew"><input id="f-serq" type="search" autocomplete="off" placeholder="シリーズを検索（なければ空欄）"><button type="button" data-fsernew="1">＋ 新しく作る</button></div><div class="chips" id="fSerSug"></div>`
+              : `<div class="sernew"><input id="f-serq" type="search" autocomplete="off" placeholder="シリーズを検索（なければ空欄）"><button type="button" data-fsernew="1">＋ 新しく作る</button></div><div class="chips" id="fSerSug">${serSugForm("")}</div>`
         }
       </div>`,
     media: `<div class="field full" id="fMedia"><span>放送形態</span><div class="segc" role="group" aria-label="放送形態">${seg("data-fm", MEDIA, f.media)}</div></div>
@@ -3747,6 +3775,13 @@ function commitRename(cancel) {
     return;
   }
   const l = M(setKey);
+  /* シリーズのメインのジャンルも新しい名前に引き継ぐ */
+  if (setKey === "series" && master.seriesMain && master.seriesMain[from]) {
+    const sm = { ...master.seriesMain };
+    if (!sm[to]) sm[to] = sm[from];
+    delete sm[from];
+    master = { ...master, seriesMain: sm };
+  }
   const k = propagate(setKey, from, to);
   const nl = l.includes(to) ? l.filter(x => x !== from) : l.map(x => (x === from ? to : x));
   setMasterList(setKey, nl);
@@ -3759,6 +3794,7 @@ function settingsHtml() {
   const cnt = usedNames(setKey);
   const q = norm(setQ);
   const big = setKey === "series";
+  const smap = big ? seriesMainMap().map : {};
   const rows = list.map((n, i) => [n, i]).filter(([n]) => !q || norm(n).includes(q));
   return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
@@ -3771,6 +3807,7 @@ function settingsHtml() {
               ([n, i]) => `<div class="mrow2" data-mi="${i}">
       <span class="mgrip" data-mgrip="1" aria-hidden="true">⠿</span>
       ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="mname" data-mrename="${esc(n)}">${esc(n)}</button>`}
+      ${setKey === "series" ? `<button type="button" class="smain sm-${smap[n]}" data-sermain="${esc(n)}" title="メインのジャンル（押すと切り替え）">${SER_GL[smap[n]]}</button>` : ""}
       <small class="mcnt">${cnt[n] || 0}${setKey === "authors" || setKey === "groups" || setKey === "soloGroups" ? "本" : "作品"}</small>
       <button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button></div>`,
             )
@@ -4689,6 +4726,15 @@ function onSettingsClick(e) {
       refreshSettings(false);
       return true;
     }
+    const smb = t.closest("[data-sermain]");
+    if (smb) {
+      const n = smb.dataset.sermain;
+      const cur = seriesMainMap().map[n] || "a";
+      master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: cur === "a" ? "d" : "a" } };
+      saveMaster();
+      refreshSettings();
+      return true;
+    }
     const rn = t.closest("[data-mrename]");
     if (rn) {
       setRen = rn.dataset.mrename;
@@ -5076,6 +5122,12 @@ function onTitleFormClick(e) {
       redrawForm();
       return true;
     }
+    if (e.target.closest("[data-fserall]")) {
+      form.serAll = true;
+      const b = $("#fSerSug");
+      if (b) b.innerHTML = serSugForm($("#f-serq")?.value || "");
+      return true;
+    }
     const fse = e.target.closest("[data-fser]");
     if (fse) {
       readForm();
@@ -5109,6 +5161,11 @@ function onTitleFormClick(e) {
       }
       form.series = n;
       form.serNew = false;
+      /* 新しく作ったシリーズのメインのジャンルは、作った作品のジャンルにする */
+      if (!M("series").includes(n)) {
+        master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: serGroup(form.k) } };
+        saveMaster();
+      }
       redrawForm();
       toast(`シリーズ「${n}」を作りました`);
       return true;
