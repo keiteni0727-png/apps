@@ -1428,7 +1428,8 @@
       return { debt: false, amount: late.late && amt != null ? amt - (it.lateFee || 0) : amt, ...late };
     }
     const x = splitOf(it, a);
-    return { debt: true, revo: x.principal + x.interest, other: x.other, interest: x.interest, principal: x.principal, ...late };
+    const total = it.status === "paid" ? (it.paidAmount ?? it.amount) : it.amount;
+    return { debt: true, total, other: x.other, interest: x.interest, principal: x.principal, ...late };
   }
   /* 延滞分だけ、延滞手数料の欄と根拠の一行を出す */
   function feeHTML(P, m) {
@@ -1441,33 +1442,24 @@
       return `<div class="field"><label for="${P}-amt">${m.late ? "延滞している額" : amtLabel || "支払額"}</label><input type="number" id="${P}-amt" inputmode="numeric" value="${m.amount ?? ""}"></div>${
         m.late ? `${feeHTML(P, m)}<div class="sumline full"><span>支払額 合計</span><b class="num" id="${P}-sum"></b></div>` : ""
       }`;
-    return `<div class="field"><label for="${P}-revo">リボ支払額</label><input type="number" id="${P}-revo" inputmode="numeric" value="${m.revo || ""}"></div>
-  <div class="field"><label for="${P}-oth">それ以外の支払額</label><input type="number" id="${P}-oth" inputmode="numeric" value="${m.other || ""}" placeholder="0"></div>
-  <div class="field"><label for="${P}-in">うち利息（自動計算）</label><input type="number" id="${P}-in" inputmode="numeric" value="${m.interest ?? ""}"></div>
+    // 支払総額（カード会社の確定額）を先に入れ、内訳（元金・利息・それ以外・延滞手数料）を合わせていく
+    return `<div class="field full"><label for="${P}-tot">支払総額${m.late ? "（延滞手数料こみ）" : ""}</label><input type="number" id="${P}-tot" inputmode="numeric" value="${m.total ?? ""}"></div>
   <div class="field"><label for="${P}-pr">うち元金</label><input type="number" id="${P}-pr" inputmode="numeric" value="${m.principal ?? ""}"></div>
+  <div class="field"><label for="${P}-in">うち利息（自動計算）</label><input type="number" id="${P}-in" inputmode="numeric" value="${m.interest ?? ""}"></div>
+  <div class="field"><label for="${P}-oth">うちそれ以外</label><input type="number" id="${P}-oth" inputmode="numeric" value="${m.other || ""}" placeholder="0"></div>
   ${feeHTML(P, m)}
-  <div class="sumline full"><span>支払額 合計${m.late ? '<small class="note">（延滞手数料こみ）</small>' : ""}</span><b class="num" id="${P}-sum"></b></div>`;
+  <div class="sumline full"><span>リボ支払額（元金＋利息）</span><b class="num" id="${P}-revo"></b></div>
+  <div class="diffbox full" id="${P}-diff" hidden></div>`;
   }
   /* ctx: acc / date（利息の基準日）/ bal / onChange / dateEl、延滞分は due（元の期日）/ payDate / payDateEl / feeManual */
   function moneyWire(P, ctx) {
-    const debt = !!$(P + "-revo"),
+    const debt = !!$(P + "-tot"),
       feeEl = $(P + "-fee");
     if (!debt && !feeEl) return;
-    let manual = false,
-      feeManual = !!(ctx.feeManual && feeEl && feeEl.value !== "");
+    let feeManual = !!(ctx.feeManual && feeEl && feeEl.value !== "");
     const num = k => Number($(P + k)?.value) || 0;
-    const set = (k, v) => ($(P + k).value = Math.max(0, Math.round(v)));
-    // 元金定額の口座は元金を固定し、差分を利息（またはリボ支払額）に回す。それ以外は リボ支払額を固定し、元金と利息で差分を調整する
-    const isP = () => ctx.acc()?.repayType === "principal" && $(P + "-pr").value !== "";
-    const base = () => (debt ? num("-revo") + num("-oth") : num("-amt"));
-    const ps = () => {
-      const revo = debt ? num("-revo") : 0,
-        int = debt ? num("-in") : 0,
-        fee = feeEl ? num("-fee") : 0;
-      $(P + "-sum").innerHTML =
-        yen(base() + fee) + (debt && revo && int > revo ? ` <span class="warnt">利息がリボ支払額を超えています</span>` : "");
-      ctx.onChange && ctx.onChange();
-    };
+    // 延滞手数料の基準になる額（延滞手数料を除いた分）
+    const base = () => (debt ? num("-pr") + num("-in") + num("-oth") : num("-amt"));
     const fee = () => {
       if (!feeEl) return;
       const a = ctx.acc(),
@@ -1482,79 +1474,80 @@
           ? `口座の設定で「遅延損害金（年率）」を入れると自動計算します`
           : `${md(due)}の期日から <b>${daysBetween(due, pdt)}日</b> × ${yen(base())} × 年${rate}%${feeManual ? "（手入力中・空にすると自動）" : ""}`;
     };
-    const autoInt = () => {
-      const a = ctx.acc();
-      if (a) $(P + "-in").value = interestFor(ctx.bal() || 0, a.rate, ctx.date() || today());
-    };
-    /* 日付が変わったとき：利息を計算しなおす（元金定額なら元金はそのまま、それ以外はリボ支払額をそのまま） */
-    const calc = () => {
-      if (debt && !manual) {
-        autoInt();
-        if (isP()) set("-revo", num("-pr") + num("-in"));
-        else set("-pr", num("-revo") - num("-in"));
-      }
-      fee();
-      ps();
+    /* 内訳の合計と支払総額の差を出し、ボタン1回で合わせられるようにする */
+    const ps = () => {
+      if (debt) {
+        $(P + "-revo").textContent = yen(num("-pr") + num("-in"));
+        const box = $(P + "-diff"),
+          tot = $(P + "-tot").value === "" ? null : num("-tot"),
+          d = tot == null ? 0 : tot - (base() + (feeEl ? num("-fee") : 0));
+        box.hidden = !d;
+        if (d) {
+          const btn = (k, l) => `<button type="button" data-fix="${k}">${l}に入れる</button>`;
+          box.innerHTML = `<div class="dmsg">内訳が支払総額より <b class="num">${yen(Math.abs(d))}</b> ${d > 0 ? "足りません" : "多いです"}</div>
+            <div class="dbtns">${btn("-in", "利息")}${btn("-pr", "元金")}${btn("-oth", "それ以外")}</div>`;
+          box.querySelectorAll("[data-fix]").forEach(
+            b =>
+              (b.onclick = () => {
+                const k = b.dataset.fix,
+                  v = num(k) + d;
+                if (v < 0) return toast("その欄だけでは合わせられません（マイナスになります）");
+                $(P + k).value = v;
+                if (k === "-in") $(P + "-in").dataset.manual = "1";
+                ps();
+              }),
+          );
+        }
+      } else
+        $(P + "-sum").innerHTML = yen(base() + (feeEl ? num("-fee") : 0));
+      ctx.onChange && ctx.onChange();
     };
     const feePs = () => {
       fee();
       ps();
     };
+    /* 日付が変わったとき：利息を手で直していなければ計算しなおす */
+    const calc = () => {
+      const a = ctx.acc();
+      if (debt && a && !$(P + "-in").dataset.manual)
+        $(P + "-in").value = interestFor(ctx.bal() || 0, a.rate, ctx.date() || today());
+      feePs();
+    };
     if (debt) {
-      /* リボ支払額を変えた：元金定額なら差分は利息へ、それ以外は利息はそのままで差分は元金へ */
-      $(P + "-revo").addEventListener("input", () => {
-        const revo = num("-revo");
-        if (isP()) {
-          if (revo >= num("-pr")) set("-in", revo - num("-pr"));
-          else {
-            set("-pr", revo);
-            set("-in", 0);
-          }
-          manual = true;
-        } else {
-          if (!manual) autoInt();
-          set("-pr", revo - num("-in"));
-        }
-        feePs();
-      });
-      $(P + "-oth").addEventListener("input", feePs);
-      /* 利息を変えた：元金定額ならリボ支払額を合わせる、それ以外は差分を元金へ */
+      ["-tot", "-pr", "-oth"].forEach(k => $(P + k).addEventListener("input", feePs));
       $(P + "-in").addEventListener("input", () => {
-        manual = true;
-        if (isP()) set("-revo", num("-pr") + num("-in"));
-        else set("-pr", num("-revo") - num("-in"));
-        feePs();
-      });
-      /* 元金を変えた：元金定額ならリボ支払額を合わせる、それ以外は差分を利息へ */
-      $(P + "-pr").addEventListener("input", () => {
-        if (ctx.acc()?.repayType === "principal") set("-revo", num("-pr") + num("-in"));
-        else {
-          manual = true;
-          set("-in", num("-revo") - num("-pr"));
-        }
+        $(P + "-in").dataset.manual = "1";
         feePs();
       });
     } else $(P + "-amt").addEventListener("input", feePs);
     if (feeEl)
       feeEl.addEventListener("input", () => {
         feeManual = feeEl.value !== "";
-        feePs();
+        ps();
       });
     ctx.dateEl && ctx.dateEl.addEventListener("change", calc);
     ctx.payDateEl && ctx.payDateEl.addEventListener("change", feePs);
     if (debt && $(P + "-in").value === "") calc();
     else feePs();
   }
+  /* 保存前の確認：内訳が支払総額と合わなければ、1回目はボタンの文字を変えて止める */
+  function moneyOk(P, btn) {
+    const box = $(P + "-diff");
+    if (!box || box.hidden) return true;
+    if (armed(btn, "差分があります。このまま保存")) return true;
+    box.scrollIntoView({ block: "center", behavior: "smooth" });
+    return false;
+  }
   function moneyRead(P) {
     const feeEl = $(P + "-fee"),
       fee = feeEl ? Number(feeEl.value) || 0 : 0,
       fx = feeEl ? { lateFee: fee, lateFeeManual: !!feeEl.dataset.manual } : {};
-    if ($(P + "-revo")) {
-      const revo = Number($(P + "-revo").value) || 0,
-        other = Number($(P + "-oth").value) || 0,
-        interest = numOrNull($(P + "-in").value) ?? 0,
-        principal = numOrNull($(P + "-pr").value) ?? Math.max(0, revo - interest);
-      return { amount: revo + other + fee, other, interest, principal, ...fx };
+    if ($(P + "-tot")) {
+      const other = Number($(P + "-oth").value) || 0,
+        interest = Number($(P + "-in").value) || 0,
+        principal = Number($(P + "-pr").value) || 0,
+        tot = numOrNull($(P + "-tot").value);
+      return { amount: tot ?? principal + interest + other + fee, other, interest, principal, ...fx };
     }
     return { amount: (numOrNull($(P + "-amt").value) || 0) + fee, ...fx };
   }
@@ -1594,8 +1587,8 @@
           }),
       );
       if (debt) payAfter(ctx);
-      $("p-save").onclick = () => paySave(ctx);
-      $("p-ok").onclick = () => payDone(ctx);
+      $("p-save").onclick = e => moneyOk("p", e.currentTarget) && paySave(ctx);
+      $("p-ok").onclick = e => moneyOk("p", e.currentTarget) && payDone(ctx);
       $("p-defer").onclick = () => openDefer(id);
       $("p-del").onclick = e => armed(e.target, "もう一度押すと削除") && deleteItem(id);
     });
@@ -1966,20 +1959,20 @@
         let m;
         if (isDebt(a)) {
           const int = interestFor(a.balance || 0, a.rate, $("e-date").value || today());
-          const revo = a.repayType === "principal" ? (a.principalPay || 0) + int : a.payment || 0;
+          const pr = Math.max(0, a.repayType === "principal" ? a.principalPay || 0 : (a.payment || 0) - int);
           m = {
             debt: true,
-            revo: cur.amount && !$("e-revo") ? cur.amount : revo,
+            total: cur.amount && !$("e-tot") ? cur.amount : pr + int + (a.extra || 0),
             other: a.extra || 0,
-            interest: null,
-            principal: null,
+            interest: int,
+            principal: pr,
             ...lt,
           };
         } else m = { debt: false, amount: cur.amount || a?.payment || null, ...lt };
         mountMoney(m);
       });
       if (f) $("e-del").onclick = e => armed(e.target, "もう一度押すと削除") && deleteItem(it.id);
-      $("e-save").onclick = () => saveItem(ctx);
+      $("e-save").onclick = e => moneyOk("e", e.currentTarget) && saveItem(ctx);
     });
   }
   function editItemHTML({ f, it }) {

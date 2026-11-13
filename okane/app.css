@@ -1329,3 +1329,9 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
 }
 /* お金の流れ：最後の行の角を箱の角に合わせる */
 .pay .panel:has(>#cFlow){overflow:hidden}
+/* 支払総額と内訳の差分 */
+.pay .diffbox{background:var(--u-warn2);border-left:3px solid var(--u-danger);border-radius:var(--u-r);padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.pay .diffbox .dmsg b{color:var(--u-danger);font-size:15px}
+.pay .diffbox .dbtns{display:flex;gap:6px;flex-wrap:wrap}
+.pay .diffbox .dbtns button{flex:1 1 0;min-width:0;padding:7px 6px;font-size:12px;white-space:nowrap}
+.pay .diffbox[hidden]{display:none}
