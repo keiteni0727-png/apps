@@ -426,6 +426,11 @@ h3 input.inl{font-size:18px;font-weight:800}
 .hcur{display:flex;align-items:center;gap:7px;font-size:17px;font-weight:900;white-space:nowrap;min-width:0}
 .hcur .mdot{width:10px;height:10px}
 .hcur .ytmark{color:var(--yt)}
+.hsub{flex:none;margin-left:4px;padding:3px 9px;border-radius:999px;font-size:12.5px;font-weight:700;line-height:1.3;color:var(--u-ink);background:var(--u-chip);border:1px solid var(--u-line)}
+.hsub.a{color:var(--anime);border-color:color-mix(in srgb,var(--anime) 45%,transparent)}
+.hsub.d{color:var(--drama);border-color:color-mix(in srgb,var(--drama) 45%,transparent)}
+.hsub.m{color:var(--movie);border-color:color-mix(in srgb,var(--movie) 45%,transparent)}
+.hsub.s{color:var(--stream);border-color:color-mix(in srgb,var(--stream) 45%,transparent)}
 .dscrim{display:none}
 @media (max-width:899px){
   .hbar .logo{display:none}
@@ -2807,6 +2812,14 @@ function setMain(html) {
   }
   main.innerHTML = m ? m[0] + `<div id="results">${html.slice(m.index + m[0].length)}</div>` : html;
 }
+/* 画面上の名前の横に、左メニューで選んでいる下の項目（映画・アニメ映画など）をラベルで出す。「すべて」のときは出さない */
+function hSubLab() {
+  const m = state.mode;
+  if (m === "a" || m === "d") return state.type.length === 1 ? (MEDIA.find(([md]) => md === state.type[0]) || [])[1] || "" : "";
+  if (m === "m") return { a: "アニメ映画", d: "実写映画" }[state.kind] || "";
+  if (m === "s") return { a: "アニメ", x: "ドラマ・バラエティ" }[state.kind] || "";
+  return "";
+}
 function render() {
   const yt = state.mode === "yt";
   /* YouTubeは「すべて」をなくし、投稿者ごとのタブだけ。今の投稿者がいなければ先頭にする */
@@ -2815,7 +2828,7 @@ function render() {
   const hc = $("#hcur");
   if (hc)
     hc.innerHTML =
-      `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>`;
+      `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>${hSubLab() ? `<span class="hsub ${state.mode}">${esc(hSubLab())}</span>` : ""}`;
   renderTabbar();
   renderVbar();
   renderSidebar();
