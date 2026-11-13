@@ -1125,6 +1125,14 @@ const SORTS = [
   ["time", "曜日・時間順"],
   ["title", "タイトル順"],
 ];
+/* ライブラリの見出しの分け方 */
+const GROUPS = [
+  ["cour", "クール別"],
+  ["year", "年別"],
+  ["month", "月別"],
+  ["series", "シリーズ別"],
+  ["none", "分けない"],
+];
 const K_UI = "adb.v3.ui",
   K_LOCAL = "adb.v3.local";
 const ls = {
@@ -1175,6 +1183,7 @@ const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
 ["sf", "era", "cour", "series", "type"].forEach(k => (state[k] = arrOf(state[k])));
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
+if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
 state.fOpen = "";
 /* 前の版で「アニメ／ドラマの番組表」を開いていたら、新しい「番組表」メニューへ */
 if ((state.mode === "a" || state.mode === "d") && state.view === "week") state.mode = "w";
@@ -1208,6 +1217,7 @@ const saveUI = () =>
     courY: state.courY,
     series: state.series,
     sort: state.sort,
+    grp: state.grp,
   });
 /* ---------- 保存したフィルタ（アニメ・ドラマで別々。マスタに保存するので端末をまたいで同じ） ---------- */
 const SVK = ["sf", "era", "type", "cour", "series"];
@@ -2461,6 +2471,12 @@ function filtered() {
    クール未設定の作品（過去作・映画など）は放送年ごと、日付もなければ「時期不明」 */
 const SI = { 冬: 0, 春: 1, 夏: 2, 秋: 3 };
 function groupKeysOf(i) {
+  const g = state.grp;
+  const f = String(i.from || "");
+  if (g === "none") return ["*"];
+  if (g === "year") return [yearOf(i) ? `Y${yearOf(i)}` : "?"];
+  if (g === "month") return [/^\d{4}-\d{2}/.test(f) ? `M${f.slice(0, 7)}` : "?"];
+  if (g === "series") return [i.series ? `S${i.series}` : "S"];
   let cs = coursOf(i);
   if (state.cour.length) cs = cs.filter(c => state.cour.includes(c));
   if (cs.length) return cs;
@@ -2468,9 +2484,27 @@ function groupKeysOf(i) {
   return [y ? `Y${y}` : "?"];
 }
 const groupRank = k =>
-  k === ALLYEAR ? 1e9 : k === "?" ? -1e9 : k[0] === "Y" ? +k.slice(1) * 4 - 0.5 : +k.slice(0, 4) * 4 + SI[k.slice(4)];
-const groupTitle = k =>
   k === ALLYEAR
+    ? 1e9
+    : k === "?"
+      ? -1e9
+      : k[0] === "Y"
+        ? +k.slice(1) * 4 - 0.5
+        : k[0] === "M"
+          ? +k.slice(1, 5) * 12 + +k.slice(6, 8)
+          : +k.slice(0, 4) * 4 + SI[k.slice(4)];
+const groupTitle = k =>
+  k === "*"
+    ? "すべて"
+    : k[0] === "S"
+      ? k.length > 1
+        ? esc(k.slice(1))
+        : "シリーズなし"
+      : k[0] === "M"
+        ? `${k.slice(1, 5)}年 ${+k.slice(6, 8)}月`
+        : state.grp === "year" && k[0] === "Y"
+          ? `${k.slice(1)}年`
+          : k === ALLYEAR
     ? "通年（クールなし）"
     : k === "?"
       ? "時期不明"
@@ -2498,6 +2532,7 @@ function groupedHtml(list) {
   );
   const asc = state.sort === "old";
   const keys = [...g.keys()].sort((a, b) => {
+    if (state.grp === "series") return a === "S" ? 1 : b === "S" ? -1 : a.localeCompare(b, "ja");
     const x = groupRank(a),
       y = groupRank(b);
     if (a === "?" || b === "?") return a === "?" ? 1 : -1;
@@ -2508,6 +2543,7 @@ function groupedHtml(list) {
     out = "",
     rest = 0;
   const ck = keys.map(k => "tv:" + k);
+  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i, false)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
   for (const k of keys) {
     const l = g.get(k);
     const key = "tv:" + k;
@@ -2554,7 +2590,7 @@ function fBtnLab(k) {
     if (cur) return ["★" + cur.name, true];
     return many("その他", state.type, v => (TYPES.find(t => t[0] === v) || [, v])[1]);
   }
-  return ["", state.sort !== "new"];
+  return ["", state.sort !== "new" || state.grp !== "cour"];
 }
 function fRowHtml(keys) {
   const btns = keys
@@ -2571,7 +2607,7 @@ function fRowHtml(keys) {
 function fPopHtml(panels) {
   const k = state.fOpen;
   if (!panels[k]) return "";
-  const T = { sf: "視聴", vod: "配信サイト", time: "時期", series: "シリーズ", type: "種別", sv: "保存したフィルタ", etc: "その他", sort: "並び順" };
+  const T = { sf: "視聴", vod: "配信サイト", time: "時期", series: "シリーズ", type: "種別", sv: "保存したフィルタ", etc: "その他", sort: "並び順・分け方" };
   return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-fpop="${k}">完了</button></div>${panels[k]}</div>`;
 }
 function vodPanelHtml() {
@@ -2605,7 +2641,8 @@ function renderList() {
       return n || state.sf.includes(v) ? chipBtn("data-sf", v, state.sf.includes(v), stLabel(v), n, "s-" + v) : "";
     })
     .join("")}</div></div>`;
-  const sortHtml = `<div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div>`;
+  const sortHtml = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
+    <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${GROUPS.map(([v, l]) => `<button type="button" role="radio" data-grp="${v}" aria-checked="${state.grp === v}" aria-pressed="${state.grp === v}">${state.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
   const anyF = act.length || state.vod;
   const panels = {
     sf: sfHtml,
@@ -4953,6 +4990,15 @@ function onFilterClick(e) {
     close();
     render();
     scrollTo(0, 0);
+    return true;
+  }
+  const gp = e.target.closest("[data-grp]");
+  if (gp) {
+    state.grp = gp.dataset.grp;
+    state.limit = 200;
+    state.fOpen = "";
+    saveUI();
+    render();
     return true;
   }
   const so = e.target.closest("[data-sort]");
