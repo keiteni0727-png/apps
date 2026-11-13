@@ -2660,7 +2660,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const head = { tv: "放送", movie: "上映", ova: "発売", stream: "配信" }[md] || "放送";
   const perLab = mv ? "公開日" : md === "ova" ? "発売期間" : "期間";
   const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
-    ${ns ? "" : `<div class="ibig"><span data-jump="f-time">${when ? esc(when) : nofHas(it, "time") ? nn("時間なし") : un("曜日・時間 未設定")}</span>${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
+    ${ns || (!when && nofHas(it, "time") && !cour) ? "" : `<div class="ibig">${!when && nofHas(it, "time") ? "" : `<span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>`}${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
     <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
     <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${stv}</span>` : nofHas(it, md === "stream" ? "plat" : md === "tv" ? "st" : "vods") ? nn({ tv: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
   const songs = songRows
