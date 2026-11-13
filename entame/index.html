@@ -836,6 +836,23 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .mlist{border:1px solid var(--u-line);border-radius:var(--u-rl);overflow:hidden;max-height:52vh;overflow-y:auto;overscroll-behavior:none}
 .mrow2{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;background:var(--u-surface);gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--u-line)}
 .mrow2:first-child{border-top:0}
+.sbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.sseg{display:flex;gap:2px;background:var(--u-chip);border-radius:9px;padding:3px}
+.sseg button{border:0;background:none;color:var(--u-sub);border-radius:7px;padding:5px 10px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap}
+.sseg button small{font-family:var(--u-num);font-size:10.5px;font-weight:600}
+.sseg button[aria-checked="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.slist{display:grid;grid-template-columns:1fr;background:var(--u-line);gap:1px}
+.srow{display:flex;align-items:center;gap:6px;background:var(--u-surface);padding:3px 8px;min-width:0}
+.srow .sname{flex:1;min-width:0;border:0;background:none;text-align:left;font:inherit;font-size:13.5px;font-weight:700;color:var(--u-ink);padding:5px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .sname:hover{text-decoration:underline}
+.srow .mren{flex:1;min-width:0}
+.srow.zero .sname,.srow.zero .mcnt{color:var(--u-sub);opacity:.6}
+.srow .smain{margin:0;padding:0 6px;font-size:10.5px}
+.srow .sren{flex:none;border:0;background:none;color:var(--u-sub);font-size:14px;padding:3px 5px;border-radius:6px}
+.srow .sren:hover{background:var(--u-chip)}
+.srow .delsm{padding:2px 7px;font-size:11px}
+@media (min-width:900px){.slist{grid-template-columns:repeat(2,minmax(0,1fr))}.sheet.setsheet:has(.slist){max-width:900px}}
+@media (max-width:899px){.sbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.sbar::-webkit-scrollbar{display:none}.sseg{flex:none}}
 .mname{border:0;background:none;text-align:left;font:inherit;font-size:14px;font-weight:700;color:var(--u-ink);padding:4px 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mren{border:1.5px solid var(--u-ink);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:5px 8px;font:inherit;font-size:14px;min-width:0}
 .mcnt{color:var(--u-sub);font-family:var(--u-num);font-size:11px;white-space:nowrap}
@@ -3789,7 +3806,44 @@ function commitRename(cancel) {
     `「${from}」を「${to}」に変えました${k ? `（${k}件）` : ""}${l.includes(to) ? "・同じ名前とまとめました" : ""}`,
   );
 }
+/* 設定のシリーズ：数が多いので並び替えはせず、ジャンルで分けて五十音順／作品数順。名前を押すとその作品一覧、✎で名前の変更 */
+let setSerG = "all",
+  setSerSort = "kana";
+function seriesSettingsHtml() {
+  const cnt = usedNames("series");
+  const smap = seriesMainMap().map;
+  const q = norm(setQ);
+  const all = M("series");
+  const nG = g => all.filter(n => g === "all" || smap[n] === g).length;
+  let rows = all.filter(n => (setSerG === "all" || smap[n] === setSerG) && (!q || norm(n).includes(q)));
+  rows.sort(setSerSort === "count" ? (a, b) => (cnt[b] || 0) - (cnt[a] || 0) || a.localeCompare(b, "ja") : (a, b) => a.localeCompare(b, "ja"));
+  const seg = (attr, cur, opts) => `<div class="sseg" role="radiogroup">${opts.map(([v, l]) => `<button type="button" role="radio" ${attr}="${v}" aria-checked="${cur === v}">${l}</button>`).join("")}</div>`;
+  return `<p class="hint" style="margin:8px 0">名前：作品一覧を開く　✎：名前を変更（作品もまとめて変わる）　ラベル：ジャンルを切り替え</p>
+    <div class="sbar">${seg("data-serg", setSerG, [["all", `すべて <small>${nG("all")}</small>`], ["a", `アニメ <small>${nG("a")}</small>`], ["d", `ドラマ・実写 <small>${nG("d")}</small>`]])}${seg("data-sersort", setSerSort, [["kana", "五十音順"], ["count", "作品数順"]])}</div>
+    <input id="mq" type="search" class="mq" placeholder="名前で絞り込み" value="${esc(setQ)}" autocomplete="off">
+    <div class="mlist slist">${
+      rows.length
+        ? rows
+            .map(n => {
+              const c = cnt[n] || 0;
+              return `<div class="srow${c ? "" : " zero"}">
+      ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="sname" data-seropen="${esc(n)}" title="作品一覧を開く">${esc(n)}</button>`}
+      <small class="mcnt" title="${c}作品">${c}</small>
+      <button type="button" class="smain sm-${smap[n]}" data-sermain="${esc(n)}" title="メインのジャンル（押すと切り替え）">${smap[n] === "a" ? "アニメ" : "ドラマ"}</button>
+      <button type="button" class="sren" data-mrename="${esc(n)}" aria-label="${esc(n)}の名前を変更">✎</button>
+      <button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button></div>`;
+            })
+            .join("")
+        : `<p class="hint" style="padding:10px">${q ? "一致するシリーズはありません" : "まだありません"}</p>`
+    }</div>`;
+}
 function settingsHtml() {
+  if (setKey === "series")
+    return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
+    <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
+    ${seriesSettingsHtml()}
+    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="追加するシリーズ名"><button type="button" data-madd="1">＋ 追加</button></div>
+    ${accountHtml()}`;
   const list = M(setKey);
   const cnt = usedNames(setKey);
   const q = norm(setQ);
@@ -3879,9 +3933,14 @@ function refreshSettings(keepScroll = true) {
   if (!el || mDrag) return;
   const sh = el.closest(".sheet");
   const y = sh.scrollTop;
+  const ly = el.querySelector(".mlist")?.scrollTop || 0;
   const f = document.activeElement && document.activeElement.id;
   el.innerHTML = settingsHtml();
-  if (keepScroll) sh.scrollTop = y;
+  if (keepScroll) {
+    sh.scrollTop = y;
+    const l = el.querySelector(".mlist");
+    if (l) l.scrollTop = ly;
+  }
   if (f === "mq") {
     const q = $("#mq");
     q.focus();
@@ -4724,6 +4783,29 @@ function onSettingsClick(e) {
       setDel = null;
       setRen = null;
       refreshSettings(false);
+      return true;
+    }
+    const sgb = t.closest("[data-serg]");
+    if (sgb) {
+      setSerG = sgb.dataset.serg;
+      refreshSettings(false);
+      return true;
+    }
+    const ssb = t.closest("[data-sersort]");
+    if (ssb) {
+      setSerSort = ssb.dataset.sersort;
+      refreshSettings(false);
+      return true;
+    }
+    const sob = t.closest("[data-seropen]");
+    if (sob) {
+      const n = sob.dataset.seropen;
+      const g = seriesMainMap().map[n];
+      close();
+      if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
+      Object.assign(state, { series: [n], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200, view: "list" });
+      render();
+      scrollTo(0, 0);
       return true;
     }
     const smb = t.closest("[data-sermain]");
