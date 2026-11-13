@@ -1,5 +1,6 @@
 /* 色・書体・角丸・土台・左メニューは u-base.css（アプリ共通）。ここはアクセント色と、このアプリだけの色 */
-/* Layout: 番組表（TV guide）— sticky channel bar, weekday rows of program slots, bottom sheet detail */
+:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--stream:#0f8a8a;--reality:#d2457a;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090;--sg-op:#2f6fd1;--sg-ed:#7a4fd0;--sg-th:#1f8a6d;--sg-in:#c46a12}
+/* ダークモード */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8;color-scheme:dark}
 }
@@ -114,7 +115,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .epset{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
 .epset button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700}
 .loading{padding:60px 16px;text-align:center;color:var(--u-sub)}
-/* clock */
+/* 未視聴あり・未入力ありのスイッチ */
 .unsw{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:5px 6px 5px 12px;font:inherit;font-size:12.5px;font-weight:700;white-space:nowrap;align-self:center}
 .unsw small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);font-weight:600}
 .unsw .tr{position:relative;width:32px;height:19px;border-radius:10px;background:var(--u-strong);transition:background .15s}
@@ -122,7 +123,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .unsw.on{border-color:var(--st-now);color:var(--st-now)}
 .unsw.on .tr{background:var(--st-now)}
 .unsw.on .tr i{left:15px}
-/* library filter */
+/* ライブラリ：検索・絞り込み */
 .ftools{display:flex;gap:8px;padding-block:14px 10px}
 .ftools input{flex:1;min-width:0;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:9px 10px;font:inherit;font-size:14px}
 .fgroup{margin-top:16px}
@@ -134,7 +135,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .ffoot .primary{flex:1}
 /* ボタンの大きさ・形は共通部品（u-btn）。枠線だけのボタンは、下の色を透かす */
 .ghost{background:transparent;color:inherit}
-/* add form: phone = full-height sheet, PC = centered dialog with two columns */
+/* 詳細・編集画面のシート（画面の真ん中に出す） */
 .sheet,.sheet.form{top:50%;bottom:auto;left:50%;right:auto;width:calc(100% - 24px);max-width:720px;transform:translate(-50%,-50%);max-height:calc(100% - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding-bottom:0;animation:none;border-radius:16px;box-shadow:var(--u-shadow)}
 .sheet:not(.form){max-width:640px}
 .fgrid{display:grid;gap:10px;margin-top:6px}
@@ -152,7 +153,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
   .ffoot{justify-content:flex-end;padding-block:10px 12px}
   .ffoot .primary{flex:0 0 auto;padding-inline:28px}
 }
-/* compact program slots */
+/* 一覧の行を詰めて表示 */
 .time .kind{font-size:9.5px;padding:1px 4px}
 .lab{font-size:10.5px;line-height:1.5;padding:0 6px;border-radius:4px;border:1px solid var(--u-line);color:var(--u-sub);white-space:nowrap}
 .lab.v{border-color:transparent;background:var(--u-chip);color:var(--u-ink)}
@@ -164,13 +165,12 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .labs{display:flex;flex-wrap:wrap;gap:4px}
 .lab.s{border-color:var(--accent);color:var(--accent);font-weight:700}
 .lab.c{border-color:transparent;display:inline-flex;align-items:baseline;gap:3px;font-family:var(--u-f);font-weight:700;font-size:10.5px;padding:0 6px;border-radius:4px;background:color-mix(in srgb,var(--u-sub) 12%,transparent);color:var(--u-sub)}
-/* watched: clearly marked */
+/* 視聴済みの話・作品をはっきり示す */
 .ep.seen{background:color-mix(in srgb,var(--u-ok) 11%,transparent)}
 .ep.seen .epn{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--u-ok) 70%,transparent)}
 .row.done{background:color-mix(in srgb,var(--st-done) 7%,transparent);box-shadow:inset 4px 0 0 var(--st-done)}
 .row.done .ttl strong{color:var(--u-sub)}
-/* songs */
-:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--stream:#0f8a8a;--reality:#d2457a;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090;--sg-op:#2f6fd1;--sg-ed:#7a4fd0;--sg-th:#1f8a6d;--sg-in:#c46a12}
+/* 主題歌（OP・ED・主題歌・挿入歌の色分け） */
 .t-op{--sgc:var(--sg-op)}.t-ed{--sgc:var(--sg-ed)}.t-th{--sgc:var(--sg-th)}.t-in{--sgc:var(--sg-in)}
 .sgh .sgn{font-size:14px;font-weight:800;color:var(--sgc);letter-spacing:.04em}
 .sgh small{font-size:11.5px;color:var(--u-sub);font-weight:600}
@@ -218,11 +218,11 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .field .chips{padding-top:0}
 .field .chips button{padding:5px 10px;font-size:13px}
 /* 小さいボタン */
-/* library cour groups */
+/* ライブラリ：クールなどの見出し */
 .cgroup{margin-top:18px}
 .ghd small{font-family:var(--u-f);font-size:11.5px;color:var(--u-sub);font-weight:500}
 .ghd span{margin-left:auto;font-family:var(--u-f);font-size:12px;color:var(--u-sub)}
-/* edit form sections */
+/* 編集画面の区切り */
 .fsec{border:1px solid var(--u-line);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--u-surface)}
 .fsec h4{margin:0 0 8px;font-size:13px;letter-spacing:.04em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .fsec h4 .hint{font-weight:400}
@@ -239,7 +239,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
   .fsec{padding:12px 16px}
 }
 .links:empty{display:none}
-/* subtitle paste */
+/* 各話リストの貼り付け */
 .spaste{border:1px solid var(--u-line);border-radius:10px;padding:12px;background:var(--u-surface)}
 .spaste textarea{width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:8px;padding:10px;font:inherit;font-size:13px;line-height:1.5;resize:vertical;min-height:140px}
 .sp-sum{margin:0 0 8px;font-size:13.5px}
@@ -260,8 +260,7 @@ html,body{overscroll-behavior:none}
   .sheet input,.sheet select,.sheet textarea,.ftools input{font-size:14px!important}
   .sheet input::placeholder,.sheet textarea::placeholder{font-size:12.5px}
 }
-/* mode switch */
-/* youtube */
+/* YouTube */
 .kind.yauth{background:var(--yt)}
 .seg.yseg{grid-template-columns:repeat(4,1fr)}
 .tick.yplay{text-decoration:none;color:var(--u-sub)}
@@ -278,7 +277,7 @@ html,body{overscroll-behavior:none}
 .ystep span{font-size:14px}
 .ystep b{font-family:var(--u-num);font-size:20px}
 .field input.chipin{border:1px dashed var(--u-line);background:transparent;border-radius:999px;padding:6px 12px;width:150px}
-/* collapsible groups */
+/* 見出しの開閉 */
 .gtog{display:flex;gap:6px;border:0;background:transparent;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;align-items:center}
 .gtog .chev{display:inline-grid;place-items:center;width:26px;height:26px;flex:none;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;font-size:11px;color:var(--u-ink);box-shadow:0 1px 2px rgba(16,24,40,.08);transition:transform .15s}
 .gtog[aria-expanded="false"] .chev{background:var(--u-chip)}
@@ -287,12 +286,11 @@ html,body{overscroll-behavior:none}
 .gbulk{display:flex;gap:12px;justify-content:flex-end;margin:4px 0 -8px}
 .count .gbulk{margin:0 0 0 auto}
 .gbulk button{border:0;background:transparent;color:var(--accent);font-size:12.5px;font-weight:700;padding:2px 0}
-/* back to top */
-/* youtube status picker */
+/* 削除ボタン・YouTubeの詳細 */
 .delsm{margin-left:auto;border:0;background:transparent;color:var(--u-sub);font-size:12px;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
 .delsm.armed{color:var(--u-accent);font-weight:700}
 #ytIn .links,#sheetIn .links{display:flex;justify-content:flex-end;margin-top:20px}
-/* inline filter panel */
+/* 詳細の項目（押すと編集） */
 .edl dt[data-jump],.edl dd[data-jump],.edl dd[data-inl]{cursor:pointer}
 .edl dd{position:relative;padding-right:22px;border-radius:6px}
 .edl dd .pen{position:absolute;right:2px;top:1px;color:var(--u-sub);font-size:12px;opacity:.45}
@@ -352,7 +350,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
   .er .er-d{grid-column:2}
   .er .del{grid-column:3;grid-row:1}
 }
-/* season colours */
+/* 季節の色（放送クール） */
 .lab.c b{font-family:var(--u-num);font-weight:500;font-size:10px;opacity:.8}
 .lab.c.au{background:color-mix(in srgb,var(--au) 14%,transparent);color:var(--au)}
 .lab.c.wi{background:color-mix(in srgb,var(--wi) 14%,transparent);color:var(--wi)}
@@ -361,7 +359,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
 .sea.su{color:var(--su)}
 .sea.au{color:var(--au)}
 .sea.wi{color:var(--wi)}
-/* status pill placement: right column on wide screens, inline on phones */
+/* 視聴ステータスの位置：PCは右端、スマホはタイトルの下 */
 .pmob{display:none}
 @media (max-width:600px){
   .pwide{display:none}
@@ -411,7 +409,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
 .sg .del{border:0;background:transparent;color:var(--u-danger);font-weight:700;font-size:12px;padding:4px 2px}
 .sgh{display:flex;align-items:center;gap:8px;min-height:26px}
 .sgadd{border:1px solid color-mix(in srgb,var(--sgc) 45%,transparent);background:color-mix(in srgb,var(--sgc) 8%,transparent);color:var(--sgc);border-radius:999px;font:inherit;font-weight:700;padding:3px 10px;font-size:12px}
-/* episode editor */
+/* 話数の編集 */
 .eped{border:1px solid var(--u-line);border-radius:10px;overflow:hidden}
 .er{display:grid;grid-template-columns:64px 1fr 132px 30px;gap:6px;align-items:center;padding:6px 8px;border-top:1px solid var(--u-line)}
 .er:first-child{border-top:0}
@@ -434,7 +432,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .edfoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .edfoot input{width:64px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:8px;padding:7px 8px;font:inherit;font-size:14px}
 .edfoot button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700}
-/* cour picker */
+/* 放送クールの選択 */
 .cours{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;align-items:center}
 .cours .tag{border:0;background:var(--u-chip);border-radius:999px;padding:5px 10px;font-size:13px;font-weight:700}
 .cours .tag::after{content:" ✕";color:var(--u-sub);font-weight:400}
@@ -446,11 +444,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .yr input{width:20px;height:20px;accent-color:var(--u-accent)}
 /* ===== 3アプリ共通：部品のそろえ ===== */
 :focus-visible{outline:2px solid var(--u-accent);outline-offset:2px}
-/* segmented control = shared track style */
-/* surfaces */
+/* 枠の角丸をそろえる */
 .slots,.banner,.fsdrop,.fsec,.spaste,.eps,.eped{border-radius:var(--u-rl)}
 .ftools input,.field input,.field select{border-radius:var(--u-r)}
-/* buttons */
+/* ボタンの角丸をそろえる */
 .epset button,.edfoot button,.sernew button{border-radius:var(--u-r)}
 /* 主題歌：音楽アプリにダウンロード済みかどうか */
 .dlb{flex:none;border:1px solid var(--u-line);background:transparent;color:var(--u-sub);border-radius:999px;padding:1px 8px;font:inherit;font-size:11px;font-weight:700;line-height:1.6;white-space:nowrap;margin-top:1px}
@@ -514,7 +511,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .svrow .svbtn{padding:6px 8px}
 .svrow .cond{flex-basis:100%;font-size:11px;color:var(--u-sub);margin:-2px 0 2px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .svlist .done{display:flex;justify-content:flex-end}
-/* バックアップ・ログイン */
+/* ログアウト */
 .bkbox{border-top:1px solid var(--u-line);margin-top:14px;padding-top:12px;flex:none}
 .bkrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .fsdrop select#courY{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:3px 8px;font:inherit;font-size:12px}

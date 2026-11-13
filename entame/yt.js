@@ -325,7 +325,7 @@ function commitInline(i, cancel) {
   if (ytOpen) ytSave(ytOpen, { [key]: v }, "保存しました");
   done();
 }
-/* detail */
+/* ---------- 詳細 ---------- */
 let ytOpen = null;
 function ytDetailHtml(x) {
   const pw = +x.pw || 0,
@@ -402,7 +402,7 @@ async function ytSave(id, patch, msg) {
   }
 }
 
-/* add / edit */
+/* ---------- 追加・編集 ---------- */
 let yform = null;
 const ONLY_Y = { yfAuthor: "投稿者", yfGenre: "ジャンル" };
 function ytFormHtml() {

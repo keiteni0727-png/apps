@@ -1,6 +1,6 @@
-/* ---------- detail ---------- */
-let openId = null,
-  epEdit = null; // epEdit: draft episode list while editing
+/* ===================== 作品の詳細：基本情報・話数（視聴チェック・各話リストの貼り付け・話数の編集・〇〇編） ===================== */
+let openId = null, // 開いている作品
+  epEdit = null; // 話数の編集中の下書き
 /* 貼り付けた各話リストから「話数 → サブタイトル」を読み取る */
 const KN = { 〇: 0, 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
 function kanjiNum(t) {

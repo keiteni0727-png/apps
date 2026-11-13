@@ -1,4 +1,4 @@
-/* ---------- add / edit title ---------- */
+/* ===================== 作品の追加・編集（詳細の中でその項目だけ編集するときも） ===================== */
 let form = null;
 const chipsHtml = (attr, opts, sel, color) =>
   opts

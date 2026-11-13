@@ -1,11 +1,13 @@
-/* ---------- display helpers ---------- */
-/* スマホの画面下メニュー：アニメ・ドラマは番組表／ライブラリ、YouTubeは投稿者 */
+/* ===================== 画面：左メニュー・番組表・ライブラリ一覧 ===================== */
+
+/* ---------- 表示の部品：アイコン・左メニュー・上の切り替え・ラベル ---------- */
+/* YouTubeの投稿者の切り替え（スマホの画面下メニュー）のアイコン */
 const TB_ICON = {
-  week: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 3l4 3 4-3"/></svg>',
-  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>',
   all: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>',
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
 };
+/* YouTubeの投稿者の絵文字（左メニュー・画面下メニュー） */
+const EMO = { キヨ: "🐱", 牛沢: "🐮", レトルト: "🦀" };
 /* PC：検索窓の上の切り替え（番組表／ライブラリ、YouTubeは投稿者）と設定の歯車 */
 const GEAR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -34,7 +36,6 @@ function renderSidebar() {
   const sb = $("#sb");
   if (!sb) return;
   document.body.classList.toggle("sbc", sbCollapsed);
-  const EMO = { キヨ: "🐱", 牛沢: "🐮", レトルト: "🦀" };
   /* 左メニューは種別。アニメ・ドラマ＝TV／TVスペシャル／映画／OVA／配信、映画＝アニメ映画／実写映画、配信＝アニメ／ドラマ・バラエティ、YouTube＝投稿者。▸▾で折りたためる
      視聴ステータスは一覧の上の切り替えで選ぶ */
   const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
@@ -92,7 +93,6 @@ function renderTabbar() {
   const nav = $("#tabbar");
   if (!nav) return;
   const yt = state.mode === "yt";
-  const EMO = { キヨ: "🐱", 牛沢: "🐮", レトルト: "🦀" };
   const items = yt
     ? ytAuthors().map(a => [
         a,
@@ -188,7 +188,7 @@ setInterval(() => {
   }
 }, 30000);
 
-/* ---------- render ---------- */
+/* ---------- ライブラリの一覧と、画面全体の描画 ---------- */
 /* ライブラリ一覧のラベル：TV・配信・映画の大分類＋見られる配信サイト名だけ */
 function libLabels(i) {
   const m = mediaOf(i);

@@ -1,3 +1,7 @@
+/* ===================== エンタメ管理：土台 =====================
+   決まった値・画面の状態・作品データの組み立て・保存（Firebase）・マスタ・話数・未入力チェック。
+   ファイルの読み込み順：core → view → filters → detail → form → settings → yt → events（最後に起動） */
+
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
 const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "配信", yt: "YouTube" };
@@ -82,7 +86,7 @@ const mins = t => {
   return m ? +m[1] * 60 + +m[2] : 9999;
 };
 
-/* ---------- state ---------- */
+/* ---------- 画面の状態 ---------- */
 let over = {}, // titles：作品（1作品1件）
   prog = {}; // progress：話数リストと視聴チェック
 let items = [],
@@ -193,12 +197,12 @@ function rebuild() {
   buildEras();
 }
 
-/* ---------- 放送クール: "2026秋" style keys, plus 通年 for shows that run regardless of cour ---------- */
+/* ---------- 放送クール：「2026秋」の形。クールに関係なく続く作品は「通年」 ---------- */
 const coursOf = i => i.cours || [];
 const courLabel = c =>
   c === ALLYEAR ? "通年" : /^\d{4}/.test(c) ? `${c.slice(0, 4)}年${c.slice(4)}` : c;
 
-/* ---------- era buckets: one per year, older years merged until each holds ~30 titles ---------- */
+/* ---------- 放送年の区切り：1年ずつ。古い年は30作品くらいになるまでまとめる ---------- */
 const yearOf = i => +String(i.from || "").slice(0, 4) || 0;
 function buildEras() {
   const cnt = {};
@@ -448,18 +452,18 @@ async function initStore() {
     if (ytOpen) ytRefresh();
   }, onErr);
 }
-/* ---------- episodes ---------- */
+/* ---------- 話数（放送日時は「分」で持つ。日本時間の深夜25時台は前日扱い） ---------- */
 const NOWMIN = () => Math.floor(Date.now() / 60000);
 const WEEK = 7 * 1440;
 function dayTimeToT(day, hm) {
-  // broadcast day + "25:23" style time (JST) -> minutes since epoch (UTC)
+  // 放送日＋「25:23」のような時刻（日本時間）→ 1970年からの分（世界時）
   if (!day) return 0;
   const [y, m, d] = day.split("-").map(Number);
   const v = mins(hm);
   return Math.floor(Date.UTC(y, m - 1, d) / 60000) + (v < 9999 ? v : 9 * 60) - 540;
 }
 const hasTime = it => mins(it.time) < 9999;
-// a date with no broadcast time is stored at 0:00 UTC (= 9:00 JST); never print that as a time
+// 時刻なしの日付は 0:00 UTC（日本時間 9:00）で持っているので、時刻としては出さない
 const noTime = (e, it) => e.nt || (e.t % 1440 === 0 && !(it && mins(it.time) === 540));
 const epWhen = (e, it, withYear) => {
   const j = jst(e.t);
