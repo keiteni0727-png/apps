@@ -635,7 +635,12 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .isgv .song{align-items:center}
 .isgv .stt{display:block;font-size:14px;font-weight:700;line-height:1.4}
 .isgv .sar{display:block;margin:1px 0 0;font-size:12px;color:var(--u-sub)}
-.isgv .dlb{padding:3px 11px;font-size:12px}
+.isgv .dlb,.isg1>.dlb{padding:3px 11px;font-size:12px}
+.isg1{align-items:center;padding:7px 0}
+.isg1 .itag{margin-top:0}
+.isg1+.isg1{border-top:1px solid var(--u-line)}
+.irg{flex:none;width:68px;font-family:var(--u-num);font-size:11px;color:var(--u-sub);white-space:nowrap}
+.isg1 .isgv .stt{font-size:14px}
 .ilinks{display:flex;gap:8px;margin-bottom:6px}
 .ilk{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center;border:1px solid var(--u-line);background:transparent;border-radius:var(--u-r);padding:10px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer}
 .ilk.off{color:var(--u-sub);font-weight:500;border-style:dashed}
@@ -2664,11 +2669,13 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
     <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${stv}</span>` : nofHas(it, md === "stream" ? "plat" : md === "tv" ? "st" : "vods") ? nn({ tv: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
   const songs = songRows
-    .map(([k, v]) => {
+    .map(([k, rows]) => {
+      if (rows.length) return rows.map(r => `<div class="isg isg1" data-jump="sgList"><span class="itag">${k}</span>${r}</div>`).join("");
       const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
       const no = (it.noSongs || []).includes(k);
-      if (!v && no) v = `<span class="nosong">なし</span>`;
-      else if (!v && main) v = `${un("未設定")}<button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
+      let v = "";
+      if (no) v = `<span class="nosong">なし</span>`;
+      else if (main) v = `${un("未設定")}<button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
       return v ? `<div class="isg" data-jump="sgList"><span class="itag">${k}</span><div class="isgv">${v}</div></div>` : "";
     })
     .join("");
@@ -2759,15 +2766,16 @@ function renderDetail(it) {
   const sl = songsOf(it).map(x =>
     span && (x.type === "OP" || x.type === "ED") && x.a == null && x.b == null ? { ...x, a: span[0], b: span[1] } : x,
   );
-  const songRows = SONG_TYPES.map(tp => {
-    const l = sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp);
-    return [
-      tp,
-      l.length
-        ? `<div class="songs">${l.map(([x, k]) => `<div class="song${x.dl ? " isdl" : ""}"><span class="stx">${songCard(x.s)}${l.length > 1 && rangeTxt(x) ? `<span class="rng">${rangeTxt(x)}</span>` : ""}</span><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button></div>`).join("")}</div>`
-        : "",
-    ];
-  });
+  /* 1曲1行：種類・使われた話・曲名／アーティスト・DL。同じ種類が複数ある作品だけ話数の列を出す */
+  const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
+  const showRng = byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeTxt(x)));
+  const songRows = byType.map(([tp, l]) => [
+    tp,
+    l.map(
+      ([x, k]) =>
+        `${showRng ? `<span class="irg">${l.length > 1 ? rangeTxt(x) : ""}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x.s)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
+    ),
+  ]);
   const md = mediaOf(it).media,
     mv = md === "movie",
     ns = noSched(md);
