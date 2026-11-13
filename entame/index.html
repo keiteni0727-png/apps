@@ -3551,7 +3551,8 @@ function schedText() {
   if (f.media === "movie") return f.from ? `${fmtD(f.from)} 公開` : "公開日を入れてください";
   if (f.media === "ova") return f.from ? `${fmtD(f.from)}から発売` : "発売日を入れてください";
   if (!f.from) return "開始日を入れると、放送曜日が自動で決まります";
-  if (f.irregular) return `${fmtD(f.from)}から ${f.media === "stream" ? "配信" : "放送"}（曜日なし）`;
+  /* 放送時間なし＝毎週の放送ではない（一挙配信・不定期など）：曜日を決めない */
+  if ((f.noF || []).includes("time")) return `${fmtD(f.from)}から ${f.media === "stream" ? "配信" : "放送"}（曜日・時間なし）`;
   const d = dowOfDate(f.from);
   const t = (f.time || "").trim();
   return `毎週 <b>${DOW[d]}曜${t ? " " + esc(t) : ""}</b> ${f.media === "stream" ? "配信" : "放送"}　${fmtD(f.from)}〜`;
@@ -3610,9 +3611,9 @@ function formHtml() {
     time:
       noSched(f.media)
         ? ""
-        : `<div class="field"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間" : "放送時間")}</div>`,
+        : `<div class="field"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間（毎週の配信ではない）" : "放送時間（毎週の放送ではない）")}</div>`,
     sched: `<div class="field full"><div class="sched" id="schedHint">${schedText()}</div>
-        ${noSched(f.media) ? "" : `<label class="yr"><input type="checkbox" id="f-irr" ${f.irregular ? "checked" : ""}>毎週の放送ではない（一挙配信・不定期など）</label>`}</div>`,
+        </div>`,
     cours:
       noSched(f.media)
         ? ""
@@ -3730,7 +3731,8 @@ function openForm(it, target) {
       songs: songsOf(it).map(x => ({ ...x })),
       span: epSpan(it),
       noSongs: [...(it.noSongs || [])],
-      noF: [...(it.noF || [])],
+      /* 前の版の「毎週の放送ではない」は「放送時間なし」として扱う */
+      noF: [...new Set([...(it.noF || []), ...(!noSched(m.media) && !!it.from && (it.dow ?? -1) < 0 ? ["time"] : [])])],
       series: it.series || "",
       url: it.url || "",
       vurl: it.vurl || "",
@@ -3793,7 +3795,7 @@ async function submitForm() {
     k: f.k,
     t,
     s: f.s,
-    dow: isMovie || f.irregular || !f.from ? -1 : dowOfDate(f.from),
+    dow: isMovie || (f.noF || []).includes("time") || !f.from ? -1 : dowOfDate(f.from),
     time: isMovie ? "" : (f.time || "").trim().replace("：", ":"),
     from: f.from || "",
     media: f.media,
@@ -5891,6 +5893,12 @@ document.addEventListener("change", e => {
   if (e.target.id === "f-from" && form) {
     readForm();
     redrawForm();
+    return;
+  }
+  if (e.target.classList.contains("nof") && form) {
+    readForm();
+    const h = $("#schedHint");
+    if (h) h.innerHTML = schedText();
     return;
   }
   /* 曲の種類を変えたら、その種類の区切りへ移す */
