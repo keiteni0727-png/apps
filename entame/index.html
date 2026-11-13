@@ -106,6 +106,24 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .eps{border:1px solid var(--u-line);border-radius:10px;overflow:hidden}
 .ep{display:grid;grid-template-columns:28px 52px 1fr auto;gap:10px;align-items:center;width:100%;border:0;border-top:1px solid var(--u-line);background:transparent;text-align:left;padding:9px 12px;font-size:13.5px}
 .ep:first-child{border-top:0}
+.archd{display:flex;align-items:baseline;gap:8px;width:100%;border:0;border-top:1px solid var(--u-line);background:var(--u-soft);text-align:left;padding:9px 12px;font:inherit;color:var(--u-ink)}
+.archd:first-child{border-top:0}
+.archd .arcar{flex:none;width:14px;font-size:10px;color:var(--u-sub)}
+.archd .arcnm{font-weight:700;font-size:13.5px;min-width:0}
+.archd .arcrg{font-family:var(--u-num);font-size:11.5px;color:var(--u-sub);white-space:nowrap}
+.archd .arcct{margin-left:auto;font-family:var(--u-num);font-size:11.5px;color:var(--u-sub);white-space:nowrap}
+.archd.done .arcnm{color:var(--u-sub)}
+.archd.done .arcct{color:var(--u-ok)}
+.archd.cur .arcnm{color:var(--st-now)}
+.arcbar{margin-bottom:10px}
+.arcbar select{width:100%;max-width:420px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px;font-weight:700}
+.arced .arl{display:grid;gap:8px;margin-bottom:10px}
+.arced .ar{display:flex;align-items:center;gap:6px}
+.arced .ar input{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:8px;padding:7px 8px;font:inherit;font-size:14px;min-width:0}
+.arced .ar-nm{flex:1}
+.arced .ar-a,.arced .ar-b{width:64px;flex:none;font-family:var(--u-num)}
+.arced .ar span{font-size:12px;color:var(--u-sub)}
+.arced .del{flex:none;border:0;background:transparent;color:var(--u-sub);font-size:15px;padding:6px}
 .ep .box{width:22px;height:22px;border-radius:6px;border:2px solid var(--u-line);display:grid;place-items:center;font-size:13px;color:#fff;transition:background .15s}
 .ep[aria-checked="true"] .box{background:var(--u-ok);border-color:var(--u-ok)}
 .ep[aria-checked="true"] .epn,.ep[aria-checked="true"] .eps-sub{color:var(--u-sub)}
@@ -2608,6 +2626,34 @@ function parseSubtitles(text) {
 }
 
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}
+/* 長編の「〇〇編」：作品の arcs = [{name, a:最初の話, b:最後の話(なし=最後まで)}] */
+let arcEdit = null, // 編集中の下書き
+  arcFold = new Map(); // 編ごとの開閉を手で変えたもの（名前#最初の話 → 開いているか）
+const arcsOf = it => (it.arcs || []).filter(r => r && r.name && r.a != null).slice().sort((x, y) => x.a - y.a);
+const arcKey = r => `${r.name}#${r.a}`;
+const arcRange = r => `#${r.a}–${r.b ?? ""}`;
+function arcEditHtml() {
+  const row = (r, i) => `<div class="ar" data-ar="${i}">
+      <input class="ar-nm" value="${esc(r.name || "")}" placeholder="例：サイヤ人編" aria-label="編の名前" autocomplete="off">
+      <input class="ar-a" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="最初の話"><span>〜</span><input class="ar-b" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="最後の話"><span>話</span>
+      <button type="button" class="del" data-ardel="${i}" aria-label="この編を削除">✕</button></div>`;
+  return `<div class="spaste arced">
+    <p class="hint" style="margin:0 0 8px">長い作品を「〇〇編」で区切ります。話数は登録済みの話の番号で入れてください（最後の話を空けると、最後まで）。</p>
+    <div class="arl">${arcEdit.length ? arcEdit.map(row).join("") : `<p class="empty" style="padding:10px 0;text-align:left">まだ編がありません。下のボタンで追加してください。</p>`}</div>
+    <button type="button" class="u-btn ghost sm" id="arAdd">＋ 編を追加</button>
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="arCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="arSave">保存</button></div></div>`;
+}
+function arcSync() {
+  if (!arcEdit) return;
+  document.querySelectorAll("[data-ar]").forEach(el => {
+    const r = arcEdit[+el.dataset.ar];
+    if (!r) return;
+    const num = v => (v.trim() === "" ? null : Math.max(0, parseInt(v, 10) || 0));
+    r.name = el.querySelector(".ar-nm").value;
+    r.a = num(el.querySelector(".ar-a").value);
+    r.b = num(el.querySelector(".ar-b").value);
+  });
+}
 function subPasteHtml(it) {
   const p = subPaste;
   if (!p.rows)
@@ -2634,6 +2680,7 @@ function nextIdx(eps) {
 }
 function epListHtml(it, eps) {
   if (subPaste) return subPasteHtml(it);
+  if (arcEdit) return arcEditHtml();
   const A = it.k === "a";
   if (!eps.length)
     return (
@@ -2643,15 +2690,46 @@ function epListHtml(it, eps) {
     );
   const w = eps.filter(e => e.w).length;
   const nx = nextIdx(eps);
-  return `<div class="epset"><button type="button" id="allAired">放送済みを全部 ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<span class="epmore"><button type="button" id="epMore" aria-label="その他の操作" aria-expanded="false">…</button><span class="epmenu" id="epMenu" hidden>${A ? `<button type="button" id="spOpen">サブタイトルを貼り付け</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button></span></span></div>
-    <div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps" role="list">${(() => {
-      return eps
-        .map((e, i) => {
-          const fut = !aired(e);
-          return `<button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button>`;
-        })
-        .join("");
-    })()}</div>`;
+  const arcs = arcsOf(it);
+  const arcIdx = e => {
+    const n = epNum(e.n);
+    return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
+  };
+  const epRow = (e, i) => {
+    const fut = !aired(e);
+    return `<button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button>`;
+  };
+  /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
+  let rowsHtml,
+    arcBar = "";
+  if (arcs.length) {
+    const groups = [];
+    eps.forEach((e, i) => {
+      const k = arcIdx(e);
+      const g = groups[groups.length - 1];
+      if (g && g.k === k) g.l.push([e, i]);
+      else groups.push({ k, l: [[e, i]] });
+    });
+    const stat = arcs.map((r, k) => {
+      const l = eps.filter(e => arcIdx(e) === k);
+      return { w: l.filter(e => e.w).length, n: l.length };
+    });
+    const curK = nx >= 0 ? arcIdx(eps[nx]) : -1;
+    rowsHtml = groups
+      .map(g => {
+        if (g.k < 0) return g.l.map(([e, i]) => epRow(e, i)).join("");
+        const r = arcs[g.k],
+          st = stat[g.k],
+          done = st.n > 0 && st.w === st.n,
+          key = arcKey(r);
+        const open = arcFold.has(key) ? arcFold.get(key) : !done || g.k === curK;
+        return `<button type="button" class="archd${done ? " done" : ""}${g.k === curK ? " cur" : ""}" data-arc="${esc(key)}" id="arc-${g.k}" aria-expanded="${open}"><span class="arcar" aria-hidden="true">${open ? "▼" : "▶"}</span><span class="arcnm">${esc(r.name)}</span><span class="arcrg">${arcRange(r)}</span><span class="arcct">${done ? "✓ " : ""}${st.w}/${st.n}</span></button>${open ? g.l.map(([e, i]) => epRow(e, i)).join("") : ""}`;
+      })
+      .join("");
+    arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
+  } else rowsHtml = eps.map(epRow).join("");
+  return `<div class="epset"><button type="button" id="allAired">放送済みを全部 ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<span class="epmore"><button type="button" id="epMore" aria-label="その他の操作" aria-expanded="false">…</button><span class="epmenu" id="epMenu" hidden>${A ? `<button type="button" id="spOpen">サブタイトルを貼り付け</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編（〇〇編）を登録</button></span></span></div>
+    ${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps" role="list">${rowsHtml}</div>`;
 }
 function epEditorHtml(it) {
   const l = epEdit.list;
@@ -2852,6 +2930,8 @@ function openDetail(id) {
   openId = id;
   epEdit = null;
   subPaste = null;
+  arcEdit = null;
+  arcFold = new Map();
   dmissKeep = false;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
@@ -4817,6 +4897,57 @@ function onDetailClick(e) {
       saveEps(it, l, "チェックを全部外しました");
       return true;
     }
+    if (e.target.closest("#arcOpenEd")) {
+      arcEdit = arcsOf(it).map(r => ({ ...r }));
+      if (!arcEdit.length) arcEdit.push({ name: "", a: 1, b: null });
+      refreshSheet();
+      return true;
+    }
+    if (arcEdit) {
+      if (e.target.closest("#arCancel")) {
+        arcEdit = null;
+        refreshSheet();
+        return true;
+      }
+      if (e.target.closest("#arAdd")) {
+        arcSync();
+        const last = arcEdit[arcEdit.length - 1];
+        arcEdit.push({ name: "", a: last ? (last.b != null ? last.b + 1 : null) : 1, b: null });
+        refreshSheet();
+        const ins = document.querySelectorAll(".ar-nm");
+        ins[ins.length - 1]?.focus();
+        return true;
+      }
+      const ad = e.target.closest("[data-ardel]");
+      if (ad) {
+        arcSync();
+        arcEdit.splice(+ad.dataset.ardel, 1);
+        refreshSheet();
+        return true;
+      }
+      if (e.target.closest("#arSave")) {
+        arcSync();
+        const l = arcEdit.map(r => ({ name: (r.name || "").trim(), a: r.a, b: r.b })).filter(r => r.name || r.a != null || r.b != null);
+        if (l.some(r => !r.name || r.a == null)) {
+          toast("編の名前と最初の話を入れてください");
+          return true;
+        }
+        if (l.some(r => r.b != null && r.b < r.a)) {
+          toast("最後の話が最初の話より前になっている編があります");
+          return true;
+        }
+        l.sort((x, y) => x.a - y.a);
+        arcEdit = null;
+        saveTitle(it.id, { arcs: l }, l.length ? "編を保存しました" : "編を消しました");
+        return true;
+      }
+    }
+    const ah = e.target.closest("[data-arc]");
+    if (ah) {
+      arcFold.set(ah.dataset.arc, ah.getAttribute("aria-expanded") !== "true");
+      refreshSheet();
+      return true;
+    }
     if (e.target.closest("#spOpen")) {
       subPaste = { text: "" };
       refreshSheet();
@@ -5091,6 +5222,21 @@ document.addEventListener("submit", e => {
   }
 });
 document.addEventListener("change", e => {
+  if (e.target.id === "arcJump") {
+    const it = items.find(x => x.id === openId);
+    const k = +e.target.value;
+    const r = it && arcsOf(it)[k];
+    if (!r) return;
+    arcFold.set(arcKey(r), true);
+    refreshSheet();
+    const sh = $("#layer .sheet"),
+      h = $("#arc-" + k);
+    if (sh && h) {
+      const hd = sh.querySelector(".dhead");
+      sh.scrollTop += h.getBoundingClientRect().top - sh.getBoundingClientRect().top - (hd ? hd.offsetHeight : 0) - 8;
+    }
+    return;
+  }
   if (e.target.dataset && e.target.dataset.svren) {
     const id = e.target.dataset.svren,
       name = e.target.value.trim();
