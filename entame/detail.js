@@ -1,0 +1,565 @@
+/* ---------- detail ---------- */
+let openId = null,
+  epEdit = null; // epEdit: draft episode list while editing
+/* 貼り付けた各話リストから「話数 → サブタイトル」を読み取る */
+const KN = { 〇: 0, 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+function kanjiNum(t) {
+  if (/^\d+$/.test(t)) return +t;
+  let total = 0,
+    cur = 0;
+  for (const c of t) {
+    if (c in KN) cur = cur * 10 + KN[c];
+    else if (c === "十") {
+      total += (cur || 1) * 10;
+      cur = 0;
+    } else if (c === "百") {
+      total += (cur || 1) * 100;
+      cur = 0;
+    } else return NaN;
+  }
+  return total + cur;
+}
+const EP_RE =
+  /^\s*(?:第\s*([0-9０-９〇零一二三四五六七八九十百]+)\s*[話回]|#\s*([0-9０-９]+)|([0-9０-９]+)\s*[話回]|([0-9０-９]+)(?=\t))\s*[\t:：.．\s]*(.*)$/;
+const zen = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+function cleanSub(s) {
+  return s
+    .replace(/\[(?:各回補足|注釈?|注|脚注|補足)?\s*[0-9０-９a-zA-Z]+\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^「(.*)」$|^『(.*)』$|^"(.*)"$/, (m, a, b, c) => (a ?? b ?? c)); // 全体を囲むカッコだけ外す（途中の『』は残す）
+}
+function parseSubtitles(text) {
+  const lines = String(text || "")
+    .replace(/\r/g, "")
+    .split("\n");
+  const out = [];
+  let open = null,
+    last = null; // open: 直前の行がサブタイトルで終わっていて、次の行に続きがある可能性
+  let yearHead = null, // 「2002年」だけの行（以降の放送日の年）
+    leadMode = false, // 「放送日 → 話数 → サブタイトル」の順の表
+    prevLead = null;
+  for (const raw of lines) {
+    let line = raw.replace(/ /g, " ");
+    const yh = zen(line).match(/^\s*(\d{4})\s*年\s*$/);
+    if (yh) {
+      yearHead = +yh[1];
+      open = null;
+      continue;
+    }
+    // 先頭が放送日の行（例: 10月3日<TAB>1<TAB>サブタイトル）は日付を外して話数の行として読む
+    let lead = null;
+    const ld = zen(line).match(/^\s*(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*\t/);
+    if (ld && EP_RE.test(line.slice(ld[0].length))) {
+      if (ld[1]) yearHead = +ld[1];
+      lead = `${yearHead ? yearHead + "年" : ""}${ld[2]}月${ld[3]}日`;
+      line = line.slice(ld[0].length);
+      leadMode = true;
+    }
+    const m = EP_RE.exec(line);
+    if (m) {
+      // 2話連続放送などで日付の列が空の行は、直前の放送日を引き継ぐ
+      if (!lead && leadMode && prevLead) lead = prevLead;
+      if (lead) prevLead = lead;
+      const n = kanjiNum(zen(m[1] || m[2] || m[3] || m[4]));
+      if (!Number.isFinite(n)) {
+        open = null;
+        continue;
+      }
+      const rest = m[5] || "";
+      const parts = rest.split("\t");
+      let sub = parts[0],
+        blk = parts.slice(1).join(" ");
+      if (!line.includes("\t") && /「.+」/.test(rest)) {
+        const q = rest.match(/「(.+?)」/);
+        sub = q[1];
+        blk = rest.slice(q.index + q[0].length);
+      } // 「第1話「タイトル」」形式
+      const e = { n, sub: cleanSub(sub), blk, lead };
+      out.push(e);
+      last = e;
+      open = parts.length === 1 && line.includes("\t") ? e : null;
+      continue;
+    }
+    let rest2 = line;
+    if (open) {
+      const ps = line.split("\t");
+      const first = ps[0].trim();
+      if (first && !/^(\d{4}年|\d{1,2}月\d{1,2}日|第\d+シーズン|第[一二三四五六七八九十]+期)/.test(first)) {
+        open.sub = cleanSub(open.sub + " " + first);
+        rest2 = ps.slice(1).join(" ");
+      }
+      open = null;
+    }
+    if (/^\s*第\s*[0-9０-９一二三四五六七八九十]+\s*(シーズン|期|部|章)/.test(line)) {
+      last = null;
+      continue;
+    }
+    if (last) last.blk += " " + rest2;
+  }
+  // 初放送日: 各話の行と続きの行から最後の日付を拾う。年が省略された行は直前の年を引き継ぐ
+  let year = null,
+    prevM = 0;
+  out.forEach(e => {
+    const t = zen(e.lead || e.blk || "");
+    delete e.lead;
+    const re = /(?:(\d{4})\s*[年\/\-.]\s*)?(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})\s*日?/g;
+    let m,
+      hit = null;
+    while ((m = re.exec(t))) if (+m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31) hit = m;
+    if (!hit) {
+      delete e.blk;
+      return;
+    }
+    let y = hit[1] ? +hit[1] : year;
+    const mo = +hit[2],
+      d = +hit[3];
+    if (!hit[1] && y && mo < prevM) y++;
+    if (y) {
+      year = y;
+      prevM = mo;
+      e.date = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    } else e.md = [mo, d];
+    delete e.blk;
+  });
+  // 同じ話数が複数あれば最初のもの（第2シーズンで番号が戻る場合は別の範囲として貼る）
+  const seen = new Set();
+  return out.filter(e => e.sub && !seen.has(e.n) && seen.add(e.n));
+}
+
+let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}
+/* 長編の「〇〇編」：作品の arcs = [{name, a:最初の話, b:最後の話(なし=最後まで)}] */
+let arcEdit = null, // 編集中の下書き
+  arcFold = new Map(); // 編ごとの開閉を手で変えたもの（名前#最初の話 → 開いているか）
+const arcsOf = it => (it.arcs || []).filter(r => r && r.name && r.a != null).slice().sort((x, y) => x.a - y.a);
+const arcKey = r => `${r.name}#${r.a}`;
+const arcRange = r => `#${r.a}–${r.b ?? ""}`;
+function arcEditHtml() {
+  const row = (r, i) => `<div class="ar" data-ar="${i}">
+      <input class="ar-nm" value="${esc(r.name || "")}" placeholder="例：サイヤ人編" aria-label="編の名前" autocomplete="off">
+      <input class="ar-a" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="最初の話"><span>〜</span><input class="ar-b" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="最後の話"><span>話</span>
+      <button type="button" class="del" data-ardel="${i}" aria-label="この編を削除">✕</button></div>`;
+  return `<div class="spaste arced">
+    <p class="hint" style="margin:0 0 8px">長い作品を「〇〇編」で区切ります。話数は登録済みの話の番号で入れてください（最後の話を空けると、最後まで）。</p>
+    <div class="arl">${arcEdit.length ? arcEdit.map(row).join("") : `<p class="empty" style="padding:10px 0;text-align:left">まだ編がありません。下のボタンで追加してください。</p>`}</div>
+    <button type="button" class="u-btn ghost sm" id="arAdd">＋ 編を追加</button>
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="arCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="arSave">保存</button></div></div>`;
+}
+function arcSync() {
+  if (!arcEdit) return;
+  document.querySelectorAll("[data-ar]").forEach(el => {
+    const r = arcEdit[+el.dataset.ar];
+    if (!r) return;
+    const num = v => (v.trim() === "" ? null : Math.max(0, parseInt(v, 10) || 0));
+    r.name = el.querySelector(".ar-nm").value;
+    r.a = num(el.querySelector(".ar-a").value);
+    r.b = num(el.querySelector(".ar-b").value);
+  });
+}
+function subPasteHtml(it) {
+  const p = subPaste;
+  if (!p.rows)
+    return `<div class="spaste">
+    <p class="hint" style="margin:0 0 8px">Wikipediaの「各話リスト」などをそのまま貼り付けてください。話数とサブタイトルだけを読み取り、ほかの列（絵コンテ・演出・放送日など）は無視します。</p>
+    <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
+  const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length,
+    same = p.rows.filter(r => r.idx >= 0 && r.old === r.sub && !r.dateCh).length,
+    miss = p.rows.filter(r => r.idx < 0).length,
+    dch = p.rows.filter(r => r.dateCh).length;
+  const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : "");
+  return `<div class="spaste">
+    <p class="sp-sum">${p.rows.length}話分を読み取りました。<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。</p>
+    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " miss" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span>${esc(r.sub)}${r.idx >= 0 && r.old && r.old !== r.sub ? `<small>今：${esc(r.old)}</small>` : ""}</span>${r.dateCh ? `<small class="dch${p.useDate ? " on" : ""}">日付 ${md(r.oldDay)} → <b>${md(r.date)}</b>${r.date.slice(0, 4) !== r.oldDay.slice(0, 4) ? `（${r.date.slice(0, 4)}年）` : ""}</small>` : ""}<span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
+    ${dch ? `<div class="dconfirm"><b>貼り付けた放送日が、登録済みの日付と${dch}話分違います。</b><label class="yr"><input type="checkbox" id="spDate" ${p.useDate ? "checked" : ""}>日付も貼り付けた内容に更新する（時刻はそのまま）</label></div>` : ""}
+    ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
+}
+/* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
+function nextIdx(eps) {
+  const a = eps.findIndex(e => !e.w && aired(e));
+  return a >= 0 ? a : eps.findIndex(e => !e.w);
+}
+function epListHtml(it, eps) {
+  if (subPaste) return subPasteHtml(it);
+  if (arcEdit) return arcEditHtml();
+  const A = it.k === "a";
+  if (!eps.length)
+    return (
+      (A
+        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加するか、各話リストを貼り付けてください。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button><button type="button" id="spOpen">各話リストを貼り付け</button></div>`
+        : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加できます。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`)
+    );
+  const w = eps.filter(e => e.w).length;
+  const nx = nextIdx(eps);
+  const arcs = arcsOf(it);
+  const arcIdx = e => {
+    const n = epNum(e.n);
+    return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
+  };
+  const epRow = (e, i) => {
+    const fut = !aired(e);
+    return `<button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button>`;
+  };
+  /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
+  let rowsHtml,
+    arcBar = "";
+  if (arcs.length) {
+    const groups = [];
+    eps.forEach((e, i) => {
+      const k = arcIdx(e);
+      const g = groups[groups.length - 1];
+      if (g && g.k === k) g.l.push([e, i]);
+      else groups.push({ k, l: [[e, i]] });
+    });
+    const stat = arcs.map((r, k) => {
+      const l = eps.filter(e => arcIdx(e) === k);
+      return { w: l.filter(e => e.w).length, n: l.length };
+    });
+    const curK = nx >= 0 ? arcIdx(eps[nx]) : -1;
+    rowsHtml = groups
+      .map(g => {
+        if (g.k < 0) return g.l.map(([e, i]) => epRow(e, i)).join("");
+        const r = arcs[g.k],
+          st = stat[g.k],
+          done = st.n > 0 && st.w === st.n,
+          key = arcKey(r);
+        const open = arcFold.has(key) ? arcFold.get(key) : !done || g.k === curK;
+        return `<button type="button" class="archd${done ? " done" : ""}${g.k === curK ? " cur" : ""}" data-arc="${esc(key)}" id="arc-${g.k}" aria-expanded="${open}"><span class="arcar" aria-hidden="true">${open ? "▼" : "▶"}</span><span class="arcnm">${esc(r.name)}</span><span class="arcrg">${arcRange(r)}</span><span class="arcct">${done ? "✓ " : ""}${st.w}/${st.n}</span></button>${open ? g.l.map(([e, i]) => epRow(e, i)).join("") : ""}`;
+      })
+      .join("");
+    arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
+  } else rowsHtml = eps.map(epRow).join("");
+  return `<div class="epset"><button type="button" id="allAired">放送済みを全部 ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<span class="epmore"><button type="button" id="epMore" aria-label="その他の操作" aria-expanded="false">…</button><span class="epmenu" id="epMenu" hidden>${A ? `<button type="button" id="spOpen">サブタイトルを貼り付け</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編（〇〇編）を登録</button></span></span></div>
+    ${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps" role="list">${rowsHtml}</div>`;
+}
+function epEditorHtml(it) {
+  const l = epEdit.list;
+  const A = it.k === "a";
+  return `<div class="eped${A ? "" : " nosub"}">${
+    l.length
+      ? l
+          .map((e, i) => {
+            const j = jst(e.t);
+            return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}">
+      <input class="er-n" value="${esc(e.n)}" aria-label="話数">
+      ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
+      <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="20180825" value="${j ? j.day : ""}" aria-label="放送日（例：20180825）">
+      <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button></div>`;
+          })
+          .join("")
+      : `<p class="empty" style="padding:14px">話がありません。下のボタンで追加してください。</p>`
+  }</div>
+    <div class="edfoot"><button type="button" id="erAdd">＋ 1話追加</button><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${l.length ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><button type="button" id="erBulkGo">話追加</button></div>
+    <p class="hint" style="margin:8px 0 0">日付を変えると、その後の話も1週間おきに自動でずれます。時刻は${esc(it.time || "各話の時刻")}のままです。</p>
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="erCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="erSave">話数を保存</button></div>`;
+}
+/* 基本情報：放送・主題歌・リンクのカード。各部分を押すと、その項目を開いた状態の編集画面へ */
+/* 配信ボタンの名前：配信サイトが1つだけならその名前、それ以外は「配信」 */
+function vodName(it) {
+  const m = mediaOf(it);
+  const l = [...new Set(m.media === "stream" ? m.plat : m.vods)];
+  return l.length === 1 ? l[0] : "配信";
+}
+function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
+  const un = t => `<span class="unset">${t}</span>`;
+  const nn = t => `<span class="nosong">${t}</span>`;
+  const when = [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim();
+  const per = periodOf(it);
+  const cour = cs.map(courLabel).join("・");
+  const head = { tv: "放送", sp: "放送", movie: "上映", ova: "発売", stream: "配信" }[md] || "放送";
+  const perLab = mv ? "公開日" : md === "sp" ? "放送日" : md === "ova" ? "発売期間" : "期間";
+  const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
+    ${ns || (!when && nofHas(it, "time") && !cour) ? "" : `<div class="ibig">${!when && nofHas(it, "time") ? "" : `<span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>`}${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
+    <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
+    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${mediaLabels(it, false, true)}</span>` : `<span class="labs">${mediaTag(it)}</span>`}${stv ? "" : nofHas(it, md === "stream" ? "plat" : hasSt(md) ? "st" : "vods") ? nn({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
+  const anySong = songRows.some(([, rows]) => rows.length);
+  const songs = songRows
+    .map(([k, rows]) => {
+      /* 種類ごとにまとめ、色の帯と種類のラベルは最初の曲だけに出す */
+      if (rows.length) return `<div class="isgrp ${SG_CLS[k]}">${rows.map((r, j) => `<div class="isg isg1" data-jump="sgList"><span class="itag ${SG_CLS[k]}"${j ? ' aria-hidden="true" style="visibility:hidden"' : ""}>${k}</span>${r}</div>`).join("")}</div>`;
+      if (anySong) return ""; // どれか1曲でも入っていれば、ほかの種類の「なし」「未設定」は出さない
+      const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
+      const no = (it.noSongs || []).includes(k);
+      let v = "";
+      if (no) v = `<span class="nosong">なし</span>`;
+      else if (main) v = `${un("未設定")}<button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
+      return v ? `<div class="isgrp ${SG_CLS[k]}"><div class="isg" data-jump="sgList"><span class="itag ${SG_CLS[k]}">${k}</span><div class="isgv">${v}</div></div></div>` : "";
+    })
+    .join("");
+  const links = `<div class="ilinks">${
+    it.series
+      ? `<button type="button" class="ilk" data-series="${esc(it.series)}">シリーズ作品</button>`
+      : `<button type="button" class="ilk off" data-jump="fSeries">シリーズ未設定</button>`
+  }${
+    it.url
+      ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener">公式サイト ↗</a>`
+      : `<button type="button" class="ilk off" data-jump="f-url">公式サイト${nofHas(it, "url") ? "なし" : "未設定"}</button>`
+  }${
+    it.vurl
+      ? `<a class="ilk" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
+      : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL${nofHas(it, "vurl") ? "なし" : "未設定"}</button>`
+  }</div>`;
+  return bc + (songs ? `<div class="icard isongs">${songs}</div>` : "") + links;
+}
+/* 詳細のタップで編集：行全体を押すと、その項目を開いた状態の編集画面へ（inl＝その場で書き換え） */
+function editRow(k, v, attr) {
+  return `<dt ${attr}>${k}</dt><dd ${attr}>${v || `<span class="unset">未設定</span>`}<span class="pen" aria-hidden="true">✎</span></dd>`;
+}
+function jumpTo(target) {
+  requestAnimationFrame(() => {
+    const el = document.getElementById(target);
+    if (!el) return;
+    const box = el.closest(".field") || el;
+    box.scrollIntoView({ block: "center" });
+    box.classList.add("flash");
+    setTimeout(() => box.classList.remove("flash"), 1600);
+    const inp = el.matches("input,select,textarea") ? el : null;
+    if (inp && inp.type !== "date") inp.focus({ preventScroll: true });
+  });
+}
+function startInline(el) {
+  if (el.querySelector("input.inl")) return;
+  const key = el.dataset.inl,
+    type = el.dataset.inltype || "text",
+    val = el.dataset.inlv || "";
+  el.classList.add("editing");
+  el.innerHTML = `<input class="inl" data-inlkey="${key}" type="${type}" value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
+  const i = el.querySelector("input");
+  i.dataset.orig = val;
+  i.focus();
+  if (type === "text") {
+    try {
+      i.setSelectionRange(i.value.length, i.value.length);
+    } catch (_) {}
+  }
+}
+let inlBusy = false;
+function commitInline(i, cancel) {
+  if (inlBusy || !i.isConnected) return;
+  inlBusy = true;
+  const key = i.dataset.inlkey;
+  let v = i.value.trim();
+  const orig = i.dataset.orig || "";
+  const done = () => {
+    inlBusy = false;
+  };
+  if (cancel || v === orig || (key === "t" && !v)) {
+    if (ytOpen) ytRefresh();
+    else refreshSheet();
+    done();
+    return;
+  }
+  if (ytOpen) {
+    if (key === "n") v = Math.max(0, parseInt(v, 10) || 0);
+    if (key === "up") {
+      const p = parseDay(v);
+      if (p === null) {
+        toast("日付を読み取れませんでした（例：2024/03/08）");
+        ytRefresh();
+        done();
+        return;
+      }
+      v = p;
+    }
+    if (key === "dur") v = parseDur(v);
+    ytSave(ytOpen, { [key]: v }, "保存しました");
+  } else if (openId) saveTitle(openId, { [key]: v }, "保存しました");
+  done();
+}
+function renderDetail(it) {
+  const cs = coursOf(it);
+  const stv = mediaLabels(it);
+  const span = it.k === "a" ? epSpan(it) : null;
+  const sl = songsOf(it).map(x =>
+    span && (x.type === "OP" || x.type === "ED") && x.a == null && x.b == null ? { ...x, a: span[0], b: span[1] } : x,
+  );
+  /* 1曲1行：種類・使われた話・曲名／アーティスト・DL。同じ種類が複数ある作品だけ話数の列を出す */
+  const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
+  /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
+  const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeTxt(x)));
+  const songRows = byType.map(([tp, l]) => [
+    tp,
+    l.map(
+      ([x, k]) =>
+        `${showRng ? `<span class="irg">${rangeTxt(x) || (l.length === 1 ? "全話" : "")}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
+    ),
+  ]);
+  const md = mediaOf(it).media,
+    mv = md === "movie",
+    ns = noSched(md);
+  const eps = episodes(it);
+  const w = eps.filter(e => e.w).length;
+  const nx = eps[nextIdx(eps)];
+  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}</div><div class="hdrow"><button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+    <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
+    <div class="seg" role="group" aria-label="ステータス">${STATUSES.map(s => `<button type="button" data-set="${s}" aria-pressed="${it.s === s}" class="${it.s === s ? "s-" + s : ""}">${stLabel(s)}</button>`).join("")}</div>
+    ${missDetail(it)}
+    <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
+    <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
+    <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
+    <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
+    <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
+}
+/* 詳細のアラート（PCだけ）：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */
+let dmissKeep = false;
+function missDetail(it) {
+  const l = missingOf(it);
+  if (!l.length) return "";
+  const hot = l.some(x => x.k === "話数");
+  /* 項目ボタン（話数は話数タブへ、ステータスは上のボタンで選ぶ）＋「なし」ボタン */
+  const main = x =>
+    x.k === "話数"
+      ? `<button type="button" data-dtab="ep">話数を登録</button>`
+      : x.j
+        ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
+        : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
+  const btn = x =>
+    `<span class="mi">${main(x)}${x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする">なし</button>` : ""}</span>`;
+  return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+}
+function refreshSheet() {
+  if (form && form.inline) return;
+  const it = items.find(x => x.id === openId);
+  const el = $("#sheetIn");
+  if (it && el) el.innerHTML = renderDetail(it);
+}
+function refreshEditor() {
+  const it = items.find(x => x.id === openId);
+  const a = $("#epArea");
+  if (it && a && epEdit) a.innerHTML = epEditorHtml(it);
+}
+function openDetail(id) {
+  const it = items.find(x => x.id === id);
+  if (!it) return;
+  openId = id;
+  epEdit = null;
+  subPaste = null;
+  arcEdit = null;
+  arcFold = new Map();
+  dmissKeep = false;
+  $("#layer").innerHTML =
+    `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
+  setDTab("info");
+  if (!TOUCH) $(".sheet .close").focus({ preventScroll: true });
+}
+/* 詳細を「基本情報／話数」タブで切り替え（PC・スマホ共通）（タブの状態はシート自体のクラスで持つ） */
+function setDTab(t) {
+  const sh = $("#layer .sheet");
+  if (!sh) return;
+  sh.classList.toggle("t-info", t === "info");
+  sh.classList.toggle("t-ep", t === "ep");
+  sh.scrollTop = 0;
+  if (t === "ep")
+    requestAnimationFrame(() => {
+      const n = sh.querySelector(".dp-ep .ep.next");
+      if (n) {
+        const hd = sh.querySelector(".dhead");
+        const sr = sh.getBoundingClientRect(),
+          nr = n.getBoundingClientRect();
+        if (nr.bottom > sr.bottom - 20) sh.scrollTop += nr.top - sr.top - (hd ? hd.offsetHeight : 0) - 110;
+      }
+    });
+}
+function fail(e) {
+  toast("保存できませんでした。もう一度お試しください");
+  console.warn(e);
+}
+async function saveTitle(id, patch, msg) {
+  const o = { ...(over[id] || {}), ...patch };
+  over[id] = o;
+  rebuild();
+  render();
+  if (openId === id && !epEdit) refreshSheet();
+  if (msg) toast(msg);
+  try {
+    await saveDoc("titles", id, o);
+  } catch (e) {
+    fail(e);
+  }
+}
+const setStatus = (it, s) => {
+  if (it.s !== s) saveTitle(it.id, { s }, `「${s}」にしました`);
+};
+/* 視聴チェックからステータスを自動で決める：全話✓→視聴済み、1話でも✓→視聴中（「見ない」はそのまま） */
+function autoStatus(it, list) {
+  if (it.s === "見ない" || !list.length) return null;
+  const all = list.every(e => e.w),
+    any = list.some(e => e.w);
+  if (all) return it.s !== "視聴済み" ? "視聴済み" : null;
+  if (any && it.s !== "視聴中") return "視聴中";
+  if (!any && it.s === "視聴済み") return "視聴中";
+  return null;
+}
+async function saveEps(it, list, msg) {
+  const ns = autoStatus(it, list);
+  if (ns) {
+    const o = { ...(over[it.id] || {}), s: ns };
+    over[it.id] = o;
+    rebuild();
+    msg = (msg ? msg + "・" : "") + `「${ns}」にしました`;
+    saveDoc("titles", it.id, o).catch(fail);
+  }
+  const p = {
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, w: e.w ? 1 : 0, ...(e.nt ? { nt: 1 } : {}) })),
+  };
+  prog[it.id] = p;
+  render();
+  if (openId === it.id && !epEdit) refreshSheet();
+  if (msg) toast(msg);
+  try {
+    await saveDoc("progress", it.id, p);
+  } catch (e) {
+    fail(e);
+  }
+}
+function toggleEp(it, idx, val) {
+  const l = episodes(it);
+  if (!l[idx]) return;
+  l[idx].w = val;
+  saveEps(it, l, `${l[idx].n}を${val ? "視聴済み" : "未視聴"}にしました`);
+  if (val) askSub(it, idx);
+}
+/* サブタイトルが空の話を視聴済みにしたら、その場で入力できる小さな画面を出す（アニメのみ） */
+let subAsk = null;
+function askSub(it, idx) {
+  const e = episodes(it)[idx];
+  if (it.k !== "a" || !e || (e.sub || "").trim()) return;
+  subAsk = { id: it.id, idx };
+  let box = $("#subPop");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "subPop";
+    document.body.appendChild(box);
+  }
+  box.innerHTML = `<div class="spop-scrim" data-spopx></div><div class="spop" role="dialog" aria-modal="true" aria-label="サブタイトルを入力">
+    <p class="spop-h"><small>${esc(it.t)}</small><b>${esc(e.n)}</b>のサブタイトル</p>
+    <input id="spopIn" autocomplete="off" enterkeyhint="done" placeholder="サブタイトルを入力" aria-label="サブタイトル">
+    <div class="spop-f"><button type="button" class="u-btn ghost" data-spopx>あとで</button><button type="button" class="u-btn pri primary" data-spopok>保存</button></div></div>`;
+  setTimeout(() => $("#spopIn")?.focus(), 30);
+}
+function closeSub() {
+  subAsk = null;
+  const b = $("#subPop");
+  if (b) b.innerHTML = "";
+}
+function saveSub() {
+  if (!subAsk) return;
+  const v = ($("#spopIn")?.value || "").trim();
+  const it = items.find(x => x.id === subAsk.id);
+  const idx = subAsk.idx;
+  closeSub();
+  if (!v || !it) return;
+  const l = episodes(it);
+  if (!l[idx]) return;
+  l[idx].sub = v;
+  saveEps(it, l, "サブタイトルを保存しました");
+}
+function nextEp(it, list) {
+  const last = list[list.length - 1];
+  const n = last ? epNum(last.n) : null;
+  const ova = mediaOf(it).media === "ova";
+  const t = last ? (last.t && !ova ? last.t + WEEK : 0) : it.from ? dayTimeToT(it.from, it.time) : 0;
+  return { n: `${n != null ? n + 1 : list.length + 1}話`, sub: "", t, w: false, nt: last ? !!last.nt : !hasTime(it) };
+}
+
