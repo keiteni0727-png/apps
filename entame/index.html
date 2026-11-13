@@ -663,6 +663,20 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .nob{margin-left:8px}
 /* 「○○なし」は項目名の行の右端に置く（入力欄の下にはみ出さない） */
 .field:has(>.nofl){position:relative}
+/* 「なし」にした項目は入力欄ごと隠す */
+.field:has(>.nofl input:checked)>*:not(span):not(label.field):not(.nofl){display:none}
+.field:has(>.nofl input:checked)>span:not(.dtw)::after,.field:has(>.nofl input:checked)>label.field>span::after{content:"　なし";color:var(--u-sub);font-weight:600}
+.sugbtn.on{background:var(--u-ink);color:var(--u-surface);border-color:var(--u-ink)}
+.sugbtn.ghost{border:1px solid var(--u-line);color:var(--u-sub)}
+/* 配信サイトの選択は小さめにしてPCでは1行に収める */
+.field .chips:has(>button.vc){gap:4px}
+.field .chips>button.vc{padding:4px 7px;font-size:11.5px;letter-spacing:-.01em}
+.field .chips>button.vc::before{width:6px;height:6px;margin-right:3px}
+@media (min-width:900px){
+  .field .chips:has(>button.vc){flex-wrap:nowrap}
+  .field .chips:has(>button.vc){gap:3px}
+  .field .chips>button.vc{flex:1 1 auto!important;min-width:0!important;padding-left:4px!important;padding-right:4px!important;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 .field>.nofl{position:absolute;top:-3px;right:0;margin:0;font-size:12px;color:var(--u-sub);gap:5px;padding:0}
 .field>.nofl input{width:16px;height:16px;margin:0}
 .nosw{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
@@ -3492,7 +3506,9 @@ function serSugForm(q) {
 /* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
 function songRowsHtml() {
   const f = form;
-  const types = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
+  /* ふだんの種類＋実際に入っている種類（映画でもOP・EDに変えた曲はその区切りに出す） */
+  const base = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
+  const types = SONG_TYPES.filter(t => base.includes(t) || f.songs.some(x => x.type === t));
   const main = f.k === "a" ? ["OP", "ED"] : ["主題歌"];
   const noable = f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"];
   const card = (x, k) => {
@@ -3602,11 +3618,18 @@ function formHtml() {
         ? ""
         : `<div class="field full"><span>放送クール</span>
         <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未設定</span>` : ""}
-          ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}（開始日から）</button>` : ""}</div>
-        <details class="more-c"${f.courOpen || f.only ? " open" : ""}><summary>ほかのクールを追加・通年にする</summary>
-          <div class="courpick"><select id="f-cy" aria-label="年">${years.map(k => `<option ${k === f.cy ? "selected" : ""}>${k}</option>`).join("")}</select><div class="segc" role="group" aria-label="季節を追加">${SEASONS.map(s => `<button type="button" data-couradd="${s}">${s}</button>`).join("")}</div></div>
-          <label class="yr"><input type="checkbox" id="f-allyear" ${f.cours.includes(ALLYEAR) ? "checked" : ""}>通年（クールに関係なく放送している作品）</label>
-        </details>${nofBox("cours")}</div>`,
+          ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}（開始日から）</button>` : ""}
+          ${(() => {
+            /* 2クール目以降：選んだ最後のクールの次をワンタップで */
+            const last = dyn.filter(c => /^\d{4}/.test(c)).sort().pop();
+            if (!last || f.cours.includes(ALLYEAR)) return "";
+            const si = SEASONS.indexOf(last.slice(4)),
+              nx = si === 3 ? `${+last.slice(0, 4) + 1}${SEASONS[0]}` : `${last.slice(0, 4)}${SEASONS[si + 1]}`;
+            return f.cours.includes(nx) ? "" : `<button type="button" class="sugbtn" data-courkey="${nx}">＋ ${courLabel(nx)}（次のクール）</button>`;
+          })()}
+          <button type="button" class="sugbtn${f.cours.includes(ALLYEAR) ? " on" : ""}" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
+          <button type="button" class="sugbtn ghost" data-courmore="1" aria-expanded="${!!f.courOpen}">ほかのクール ${f.courOpen ? "▴" : "▾"}</button></div>
+        ${f.courOpen || f.only ? `<div class="courpick"><select id="f-cy" aria-label="年">${years.map(k => `<option ${k === f.cy ? "selected" : ""}>${k}</option>`).join("")}</select><div class="segc" role="group" aria-label="季節を追加">${SEASONS.map(s => `<button type="button" data-couradd="${s}">${s}</button>`).join("")}</div></div>` : ""}${nofBox("cours")}</div>`,
     n:
       f.id || f.media === "movie"
         ? ""
@@ -3786,8 +3809,18 @@ async function submitForm() {
     vurl: normVurl(f.vurl),
   };
   /* 入力した項目の「なし」は自動で外す */
-  const filled = { time: patch.time, st: patch.stations.length, plat: patch.plat.length, vods: patch.vods.length, cours: patch.cours.length, url: patch.url, vurl: patch.vurl };
-  patch.noF = [...new Set(f.noF || [])].filter(k => k in filled && !filled[k]);
+  /* 「なし」にした項目は入力欄を隠しているので、残っている値は消して「なし」を優先 */
+  const clr = {
+    time: () => (patch.time = ""),
+    st: () => (patch.stations = []),
+    plat: () => (patch.plat = []),
+    vods: () => (patch.vods = []),
+    cours: () => (patch.cours = []),
+    url: () => (patch.url = ""),
+    vurl: () => (patch.vurl = ""),
+  };
+  patch.noF = [...new Set(f.noF || [])].filter(k => k in clr);
+  patch.noF.forEach(k => clr[k]());
   if (f.id) {
     const id = f.id;
     close();
@@ -5341,6 +5374,20 @@ function onTitleFormClick(e) {
       redrawForm();
       return true;
     }
+    if (e.target.closest("[data-courall]")) {
+      readForm();
+      const on = form.cours.includes(ALLYEAR);
+      form.cours = form.cours.filter(c => c !== ALLYEAR);
+      if (!on) form.cours.unshift(ALLYEAR);
+      redrawForm();
+      return true;
+    }
+    if (e.target.closest("[data-courmore]")) {
+      readForm();
+      form.courOpen = !form.courOpen;
+      redrawForm();
+      return true;
+    }
     const ca = e.target.closest("[data-couradd]");
     if (ca) {
       readForm();
@@ -6044,6 +6091,15 @@ function normDate(v) {
   if (!v) return "";
   let y, m, d, x;
   if ((x = /^(\d{4})(\d{2})(\d{2})$/.exec(v))) [, y, m, d] = x;
+  else if ((x = /^(\d{4})(\d)(\d)$/.exec(v))) [, y, m, d] = x; // 201845 → 2018/4/5
+  else if ((x = /^(\d{4})(\d{3})$/.exec(v))) {
+    /* 2018415 → 4/15、2018105 → 10/5（ありえる方。どちらもありえるときは月1けたを優先） */
+    y = x[1];
+    const a = [x[2][0], x[2].slice(1)],
+      b = [x[2].slice(0, 2), x[2][2]];
+    const ok = ([mm, dd]) => +mm >= 1 && +mm <= 12 && +dd >= 1 && +dd <= 31;
+    [m, d] = ok(a) && !(a[1][0] === "0" && ok(b)) ? a : b; // 日が0始まり（2018105）なら10/5と読む
+  }
   else if ((x = /^(\d{4})[\/.\-年](\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v))) [, y, m, d] = x;
   else if ((x = /^(\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v))) {
     y = new Date().getFullYear();
