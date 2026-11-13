@@ -232,6 +232,25 @@ button.lab.s{font:inherit;font-size:12px;font-weight:700;padding:2px 8px;backgro
 .rng{font-family:var(--u-num);font-size:11px;color:var(--u-sub);background:var(--u-chip);border-radius:4px;padding:0 6px;margin-left:6px;white-space:nowrap}
 .sglist{display:grid;gap:8px}
 .sg{border:1px solid var(--u-line);border-radius:var(--u-rl);background:var(--u-bg);padding:10px;display:grid;gap:8px}
+:root{--sg-op:#2f6fd1;--sg-ed:#7a4fd0;--sg-th:#1f8a6d;--sg-in:#c46a12}
+.t-op{--sgc:var(--sg-op)}.t-ed{--sgc:var(--sg-ed)}.t-th{--sgc:var(--sg-th)}.t-in{--sgc:var(--sg-in)}
+.sglist{display:grid;gap:12px}
+.sgsec{display:grid;gap:8px;border-left:4px solid var(--sgc);padding-left:10px}
+.sgh{display:flex;align-items:center;gap:8px;min-height:30px}
+.sgh .sgn{font-size:14px;font-weight:800;color:var(--sgc);letter-spacing:.04em}
+.sgh small{font-size:11.5px;color:var(--u-sub);font-weight:600}
+.sg-sp{flex:1}
+.sgh .sgno{position:static;font-size:12px;color:var(--u-sub);display:flex;align-items:center;gap:5px}
+.sgh .sgno input{width:16px;height:16px;margin:0}
+.sgadd{border:1px solid color-mix(in srgb,var(--sgc) 45%,transparent);background:color-mix(in srgb,var(--sgc) 8%,transparent);color:var(--sgc);border-radius:999px;padding:4px 12px;font:inherit;font-size:12.5px;font-weight:700}
+.sgempty{margin:0;font-size:12px}
+.sg-r{flex-wrap:wrap}
+.sg-r .sg-all{font-size:11.5px;font-weight:700;color:var(--sgc);margin-left:4px}
+.sg-r .sg-dlw{margin:0;font-size:12.5px}
+.sg-r .sg-t{width:auto;padding:4px 6px;font-size:12px;border-radius:7px;color:var(--u-sub)}
+.sg-r .del{font-size:12.5px}
+.sg-r .sg-a,.sg-r .sg-b{width:62px;flex:none;padding:6px 8px}
+.sg-r .sg-t{max-width:110px}
 .sg-top{display:flex;align-items:center;gap:10px}
 .sg-top select{width:auto;min-width:110px;padding:6px 8px;font-size:14px;font-weight:700}
 .sg-top .sg-dlw{margin-left:auto}
@@ -680,6 +699,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .isg{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--u-line)}
 .isg:first-child{border-top:0}
 .itag{flex:none;min-width:34px;text-align:center;font-size:11px;font-weight:700;color:var(--u-sub);background:var(--u-chip);border-radius:6px;padding:2px 6px;margin-top:2px}
+.itag.t-op,.itag.t-ed,.itag.t-th,.itag.t-in{background:var(--sgc);color:#fff;min-width:44px}
+.isgrp{border-left:3px solid var(--sgc);padding-left:9px;margin:6px 0}
+.isgrp+.isgrp{border-top:0;margin-top:10px}
+.isgrp .isg{border-top:0}
+.isgrp .isg1+.isg1{border-top:1px dashed var(--u-line)}
 .isgv{flex:1;min-width:0}
 .isgv .song{align-items:center}
 .isgv .stt{display:block;font-size:14px;font-weight:700;line-height:1.4}
@@ -1445,6 +1469,8 @@ function epSpan(it) {
   const ns = (it ? episodes(it) : []).map(e => parseInt(String(e.n).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n));
   return ns.length ? [Math.min(...ns), Math.max(...ns)] : null;
 }
+/* 曲の種類ごとの色（OP=青・ED=紫・主題歌=緑・挿入歌=橙） */
+const SG_CLS = { OP: "t-op", ED: "t-ed", 主題歌: "t-th", 挿入歌: "t-in" };
 const rangeTxt = x =>
   x.a == null && x.b == null ? "" : x.a != null && x.b === x.a ? `${x.a}話` : `${x.a ?? ""}〜${x.b ?? ""}話`;
 
@@ -3128,14 +3154,15 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const anySong = songRows.some(([, rows]) => rows.length);
   const songs = songRows
     .map(([k, rows]) => {
-      if (rows.length) return rows.map(r => `<div class="isg isg1" data-jump="sgList"><span class="itag">${k}</span>${r}</div>`).join("");
+      /* 種類ごとにまとめ、色の帯と種類のラベルは最初の曲だけに出す */
+      if (rows.length) return `<div class="isgrp ${SG_CLS[k]}">${rows.map((r, j) => `<div class="isg isg1" data-jump="sgList"><span class="itag ${SG_CLS[k]}"${j ? ' aria-hidden="true" style="visibility:hidden"' : ""}>${k}</span>${r}</div>`).join("")}</div>`;
       if (anySong) return ""; // どれか1曲でも入っていれば、ほかの種類の「なし」「未設定」は出さない
       const main = it.k === "a" ? k === "OP" || k === "ED" : k === "主題歌";
       const no = (it.noSongs || []).includes(k);
       let v = "";
       if (no) v = `<span class="nosong">なし</span>`;
       else if (main) v = `${un("未設定")}<button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
-      return v ? `<div class="isg" data-jump="sgList"><span class="itag">${k}</span><div class="isgv">${v}</div></div>` : "";
+      return v ? `<div class="isgrp ${SG_CLS[k]}"><div class="isg" data-jump="sgList"><span class="itag ${SG_CLS[k]}">${k}</span><div class="isgv">${v}</div></div></div>` : "";
     })
     .join("");
   const links = `<div class="ilinks">${
@@ -3462,21 +3489,35 @@ function serSugForm(q) {
   } else if (others.length) h += `<button type="button" class="ser-all" data-fserall="1">${SER_GL[other]}のシリーズからも探す（${nq ? "一致 " : ""}${others.length}件）</button>`;
   return h;
 }
+/* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
 function songRowsHtml() {
-  return (
-    form.songs
-      .map((x, k) => {
-        const { st, ar } = x.st !== undefined ? x : splitTA(x.s);
-        return `<div class="sg" data-sg="${k}">
-    <div class="sg-top"><select class="sg-t" aria-label="種類">${SONG_TYPES.map(t => `<option ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select>
-      <label class="sg-dlw"><input type="checkbox" class="sg-dl" ${x.dl ? "checked" : ""}>♪ DL済み</label>
-      <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div>
+  const f = form;
+  const types = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
+  const main = f.k === "a" ? ["OP", "ED"] : ["主題歌"];
+  const noable = f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"];
+  const card = (x, k) => {
+    const { st, ar } = x.st !== undefined ? x : splitTA(x.s);
+    return `<div class="sg" data-sg="${k}">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
-    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"><span>話</span></div></div>`;
-      })
-      .join("") || `<p class="hint" style="margin:0">まだ登録されていません</p>`
-  );
+    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"><span>話</span>${x.a == null && x.b == null ? `<span class="sg-all">全話</span>` : ""}
+      <span class="sg-sp"></span>
+      <label class="sg-dlw"><input type="checkbox" class="sg-dl" ${x.dl ? "checked" : ""}>♪ DL済み</label>
+      <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}${t === x.type ? "" : "に変える"}</option>`).join("")}</select>
+      <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div>`;
+  };
+  return types
+    .map(t => {
+      const l = f.songs.map((x, k) => [x, k]).filter(([x]) => x.type === t);
+      const no = (f.noSongs || []).includes(t);
+      if (!l.length && !main.includes(t) && !(noable.includes(t) && no)) return "";
+      return `<div class="sgsec ${SG_CLS[t]}">
+        <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
+          ${noable.includes(t) && !l.length ? `<label class="nofl sgno"><input type="checkbox" class="nos" value="${t}" ${no ? "checked" : ""} aria-label="${t}なし"><span>なし</span></label>` : ""}
+          <button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button></div>
+        ${l.length ? l.map(([x, k]) => card(x, k)).join("") : no ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
+    })
+    .join("") + (types.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? "" : "");
 }
 const dowOfDate = d => {
   if (!d) return -1;
@@ -3572,8 +3613,7 @@ function formHtml() {
         : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"><span class="hint">${f.media === "ova" ? "第1話に発売日を入れて話を作ります" : "開始日から毎週の日付で話を作ります"}</span></label>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
-        <div class="chips" style="margin-top:4px">${songTypes.map(t => `<button type="button" data-sgadd="${t}">＋ ${t}</button>`).join("")}</div>
-        <div class="nosw">${(f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"]).map(t => `<label class="yr"><input type="checkbox" class="nos" value="${t}" ${(f.noSongs || []).includes(t) ? "checked" : ""}>${t}なし</label>`).join("")}</div>
+        ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
         ${f.only ? `<p class="hint" style="margin:6px 0 0">話によって曲が変わるときは、使われた話の範囲を入れます</p>` : ""}</div>`,
     url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
     vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信サイト（見るページのURL）</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
@@ -5271,8 +5311,7 @@ function onTitleFormClick(e) {
       const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
       form.songs.push({ type: sa.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
       redrawForm();
-      const rows = document.querySelectorAll(".sg-st");
-      rows[rows.length - 1]?.focus();
+      document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-st`)?.focus();
       return true;
     }
     const sdl = e.target.closest("[data-sgdel]");
@@ -5803,6 +5842,12 @@ document.addEventListener("change", e => {
     return;
   }
   if (e.target.id === "f-from" && form) {
+    readForm();
+    redrawForm();
+    return;
+  }
+  /* 曲の種類を変えたら、その種類の区切りへ移す */
+  if (e.target.classList.contains("sg-t") && form) {
     readForm();
     redrawForm();
     return;
