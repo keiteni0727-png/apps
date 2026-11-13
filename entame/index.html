@@ -527,6 +527,23 @@ h3 input.inl{font-size:18px;font-weight:800}
 .ined .close{width:30px;height:30px}
 .ined .fgrid.only{margin-top:8px}
 .ined .ffoot{position:static;margin-top:10px;padding:10px 0 0;background:none}
+/* 曲の編集：文字を小さめにし、1曲を詰めて表示（ラベルは入力欄の左に小さく） */
+.sglist{gap:10px}
+.sgsec{gap:6px;padding-left:8px}
+.sg{padding:7px 8px;gap:5px}
+.sg-f{grid-template-columns:1fr!important;gap:5px}
+.sg-f label{grid-template-columns:4.6em 1fr;align-items:center;gap:6px}
+.sg-f label span{font-size:11px}
+.sg .sg-f input,.sg .sg-r input,.sg .sg-r select{font-size:13px!important;padding:5px 8px;line-height:1.35;border-radius:7px}
+.sg .sg-r{gap:5px;font-size:12px;row-gap:4px}
+.sg .sg-r .sg-rl{width:4.6em;margin:0;font-size:11px}
+.sg .sg-r .sg-a,.sg .sg-r .sg-b{width:52px;padding:5px 6px}
+.sg .sg-r .sg-t{max-width:96px;padding:4px 4px;font-size:12px!important}
+.sg .sg-dlw{font-size:12px}
+.sg .sg-dlw input{width:16px;height:16px}
+.sg .del{font-size:12px;padding:4px 2px}
+.sgh{min-height:26px}
+.sgadd{padding:3px 10px;font-size:12px}
 .fsdrop .clear{border:0;background:transparent;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;padding:4px 0}
 /* episode editor */
 .eped{border:1px solid var(--u-line);border-radius:10px;overflow:hidden}
