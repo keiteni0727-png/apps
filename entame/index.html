@@ -5831,14 +5831,18 @@ document.addEventListener("focusout", e => {
 function normVurl(u) {
   u = String(u || "").trim();
   const m = /^(?:https?:\/\/)?(?:www\.)?netflix\.com\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?(?:title\/(\d+)|[^?#]*\?(?:.*&)?jbv=(\d+))/i.exec(u);
-  return m ? `https://www.netflix.com/title/${m[1] || m[2]}` : u;
+  if (m) return `https://www.netflix.com/title/${m[1] || m[2]}`;
+  /* U-NEXT：作品はSID番号。作品ページ（/title/SID…）・再生画面（/play/SID…/ED…）・後ろに ?… が付いた共有リンクを作品ページの形に */
+  const un = /^(?:https?:\/\/)?video\.unext\.jp\/.*?\b(SID\d+)/i.exec(u);
+  if (un) return `https://video.unext.jp/title/${un[1].toUpperCase()}`;
+  return u;
 }
 document.addEventListener("input", e => {
   if (e.target.id !== "f-vurl") return;
   const v = normVurl(e.target.value);
   if (v !== e.target.value.trim()) {
     e.target.value = v;
-    toast("NetflixのURLを作品ページの形に直しました");
+    toast("配信URLを作品ページの形に直しました");
   }
 });
 
