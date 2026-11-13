@@ -945,33 +945,35 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .wcard{display:flex;flex-direction:column;background:var(--u-surface);border:1px solid var(--u-line);border-radius:14px;overflow:hidden;min-width:0}
 .wcard.nx{border:2px solid var(--accent)}
-.wc-main{display:grid;gap:5px;border:0;background:none;text-align:left;padding:12px 14px 8px;font:inherit;color:var(--u-ink);min-width:0;flex:1;align-content:start}
-.wc-top{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}
-.wc-time{font-family:var(--u-num);font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1}
-.wc-st{font-size:12px;font-weight:700;color:var(--u-sub)}
+.wc-main{display:grid;gap:7px;border:0;background:none;text-align:left;padding:14px 16px 12px;font:inherit;color:var(--u-ink);min-width:0;flex:1;align-content:start}
+.wc-top{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.wc-time{font-family:var(--u-num);font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1}
+.wc-st{font-size:14px;font-weight:700;color:var(--u-sub)}
+.wc-top .kind{font-size:12px;padding:2px 7px}
 .wc-vods{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
-.wc-ttl{font-family:var(--u-f);font-size:16px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
-.wc-ep{font-size:13px;color:var(--u-sub);overflow-wrap:anywhere}
+.wc-vods .lab{font-size:12px;padding:2px 8px}
+.wc-ser{display:flex;margin-bottom:-3px}
+.wc-ser .lab{font-size:12px;padding:2px 8px}
+.wc-ttl{font-family:var(--u-f);font-size:19px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.wc-ep{font-size:15px;color:var(--u-sub);overflow-wrap:anywhere}
 .wc-ep b{color:var(--u-ink);font-family:var(--u-num)}
-.wc-prog{display:flex;align-items:center;gap:8px;margin-top:2px}
-.wc-bar{flex:1;max-width:200px;height:6px;border-radius:3px;background:var(--u-chip);overflow:hidden}
+.wc-ep em{font-style:normal;font-size:11.5px;font-weight:700;color:var(--u-sub);border:1px solid var(--u-line);border-radius:5px;padding:1px 6px;margin-right:7px;vertical-align:1px}
+.wc-prog{display:flex;align-items:center;gap:10px;margin-top:2px;flex-wrap:wrap}
+.wc-bar{flex:1;min-width:100px;max-width:240px;height:8px;border-radius:4px;background:var(--u-chip);overflow:hidden}
 .wc-bar i{display:block;height:100%;background:var(--u-ok)}
-.wc-cnt{font-family:var(--u-num);font-size:12px;color:var(--u-sub);font-weight:600}
-.wc-un{font-size:11px;font-weight:700;color:var(--st-now);background:color-mix(in srgb,var(--st-now) 14%,transparent);border-radius:5px;padding:2px 6px}
-.wc-songs{display:grid;gap:2px;font-size:12px;color:var(--u-sub);margin-top:2px}
-.wc-s{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wc-s b{display:inline-block;min-width:44px;font-size:10.5px;color:var(--u-sub)}
-.wc-s.dl::after{content:" ♪";color:var(--u-ok)}
-.wc-foot{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
-.wc-per{font-family:var(--u-num);font-size:11.5px;color:var(--u-sub)}
-.wc-act{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:0 12px 12px}
-.wc-act .miss{margin-right:auto}
-.wc-tick{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:999px;padding:7px 14px;font:inherit;font-size:13px;font-weight:700;white-space:nowrap}
-.wc-tick span[aria-hidden]{color:var(--u-ok)}
-.wcard.un .wc-tick{background:var(--u-ink);color:var(--u-surface);border-color:var(--u-ink)}
-.wcard.un .wc-tick span[aria-hidden]{color:inherit}
-.wc-tick .mo{display:none}
-.wc-ok{font-size:12px;color:var(--u-sub)}
+.wc-cnt{font-family:var(--u-num);font-size:13.5px;color:var(--u-sub);font-weight:600}
+.wc-un{font-size:13px;font-weight:700;color:var(--st-now);background:color-mix(in srgb,var(--st-now) 14%,transparent);border-radius:6px;padding:2px 8px}
+.wc-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.wc-foot .lab.c{font-size:12px}
+.wc-per{font-family:var(--u-num);font-size:13px;color:var(--u-sub)}
+.wc-foot .miss{margin-left:auto}
+.wc-act{border-top:1px solid var(--u-line);display:flex}
+.wc-tick{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:none;color:var(--u-ink);padding:12px 14px;font:inherit;font-size:15px;font-weight:700;white-space:nowrap}
+.wc-tick .ck{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;border:2px solid var(--u-ok);color:var(--u-ok);font-size:13px;line-height:1}
+.wc-tick small{font-size:12px;color:var(--u-sub);font-weight:600}
+.wc-tick:hover{background:var(--u-chip)}
+.wcard.un .wc-tick{background:color-mix(in srgb,var(--u-ok) 10%,transparent)}
+.wc-ok{flex:1;text-align:center;font-size:13px;color:var(--u-sub);padding:11px 14px}
 .vseg[hidden]{display:none}
 .wtabs{display:flex;gap:4px;background:var(--u-chip);border-radius:12px;padding:4px;margin-top:16px}
 .wtabs button{flex:1;display:grid;justify-items:center;gap:1px;border:0;background:none;color:var(--u-sub);border-radius:9px;padding:7px 4px;position:relative;font:inherit;line-height:1.2}
@@ -1003,11 +1005,10 @@ body.sbc .u-app .sb .sb-fold{display:none}
   .wt-un{min-width:0;flex:none;width:46%}
   .wday{margin-top:12px}
   .wgrid{grid-template-columns:1fr}
-  .wc-time{font-size:26px}
-  .wc-ttl{font-size:17px}
+  .wc-time{font-size:30px}
+  .wc-ttl{font-size:19px}
   .wc-bar{max-width:none}
-  .wc-tick{padding:10px 18px;font-size:14px}
-  .wc-tick .mo{display:inline}
+  .wc-tick{padding:14px;font-size:16px}
   .hseg:empty{display:none}
   .hbar:has(.hseg:empty) .hcur{gap:8px}
   .hbar:has(.hseg:empty) .hcur .hname{position:static;width:auto;height:auto;overflow:visible;clip:auto;font-family:var(--u-f);font-size:17px;font-weight:700}
@@ -2358,31 +2359,23 @@ function weekCard(i, dayKey, isNext, onAir, preferBack) {
   const st = i.dow < 0 ? "" : stationTxt(i);
   const vods = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
   const fin = dayKey && isFinOn(i, dayKey);
-  const songs = ["OP", "ED", "主題歌"]
-    .map(t => {
-      const p = songPick(i, t, n);
-      if (!p) return "";
-      const sp = splitTA(p.x.s);
-      return `<span class="wc-s${p.x.dl ? " dl" : ""}"><b>${t}</b>${esc(sp.raw ? sp.st : sp.st || sp.ar)}</span>`;
-    })
-    .filter(Boolean)
-    .join("");
   const per = periodOf(i);
   const cs = coursOf(i);
   const foot = cs.map(c => courLab(c)).join("") + (per ? `<span class="wc-per">${esc(per)}</span>` : "");
+  /* カードの下いっぱいの帯：未視聴があれば「○話を見た」で視聴済みに、なければ状態だけ */
   const tick = back[0]
-    ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(back[0].n)}を視聴済にする"><span aria-hidden="true">✓</span> ${esc(back[0].n)}<span class="mo">を見た</span></button>`
-    : `<span class="wc-ok">${eps.length && w === eps.length ? "全話視聴済み" : "未視聴なし"}</span>`;
+    ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(back[0].n)}を視聴済にする"><span class="ck" aria-hidden="true">✓</span>${esc(back[0].n)}を見た</button>`
+    : `<span class="wc-ok">${eps.length && w === eps.length ? "全話視聴済み" : eps.length ? "放送済みの話はすべて視聴済み" : "話数未登録"}</span>`;
   return `<div class="wcard${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">${onAir ? `<span class="wc-badge live">● ON AIR</span>` : isNext ? `<span class="wc-badge nx">NEXT</span>` : ""}
     <button type="button" class="wc-main" data-id="${i.id}">
       <span class="wc-top"><span class="wc-time">${i.dow < 0 ? { movie: "映画", ova: "OVA" }[m.media] || "配信" : esc(i.time || "--:--")}</span>${st ? `<span class="wc-st">${esc(st)}</span>` : ""}${kindTag(i)}${fin ? FIN : ""}<span class="wc-vods">${vods.map(vlab).join("")}</span></span>
+      ${i.series ? `<span class="wc-ser"><span class="lab s">${esc(i.series)}</span></span>` : ""}
       <span class="wc-ttl">${esc(i.t)}</span>
-      <span class="wc-ep">${e ? `<b>${esc(e.n)}</b>${e.sub ? `「${esc(e.sub)}」` : ""}` : eps.length ? "放送予定の話はありません" : "話数未登録"}</span>
-      ${eps.length ? `<span class="wc-prog"><span class="wc-bar"><i style="width:${Math.round((w / eps.length) * 100)}%"></i></span><span class="wc-cnt">${w}/${eps.length}話</span>${back.length ? `<span class="wc-un">未視聴 ${back.length}話</span>` : ""}</span>` : ""}
-      ${songs ? `<span class="wc-songs pconly">${songs}</span>` : ""}
-      ${foot ? `<span class="wc-foot pconly">${foot}</span>` : ""}
+      <span class="wc-ep">${e ? `<em>${!aired(e) ? "放送" : e.w ? "放送済" : "未視聴"}</em><b>${esc(e.n)}</b>${e.sub ? `「${esc(e.sub)}」` : ""}` : eps.length ? "放送予定の話はありません" : "話数未登録"}</span>
+      ${eps.length ? `<span class="wc-prog"><span class="wc-bar"><i style="width:${Math.round((w / eps.length) * 100)}%"></i></span><span class="wc-cnt">${w}/${eps.length}話 視聴</span>${back.length ? `<span class="wc-un">未視聴 ${back.length}話</span>` : ""}</span>` : ""}
+      ${foot || missingOf(i).length ? `<span class="wc-foot pconly">${foot}${missBadge(i)}</span>` : ""}
     </button>
-    <div class="wc-act">${missBadge(i)}${tick}</div>
+    <div class="wc-act">${tick}</div>
   </div>`;
 }
 function renderWeek() {
