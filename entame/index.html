@@ -88,6 +88,9 @@ main{padding-bottom:48px}
 }
 .sheet .wrap{padding-top:10px}
 .sheet h3{font-family:var(--u-f);font-weight:700;font-size:20px;line-height:1.4;margin:4px 0 6px;text-wrap:balance}
+.tcopy{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin:-4px 0 0 6px;width:28px;height:28px;border:0;border-radius:8px;background:transparent;color:var(--u-sub);cursor:pointer}
+.tcopy:hover{background:var(--u-chip)}
+.tcopy:active{transform:scale(.92)}
 .sheet h4{font-size:13px;margin:20px 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .sheet h4 small{color:var(--u-sub);font-weight:500}
 .seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin:14px 0}
@@ -2783,7 +2786,7 @@ function renderDetail(it) {
   const w = eps.filter(e => e.w).length;
   const nx = eps[nextIdx(eps)];
   return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}</div><div class="hdrow"><button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
-    <h3>${esc(it.t)}</h3>
+    <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
     <div class="seg" role="group" aria-label="ステータス">${STATUSES.map(s => `<button type="button" data-set="${s}" aria-pressed="${it.s === s}" class="${it.s === s ? "s-" + s : ""}">${stLabel(s)}</button>`).join("")}</div>
     ${missDetail(it)}
     <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
@@ -4698,6 +4701,16 @@ function onDetailClick(e) {
   if (it) {
     if (e.target.closest("#editItem")) {
       openForm(it);
+      return true;
+    }
+    if (e.target.closest("#copyTitle")) {
+      const ok = copyText(it.t);
+      if (ok) toast("タイトルをコピーしました");
+      else
+        navigator.clipboard
+          .writeText(it.t)
+          .then(() => toast("タイトルをコピーしました"))
+          .catch(() => toast("コピーできませんでした"));
       return true;
     }
     const nfb = e.target.closest("[data-nof]");
