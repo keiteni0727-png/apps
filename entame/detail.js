@@ -273,18 +273,11 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     ${ns || (!when && nofHas(it, "time") && !cour) ? "" : `<div class="ibig">${!when && nofHas(it, "time") ? "" : `<span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>`}${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
     <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
     <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${mediaLabels(it, true)}</span>` : `<span class="labs">${mediaTag(it)}</span>`}${stv ? "" : nofHas(it, md === "stream" ? "plat" : hasSt(md) ? "st" : "vods") ? nn({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
-  const anySong = songRows.some(([, rows]) => rows.length);
   const songs = songRows
     .map(([k, rows]) => {
       /* 種類ごとにまとめ、色の帯と種類のラベルは最初の曲だけに出す */
       if (rows.length) return `<div class="isgrp ${SG_CLS[k]}">${rows.map((r, j) => `<div class="isg isg1" data-jump="sgList"><span class="itag ${SG_CLS[k]}"${j ? ' aria-hidden="true" style="visibility:hidden"' : ""}>${k}</span>${r}</div>`).join("")}</div>`;
-      if (anySong) return ""; // どれか1曲でも入っていれば、ほかの種類の「なし」「未設定」は出さない
-      const main = k === "OP" || k === "ED" || k === "主題歌";
-      const no = (it.noSongs || []).includes(k);
-      let v = "";
-      if (no) v = `<span class="nosong">なし</span>`;
-      else if (main) v = `${un("未設定")}<button type="button" class="dlb nob" data-nosong="${k}">${k}なしにする</button>`;
-      return v ? `<div class="isgrp ${SG_CLS[k]}"><div class="isg" data-jump="sgList"><span class="itag ${SG_CLS[k]}">${k}</span><div class="isgv">${v}</div></div></div>` : "";
+      return ""; // 入力されている曲だけ出す（未設定・なしは出さない）
     })
     .join("");
   const links = `<div class="ilinks">${
@@ -350,7 +343,7 @@ function missDetail(it) {
         ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
         : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
   const btn = x =>
-    `<span class="mi">${main(x)}${x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする">なし</button>` : ""}</span>`;
+    `<span class="mi">${main(x)}${x.ns ? `<button type="button" class="nb" data-nosong="all" title="OP・ED・主題歌を「なし」にする">なし</button>` : x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする">なし</button>` : ""}</span>`;
   return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function refreshSheet() {
@@ -594,9 +587,8 @@ const DETAIL_ACTIONS = [
   [
     "[data-nosong]",
     (el, it) => {
-      const k = el.dataset.nosong;
-      const cur = it.noSongs || [];
-      saveTitle(it.id, { noSongs: cur.includes(k) ? cur.filter(x => x !== k) : [...cur, k] }, `${k}を「なし」にしました`);
+      dmissKeep = true;
+      saveTitle(it.id, { noSongs: ["OP", "ED", "主題歌"] }, "OP・ED・主題歌を「なし」にしました");
     },
   ],
   /* 曲のDL済み */

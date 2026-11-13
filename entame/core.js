@@ -517,8 +517,6 @@ function missingOf(i) {
   const md = m.media,
     ns = noSched(md);
   const sl = songsOf(i);
-  const no = i.noSongs || [];
-  const needSong = t => !no.includes(t) && !sl.some(x => x.type === t && (x.s || "").trim());
   const nf = i.noF || [];
   const out = [];
   const add = (k, j = "", n = "") => (!n || !nf.includes(n)) && out.push({ k, j, n });
@@ -530,9 +528,8 @@ function missingOf(i) {
   if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
   if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "vods");
   if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "cours");
-  // OP・ED・主題歌のどれか1つでも入っていれば、曲の未入力は出さない
-  const anySong = sl.some(x => (x.s || "").trim());
-  if (!anySong) (i.k === "a" && md !== "movie" ? ["OP", "ED"] : ["主題歌"]).forEach(t => needSong(t) && add(t, "sgList"));
+  // 曲が1曲もなく「なし」にもしていないときだけ（OP・ED・主題歌まとめて1項目）
+  if (!sl.some(x => (x.s || "").trim()) && !(i.noSongs || []).length) out.push({ k: "OP・ED・主題歌", j: "sgList", n: "", ns: 1 });
   /* 曲名・アーティストのどちらかだけ入っている曲（編集画面の2つの入力欄と同じ中身で判定） */
   const ta = sl.filter(x => (x.s || "").trim()).map(x => ({ st: songTA(x).st.trim(), ar: songTA(x).ar.trim() }));
   if (ta.some(x => x.st && !x.ar)) add("アーティスト", "sgList");
@@ -546,7 +543,7 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "見られる配信", "放送クール", "OP", "ED", "主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
+const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "見られる配信", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);

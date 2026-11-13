@@ -54,7 +54,8 @@ function songRowsHtml() {
   /* OP・ED・主題歌はジャンル・種別に関係なくいつも出す（挿入歌は追加したときだけ） */
   const types = SONG_TYPES.filter(t => SONG_MAIN.includes(t) || t === "挿入歌" || f.songs.some(x => x.type === t));
   const main = SONG_MAIN;
-  const noable = SONG_MAIN;
+  /* 「なし」は曲が1曲もないときだけ。OP・ED・主題歌まとめて1つ */
+  const none = !f.songs.length && (f.noSongs || []).length > 0;
   const card = (x, k) => {
     return `<div class="sg" data-sg="${k}">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
@@ -65,18 +66,18 @@ function songRowsHtml() {
       <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}${t === x.type ? "" : "に変える"}</option>`).join("")}</select>
       <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div>`;
   };
-  return types
+  const secs = types
     .map(t => {
       const l = f.songs.map((x, k) => [x, k]).filter(([x]) => x.type === t);
-      const no = (f.noSongs || []).includes(t);
-      if (!l.length && !main.includes(t) && !(noable.includes(t) && no)) return "";
+      if (!l.length && !main.includes(t)) return "";
       return `<div class="sgsec ${SG_CLS[t]}">
         <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
-          ${noable.includes(t) && !l.length ? `<label class="nofl sgno"><input type="checkbox" class="nos" value="${t}" ${no ? "checked" : ""} aria-label="${t}なし"><span>なし</span></label>` : ""}
           <button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button></div>
-        ${l.length ? l.map(([x, k]) => card(x, k)).join("") : no ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
+        ${l.length ? l.map(([x, k]) => card(x, k)).join("") : none ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
     })
     .join("");
+  const noBox = f.songs.length ? "" : `<label class="nofl sgno sgall"><input type="checkbox" class="nos" ${none ? "checked" : ""}><span>OP・ED・主題歌 なし</span></label>`;
+  return noBox + secs;
 }
 const dowOfDate = d => {
   if (!d) return -1;
@@ -229,7 +230,7 @@ function readForm() {
     const l = (form.noF || []).filter(x => x !== c.value);
     form.noF = c.checked ? [...l, c.value] : l;
   });
-  if ($("#sgList")) form.noSongs = [...document.querySelectorAll(".nos:checked")].map(x => x.value);
+  if ($("#sgList")) form.noSongs = document.querySelector(".nos:checked") ? [...SONG_MAIN] : [];
   if ($("#sgList"))
     form.songs = [...document.querySelectorAll("[data-sg]")].map(r => {
       const a = r.querySelector(".sg-a").value,
@@ -376,7 +377,7 @@ async function submitForm() {
     vods: f.media === "stream" ? [] : f.vods,
     cours: isMovie ? [] : f.cours,
     songs,
-    noSongs: (f.noSongs || []).filter(t => !songs.some(x => x.type === t)),
+    noSongs: songs.length ? [] : f.noSongs || [],
     noF: [],
     series: (f.series || "").trim(),
     url: (f.url || "").trim(),
