@@ -987,6 +987,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wtabs button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .wtabs .wdot{position:absolute;top:6px;right:calc(50% - 22px);width:7px;height:7px;border-radius:50%;background:var(--st-now)}
 .mkind{display:flex;gap:6px;margin:0 0 8px}
+.xser{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 9%,var(--u-surface));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:10px;padding:8px 12px;margin:0 0 8px;font-size:13px}
+.xser span{flex:1;min-width:0}
+.xser .u-btn{flex:none}
 .mkind button{flex:1;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-sub);border-radius:999px;padding:8px 10px;font:inherit;font-size:13.5px;font-weight:700;white-space:nowrap}
 .mkind button small{font-family:var(--u-num);font-size:11px;margin-left:5px;font-weight:600;opacity:.8}
 .mkind button[aria-checked="true"]{background:var(--movie);border-color:var(--movie);color:#fff}
@@ -1204,6 +1207,7 @@ else if (state.mode !== "yt") state.kind = state.mode;
 /* 番組表はメニュー「番組表」だけ。アニメ・ドラマ・配信はライブラリ */
 state.view = state.mode === "w" ? "week" : "list";
 state.wday = ""; // スマホの番組表で選んでいる日
+state.xser = false;
 const saveUI = () =>
   ls.set(K_UI, {
     fOpen: state.fOpen || "",
@@ -2055,11 +2059,13 @@ function renderTabbar() {
 }
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
 /* 配信タブ：種別「配信」（配信オリジナル）をジャンル問わずまとめて出す。リアリティ（k="r"）は映画・配信タブにだけ出る */
+/* 作品詳細のシリーズ名から開いたときは、アニメ・ドラマ・映画・配信をまたいでそのシリーズを全部出す（xser） */
 const ofKind = i =>
-  (state.mode !== "w" || i.k === "a" || i.k === "d") &&
+  (state.xser && state.series.length && state.mode !== "w" && state.mode !== "yt") ||
+  ((state.mode !== "w" || i.k === "a" || i.k === "d") &&
   (state.kind === "all" || i.k === state.kind || (state.mode === "m" && state.kind === "d" && i.k === "f")) &&
   (state.mode !== "m" || mediaOf(i).media === "movie") &&
-  (state.mode !== "s" || mediaOf(i).media === "stream");
+  (state.mode !== "s" || mediaOf(i).media === "stream"));
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
 const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
 const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
@@ -2231,7 +2237,7 @@ function slotRow(i, week, dayKey) {
     tick = `<button type="button" class="tick" data-tick="${i.id}" ${back.length ? "" : "disabled"} aria-label="${back[0] ? esc(i.t) + " " + esc(back[0].n) + "を視聴済にする" : "未視聴の話はありません"}"><span>✓</span>${back[0] ? esc(back[0].n) : "—"}</button>`;
   }
   return `<div class="row${!week && i.s === "視聴済み" ? " done" : ""}${week ? "" : " lst ls-" + esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
-    <span class="time">${week ? `${esc(i.time || "")}${i.dow < 0 ? `<small>${{ movie: "映画", ova: "OVA" }[mediaOf(i).media] || "配信"}</small>` : ""}${stationTxt(i) ? `<span class="tst">${esc(stationTxt(i))}</span>` : ""}` : `${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}`}${state.kind === "all" ? kindTag(i) : ""}</span>
+    <span class="time">${week ? `${esc(i.time || "")}${i.dow < 0 ? `<small>${{ movie: "映画", ova: "OVA" }[mediaOf(i).media] || "配信"}</small>` : ""}${stationTxt(i) ? `<span class="tst">${esc(stationTxt(i))}</span>` : ""}` : `${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}`}${state.kind === "all" || state.xser ? kindTag(i) : ""}</span>
     <span class="ttl"><strong>${week && dayKey && isFinOn(i, dayKey) ? FIN : ""}${esc(i.t)}</strong><span class="meta">${week ? pcCourPer(i) + labels(i, false, true) + missBadge(i) : `<span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}`}</span>${nx}</span>
     ${pcInfo(i, week, dayKey)}${week ? "" : `<span class="pwide">${stPill(i)}</span>`}</button>${tick}</div>`;
 }
@@ -2679,6 +2685,7 @@ function renderList() {
   }
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
     ${state.mode === "m" ? `<div class="mkind" role="radiogroup" aria-label="映画の種類">${[["all", "すべて"], ["a", "アニメ映画"], ["d", "実写映画"]].map(([v, l]) => `<button type="button" role="radio" data-mk="${v}" aria-checked="${state.kind === v}">${l}<small>${items.filter(i => mediaOf(i).media === "movie" && (v === "all" || i.k === v || (v === "d" && i.k === "f"))).length}</small></button>`).join("")}</div>` : ""}
+    ${state.xser && state.series.length ? `<div class="xser"><span><b>シリーズ「${esc(state.series.join("・"))}」</b>をアニメ・ドラマ・映画・配信まとめて表示しています</span><button type="button" class="u-btn sm" data-xseroff="1">${esc(MODE_NAME[state.mode])}だけにする</button></div>` : ""}
     <div class="fwrap">${fRowHtml(fKeys())}${fPopHtml(panels)}</div>
     <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
     ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
@@ -4739,6 +4746,7 @@ function setMode(m) {
   state.mode = m;
   state.view = m === "w" ? "week" : "list";
   state.wday = "";
+  state.xser = false;
   if (m === "w") {
     state.kind = "all";
   } else if (m === "m" || m === "s") {
@@ -4985,6 +4993,7 @@ function onFilterClick(e) {
   const se = e.target.closest("[data-series]");
   if (se) {
     state.series = [se.dataset.series];
+    state.xser = true;
     if (state.mode === "w") {
       const it = items.find(x => x.id === openId);
       setMode(it && it.k === "d" ? "d" : "a");
@@ -4994,6 +5003,11 @@ function onFilterClick(e) {
     close();
     render();
     scrollTo(0, 0);
+    return true;
+  }
+  if (e.target.closest("[data-xseroff]")) {
+    state.xser = false;
+    render();
     return true;
   }
   const gp = e.target.closest("[data-grp]");
