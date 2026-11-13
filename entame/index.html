@@ -255,7 +255,7 @@ button.lab.s{font:inherit;font-size:12px;font-weight:700;padding:2px 8px;backgro
 .sg-top select{width:auto;min-width:110px;padding:6px 8px;font-size:14px;font-weight:700}
 .sg-top .sg-dlw{margin-left:auto}
 .sg .del{border:0;background:transparent;color:var(--u-danger);font-size:12.5px;font-weight:700;padding:6px 4px}
-.sg-f{display:grid;grid-template-columns:1fr;gap:10px}
+.sg-f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sg-f label{display:grid;gap:4px;min-width:0}
 .sg-f label span,.sg-rl{font-size:11.5px;font-weight:700;color:var(--u-sub)}
 .sg-f input,.sg-r input{padding:7px 9px;font-size:14.5px;width:100%}
@@ -267,6 +267,7 @@ button.lab.s{font:inherit;font-size:12px;font-weight:700;padding:2px 8px;backgro
 }
 .sheet.form.mini{max-width:600px}
 .stt{font-weight:700}
+.sar{color:var(--u-sub);margin-left:2px}
 .sernew{display:flex;gap:8px;margin-top:8px}
 .sernew input{flex:1;min-width:0}
 .sernew button{flex:none;border:1px solid var(--u-line);background:var(--u-bg);border-radius:10px;padding:0 14px;font-weight:700;font-size:14px}
@@ -728,6 +729,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .isgv{flex:1;min-width:0}
 .isgv .song{align-items:center}
 .isgv .stt{display:block;font-size:14px;font-weight:700;line-height:1.4}
+.isgv .sar{display:block;margin:1px 0 0;font-size:12px;color:var(--u-sub)}
 .isgv .dlb,.isg1>.dlb{padding:3px 11px;font-size:12px}
 .isg1{align-items:center;padding:7px 0}
 .isg1 .itag{margin-top:0}
@@ -1487,7 +1489,15 @@ const songText = i =>
     .map(x => x.type + " " + x.s)
     .join(" ");
 /* 詳細のカード用：入力したとおりに表示（曲名・アーティストの自動区分はしない） */
-const songCard = s => `<span class="stt">${esc(s)}</span>`;
+/* 曲名とアーティストは入力欄ごとに別々に保存（自動で分けたりつないだりしない）。
+   s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
+const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
+const songJoin = (st, ar) => [st.trim(), ar.trim()].filter(Boolean).join(" ");
+/* 詳細のカード用：曲名とアーティストを2段で */
+const songCard = x => {
+  const { st, ar } = songTA(x);
+  return `${st ? `<span class="stt">${esc(st)}</span>` : ""}${ar ? `<span class="sar">${esc(ar)}</span>` : ""}`;
+};
 function epSpan(it) {
   const ns = (it ? episodes(it) : []).map(e => parseInt(String(e.n).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n));
   return ns.length ? [Math.min(...ns), Math.max(...ns)] : null;
@@ -2312,7 +2322,7 @@ function pcInfo(i, week, dayKey) {
     .map(t => {
       const p = songPick(i, t, n);
       if (!p) return "";
-      return `<span class="pci-r${p.x.dl ? " dl" : ""}"><b>${t}</b><span class="pci-v">${p.x.dl ? '<i class="pci-dl" aria-label="DL済み">♪</i>' : ""}${esc(p.x.s)}</span>${!week && p.more ? `<em>ほか${p.more}曲</em>` : ""}</span>`;
+      return `<span class="pci-r${p.x.dl ? " dl" : ""}"><b>${t}</b><span class="pci-v">${p.x.dl ? '<i class="pci-dl" aria-label="DL済み">♪</i>' : ""}${(({ st, ar }) => `${esc(st)}${ar ? `<small>${esc(ar)}</small>` : ""}`)(songTA(p.x))}</span>${!week && p.more ? `<em>ほか${p.more}曲</em>` : ""}</span>`;
     })
     .join("");
   return `<span class="pci">${song}</span>`;
@@ -3314,7 +3324,7 @@ function renderDetail(it) {
     tp,
     l.map(
       ([x, k]) =>
-        `${showRng ? `<span class="irg">${rangeTxt(x) || (l.length === 1 ? "全話" : "")}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x.s)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
+        `${showRng ? `<span class="irg">${rangeTxt(x) || (l.length === 1 ? "全話" : "")}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
     ),
   ]);
   const md = mediaOf(it).media,
@@ -3553,7 +3563,8 @@ function songRowsHtml() {
   const noable = f.k === "a" ? ["OP", "ED", "主題歌"] : ["主題歌"];
   const card = (x, k) => {
     return `<div class="sg" data-sg="${k}">
-    <div class="sg-f"><label><span>曲</span><input class="sg-st" value="${esc(x.s || "")}" placeholder="例：「エスコート」THE BEAT GARDEN" autocomplete="off"></label></div>
+    <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
+      <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
     <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"><span>話</span>${x.a == null && x.b == null ? `<span class="sg-all">全話</span>` : ""}
       <span class="sg-sp"></span>
       <label class="sg-dlw"><input type="checkbox" class="sg-dl" ${x.dl ? "checked" : ""}>♪ DL済み</label>
@@ -3732,7 +3743,9 @@ function readForm() {
         b = r.querySelector(".sg-b").value;
       return {
         type: r.querySelector(".sg-t").value,
-        s: r.querySelector(".sg-st").value,
+        st: r.querySelector(".sg-st").value,
+        ar: r.querySelector(".sg-ar").value,
+        s: songJoin(r.querySelector(".sg-st").value, r.querySelector(".sg-ar").value),
         a: a === "" ? null : +a,
         b: b === "" ? null : +b,
         ...(r.querySelector(".sg-dl")?.checked ? { dl: 1 } : {}),
@@ -3824,7 +3837,7 @@ async function submitForm() {
     toast("タイトルを入れてください");
     return;
   }
-  const songs = f.songs.map(({ st, ar, ...x }) => ({ ...x, s: x.s.trim() })).filter(x => x.s);
+  const songs = f.songs.map(x => ({ ...x, st: (x.st ?? x.s ?? "").trim(), ar: (x.ar || "").trim(), s: (x.s || "").trim() })).filter(x => x.s);
   const isMovie = noSched(f.media);
   const patch = {
     k: f.k,
@@ -5409,7 +5422,7 @@ function onTitleFormClick(e) {
       const last = same[same.length - 1];
       const sp = form.span || (+form.n ? [1, +form.n] : null);
       const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
-      form.songs.push({ type: sa.dataset.sgadd, s: "", a: a0, b: sp ? sp[1] : null });
+      form.songs.push({ type: sa.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
       redrawForm();
       document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-st`)?.focus();
       return true;
