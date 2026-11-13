@@ -642,7 +642,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 }
 .nosong{color:var(--u-sub);font-size:13px}
 .nob{margin-left:8px}
-.nofl{margin-top:2px;font-size:12px;color:var(--u-sub)}
+/* 「○○なし」は項目名の行の右端に置く（入力欄の下にはみ出さない） */
+.field:has(>.nofl){position:relative}
+.field>.nofl{position:absolute;top:-3px;right:0;margin:0;font-size:12px;color:var(--u-sub);gap:5px;padding:0}
+.field>.nofl input{width:16px;height:16px;margin:0}
 .nosw{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
 /* 番組表：時刻の下の放送局 */
 .time .tst{font-family:var(--u-f);font-size:9.5px;font-weight:700;color:var(--u-sub);line-height:1.3;white-space:nowrap;letter-spacing:-.02em}
@@ -1958,7 +1961,7 @@ function missingOf(i) {
 const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods: "見られる配信", cours: "放送クール", url: "公式サイト", vurl: "配信URL" };
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
-  `<label class="yr nofl"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""}>${lab || NOF_LAB[k]}なし</label>`;
+  `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
 const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "見られる配信", "放送クール", "OP", "ED", "主題歌", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
