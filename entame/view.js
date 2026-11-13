@@ -36,7 +36,7 @@ function renderSidebar() {
   const sb = $("#sb");
   if (!sb) return;
   document.body.classList.toggle("sbc", sbCollapsed);
-  /* 左メニューは種別。アニメ・ドラマ＝TV／TVスペシャル／映画／OVA／配信、映画＝アニメ映画／実写映画、配信＝アニメ／ドラマ・バラエティ、YouTube＝投稿者。▸▾で折りたためる
+  /* 左メニューは種別。アニメ・ドラマ＝TV／TV SP／映画／OVA／配信、映画＝アニメ映画／実写映画、配信＝アニメ／ドラマ・バラエティ、YouTube＝投稿者。▸▾で折りたためる
      視聴ステータスは一覧の上の切り替えで選ぶ */
   const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
   const subOf = m => {
@@ -142,7 +142,7 @@ function stationTxt(i) {
   const l = m.media === "stream" ? m.plat : hasSt(m.media) ? m.stations : [];
   return l.join("・");
 }
-/* 放送局・配信サイトのラベル。tag=true：作品詳細用。種別（TV・SP・映画・OVA・配信）を一覧と同じタグで先頭に出す */
+/* 放送局・配信サイトのラベル。tag=true：作品詳細用。種別（TV・TV SP・映画・OVA・配信）を一覧と同じタグで先頭に出す */
 function mediaLabels(i, tag) {
   const m = mediaOf(i);
   const head = tag ? mediaTag(i) : "";
@@ -520,7 +520,7 @@ const groupTitle = k =>
     : k === "?"
       ? "時期不明"
       : k[0] === "Y"
-        ? `${k.slice(1)}年<small>クール未設定・映画・OVA・SP</small>`
+        ? `${k.slice(1)}年<small>クール未設定・映画・OVA・TV SP</small>`
         : `${k.slice(0, 4)}年 <span class="sea ${SEASON_CLS[k.slice(4)] || ""}">${k.slice(4)}</span><small>${["1〜3月", "4〜6月", "7〜9月", "10〜12月"][SI[k.slice(4)]]}</small>`;
 /* 見出しを押すと折りたたむ。開閉は端末に覚えておく */
 const collapsed = new Set(ls.get("adb.v3.col") || []);

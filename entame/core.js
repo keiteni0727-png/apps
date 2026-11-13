@@ -45,7 +45,7 @@ const vcStyle = v => {
 const vlab = v => `<span class="lab v${VOD_COLOR[v] ? " vc" : ""}"${vcStyle(v)}>${esc(v)}</span>`;
 const MEDIA = [
   ["tv", "TV"],
-  ["sp", "TVスペシャル"],
+  ["sp", "TV SP"],
   ["movie", "映画"],
   ["ova", "OVA"],
   ["stream", "配信"],
@@ -149,7 +149,7 @@ const saveUI = () =>
 const TYPES = [
   ["すべて", "すべて"],
   ["tv", "TV"],
-  ["sp", "TVスペシャル"],
+  ["sp", "TV SP"],
   ["stream", "配信"],
   ["movie", "映画"],
   ["ova", "OVA"],
@@ -157,11 +157,11 @@ const TYPES = [
 const typeOk = i => !state.type.length || state.type.includes(mediaOf(i).media);
 /* 放送形態: media＝tv（放送局 stations）・stream（配信サイト plat）・movie・ova。vods＝見られる配信サイト */
 const mediaOf = i => ({ media: i.media || "tv", stations: i.stations || [], plat: i.plat || [], vods: i.vods || [] });
-/* 映画・OVA・TVスペシャル：毎週の放送時間と放送クールを持たない（TVスペシャルは1回だけの放送。放送局はある） */
+/* 映画・OVA・TV SP：毎週の放送時間と放送クールを持たない（TV SPは1回だけの放送。放送局はある） */
 const noSched = m => m === "movie" || m === "ova" || m === "sp";
 const hasSt = m => m === "tv" || m === "sp";
-const MEDIA_LAB = { tv: "TV", sp: "SP", stream: "配信", movie: "映画", ova: "OVA" };
-const ONE_LAB = { movie: "映画", ova: "OVA", sp: "SP" };
+const MEDIA_LAB = { tv: "TV", sp: "TV SP", stream: "配信", movie: "映画", ova: "OVA" };
+const ONE_LAB = { movie: "映画", ova: "OVA", sp: "TV SP" };
 /* 主題歌: songs＝[{type,s,a,b,dl}] a〜b話で使われた曲 */
 const songsOf = i => i.songs || [];
 const songText = i =>

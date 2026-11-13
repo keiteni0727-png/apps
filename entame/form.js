@@ -93,7 +93,7 @@ const courOfDate = d => {
 function schedText() {
   const f = form;
   if (f.media === "movie") return f.from ? `${fmtD(f.from)} 公開` : "公開日を入れてください";
-  if (f.media === "sp") return f.from ? `${fmtD(f.from)} 放送（TVスペシャル）` : "放送日を入れてください";
+  if (f.media === "sp") return f.from ? `${fmtD(f.from)} 放送（TV SP）` : "放送日を入れてください";
   if (f.media === "ova") return f.from ? `${fmtD(f.from)}から発売` : "発売日を入れてください";
   if (!f.from) return "開始日を入れると、放送曜日が自動で決まります";
   /* 放送時間なし＝毎週の放送ではない（一挙配信・不定期など）：曜日を決めない */
@@ -413,7 +413,7 @@ async function submitForm() {
   const n = Math.min(2000, +f.n || 0);
   close();
   await saveTitle(id, patch, "追加しました");
-  /* TVスペシャルは1話（放送日）を自動で作る */
+  /* TV SPは1話（放送日）を自動で作る */
   if (!n && f.media === "sp" && f.from) {
     const it = items.find(x => x.id === id);
     await saveEps(it, [{ n: "SP", sub: "", t: dayTimeToT(f.from, "9:00"), nt: true, w: false }]);
