@@ -1444,7 +1444,7 @@
     return `<div class="field"><label for="${P}-revo">リボ支払額</label><input type="number" id="${P}-revo" inputmode="numeric" value="${m.revo || ""}"></div>
   <div class="field"><label for="${P}-oth">それ以外の支払額</label><input type="number" id="${P}-oth" inputmode="numeric" value="${m.other || ""}" placeholder="0"></div>
   <div class="field"><label for="${P}-in">うち利息（自動計算）</label><input type="number" id="${P}-in" inputmode="numeric" value="${m.interest ?? ""}"></div>
-  <div class="field"><label for="${P}-pr">うち元金</label><input type="number" id="${P}-pr" class="ro" readonly tabindex="-1" value="${m.principal ?? ""}"></div>
+  <div class="field"><label for="${P}-pr">うち元金</label><input type="number" id="${P}-pr" inputmode="numeric" value="${m.principal ?? ""}"></div>
   ${feeHTML(P, m)}
   <div class="sumline full"><span>支払額 合計${m.late ? '<small class="note">（延滞手数料こみ）</small>' : ""}</span><b class="num" id="${P}-sum"></b></div>`;
   }
@@ -1456,12 +1456,14 @@
     let manual = false,
       feeManual = !!(ctx.feeManual && feeEl && feeEl.value !== "");
     const num = k => Number($(P + k)?.value) || 0;
+    const set = (k, v) => ($(P + k).value = Math.max(0, Math.round(v)));
+    // 元金定額の口座は元金を固定し、差分を利息（またはリボ支払額）に回す。それ以外は リボ支払額を固定し、元金と利息で差分を調整する
+    const isP = () => ctx.acc()?.repayType === "principal" && $(P + "-pr").value !== "";
     const base = () => (debt ? num("-revo") + num("-oth") : num("-amt"));
     const ps = () => {
       const revo = debt ? num("-revo") : 0,
         int = debt ? num("-in") : 0,
         fee = feeEl ? num("-fee") : 0;
-      if (debt) $(P + "-pr").value = Math.max(0, revo - int);
       $(P + "-sum").innerHTML =
         yen(base() + fee) + (debt && revo && int > revo ? ` <span class="warnt">利息がリボ支払額を超えています</span>` : "");
       ctx.onChange && ctx.onChange();
@@ -1480,9 +1482,17 @@
           ? `口座の設定で「遅延損害金（年率）」を入れると自動計算します`
           : `${md(due)}の期日から <b>${daysBetween(due, pdt)}日</b> × ${yen(base())} × 年${rate}%${feeManual ? "（手入力中・空にすると自動）" : ""}`;
     };
-    const calc = () => {
+    const autoInt = () => {
       const a = ctx.acc();
-      if (debt && !manual && a) $(P + "-in").value = interestFor(ctx.bal() || 0, a.rate, ctx.date() || today());
+      if (a) $(P + "-in").value = interestFor(ctx.bal() || 0, a.rate, ctx.date() || today());
+    };
+    /* 日付が変わったとき：利息を計算しなおす（元金定額なら元金はそのまま、それ以外はリボ支払額をそのまま） */
+    const calc = () => {
+      if (debt && !manual) {
+        autoInt();
+        if (isP()) set("-revo", num("-pr") + num("-in"));
+        else set("-pr", num("-revo") - num("-in"));
+      }
       fee();
       ps();
     };
@@ -1491,11 +1501,38 @@
       ps();
     };
     if (debt) {
-      $(P + "-revo").addEventListener("input", calc);
+      /* リボ支払額を変えた：元金定額なら差分は利息へ、それ以外は利息はそのままで差分は元金へ */
+      $(P + "-revo").addEventListener("input", () => {
+        const revo = num("-revo");
+        if (isP()) {
+          if (revo >= num("-pr")) set("-in", revo - num("-pr"));
+          else {
+            set("-pr", revo);
+            set("-in", 0);
+          }
+          manual = true;
+        } else {
+          if (!manual) autoInt();
+          set("-pr", revo - num("-in"));
+        }
+        feePs();
+      });
       $(P + "-oth").addEventListener("input", feePs);
+      /* 利息を変えた：元金定額ならリボ支払額を合わせる、それ以外は差分を元金へ */
       $(P + "-in").addEventListener("input", () => {
         manual = true;
-        ps();
+        if (isP()) set("-revo", num("-pr") + num("-in"));
+        else set("-pr", num("-revo") - num("-in"));
+        feePs();
+      });
+      /* 元金を変えた：元金定額ならリボ支払額を合わせる、それ以外は差分を利息へ */
+      $(P + "-pr").addEventListener("input", () => {
+        if (ctx.acc()?.repayType === "principal") set("-revo", num("-pr") + num("-in"));
+        else {
+          manual = true;
+          set("-in", num("-revo") - num("-pr"));
+        }
+        feePs();
       });
     } else $(P + "-amt").addEventListener("input", feePs);
     if (feeEl)
@@ -1515,8 +1552,9 @@
     if ($(P + "-revo")) {
       const revo = Number($(P + "-revo").value) || 0,
         other = Number($(P + "-oth").value) || 0,
-        interest = numOrNull($(P + "-in").value) ?? 0;
-      return { amount: revo + other + fee, other, interest, principal: Math.max(0, revo - interest), ...fx };
+        interest = numOrNull($(P + "-in").value) ?? 0,
+        principal = numOrNull($(P + "-pr").value) ?? Math.max(0, revo - interest);
+      return { amount: revo + other + fee, other, interest, principal, ...fx };
     }
     return { amount: (numOrNull($(P + "-amt").value) || 0) + fee, ...fx };
   }
