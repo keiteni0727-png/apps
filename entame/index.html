@@ -594,6 +594,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop .fgroup>h5{grid-column:1;grid-row:1}
 .fsdrop .fgroup .chips button,.fsdrop .fgroup .chips select{flex:none;white-space:nowrap}
 .fsdrop #serSug:empty{display:none}
+.fsdrop #serSug{display:block}
+.fsdrop #serSug .sershd{display:block;margin:2px 0 4px}
+.fsdrop .serbox{display:flex;flex-wrap:wrap;gap:5px;max-height:132px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 4px;border-top:1px solid var(--u-line);border-bottom:1px solid var(--u-line);padding-top:6px}
+.fsdrop .serbox button{font-size:12.5px;padding:4px 10px}
+@media (max-width:899px){.fsdrop .serbox{max-height:150px}}
 /* 保存したフィルタ */
 .vodbar{display:flex;gap:6px;overflow-x:auto;margin-top:8px;padding-bottom:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .vodbar::-webkit-scrollbar{display:none}
@@ -2739,20 +2744,19 @@ const norm = t =>
     .normalize("NFKC")
     .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
     .replace(/[\s・、。!！?？〜~\-－]/g, "");
+/* シリーズの候補：入力がなければ登録済みのシリーズをすべて（作品数の多い順）、入力があれば一致するもの。枠は高さを決めて中でスクロール */
 function seriesSugHtml(q) {
   const nq = norm(q);
-  if (!nq) return "";
   const cnt = seriesCounts();
   let names = Object.keys(cnt).filter(n => !state.series.includes(n));
   if (nq)
     names = names
       .filter(n => norm(n).includes(nq))
       .sort((a, b) => norm(a).indexOf(nq) - norm(b).indexOf(nq) || cnt[b] - cnt[a]);
-  else names.sort((a, b) => cnt[b] - cnt[a]);
-  const shown = names.slice(0, nq ? 30 : 12);
-  return shown.length
-    ? `${nq ? "" : `<span class="hint" style="width:100%">作品数の多いシリーズ</span>`}${shown.map(n => `<button type="button" data-seradd="${esc(n)}">＋ ${esc(n)}<small>${cnt[n]}</small></button>`).join("")}${names.length > shown.length ? `<span class="hint">ほか${names.length - shown.length}件。名前で検索してください</span>` : ""}`
-    : `<span class="hint">「${esc(q)}」に一致するシリーズはありません</span>`;
+  else names.sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, "ja"));
+  if (!names.length)
+    return nq ? `<span class="hint">「${esc(q)}」に一致するシリーズはありません</span>` : `<span class="hint">登録されているシリーズはありません</span>`;
+  return `<span class="hint sershd">${nq ? `一致するシリーズ ${names.length}件` : `登録済みのシリーズ ${names.length}件（作品数の多い順）`}</span><div class="serbox">${names.map(n => `<button type="button" data-seradd="${esc(n)}">${esc(n)}<small>${cnt[n]}</small></button>`).join("")}</div>`;
 }
 function filterHtml(part) {
   const base = items.filter(i => ofKind(i) && seriesOk(i));
