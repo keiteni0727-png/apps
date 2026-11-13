@@ -1067,6 +1067,20 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .mkind button small{font-family:var(--u-num);font-size:11px;margin-left:5px;font-weight:600;opacity:.8}
 .mkind button[aria-checked="true"]{background:var(--movie);border-color:var(--movie);color:#fff}
 @media (min-width:900px){.mkind button{flex:none;min-width:130px}}
+/* 左メニュー：U-NEXT風に、まとまりごとの角丸パネル */
+.u-app .sb .sbp{flex:none;background:var(--u-chip);border-radius:12px;margin:0 0 6px;overflow:hidden}
+.u-app .sb .sbp .sb-row{gap:0}
+.u-app .sb .sbp .sb-row>.sb-it{border-radius:0;background:none}
+.u-app .sb .sbp .sb-row>.sb-it.on{color:var(--u-accent)}
+.u-app .sb .sbp .sb-fold{width:38px;height:auto;align-self:stretch;border-radius:0;border-left:1px solid var(--u-line)}
+.u-app .sb .sbp .sb-sub{margin:0;padding:0 0 6px;border-left:0}
+.u-app .sb .sbp .sb-sub .sb-it{border-radius:0;padding-left:44px;background:none;border-left:3px solid transparent}
+.u-app .sb .sbp .sb-sub .sb-it.on{background:var(--u-surface);border-left-color:var(--u-accent);color:var(--u-ink);font-weight:700}
+.stseg{display:flex;gap:3px;background:var(--u-chip);border-radius:11px;padding:3px;margin:0 0 8px}
+.stseg button{flex:1;display:flex;align-items:baseline;justify-content:center;gap:5px;border:0;background:none;color:var(--u-sub);border-radius:8px;padding:7px 4px;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;min-width:0}
+.stseg button small{font-family:var(--u-num);font-size:10.5px;font-weight:600;opacity:.8}
+.stseg button[aria-checked="true"]{background:var(--u-ink);color:var(--u-surface)}
+@media (max-width:899px){.stseg button{flex-direction:column;align-items:center;gap:0;padding:5px 2px;font-size:12.5px}}
 /* 左メニュー：詰めた余白・折りたたみ・件数 */
 .u-app .sb .sb-row{display:flex;align-items:center;gap:2px}
 .u-app .sb .sb-row>.sb-it{flex:1;min-width:0}
@@ -2060,26 +2074,37 @@ function renderSidebar() {
   if (!sb) return;
   document.body.classList.toggle("sbc", sbCollapsed);
   const EMO = { キヨ: "🐱", 牛沢: "🐮", レトルト: "🦀" };
-  /* アニメ・ドラマ・映画・配信の下はステータス（すべて／未視聴／視聴中／視聴済／見ない）、YouTubeは投稿者。▸▾で折りたためる */
-  const one = state.sf.length === 1 ? state.sf[0] : state.sf.length ? "*" : "";
+  /* 左メニューは種別。アニメ・ドラマ＝TV／TVスペシャル／映画／OVA／配信、映画＝アニメ映画／実写映画、配信＝アニメ／ドラマ・バラエティ、YouTube＝投稿者。▸▾で折りたためる
+     視聴ステータスは一覧の上の切り替えで選ぶ */
+  const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
   const subOf = m => {
     if (m === "yt") return ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, null]);
     if (m === "w") return [];
     const l = items.filter(i => inMode(m, i));
-    return [
-      [`data-sfgo=""`, "すべて", !one, l.length],
-      ...STATUSES.map(v => [`data-sfgo="${esc(v)}"`, stLabel(v), one === v, l.filter(i => i.s === v).length]),
-    ];
+    if (m === "m")
+      return [
+        [`data-mk="all"`, "すべて", state.kind === "all", l.length],
+        [`data-mk="a"`, "アニメ映画", state.kind === "a", l.filter(i => i.k === "a").length],
+        [`data-mk="d"`, "実写映画", state.kind === "d", l.filter(i => i.k !== "a").length],
+      ];
+    if (m === "s")
+      return [
+        [`data-skgo="all"`, "すべて", state.kind === "all", l.length],
+        [`data-skgo="a"`, "アニメ", state.kind === "a", l.filter(i => i.k === "a").length],
+        [`data-skgo="x"`, "ドラマ・バラエティ", state.kind === "x", l.filter(i => i.k !== "a").length],
+      ];
+    const by = md => l.filter(i => mediaOf(i).media === md).length;
+    return [[`data-tygo=""`, "すべて", !oneT, l.length], ...MEDIA.filter(([md]) => by(md)).map(([md, lab]) => [`data-tygo="${md}"`, lab, oneT === md, by(md)])];
   };
   const mode = (m, ic, l) => {
     const sub = subOf(m);
     const fold = sbFold.has(m);
-    return `<div class="sb-row"><button type="button" class="sb-it${state.mode === m ? " on" : ""}"${state.mode === m ? ' aria-current="page"' : ""} data-mode="${m}" title="${l}"><i aria-hidden="true">${ic}</i><span class="lbl">${l}</span></button>${sub.length ? `<button type="button" class="sb-fold lbl" data-sbfold="${m}" aria-expanded="${!fold}" aria-label="${l}の項目を${fold ? "開く" : "たたむ"}">${fold ? "▸" : "▾"}</button>` : ""}</div>${sub.length && !fold ? `<div class="sb-sub">${sub
+    return `<div class="sbp${state.mode === m ? " cur" : ""}"><div class="sb-row"><button type="button" class="sb-it${state.mode === m ? " on" : ""}"${state.mode === m ? ' aria-current="page"' : ""} data-mode="${m}" title="${l}"><i aria-hidden="true">${ic}</i><span class="lbl">${l}</span></button>${sub.length ? `<button type="button" class="sb-fold lbl" data-sbfold="${m}" aria-expanded="${!fold}" aria-label="${l}の項目を${fold ? "開く" : "たたむ"}">${fold ? "▸" : "▾"}</button>` : ""}</div>${sub.length && !fold ? `<div class="sb-sub">${sub
       .map(
         ([attr, lab, on, n]) =>
           `<button type="button" class="sb-it${state.mode === m && on ? " on" : ""}"${state.mode === m && on ? ' aria-current="page"' : ""} data-go="${m}" ${attr}><span>${esc(lab)}</span>${n != null ? `<small>${n}</small>` : ""}</button>`,
       )
-      .join("")}</div>` : ""}`;
+      .join("")}</div>` : ""}</div>`;
   };
   sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${matchMedia("(max-width:899px)").matches ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : `<button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button>`}</div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
@@ -2143,7 +2168,7 @@ function renderTabbar() {
 const ofKind = i =>
   (state.xser && state.series.length && state.mode !== "w" && state.mode !== "yt") ||
   ((state.mode !== "w" || i.k === "a" || i.k === "d") &&
-  (state.kind === "all" || i.k === state.kind || (state.mode === "m" && state.kind === "d" && i.k === "f")) &&
+  (state.kind === "all" || i.k === state.kind || (state.mode === "m" && state.kind === "d" && i.k === "f") || (state.kind === "x" && i.k !== "a")) &&
   (state.mode !== "m" || mediaOf(i).media === "movie") &&
   (state.mode !== "s" || mediaOf(i).media === "stream"));
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
@@ -2528,6 +2553,16 @@ function renderWeek() {
   h += `<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div><div class="wgrid">${cur.list.map(i => card(cur, i)).join("")}</div></section>`;
   return h;
 }
+/* 一覧の上の視聴ステータス切り替え（件数はステータス以外の絞り込みをかけた数） */
+function stSegHtml() {
+  const keep = state.sf;
+  state.sf = [];
+  const base = filtered();
+  state.sf = keep;
+  const one = keep.length === 1 ? keep[0] : keep.length ? "*" : "";
+  const b = (v, lab, n) => `<button type="button" role="radio" data-stf="${esc(v)}" aria-checked="${one === v}">${lab}<small>${n}</small></button>`;
+  return `<div class="stseg" role="radiogroup" aria-label="視聴ステータス">${b("", "すべて", base.length)}${STATUSES.map(v => b(v, stLabel(v), base.filter(i => i.s === v).length)).join("")}</div>`;
+}
 function filtered() {
   let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
   if (state.q) {
@@ -2659,10 +2694,7 @@ function groupedHtml(list) {
 }
 /* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
 /* 絞り込みボタン：視聴ステータスは左のメニューで選ぶ。PCは「シリーズ」「種別」「保存」を別々に、スマホは幅が狭いので「その他」にまとめる */
-const fKeys = () => {
-  const ty = state.mode !== "m" && state.mode !== "s";
-  return IS_PC() ? ["vod", "time", "series", ...(ty ? ["type"] : []), "sv", "sort"] : ["vod", "time", "series", ty ? "etc" : "sv", "sort"];
-};
+const fKeys = () => ["vod", "time", "series", "sv", "sort"];
 const SORT_IC =
   '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
 function fBtnLab(k) {
@@ -2764,7 +2796,7 @@ function renderList() {
       mkeys = `<div class="mkeys misw" role="group" aria-label="未入力の項目で絞り込み"><button type="button" data-mkey="" aria-pressed="${!state.missKey}">すべて</button>${ks.map(k => `<button type="button" data-mkey="${esc(k)}" aria-pressed="${state.missKey === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`;
   }
   return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
-    ${state.mode === "m" ? `<div class="mkind" role="radiogroup" aria-label="映画の種類">${[["all", "すべて"], ["a", "アニメ映画"], ["d", "実写映画"]].map(([v, l]) => `<button type="button" role="radio" data-mk="${v}" aria-checked="${state.kind === v}">${l}<small>${items.filter(i => mediaOf(i).media === "movie" && (v === "all" || i.k === v || (v === "d" && i.k === "f"))).length}</small></button>`).join("")}</div>` : ""}
+    ${stSegHtml()}
     ${state.xser && state.series.length ? `<div class="xser"><span><b>シリーズ「${esc(state.series.join("・"))}」</b>をアニメ・ドラマ・映画・配信まとめて表示しています</span><button type="button" class="u-btn sm" data-xseroff="1">${esc(MODE_NAME[state.mode])}だけにする</button></div>` : ""}
     <div class="fwrap">${fRowHtml(fKeys())}${fPopHtml(panels)}</div>
     <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
@@ -4996,10 +5028,19 @@ function onNavClick(e) {
     renderSidebar();
     return true;
   }
-  const sg = e.target.closest("[data-sfgo]");
-  if (sg) {
-    setMode(sg.dataset.go);
-    state.sf = sg.dataset.sfgo ? [sg.dataset.sfgo] : [];
+  const tg = e.target.closest("[data-tygo]");
+  if (tg) {
+    setMode(tg.dataset.go);
+    state.type = tg.dataset.tygo ? [tg.dataset.tygo] : [];
+    state.limit = 200;
+    render();
+    scrollTo(0, 0);
+    return true;
+  }
+  const skb = e.target.closest("[data-skgo]");
+  if (skb) {
+    setMode("s");
+    state.kind = skb.dataset.skgo;
     state.limit = 200;
     render();
     scrollTo(0, 0);
@@ -5007,6 +5048,7 @@ function onNavClick(e) {
   }
   const mkb2 = e.target.closest("[data-mk]");
   if (mkb2) {
+    if (mkb2.dataset.go) setMode(mkb2.dataset.go);
     state.mk = state.kind = mkb2.dataset.mk;
     state.limit = 200;
     render();
@@ -5062,9 +5104,10 @@ function onNavClick(e) {
   const md = e.target.closest("[data-mode]");
   if (md) {
     const m = md.dataset.mode;
-    if (state.mode !== m || state.sf.length) {
+    if (state.mode !== m || state.type.length || (m === "s" && state.kind !== "all") || (m === "m" && state.kind !== "all")) {
       setMode(m);
-      state.sf = [];
+      state.type = [];
+      if (m === "s" || m === "m") state.mk = state.kind = "all";
       render();
       scrollTo(0, 0);
     }
@@ -5230,6 +5273,15 @@ function onFilterClick(e) {
     close();
     render();
     scrollTo(0, 0);
+    return true;
+  }
+  const stb = e.target.closest("[data-stf]");
+  if (stb) {
+    const v = stb.dataset.stf;
+    state.sf = !v || (state.sf.length === 1 && state.sf[0] === v) ? [] : [v];
+    state.limit = 200;
+    saveUI();
+    render();
     return true;
   }
   if (e.target.closest("[data-xseroff]")) {
