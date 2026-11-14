@@ -256,9 +256,8 @@ function pcInfo(i) {
 }
 /* ライブラリの1行 */
 function slotRow(i) {
-  const bs = bOn();
-  return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}${bs && bsel.has(i.id) ? " bsel" : ""}"><button class="slot" type="button" data-id="${i.id}"${bs ? ` aria-pressed="${bsel.has(i.id)}"` : ""}>
-    ${bs ? '<span class="bck" aria-hidden="true">✓</span>' : ""}<span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || (state.xser && state.series.length) ? kindTag(i) : ""}</span>
+  return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
+    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || (state.xser && state.series.length) ? kindTag(i) : ""}</span>
     <span class="ttl"><strong>${esc(i.t)}</strong><span class="meta"><span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}</span></span>
     ${pcInfo(i)}<span class="pwide">${stPill(i)}</span></button></div>`;
 }
@@ -546,7 +545,7 @@ const collapsed = new Set(ls.get("adb.v3.col") || []);
 const saveCol = () => ls.set("adb.v3.col", [...collapsed]);
 const gHead = (key, title, count) => {
   const c = collapsed.has(key);
-  return `<h2 class="ghd"><button type="button" class="gtog" data-gtog="${esc(key)}" aria-expanded="${!c}"><span class="chev" aria-hidden="true">${c ? "▸" : "▾"}</span>${title}</button>${typeof bGrpBtn === "function" ? bGrpBtn(key) : ""}<span>${count}</span></h2>`;
+  return `<h2 class="ghd"><button type="button" class="gtog" data-gtog="${esc(key)}" aria-expanded="${!c}"><span class="chev" aria-hidden="true">${c ? "▸" : "▾"}</span>${title}</button><span>${count}</span></h2>`;
 };
 const bulkBtns = keys =>
   keys.length > 1
@@ -573,7 +572,6 @@ function groupedHtml(list) {
     out = "",
     rest = 0;
   const ck = keys.map(k => "tv:" + k);
-  bGroups = new Map(keys.map(k => ["tv:" + k, g.get(k).map(i => i.id)]));
   if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
   for (const k of keys) {
     const l = g.get(k);
@@ -626,7 +624,7 @@ function renderList() {
     ${stSegHtml()}
     ${state.xser && state.series.length ? `<div class="xser"><span><b>シリーズ「${esc(state.series.join("・"))}」</b>をアニメ・ドラマ・映画・配信まとめて表示しています</span><button type="button" class="u-btn sm" data-xseroff="1">${esc(MODE_NAME[state.mode])}だけにする</button></div>` : ""}
     <div class="fwrap">${fRowHtml(FKEYS)}${fPopHtml(panel ? panel() : "")}</div>
-    <p class="count">${list.length}件${bSelBtn()}${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
+    <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
     ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
 }
 let loaded = false;
@@ -687,10 +685,6 @@ function render() {
     body = body.slice(0, ce) + gb[0] + body.slice(ce);
   }
   setMain(body + `<p class="note savenote" id="saveNote">${saveNoteHtml()}</p>`);
-  /* 一括選択の帯（ライブラリで選択モードのときだけ） */
-  const bd = $("#bdockw");
-  if (bd) bd.innerHTML = bDockHtml();
-  document.body.classList.toggle("bmode", bOn());
   if (lockY === null) scrollTo(0, y);
   if (typeof markStuck === "function") markStuck();
   saveUI();

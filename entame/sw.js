@@ -1,5 +1,5 @@
 /* オフラインでも開けるようにする。中身は「まずネットから、だめなら前回の控え」 */
-const CACHE = "entame-20261115d";
+const CACHE = "entame-20261115e";
 const SHELL = [
   "./",
   "app.css",
@@ -11,7 +11,6 @@ const SHELL = [
   "settings.js",
   "yt.js",
   "hist.js",
-  "bulk.js",
   "events.js",
   "../shared/u-base.css",
   "../shared/u-core.js",
