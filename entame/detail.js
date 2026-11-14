@@ -479,7 +479,7 @@ function askSub(it, idx) {
     <p class="spop-h"><small>${esc(it.t)}</small><b>${esc(e.n)}</b>のサブタイトル</p>
     <input id="spopIn" autocomplete="off" enterkeyhint="done" placeholder="サブタイトルを入力" aria-label="サブタイトル">
     <div class="spop-f"><button type="button" class="u-btn ghost" data-spopx>あとで</button><button type="button" class="u-btn pri primary" data-spopok>保存</button></div></div>`;
-  setTimeout(() => $("#spopIn")?.focus(), 30);
+  if (!TOUCH) setTimeout(() => $("#spopIn")?.focus(), 30);
 }
 function closeSub() {
   subAsk = null;
@@ -640,7 +640,8 @@ const DETAIL_ACTIONS = [
       epOne = +el.dataset.epone;
       refreshSheet();
       const r = $(".e1");
-      if (r) (r.querySelector(".e1-s") || r.querySelector(".e1-n")).focus({ preventScroll: true });
+      /* スマホでは自動でキーボードを出さない（入力欄を押したときだけ） */
+      if (r && !TOUCH) (r.querySelector(".e1-s") || r.querySelector(".e1-n")).focus({ preventScroll: true });
     },
   ],
   [
@@ -760,7 +761,7 @@ const ARC_ACTIONS = [
       arcEdit.push({ name: "", a: last ? (last.b != null ? last.b + 1 : null) : 1, b: null });
       refreshSheet();
       const ins = document.querySelectorAll(".ar-nm");
-      ins[ins.length - 1]?.focus();
+      if (!TOUCH) ins[ins.length - 1]?.focus();
     },
   ],
   [

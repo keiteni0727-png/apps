@@ -288,7 +288,7 @@ function startInline(el) {
   el.innerHTML = `<input class="inl${key === "up" ? " dto" : ""}" data-inlkey="${key}" type="${type}"${key === "up" ? ' inputmode="numeric"' : ""} value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
   const i = el.querySelector("input");
   i.dataset.orig = val;
-  i.focus();
+  if (!TOUCH) i.focus();
   if (type === "text") {
     try {
       i.setSelectionRange(i.value.length, i.value.length);

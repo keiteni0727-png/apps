@@ -464,7 +464,7 @@ const FORM_ACTIONS = [
     },
   ],
   ["[data-fser]", formEdit(el => (form.series = el.dataset.fser))],
-  ["[data-fserdel]", formEdit(() => (form.series = ""), () => $("#f-serq")?.focus())],
+  ["[data-fserdel]", formEdit(() => (form.series = ""), () => !TOUCH && $("#f-serq")?.focus())],
   [
     "[data-fsernew]",
     formEdit(
@@ -472,7 +472,7 @@ const FORM_ACTIONS = [
         form.serNew = el.dataset.fsernew === "1";
         form.serNewName = $("#f-serq")?.value || "";
       },
-      () => $("#f-sernew")?.focus(),
+      () => !TOUCH && $("#f-sernew")?.focus(),
     ),
   ],
   [
@@ -503,7 +503,7 @@ const FORM_ACTIONS = [
         const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
         form.songs.push({ type: el.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
       },
-      () => document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-qi`)?.focus(),
+      () => !TOUCH && document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-qi`)?.focus(),
     ),
   ],
   ["[data-sgdel]", formEdit(el => form.songs.splice(+el.dataset.sgdel, 1))],

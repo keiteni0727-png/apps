@@ -190,7 +190,7 @@ const SAVED_FILTER_ACTIONS = [
       state.svName = null;
       render();
       const i = $("#svName");
-      if (i) {
+      if (i && !TOUCH) {
         i.focus();
         i.select();
       }
@@ -295,7 +295,7 @@ const FILTER_ACTIONS = [
       if (state.sort === "new") state.sort = "old";
       state.limit = 200;
       render();
-      $("#seriesQ")?.focus();
+      if (!TOUCH) $("#seriesQ")?.focus();
     },
   ],
   [

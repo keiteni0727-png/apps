@@ -293,7 +293,7 @@ const SETTINGS_ACTIONS = [
       setDel = null;
       refreshSettings();
       const i = $(".mren");
-      if (i) {
+      if (i && !TOUCH) {
         i.focus();
         i.select();
       }
