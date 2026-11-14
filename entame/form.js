@@ -71,7 +71,7 @@ function songRowsHtml() {
         (r, j) =>
           `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほかの話</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-xh">1話だけなら「最後」は空</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
       )
-      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 飛び飛びの話を追加</button></div>`;
+      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button></div>`;
   };
   const secs = types
     .map(t => {
