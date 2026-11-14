@@ -978,6 +978,8 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .e1-b{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
 .e1-b button{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--u-r);padding:7px 14px;font-size:13px;font-weight:700}
 .e1-b .pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.e1-b .e1-del{margin-right:auto;color:var(--u-danger);border-color:color-mix(in srgb,var(--u-danger) 40%,transparent)}
+.e1-b .e1-del.arm{background:var(--u-danger);border-color:var(--u-danger);color:#fff}
 @media (max-width:560px){
   .e1{grid-template-columns:58px 1fr}
   .e1 .e1-s{grid-column:1/-1;grid-row:2}

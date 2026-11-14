@@ -254,7 +254,7 @@ function epOneHtml(it, e, i) {
     <input class="e1-n" value="${esc(e.n)}" aria-label="話数" autocomplete="off">
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
-    <div class="e1-b"><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
+    <div class="e1-b"><button type="button" class="e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
 }
 function epEditorHtml(it) {
   const l = epEdit.list;
@@ -695,6 +695,23 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["#e1Save", (el, it) => saveEpOne(it)],
+  /* 1話だけ削除：誤タップ防止のため、1回目で「本当に削除」に変わり、2回目で削除 */
+  [
+    "#e1Del",
+    (el, it) => {
+      if (!el.classList.contains("arm")) {
+        el.classList.add("arm");
+        el.textContent = "本当に削除";
+        return;
+      }
+      const l = episodes(it);
+      const x = l[epOne];
+      epOne = null;
+      if (!x) return refreshSheet();
+      l.splice(l.indexOf(x), 1);
+      saveEps(it, l, `${x.n}を削除しました`);
+    },
+  ],
   [
     "[data-set]",
     (el, it) => {
