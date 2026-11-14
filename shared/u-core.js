@@ -239,4 +239,21 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
       }
       return { kind: "none", db: null, uid: null, logout: null };
     })());
+
+  /* ---------- パスワード管理アプリ（1Password・Bitwarden・LastPass など）の候補ボタンを、ログイン以外の入力欄では出さない ----------
+     パスワード・メールアドレス・ユーザー名の欄（ログイン画面）はそのまま。画面を描き直して増えた入力欄にも付ける */
+  const pmLogin = el => el.type === "password" || el.type === "email" || /username|password|email/.test(el.getAttribute("autocomplete") || "");
+  const pmMark = root => {
+    const l = root.matches && root.matches("input,textarea") ? [root] : [];
+    if (root.querySelectorAll) l.push(...root.querySelectorAll("input,textarea"));
+    l.forEach(el => {
+      if (el.hasAttribute("data-1p-ignore") || pmLogin(el)) return;
+      el.setAttribute("data-1p-ignore", "");
+      el.setAttribute("data-lpignore", "true");
+      el.setAttribute("data-bwignore", "");
+      el.setAttribute("data-form-type", "other");
+    });
+  };
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && pmMark(n)))).observe(document.documentElement, { childList: true, subtree: true });
+  pmMark(document);
 })();
