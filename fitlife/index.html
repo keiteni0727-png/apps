@@ -369,7 +369,7 @@ function startColListeners(){
 const allChars = () => [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
 const charPic = c => `<img src="${c.img}" alt="">`;
 const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], ...S.game });
-const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.rarity, at:Date.now(), kind }, ...(g.history || [])].slice(0, 50); };
+const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.rarity, at:Date.now(), kind }, ...(g.history || [])].slice(0, 5000); };
 // ガチャのデータは、毎回サーバーの最新データを読んでから書き換える（画面の古いデータで上書きしない）
 async function updateGame(fn){
   if(!S.gameReady) throw new Error('読み込み中だよ。少し待ってからもう一度押してね');
@@ -787,9 +787,9 @@ function ownerGachaCard(){
       return `<div class="zk ${c.rarity} ${n ? '' : 'no'}">${n > 1 ? `<span class="cnt">×${n}</span>` : ''}<div class="pic">${charPic(c)}</div>
         <div class="nm">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div>` : '<p class="empty">まだキャラを登録していません</p>'}
     <div style="font-weight:700;color:var(--pink-d);margin:14px 0 2px">🕒 ガチャ履歴</div>
-    ${(g.history || []).length ? `<ul class="list">${g.history.map(h => { const c = chars.find(x => x.id === h.id), [kl, kc] = KIND[h.kind] || KIND.new;
+    ${(g.history || []).length ? `<ul class="list">${g.history.slice(0, 50).map(h => { const c = chars.find(x => x.id === h.id), [kl, kc] = KIND[h.kind] || KIND.new;
       return `<li>${c ? `<img class="thumb" src="${c.img}" alt="">` : '<div class="thumb"></div>'}<div class="main"><div class="t">${esc(c ? c.name : h.name)} <span class="rar ${h.rarity}">${h.rarity}</span></div>
-        <div class="s">${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>`
+        <div class="s">${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>${g.history.length > 50 ? `<p class="muted" style="margin:6px 0 0">最新50回を表示中（ぜんぶで${g.history.length}回の記録があります）</p>` : ''}`
       : '<p class="empty">まだ履歴がありません（これから引いた分が出ます）</p>'}</div>`;
 }
 function ownerCharCard(){
