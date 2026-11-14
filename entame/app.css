@@ -1203,3 +1203,12 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
   .u-app .sb .sb-foot{padding-top:6px;gap:2px}
   .u-app .sb .sb-foot .sb-it{height:36px;padding-top:0;padding-bottom:0}
 }
+/* 作品詳細の上段：番組名は枠の右端まで使って折り返す（行の長さをそろえる balance をやめる） */
+.sheet:not(.form) .dhead h3{text-wrap:wrap}
+/* 上段のラベル（アニメ・映画・視聴ステータス）と、矢印・編集・✕の高さを30pxにそろえる */
+.dhead .hdrow{align-items:center}
+.dhead .meta{display:flex;flex-wrap:wrap;align-items:center}
+.dhead .meta .kind,.dhead .meta .dmt,.dhead .meta .dst{box-sizing:border-box;height:30px;display:inline-flex;align-items:center;padding-top:0;padding-bottom:0;line-height:1}
+.dhead .dnav,.dhead .editbtn,.sheet:not(.form) .dhead .close{box-sizing:border-box;height:30px;display:inline-flex;align-items:center;justify-content:center;padding-top:0;padding-bottom:0;line-height:1}
+.dhead .dnav{width:30px}
+.sheet:not(.form) .dhead .close{width:30px;padding:0}
