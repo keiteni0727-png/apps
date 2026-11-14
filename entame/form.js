@@ -127,7 +127,6 @@ function formHtml() {
   const dyn = f.cours.filter(c => c !== ALLYEAR);
   const songTypes = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
   const sug = courOfDate(f.from);
-  const mFix = f.k === "f" || f.k === "r";
   const sec = (title, body, note = "") =>
     `<section class="fsec"><h4>${title}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
@@ -138,7 +137,7 @@ function formHtml() {
         ["a", "アニメ", "ka"],
         ["d", "ドラマ", "kd"],
         ["f", "映画", "kf"],
-        ["r", "配信", "kr"],
+        ["r", "バラエティ", "kr"],
       ],
       f.k,
     )}</div></div>`,
@@ -156,10 +155,11 @@ function formHtml() {
               : `<div class="sernew"><input id="f-serq" type="search" autocomplete="off" placeholder="シリーズを検索（なければ空欄）"><button type="button" data-fsernew="1">＋ 新しく作る</button></div><div class="chips" id="fSerSug">${serSugForm("")}</div>`
         }
       </div>`,
-    /* ジャンルが映画・配信のときは放送形態が決まっているので出さない（未入力から飛ぶ先は下の欄に付け替え） */
-    media: `${mFix ? "" : `<div class="field full" id="fMedia"><span>放送形態</span><div class="segc" role="group" aria-label="放送形態">${seg("data-fm", MEDIA, f.media)}</div></div>`}
-      ${hasSt(f.media) ? `<div class="field full"${mFix ? ' id="fMedia"' : ""}><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div>${nofBox("st")}</div>` : ""}
-      ${f.media === "stream" ? `<div class="field full"${mFix && !hasSt(f.media) ? ' id="fMedia"' : ""}><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat, true)}</div>${nofBox("plat")}</div>` : ""}
+    /* 放送形態：ジャンル映画は出さず「公開（映画館／配信）」だけ。バラエティは TV／配信 の2つ。どのジャンルでも映画なら公開を選べる */
+    media: `${f.k === "f" ? "" : `<div class="field full" id="fMedia"><span>放送形態</span><div class="segc" role="group" aria-label="放送形態">${seg("data-fm", f.k === "r" ? MEDIA.filter(([m]) => m === "tv" || m === "stream") : MEDIA, f.media)}</div></div>`}
+      ${f.media === "movie" ? `<div class="field full"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}
+      ${hasSt(f.media) ? `<div class="field full"><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div>${nofBox("st")}</div>` : ""}
+      ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat, true)}</div>${nofBox("plat")}</div>` : ""}
       ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods, true)}</div>${nofBox("vods", "見られる配信")}</div>` : ""}`,
     from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）", sp: "放送日" }[f.media] || "開始日（第1話）"}</span><span class="dtw"><input id="f-from" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${esc(dtShow(f.from))}"><button type="button" class="dtcal" data-dtcal="f-from" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="f-from"></span></label>`,
     time:
@@ -286,6 +286,7 @@ function openForm(it, target, el) {
       time: it.time || "",
       from: it.from || "",
       media: m.media,
+      rel: it.rel || "",
       stations: [...m.stations],
       plat: [...m.plat],
       vods: [...m.vods],
@@ -404,6 +405,7 @@ async function submitForm() {
     time: isMovie ? "" : (f.time || "").trim().replace("：", ":"),
     from: f.from || "",
     media: f.media,
+    rel: f.media === "movie" && f.rel === "stream" ? "stream" : "",
     stations: hasSt(f.media) ? f.stations : [],
     plat: f.media === "stream" ? f.plat : [],
     vods: f.media === "stream" ? [] : f.vods,
@@ -483,6 +485,7 @@ const formEdit = (fn, after) => el => {
 };
 const FORM_ACTIONS = [
   ["[data-fm]", formEdit(el => (form.media = el.dataset.fm))],
+  ["[data-frel]", formEdit(el => (form.rel = el.dataset.frel))],
   ["[data-fst]", formEdit(el => (form.stations = toggle(form.stations, el.dataset.fst)))],
   ["[data-fplat]", formEdit(el => (form.plat = toggle(form.plat, el.dataset.fplat)))],
   ["[data-fvod]", formEdit(el => (form.vods = toggle(form.vods, el.dataset.fvod)))],
@@ -569,7 +572,7 @@ const FORM_ACTIONS = [
       if (el.dataset.fk) {
         form.k = el.dataset.fk;
         if (form.k === "f") form.media = "movie";
-        if (form.k === "r") form.media = "stream";
+        if (form.k === "r" && form.media !== "tv" && form.media !== "stream") form.media = "stream";
       }
       if (el.dataset.fs) form.s = el.dataset.fs;
     }),

@@ -32,7 +32,7 @@ function sbOnly(m) {
 }
 /* メニューごとの対象（左メニューの件数用。ofKind と同じ考え方） */
 const inMode = (m, i) =>
-  m === "a" ? i.k === "a" : m === "d" ? i.k === "d" : m === "m" ? mediaOf(i).media === "movie" : m === "s" ? mediaOf(i).media === "stream" : false;
+  m === "a" ? i.k === "a" : m === "d" ? i.k === "d" : m === "m" ? mediaOf(i).media === "movie" : m === "s" ? i.k === "r" : false;
 function renderSidebar() {
   const sb = $("#sb");
   if (!sb) return;
@@ -50,12 +50,13 @@ function renderSidebar() {
         [`data-mk="a"`, "アニメ映画", state.sub === "a", l.filter(i => i.k === "a").length],
         [`data-mk="d"`, "実写映画", state.sub === "d", l.filter(i => i.k !== "a").length],
       ];
-    if (m === "s")
-      return [
-        [`data-skgo="all"`, "すべて", state.sub === "all", l.length],
-        [`data-skgo="a"`, "アニメ", state.sub === "a", l.filter(i => i.k === "a").length],
-        [`data-skgo="x"`, "ドラマ・バラエティ", state.sub === "x", l.filter(i => i.k !== "a").length],
-      ];
+    /* バラエティの下：配信サイト別（Netflix・ABEMA など）。件数の多い順 */
+    if (m === "s") {
+      const cnt = {};
+      l.forEach(i => vodsOf(i).forEach(v => (cnt[v] = (cnt[v] || 0) + 1)));
+      const vs = Object.keys(cnt).sort((p, q) => cnt[q] - cnt[p] || (p < q ? -1 : 1));
+      return [[`data-skgo=""`, "すべて", !state.vod, l.length], ...vs.map(v => [`data-skgo="${esc(v)}"`, v, state.vod === v, cnt[v]])];
+    }
     const by = md => l.filter(i => mediaOf(i).media === md).length;
     return [[`data-tygo=""`, "すべて", !oneT, l.length], ...MEDIA.filter(([md]) => by(md)).map(([md, lab]) => [`data-tygo="${md}"`, lab, oneT === md, by(md)])];
   };
@@ -123,19 +124,19 @@ function renderTabbar() {
     .join("");
 }
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
-/* 配信タブ：種別「配信」（配信オリジナル）をジャンル問わずまとめて出す。リアリティ（k="r"）は映画・配信タブにだけ出る */
+/* バラエティタブ：ジャンル「バラエティ」（k="r"、恋愛リアリティなど）だけ。配信オリジナルのアニメ・ドラマはそれぞれの側で放送形態「配信」として出る */
 /* 作品詳細のシリーズ名から開いたときは、アニメ・ドラマ・映画・配信をまたいでそのシリーズを全部出す（xser） */
 const ofKind = i =>
   (state.xser && state.series.length && state.mode !== "w" && state.mode !== "yt") ||
   ((state.mode !== "w" || i.k === "a" || i.k === "d") &&
   ((k => k === "all" || i.k === k || (state.mode === "m" && k === "d" && i.k === "f") || (k === "x" && i.k !== "a"))(curKind())) &&
   (state.mode !== "m" || mediaOf(i).media === "movie") &&
-  (state.mode !== "s" || mediaOf(i).media === "stream"));
+  (state.mode !== "s" || i.k === "r"));
 /* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
 const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
 const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
 /* ジャンル：a=アニメ d=ドラマ f=映画（ドラマと関係ない実写映画） r=配信（恋愛リアリティ・バラエティなど、アニメでもドラマでもない配信番組） */
-const KIND_LAB = { a: "アニメ", d: "ドラマ", f: "映画", r: "配信" };
+const KIND_LAB = { a: "アニメ", d: "ドラマ", f: "映画", r: "バラエティ" };
 const kindTag = i => `<span class="kind ${i.k}">${KIND_LAB[i.k] || "ドラマ"}</span>`;
 /* 番組表の時刻の下に出す放送局（配信なら配信サイト） */
 function stationTxt(i) {
@@ -203,8 +204,8 @@ function libLabels(i) {
 }
 /* ライブラリ一覧でタイトルの前に出す種別（TV・映画・OVA・配信）。シリーズや配信サイトのラベルとは別の形・色 */
 const mediaTag = i => {
-  const md = mediaOf(i).media;
-  return MEDIA_LAB[md] ? `<span class="mtag m-${md}">${MEDIA_LAB[md]}</span>` : "";
+  const l = mediaLabOf(i);
+  return l ? `<span class="mtag m-${l[1]}">${l[0]}</span>` : "";
 };
 /* PCの一覧に出す追加の情報（放送クール・放送期間・OP/ED） */
 function contCours(i) {
@@ -630,7 +631,7 @@ function hSubLab() {
   const m = state.mode;
   if (m === "a" || m === "d") return state.type.length === 1 ? (MEDIA.find(([md]) => md === state.type[0]) || [])[1] || "" : "";
   if (m === "m") return { a: "アニメ映画", d: "実写映画" }[state.sub] || "";
-  if (m === "s") return { a: "アニメ", x: "ドラマ・バラエティ" }[state.sub] || "";
+  if (m === "s") return state.vod || "";
   return "";
 }
 /* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す。やめたら true */
@@ -675,6 +676,7 @@ function render() {
 /* 画面の切り替え：左メニュー（番組表・アニメ…）を選ぶ。絞り込みとシリーズは外す */
 function setMode(m) {
   if (state.mode === m) return;
+  if (state.mode === "s" || m === "s") state.vod = ""; // バラエティの配信サイト選びはほかのメニューに持ち越さない
   state.mode = m;
   state.sub = "all";
   state.wday = "";

@@ -4,7 +4,7 @@
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
-const MODE_NAME = { w: "番組表", h: "視聴記録", a: "アニメ", d: "ドラマ", m: "映画", s: "配信", yt: "YouTube" };
+const MODE_NAME = { w: "番組表", h: "視聴記録", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube" };
 const MODE_KEYS = Object.keys(MODE_NAME);
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 /* 表示の言い回し：保存データの値は「視聴済み」のまま、画面では「視聴済」と出す */
@@ -92,9 +92,9 @@ let over = {}, // titles：作品（1作品1件）
 let items = [],
   eras = [];
 /* 画面の状態。mode＝左メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s 配信・yt YouTube）、
-   sub＝映画・配信の中の下の項目（映画：all/a アニメ映画/d 実写、配信：all/a アニメ/x ドラマ・バラエティ）。
+   sub＝映画の中の下の項目（all/a アニメ映画/d 実写）。バラエティの下は配信サイト別で state.vod を使う
    そのほかは絞り込み（sf 視聴・era 放送年・type 種別・cour 放送クール・series シリーズ・vod 配信サイト）と並び順 */
-const SUBS = { m: ["all", "a", "d"], s: ["all", "a", "x"] };
+const SUBS = { m: ["all", "a", "d"] }; // バラエティの下は配信サイト別（state.vod で絞る）
 const state = Object.assign(
   {
     mode: "w",
@@ -161,6 +161,14 @@ const mediaOf = i => ({ media: i.media || "tv", stations: i.stations || [], plat
 const noSched = m => m === "movie" || m === "ova" || m === "sp";
 const hasSt = m => m === "tv" || m === "sp";
 const MEDIA_LAB = { tv: "TV", sp: "TV SP", stream: "配信", movie: "映画", ova: "OVA" };
+/* 映画の公開：rel＝"stream" なら配信で公開（Netflix映画など）。放送形態は映画のまま */
+const relStream = i => mediaOf(i).media === "movie" && i.rel === "stream";
+/* 放送形態のラベル [文字, 色クラス]。ジャンル映画の劇場公開はジャンルと同じなので出さない */
+const mediaLabOf = i => {
+  const md = mediaOf(i).media;
+  if (md === "movie") return relStream(i) ? [i.k === "f" ? "配信" : "配信映画", "stream"] : i.k === "f" ? null : ["映画", "movie"];
+  return MEDIA_LAB[md] ? [MEDIA_LAB[md], md] : null;
+};
 const ONE_LAB = { movie: "映画", ova: "OVA", sp: "TV SP" };
 /* 主題歌: songs＝[{type,s,a,b,ex,dl}] a〜b話で使われた曲。ex＝飛び飛びのときの追加の話 [{a,b}] */
 const songsOf = i => i.songs || [];

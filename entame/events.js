@@ -42,13 +42,13 @@ const NAV_ACTIONS = [
       go();
     },
   ],
-  /* 配信の下：アニメ／ドラマ・バラエティ */
+  /* バラエティの下：配信サイト別 */
   [
     "[data-skgo]",
     el => {
       leaveXser();
       setMode("s");
-      state.sub = el.dataset.skgo;
+      state.vod = el.dataset.skgo;
       state.limit = 200;
       go();
     },
@@ -129,10 +129,11 @@ const NAV_ACTIONS = [
       sbOnly(m);
       renderSidebar();
       const wasX = leaveXser();
-      if (!wasX && state.mode === m && !state.type.length && state.sub === "all") return;
+      if (!wasX && state.mode === m && !state.type.length && state.sub === "all" && !(m === "s" && state.vod)) return;
       setMode(m);
       state.type = [];
       state.sub = "all";
+      if (m === "s") state.vod = "";
       go();
     },
   ],
