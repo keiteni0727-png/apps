@@ -1,5 +1,5 @@
 /* オフラインでも開けるようにする。中身は「まずネットから、だめなら前回の控え」 */
-const CACHE = "okane-ui1114a";
+const CACHE = "okane-ui1114b";
 const SHELL = ["./", "app.css", "fin.js", "pay.js", "kb.js", "move.js", "../shared/u-base.css", "../shared/u-core.js", "manifest.json", "icon-180.png", "icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {

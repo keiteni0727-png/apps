@@ -252,6 +252,8 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
       el.setAttribute("data-lpignore", "true");
       el.setAttribute("data-bwignore", "");
       el.setAttribute("data-form-type", "other");
+      /* 自動で出る候補の一覧もしまっておく（1Password は候補を自動では開かなくなる）。もともと指定がある欄はそのまま */
+      if (!el.hasAttribute("autocomplete")) el.setAttribute("autocomplete", "off");
     });
   };
   new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && pmMark(n)))).observe(document.documentElement, { childList: true, subtree: true });
