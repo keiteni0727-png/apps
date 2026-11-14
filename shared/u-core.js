@@ -140,7 +140,7 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
       return {
         id: ref.id,
         get: async () => snap(await F.getDoc(ref)),
-        set: data => F.setDoc(ref, data),
+        set: (data, opt) => (opt ? F.setDoc(ref, data, opt) : F.setDoc(ref, data)),
         /* 渡した項目だけ書きかえる。{items:{id:中身}} なら items の中の id ごとに丸ごと入れ替え（null は削除の印として残す） */
         update: async data => {
           const args = [];
@@ -171,12 +171,14 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
       },
       collection: name => ({
         doc: id => doc(`${name}/${id}`),
-        onSnapshot: (cb, err) =>
+        /* opt.meta＝true なら「端末に残っていた古いデータか（fromCache）」が変わったときも呼ぶ */
+        onSnapshot: (cb, err, opt) =>
           F.onSnapshot(
             F.collection(fs, `${root}/${name}`),
+            { includeMetadataChanges: !!(opt && opt.meta) },
             q => {
               const docs = q.docs.map(snap);
-              cb({ docs, size: docs.length, empty: !docs.length, forEach: f => docs.forEach(f) });
+              cb({ docs, size: docs.length, empty: !docs.length, forEach: f => docs.forEach(f), fromCache: q.metadata.fromCache });
             },
             err,
           ),

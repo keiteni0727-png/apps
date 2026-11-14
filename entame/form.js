@@ -333,6 +333,8 @@ function openForm(it, target, el) {
   openId = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form" role="dialog" aria-modal="true" aria-label="${form.id ? "作品を編集" : "作品を追加"}"><div class="wrap" id="formIn">${formHtml()}</div></div>`;
+  readForm();
+  form.init = JSON.stringify({ ...form, init: 0 });
   if (!TOUCH) $("#f-t").focus({ preventScroll: true });
 }
 /* 作品の詳細画面で、押した項目をその場で編集する（編集画面は開かない）
@@ -380,15 +382,9 @@ function commitInlineForm() {
   if (JSON.stringify({ ...form, init: 0 }) === form.init) closeInlineForm();
   else submitForm();
 }
-async function submitForm() {
-  readForm();
-  const f = form;
+/* 編集画面の中身から、保存する項目を作る */
+function buildPatch(f) {
   const t = (f.t || "").trim();
-  if (!t) {
-    $("#f-t").focus();
-    toast("タイトルを入れてください");
-    return;
-  }
   const songs = f.songs
     .map(({ ex, ...x }) => {
       /* 飛び飛びの話：「最初」が空の行は保存しない。最後が最初より小さいときは入れ替える */
@@ -430,6 +426,31 @@ async function submitForm() {
   };
   patch.noF = [...new Set(f.noF || [])].filter(k => k in clr);
   patch.noF.forEach(k => clr[k]());
+  return patch;
+}
+async function submitForm() {
+  readForm();
+  const f = form;
+  const t = (f.t || "").trim();
+  if (!t) {
+    $("#f-t").focus();
+    toast("タイトルを入れてください");
+    return;
+  }
+  const patch = buildPatch(f);
+  /* 開いたときから変わった項目だけ保存する（触っていない項目で、ほかの端末の変更を消さないため） */
+  if (f.id && f.init) {
+    const base = buildPatch(JSON.parse(f.init));
+    Object.keys(patch).forEach(key => JSON.stringify(patch[key]) === JSON.stringify(base[key]) && delete patch[key]);
+    if (!Object.keys(patch).length) {
+      if (f.inline) closeInlineForm();
+      else {
+        close();
+        openDetail(f.id);
+      }
+      return;
+    }
+  }
   if (f.id && f.inline) {
     form = null;
     await saveTitle(f.id, patch, "保存しました");

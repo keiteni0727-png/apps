@@ -317,7 +317,7 @@ const fmtAt = t => {
     : `${d.getFullYear() !== n.getFullYear() ? d.getFullYear() + "/" : ""}${d.getMonth() + 1}/${d.getDate()} ${hm}`;
 };
 function saveNoteHtml() {
-  const st = saving ? ["ing", "保存中…"] : saveErr ? ["err", "保存できませんでした"] : ["ok", "保存済み"];
+  const st = !isSynced() && db ? ["ing", "同期中…"] : saving ? ["ing", "保存中…"] : saveErr ? ["err", "保存できませんでした"] : ["ok", "保存済み"];
   return `<span class="sv ${st[0]}"><i></i>${st[1]}</span>${lastAt ? `<span class="svat">最終変更 ${fmtAt(lastAt)}</span>` : ""}`;
 }
 function updateSaveNote() {
@@ -350,6 +350,49 @@ function saveDoc(col, id, data) {
   lastAt = data._at;
   return write(() => db.doc(`${col}/${id}`).set(data));
 }
+/* 渡した項目だけ書きかえる（ほかの端末で変えた項目は消さない）。最新のデータが届くまでは待ってから書く */
+async function mergeDoc(col, id, patch) {
+  const data = { ...patch, _at: Date.now() };
+  lastAt = data._at;
+  await whenSynced();
+  return write(() => db.doc(`${col}/${id}`).set(data, { merge: true }));
+}
+/* ---------- 同期：開いた直後や、しばらく裏にいたあとは、最新のデータが届くまで「同期中」 ---------- */
+var syncOk = { titles: false, progress: false };
+var syncHold = false; // 裏から戻った直後の待ち
+var syncWait = [];
+function isSynced() {
+  return syncOk.titles && syncOk.progress && !syncHold;
+}
+function syncChanged() {
+  updateSaveNote();
+  if (isSynced()) {
+    syncWait.forEach(f => f());
+    syncWait = [];
+  }
+}
+const whenSynced = () => (isSynced() ? Promise.resolve() : new Promise(r => syncWait.push(r)));
+/* 話数のチェックなど、まとめて保存するものは同期中は止める */
+function syncBlock() {
+  if (isSynced()) return false;
+  toast("最新のデータを読み込み中です。少しだけ待ってからもう一度お試しください");
+  return true;
+}
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    hiddenAt = Date.now();
+    return;
+  }
+  /* 2分以上裏にいたら、最新が届くまで（届かなくても最大5秒）待つ */
+  if (!hiddenAt || Date.now() - hiddenAt < 120000) return;
+  syncHold = true;
+  syncChanged();
+  setTimeout(() => {
+    syncHold = false;
+    syncChanged();
+  }, 5000);
+});
 /* ---------- マスタ（シリーズ・放送局・配信サイト・投稿者・グループ）：並び順と名前を保存 ---------- */
 let master = {};
 const MKEYS = [
@@ -432,7 +475,7 @@ function fixOldData() {
     const md = o.media || "tv";
     if (noSched(md) || !o.from || (o.dow ?? -1) >= 0 || (o.noF || []).includes("time")) return;
     over[id] = { ...o, noF: [...(o.noF || []), "time"] };
-    put("titles/" + id, over[id]);
+    mergeDoc("titles", id, { noF: over[id].noF }).catch(fail);
     if (loaded) rebuild();
   });
 }
@@ -461,16 +504,35 @@ async function initStore() {
     s.docs.forEach(d => (m[d.id] = d.data()));
     return m;
   };
-  db.collection("titles").onSnapshot(s => {
-    over = docsOf(s);
-    got.titles = true;
-    done();
-  }, onErr);
-  db.collection("progress").onSnapshot(s => {
-    prog = docsOf(s);
-    got.progress = true;
-    done();
-  }, onErr);
+  /* fromCache＝端末に残っていた古いデータ。最新（fromCache=false）が届いたら同期完了 */
+  const syncMark = (k, s) => {
+    const ok = s.fromCache === false;
+    if (syncOk[k] !== ok) {
+      syncOk[k] = ok;
+      if (ok) syncHold = false;
+      syncChanged();
+    }
+  };
+  db.collection("titles").onSnapshot(
+    s => {
+      syncMark("titles", s);
+      over = docsOf(s);
+      got.titles = true;
+      done();
+    },
+    onErr,
+    { meta: true },
+  );
+  db.collection("progress").onSnapshot(
+    s => {
+      syncMark("progress", s);
+      prog = docsOf(s);
+      got.progress = true;
+      done();
+    },
+    onErr,
+    { meta: true },
+  );
   db.collection("master").onSnapshot(s => {
     const d = s.docs.find(x => x.id === "all");
     master = d ? d.data() : {};

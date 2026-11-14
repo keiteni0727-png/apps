@@ -217,7 +217,7 @@ function propagate(key, from, to) {
   });
   if (ch.length) {
     rebuild();
-    ch.forEach(([id]) => saveDoc("titles", id, over[id]).catch(fail));
+    ch.forEach(([id, p]) => mergeDoc("titles", id, p).catch(fail));
   }
   return ch.length;
 }

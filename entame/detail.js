@@ -470,7 +470,8 @@ async function saveTitle(id, patch, msg) {
   if (openId === id && !epEdit) refreshSheet();
   if (msg) toast(msg);
   try {
-    await saveDoc("titles", id, o);
+    /* 変えた項目だけ保存（まるごと上書きすると、ほかの端末で入れた曲やクールが古いまま戻ってしまうため） */
+    await mergeDoc("titles", id, patch);
   } catch (e) {
     fail(e);
   }
@@ -489,13 +490,18 @@ function autoStatus(it, list) {
   return null;
 }
 async function saveEps(it, list, msg) {
+  /* 話数はリストをまとめて保存するので、最新のデータが届くまでは保存しない（古い話数で上書きしないため） */
+  if (syncBlock()) {
+    if (openId === it.id && !epEdit) refreshSheet();
+    return;
+  }
   const ns = autoStatus(it, list);
   if (ns) {
     const o = { ...(over[it.id] || {}), s: ns };
     over[it.id] = o;
     rebuild();
     msg = (msg ? msg + "・" : "") + `「${ns}」にしました`;
-    saveDoc("titles", it.id, o).catch(fail);
+    mergeDoc("titles", it.id, { s: ns }).catch(fail);
   }
   const p = {
     /* wt＝チェックを付けた日時（視聴記録用）。チェックを外した話は持たない */
