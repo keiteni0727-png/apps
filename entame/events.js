@@ -582,6 +582,77 @@ const KEY_ACTIONS = [
 ];
 document.addEventListener("keydown", e => runInputs(KEY_ACTIONS, e));
 
+/* 矢印キーで入力欄を移る（PC）
+   話数の編集・編の登録（表の形）：↑↓＝上下の行の同じ欄、←→＝カーソルが文字の端にあるときだけ隣の欄
+   作品・YouTubeの編集画面：↑↓＝前・次の入力欄（数字の欄も増減ではなく移動）。1話だけ編集：↑↓・端の←→で前・次の欄 */
+const ARROWS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+const navOk = el =>
+  el.tagName === "INPUT" &&
+  !["checkbox", "radio", "hidden", "date", "range", "file", "color", "button", "submit"].includes(el.type) &&
+  !el.classList.contains("dtpick") &&
+  !el.disabled &&
+  !el.readOnly &&
+  el.offsetParent !== null;
+const navInputs = box => [...box.querySelectorAll("input")].filter(navOk);
+function navGo(e, el) {
+  if (!el) return false;
+  e.preventDefault();
+  el.focus({ preventScroll: true });
+  el.scrollIntoView({ block: "nearest" });
+  if (!isDt(el))
+    try {
+      el.select();
+    } catch (_) {}
+  return true;
+}
+/* カーソルが文字の左端・右端にあるか（数字の欄など、カーソル位置が取れない欄は端とみなす） */
+const atEdge = (t, left) => {
+  let s;
+  try {
+    s = t.selectionStart;
+  } catch (_) {
+    s = null;
+  }
+  if (s == null) return true;
+  if (s === 0 && t.selectionEnd === t.value.length) return true; // 全部選んだ状態（移ってきた直後）も端とみなす
+  if (s !== t.selectionEnd) return false;
+  return left ? s === 0 : s === t.value.length;
+};
+document.addEventListener("keydown", e => {
+  if (!ARROWS.includes(e.key) || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || imeEnter(e)) return;
+  const t = e.target;
+  if (!t || !navOk(t)) return;
+  const up = e.key === "ArrowUp",
+    down = e.key === "ArrowDown",
+    left = e.key === "ArrowLeft",
+    right = e.key === "ArrowRight";
+  /* 表の形：話数の編集の行・編の行 */
+  const row = t.closest("[data-er],[data-ar]");
+  if (row) {
+    const cells = navInputs(row),
+      c = cells.indexOf(t);
+    if (up || down) {
+      let r = row;
+      do r = up ? r.previousElementSibling : r.nextElementSibling;
+      while (r && !r.matches("[data-er],[data-ar]"));
+      if (!navGo(e, r && navInputs(r)[Math.min(c, navInputs(r).length - 1)]) && t.type === "number") e.preventDefault();
+      return;
+    }
+    if (atEdge(t, left)) navGo(e, cells[c + (left ? -1 : 1)]);
+    return;
+  }
+  /* 1話だけ編集・作品／YouTubeの編集画面：前・次の入力欄 */
+  const box = t.closest(".e1,#titleF,#ytF");
+  if (!box) return;
+  const l = navInputs(box),
+    i = l.indexOf(t);
+  if (up || down) {
+    if (!navGo(e, l[i + (up ? -1 : 1)]) && t.type === "number") e.preventDefault();
+    return;
+  }
+  if (box.classList.contains("e1") && atEdge(t, left)) navGo(e, l[i + (left ? -1 : 1)]);
+});
+
 document.addEventListener("focusout", e => {
   if (e.target.classList && e.target.classList.contains("inl")) commitInline(e.target);
 });
