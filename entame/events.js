@@ -6,6 +6,16 @@
 /* PC：左メニューの開閉と設定の歯車 */
 const SHELL_ACTIONS = [
   ["#gearBtn,[data-gear]", () => openSettings()],
+  /* 表示の切り替え：自動 → ライト → ダーク → 自動 */
+  [
+    "#hTheme",
+    () => {
+      const nx = { auto: "light", light: "dark", dark: "auto" }[U.theme()];
+      U.setTheme(nx);
+      renderThemeBtn();
+      toast(`表示：${TH_NAME[nx]}`);
+    },
+  ],
   [
     "[data-sbtog]",
     () => {
@@ -244,7 +254,7 @@ function onDrawerClick(e) {
   return false;
 }
 /* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉、画面は指に合わせて横に動かし、離すと番組表／ライブラリなど隣の画面へ */
-const segBtns = () => [...document.querySelectorAll("#hseg [data-tb]")];
+const segBtns = () => [...document.querySelectorAll("#hseg [data-tb], #main .wtabs [data-tb]")];
 const segIdx = () => segBtns().findIndex(b => b.getAttribute("aria-selected") === "true");
 uSwipe({
   sb: "#sb",

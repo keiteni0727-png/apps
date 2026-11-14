@@ -84,16 +84,7 @@ function masterListHtml() {
 }
 function settingsHtml() {
   const ser = setKey === "series";
-  const th = U.theme();
   return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
-    <div class="thh">表示（この端末だけ）</div>
-    <div class="thseg" role="group" aria-label="表示">${[
-      ["auto", "自動"],
-      ["light", "ライト"],
-      ["dark", "ダーク"],
-    ]
-      .map(([v, l]) => `<button type="button" data-theme-set="${v}" aria-pressed="${th === v}">${l}</button>`)
-      .join("")}</div>
     <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
     ${ser ? seriesSettingsHtml() : masterListHtml()}
     <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>

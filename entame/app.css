@@ -1177,3 +1177,29 @@ body.sbc .u-app .sb .sb-it i{margin:0}
   body.sbc .u-app .sb .sb-foot{padding-top:6px;gap:2px}
   body.sbc .u-app .sb .sb-foot .sb-it{height:36px;padding:0}
 }
+
+/* ===== 上の帯：高さを固定（メニューで変わらない）。右上に表示の切り替え ===== */
+header .hbar{box-sizing:border-box;height:56px;padding-block:0}
+.hthm{flex:none;margin-left:auto;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
+.hthm svg{width:19px;height:19px}
+.hseg{max-height:40px}
+.hseg button{padding-top:6px;padding-bottom:6px}
+@media (max-width:899px){
+  header .hbar{height:52px}
+  .hseg:not(:empty)+.hthm{margin-left:4px}
+  .wtabs{margin-top:10px}
+  .wtabs button{padding:6px 2px}
+  .wtabs button b{font-size:14px}
+}
+/* ===== PC：左メニューは開いたときも、たたんだときと同じ大きさ（詰めた行）でスクロールなしに ===== */
+@media (min-width:900px){
+  .u-app .sb .sb-add{height:38px;padding:0;margin-bottom:6px}
+  .u-app .sb .sbp{margin-bottom:4px}
+  .u-app .sb .sbp .sb-row>.sb-it{height:40px;padding-top:0;padding-bottom:0}
+  .u-app .sb .sbp .sb-fold{height:40px;align-self:auto}
+  .u-app .sb .sbp .sb-sub{padding-bottom:4px}
+  .u-app .sb .sbp .sb-sub .sb-it{height:30px;padding-top:0;padding-bottom:0;font-size:13px}
+  .u-app .sb .sb-sec{padding:4px 8px 2px}
+  .u-app .sb .sb-foot{padding-top:6px;gap:2px}
+  .u-app .sb .sb-foot .sb-it{height:36px;padding-top:0;padding-bottom:0}
+}

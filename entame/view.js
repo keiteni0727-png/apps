@@ -78,6 +78,21 @@ function renderSidebar() {
     ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
+/* 上の帯の右上：表示の切り替え（自動→ライト→ダーク→自動）。今の表示のアイコンを出す */
+const TH_IC = {
+  auto: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>`,
+  light: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`,
+  dark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`,
+};
+const TH_NAME = { auto: "自動（端末に合わせる）", light: "ライト", dark: "ダーク" };
+function renderThemeBtn() {
+  const b = $("#hTheme");
+  if (!b) return;
+  const v = U.theme();
+  b.innerHTML = TH_IC[v];
+  b.setAttribute("aria-label", `表示：${TH_NAME[v]}（押すと切り替え）`);
+  b.title = `表示：${TH_NAME[v]}`;
+}
 /* PCも上の帯（スマホと同じ）に切り替えと設定を出すので、検索窓の上の切り替えは使わない */
 function renderVbar() {
   const v = $("#vbar");
@@ -107,14 +122,11 @@ function renderTabbar() {
         a === "すべて" ? TB_ICON.all : EMO[a] ? `<i class="temo" aria-hidden="true">${EMO[a]}</i>` : TB_ICON.user,
         yst.author === a,
       ])
-    : state.mode === "w"
-        ? weekDayTabs()
-        : [];
+    : [];
   nav.className = "tabbar n" + items.length;
   const gear = $("#tbGear");
   if (gear && !gear.firstChild) gear.innerHTML = GEAR;
-  const hg = $("#hGear");
-  if (hg && !hg.firstChild) hg.innerHTML = GEAR;
+  renderThemeBtn();
   const hs = $("#hseg");
   if (hs) {
     hs.innerHTML = items
@@ -436,7 +448,10 @@ function renderWeek() {
     h += `<section class="wday"><div class="wdayhd"><h2>未視聴のある作品</h2><small>${l.length}本</small></div><div class="wgrid">${l.map(([x, i]) => card(x, i, true)).join("")}</div></section>`;
     return h;
   }
-  /* PC・スマホとも1日ずつ。曜日は上の帯で選ぶ */
+  /* PC・スマホとも1日ずつ。曜日は上の帯の外（本文の上）で選ぶ */
+  h += `<div class="wtabs" role="tablist" aria-label="曜日">${weekDayTabs()
+    .map(([v, , , on, html]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${html}</button>`)
+    .join("")}</div>`;
   const cur = g.find(x => x.k === state.wday) || g[0];
   h += `<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div><div class="wgrid">${cur.list.map(i => card(cur, i)).join("")}</div></section>`;
   return h;
