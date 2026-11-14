@@ -129,6 +129,17 @@ function parseSubtitles(text) {
 
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
+let stMenu = false; // 視聴ステータスの選択肢を開いているか
+let navIds = []; // 詳細を開いた画面に出ていた作品の並び（前・次の作品へ移る順）
+/* 一覧・番組表・視聴記録に出ている作品を、画面の上から順に（同じ作品は1回） */
+function screenIds() {
+  const seen = new Set();
+  return [...document.querySelectorAll("#main [data-id]")].map(el => el.dataset.id).filter(id => !seen.has(id) && seen.add(id) && items.some(x => x.id === id));
+}
+function navNeighbors(id) {
+  const i = navIds.indexOf(id);
+  return i < 0 ? [null, null] : [navIds[i - 1] || null, navIds[i + 1] || null];
+}
 /* 長編の「〇〇編」：作品の arcs = [{name, a:最初の話, b:最後の話(なし=最後まで)}] */
 let arcEdit = null, // 編集中の下書き
   arcFold = new Map(); // 編ごとの開閉を手で変えたもの（名前#最初の話 → 開いているか）
@@ -331,9 +342,13 @@ function renderDetail(it) {
   const eps = episodes(it);
   const w = eps.filter(e => e.w).length;
   const nx = eps[nextIdx(eps)];
-  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}</div><div class="hdrow"><button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  /* 視聴ステータスはラベル1つ。押すと4つの選択肢が開く */
+  const stBtn = `<span class="stw"><button type="button" class="pill dst ${it.s ? "s-" + esc(it.s) : "s-none"}" id="stOpen" aria-haspopup="true" aria-expanded="${stMenu}">${esc(stLabel(it.s || "未設定"))}<span class="stv" aria-hidden="true">▾</span></button>${stMenu ? `<span class="stmenu" role="menu">${STATUSES.map(s => `<button type="button" role="menuitemradio" data-set="${s}" aria-checked="${it.s === s}" class="s-${s}">${stLabel(s)}</button>`).join("")}</span>` : ""}</span>`;
+  const nv = navNeighbors(it.id),
+    busy = !!(epEdit || arcEdit || subPaste || epOne != null);
+  const navB = (d, lab, ic) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${ic}</button>`;
+  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", "‹")}${navB(1, "次の作品", "›")}<button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
-    <div class="seg" role="group" aria-label="ステータス">${STATUSES.map(s => `<button type="button" data-set="${s}" aria-pressed="${it.s === s}" class="${it.s === s ? "s-" + s : ""}">${stLabel(s)}</button>`).join("")}</div>
     ${missDetail(it)}
     <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
@@ -369,16 +384,31 @@ function refreshEditor() {
   const a = $("#epArea");
   if (it && a && epEdit && !subPaste) a.innerHTML = epEditorHtml(it);
 }
-function openDetail(id) {
+function openDetail(id, dir) {
   const it = items.find(x => x.id === id);
   if (!it) return;
+  /* 前・次の作品へ移るときはシートを作り直さず中身だけ入れかえ、今のタブもそのまま */
+  const sh = dir && $("#layer .sheet");
+  if (!dir) navIds = screenIds();
   openId = id;
+  stMenu = false;
   epEdit = null;
   subPaste = null;
   epOne = null;
   arcEdit = null;
   arcFold = new Map();
   dmissKeep = false;
+  if (sh) {
+    const tab = sh.classList.contains("t-ep") ? "ep" : "info";
+    sh.setAttribute("aria-label", it.t);
+    const w = $("#sheetIn");
+    w.innerHTML = renderDetail(it);
+    w.classList.remove("dsl-l", "dsl-r");
+    void w.offsetWidth;
+    w.classList.add(dir > 0 ? "dsl-r" : "dsl-l");
+    setDTab(tab);
+    return;
+  }
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
   setDTab("info");
@@ -652,7 +682,35 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["#e1Save", (el, it) => saveEpOne(it)],
-  ["[data-set]", (el, it) => setStatus(it, el.dataset.set)],
+  [
+    "[data-set]",
+    (el, it) => {
+      stMenu = false;
+      if (it.s === el.dataset.set) return refreshSheet();
+      setStatus(it, el.dataset.set);
+      refreshSheet();
+    },
+  ],
+  /* 視聴ステータスのラベル：押すと選択肢を開く／閉じる。ほかの場所を押したら閉じる */
+  [
+    "#stOpen",
+    () => {
+      stMenu = !stMenu;
+      refreshSheet();
+    },
+  ],
+  [
+    null,
+    el => {
+      if (stMenu && !el.closest(".stw")) {
+        stMenu = false;
+        refreshSheet();
+      }
+      return false;
+    },
+  ],
+  /* 前・次の作品 */
+  ["[data-dnav]", el => detailNav(+el.dataset.dnav)],
   /* 話の視聴チェック */
   [
     "[data-ep]",
@@ -870,6 +928,12 @@ function saveEpOne(it) {
   const name = x.n;
   epOne = null;
   saveEps(it, l, `${name}を保存しました`);
+}
+/* 前・次の作品へ（話数の編集などの途中は移らない） */
+function detailNav(d) {
+  if (!openId || epEdit || arcEdit || subPaste || epOne != null || (form && form.inline)) return;
+  const id = navNeighbors(openId)[d < 0 ? 0 : 1];
+  if (id) openDetail(id, d);
 }
 function onDetailClick(e) {
   const it = openId && items.find(x => x.id === openId);
