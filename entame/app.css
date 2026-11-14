@@ -1225,7 +1225,7 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .ntx{flex:none;width:40px;border:0;border-left:1px solid var(--u-line);background:transparent;color:var(--u-sub);font-size:14px}
 .ntx:active{background:var(--u-chip)}
 
-/* スマホの未入力：一覧の印は件数だけ、項目の絞り込みは横スクロール、詳細のボタンは少し大きく */
+/* スマホの未入力：一覧の印は件数だけ、項目の絞り込みは折り返して全部見せる、詳細のボタンは少し大きく */
 .miss .mc{display:none}
 @media (max-width:899px){
   .row .miss,.yrow .miss{padding:0 7px 0 3px}
@@ -1234,9 +1234,8 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
   .miss b{margin-right:3px}
   .count{flex-wrap:wrap}
   .count .unsw{margin-left:auto;padding:3px 5px 3px 10px;font-size:12px}
-  .mkeys{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px 8px;padding:0 16px}
-  .mkeys::-webkit-scrollbar{display:none}
-  .mkeys button{flex:none}
+  .mkeys{gap:5px}
+  .mkeys button{padding:3px 9px;font-size:11.5px}
   .dmiss{margin:8px 0 0;font-size:12px}
   .dmiss summary{padding:8px 12px}
   .dmiss .mbtns button{padding:5px 12px;font-size:12.5px}
