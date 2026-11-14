@@ -4,7 +4,7 @@
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
-const MODE_NAME = { w: "番組表", h: "視聴記録", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube" };
+const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", h: "視聴記録" };
 const MODE_KEYS = Object.keys(MODE_NAME);
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 /* 表示の言い回し：保存データの値は「視聴済み」のまま、画面では「視聴済」と出す */
