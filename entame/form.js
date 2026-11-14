@@ -65,7 +65,13 @@ function songRowsHtml() {
       <span class="sg-sp"></span>
       <label class="sg-dlw"><input type="checkbox" class="sg-dl" ${x.dl ? "checked" : ""}>♪ DL済み</label>
       <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}${t === x.type ? "" : "に変える"}</option>`).join("")}</select>
-      <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div>`;
+      <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div>
+    ${(x.ex || [])
+      .map(
+        (r, j) =>
+          `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほかの話</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-xh">1話だけなら「最後」は空</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
+      )
+      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 飛び飛びの話を追加</button></div>`;
   };
   const secs = types
     .map(t => {
@@ -243,6 +249,16 @@ function readForm() {
         s: songJoin(r.querySelector(".sg-st").value, r.querySelector(".sg-ar").value),
         a: a === "" ? null : +a,
         b: b === "" ? null : +b,
+        /* 飛び飛びの追加の話（「最初」が空の行は捨てない：入力途中でも消えないように残す） */
+        ...(r.querySelector(".sg-x")
+          ? {
+              ex: [...r.querySelectorAll(".sg-x")].map(e => {
+                const xa = e.querySelector(".sg-xa").value,
+                  xb = e.querySelector(".sg-xb").value;
+                return { a: xa === "" ? null : +xa, b: xb === "" ? null : +xb };
+              }),
+            }
+          : {}),
         ...(r.querySelector(".sg-dl")?.checked ? { dl: 1 } : {}),
       };
     });
@@ -370,7 +386,13 @@ async function submitForm() {
     toast("タイトルを入れてください");
     return;
   }
-  const songs = f.songs.map(x => ({ ...x, st: (x.st ?? x.s ?? "").trim(), ar: (x.ar || "").trim(), s: (x.s || "").trim() })).filter(x => x.s);
+  const songs = f.songs
+    .map(({ ex, ...x }) => {
+      /* 飛び飛びの話：「最初」が空の行は保存しない。最後が最初より小さいときは入れ替える */
+      const e = (ex || []).filter(r => r && r.a != null).map(r => (r.b != null && r.b < r.a ? { a: r.b, b: r.a } : r.b === r.a ? { a: r.a, b: null } : r));
+      return { ...x, ...(e.length ? { ex: e } : {}), st: (x.st ?? x.s ?? "").trim(), ar: (x.ar || "").trim(), s: (x.s || "").trim() };
+    })
+    .filter(x => x.s);
   const isMovie = noSched(f.media);
   const patch = {
     k: f.k,
@@ -450,6 +472,7 @@ function lockScroll(on) {
 }
 new MutationObserver(() => lockScroll(!!$("#layer").firstElementChild)).observe($("#layer"), { childList: true });
 /* 作品の追加・編集画面：入力中の内容を読み取ってから変えて、描き直す */
+let sgExK = -1; // 飛び飛びの話を足した曲（足したあとその入力欄へ移るため）
 const formEdit = (fn, after) => el => {
   readForm();
   fn(el);
@@ -514,6 +537,29 @@ const FORM_ACTIONS = [
     ),
   ],
   ["[data-sgdel]", formEdit(el => form.songs.splice(+el.dataset.sgdel, 1))],
+  /* 飛び飛びの話：行を足す／消す */
+  [
+    "[data-sgex]",
+    formEdit(
+      el => {
+        sgExK = +el.dataset.sgex;
+        const x = form.songs[sgExK];
+        if (x) x.ex = [...(x.ex || []), { a: null, b: null }];
+      },
+      () => {
+        const l = document.querySelectorAll(`.sg[data-sg="${sgExK}"] .sg-xa`);
+        if (!TOUCH && l.length) l[l.length - 1].focus();
+      },
+    ),
+  ],
+  [
+    "[data-sgxdel]",
+    formEdit(el => {
+      const [k, j] = el.dataset.sgxdel.split(":").map(Number);
+      const x = form.songs[k];
+      if (x && x.ex) x.ex.splice(j, 1);
+    }),
+  ],
   /* ジャンル・ステータス。映画は放送形態も映画に、配信番組は配信に */
   [
     "[data-fk],[data-fs]",

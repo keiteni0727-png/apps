@@ -317,7 +317,8 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     .map(r => {
       const { st, ar } = songTA(r.x);
       /* 2行目：「歌」ラベル＋アーティスト、使われた話は枠つきの小さなラベルで見分けやすく */
-      const sub = [ar.trim() ? `<span class="iar"><b>歌</b>${esc(ar)}</span>` : "", r.rng ? `<span class="iep inum">${esc(r.rng)}</span>` : ""].filter(Boolean).join("");
+      /* 話は範囲ごとに1つずつの枠ラベル（飛び飛びでも [1〜10話] [13話] [20〜30話] と分けて並べる） */
+      const sub = [ar.trim() ? `<span class="iar"><b>歌</b>${esc(ar)}</span>` : "", r.rng.length ? `<span class="ieps">${r.rng.map(t => `<span class="iep inum">${esc(t)}</span>`).join("")}</span>` : ""].filter(Boolean).join("");
       return `<div class="imsg" data-jump="sgList"><span class="itag ${SG_CLS[r.k]}">${r.k}</span><span class="imn">${st.trim() ? esc(st) : un("曲名 未設定")}</span>${sub ? `<span class="ima">${sub}</span>` : ""}<button type="button" class="dlb${r.x.dl ? " on" : ""}" data-sgdl="${r.i}" aria-pressed="${!!r.x.dl}" aria-label="${esc(r.x.s)}を${r.x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.x.dl ? "♪DL" : "DL"}</button></div>`;
     })
     .join("");
@@ -341,14 +342,14 @@ function renderDetail(it) {
   const stv = mediaLabels(it);
   const span = it.k === "a" ? epSpan(it) : null;
   const sl = songsOf(it).map(x =>
-    span && (x.type === "OP" || x.type === "ED") && x.a == null && x.b == null ? { ...x, a: span[0], b: span[1] } : x,
+    span && (x.type === "OP" || x.type === "ED") && x.a == null && x.b == null && !exOf(x).length ? { ...x, a: span[0], b: span[1] } : x,
   );
   /* 1曲1行：種類・使われた話・曲名／アーティスト・DL。同じ種類が複数ある作品だけ話数の列を出す */
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
   /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
-  const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeTxt(x)));
+  const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeList(x).length));
   /* 曲の行のデータ（種類の順・同じ種類の中は登録順）。rng＝使われた話 */
-  const songRows = byType.flatMap(([tp, l]) => l.map(([x, k]) => ({ k: tp, x, i: k, rng: showRng ? rangeTxt(x) || (l.length === 1 ? "全話" : "") : "" })));
+  const songRows = byType.flatMap(([tp, l]) => l.map(([x, k]) => ({ k: tp, x, i: k, rng: showRng ? (rangeList(x).length ? rangeList(x) : l.length === 1 ? ["全話"] : []) : [] })));
   const md = mediaOf(it).media,
     mv = md === "movie",
     ns = noSched(md);

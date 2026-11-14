@@ -162,7 +162,7 @@ const noSched = m => m === "movie" || m === "ova" || m === "sp";
 const hasSt = m => m === "tv" || m === "sp";
 const MEDIA_LAB = { tv: "TV", sp: "TV SP", stream: "配信", movie: "映画", ova: "OVA" };
 const ONE_LAB = { movie: "映画", ova: "OVA", sp: "TV SP" };
-/* 主題歌: songs＝[{type,s,a,b,dl}] a〜b話で使われた曲 */
+/* 主題歌: songs＝[{type,s,a,b,ex,dl}] a〜b話で使われた曲。ex＝飛び飛びのときの追加の話 [{a,b}] */
 const songsOf = i => i.songs || [];
 const songText = i =>
   songsOf(i)
@@ -199,6 +199,16 @@ function epSpan(it) {
 const SG_CLS = { OP: "t-op", ED: "t-ed", 主題歌: "t-th", 挿入歌: "t-in" };
 const rangeTxt = x =>
   x.a == null && x.b == null ? "" : x.a != null && x.b === x.a ? `${x.a}話` : `${x.a ?? ""}〜${x.b ?? ""}話`;
+/* 飛び飛びのときの追加の話：ex＝[{a,b}]。b が空なら a 話だけ */
+const exOf = x => (x.ex || []).filter(r => r && r.a != null);
+const exTxt = r => (r.b == null || r.b === r.a ? `${r.a}話` : `${r.a}〜${r.b}話`);
+/* 使われた話を、範囲ごとのラベルの配列に（話の順に並べる） */
+const rangeList = x => {
+  const l = [];
+  if (x.a != null || x.b != null) l.push([x.a ?? 0, rangeTxt(x)]);
+  exOf(x).forEach(r => l.push([r.a, exTxt(r)]));
+  return l.sort((p, q) => p[0] - q[0]).map(r => r[1]);
+};
 
 /* 並び：o（Notionから取り込んだときの順番）→ あとから追加したものはidの順 */
 const byOrder = ([a, x], [b, y]) => (x.o ?? 1e9) - (y.o ?? 1e9) || (a < b ? -1 : a > b ? 1 : 0);
