@@ -32,6 +32,7 @@ const yst = Object.assign(
     sort: "new",
     fp: "",
     grp: "genre",
+    missOnly: false,
   },
   ls.get("adb.v3.yt") || {},
   { q: "" },
@@ -49,6 +50,7 @@ const saveYtUI = () =>
     sort: yst.sort,
     fp: yst.fp,
     grp: yst.grp,
+    missOnly: yst.missOnly,
   });
 /* 再生リスト＝データベースの yt の各ドキュメント */
 function ytRebuild() {
@@ -114,12 +116,42 @@ const fmtShortDay = t => {
     n = new Date();
   return `${d.getFullYear() !== n.getFullYear() ? d.getFullYear() + "/" : ""}${d.getMonth() + 1}/${d.getDate()}`;
 };
+/* 未入力の項目（作品の未入力アラートと同じ形）。「なし」にできる項目は noF に入れる */
+const YT_NOF_LAB = { dur: "再生時間", pl: "再生リスト", sm: "まとめ動画" };
+function ytMissingOf(x) {
+  const nf = x.noF || [],
+    out = [];
+  const add = (k, j, n = "") => (!n || !nf.includes(n)) && out.push({ k, j, n });
+  if (!x.a) add("投稿者", "yfAuthor");
+  if (!ytCat(x)) add("ジャンル", "yfGenre");
+  if (!x.up) add("初回投稿日", "y-up");
+  if (!x.dur) add("再生時間", "y-dur", "dur");
+  if (!+x.n) add("パート数", "y-n");
+  if (!String(x.pl || "").trim()) add("再生リスト", "y-pl", "pl");
+  if (!String(x.sm || "").trim()) add("まとめ動画", "y-sm", "sm");
+  return out;
+}
+function ytMissBadge(x) {
+  const names = ytMissingOf(x).map(m => m.k);
+  if (!names.length) return "";
+  const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
+  return `<span class="miss pconly" title="未入力：${esc(names.join("・"))}"><b>未入力</b>${esc(head)}</span>`;
+}
+/* 詳細のアラート（PCだけ。作品の詳細と同じ）：ふだんは1行に畳み、開くと項目ボタン */
+let ytMissKeep = false;
+function ytMissDetail(x) {
+  const l = ytMissingOf(x);
+  if (!l.length) return "";
+  const btn = m =>
+    `<span class="mi"><button type="button" data-jump="${m.j}">✎ ${esc(m.k)}</button>${m.n ? `<button type="button" class="nb" data-ynof="${m.n}" title="${esc(m.k)}を「なし」にする">なし</button>` : ""}</span>`;
+  return `<details class="dmiss"${ytMissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(m => m.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+}
 function ytRow(x) {
   const pw = +x.pw || 0,
     n = +x.n || 0;
   return `<div class="row yrow lst ls-${esc(ytSt(x) || UNSEEN)}${/視聴済み/.test(x.s) ? " done" : ""}"><button class="slot" type="button" data-yt="${x.id}">
     <span class="time">${x.up ? `${+x.up.slice(5, 7)}/${+x.up.slice(8, 10)}<small>${x.up.slice(0, 4)}</small>` : ""}${yst.author === "すべて" && x.a ? `<span class="kind yauth">${esc(x.a)}</span>` : ""}</span>
-    <span class="ttl"><strong>${esc(x.t)}</strong><span class="meta"><span class="pmob">${ytPill(ytSt(x))}</span>${ytGenreLab(x)}${n ? `<span class="lab">全${n}本</span>` : ""}${x.dur ? `<span class="lab">${esc(x.dur)}</span>` : ""}</span>
+    <span class="ttl"><strong>${esc(x.t)}</strong><span class="meta"><span class="pmob">${ytPill(ytSt(x))}</span>${ytGenreLab(x)}${n ? `<span class="lab">全${n}本</span>` : ""}${x.dur ? `<span class="lab">${esc(x.dur)}</span>` : ""}${ytMissBadge(x)}</span>
       ${pw && n ? `<span class="next"><span class="ybar"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></span><span>${pw}/${n}本</span></span>` : ""}</span>
     <span class="pwide">${ytPill(ytSt(x))}</span></button>
     ${x.pl ? `<a class="tick yplay" href="${esc(x.pl)}" target="_blank" rel="noopener" aria-label="${esc(x.t)}をYouTubeで開く"><span>▶</span>再生</a>` : ""}</div>`;
@@ -168,35 +200,29 @@ function ytGenreGroups(list) {
 }
 /* YouTubeの絞り込み：アニメ・ドラマと同じ1列のボタン＋下に出る選択肢 */
 function ytRowHtml(sortLab) {
-  const pl = yst.pri;
   const b = (k, lab, on) =>
     `<button type="button" class="fb${on ? " on" : ""}" data-ytpop="${k}" aria-expanded="${yst.fp === k}"><span class="v">${esc(lab)}</span><span class="chev" aria-hidden="true">▾</span></button>`;
-  const priLab = !pl.length ? "視聴" : pl.length === 1 ? stLabel(pl[0]) : `視聴 ${pl.length}`;
   const gLab = yst.genre === "すべて" ? "ジャンル" : yst.genre + (yst.sub !== "すべて" ? "・" + yst.sub : "");
   const sOn = yst.sort !== "new" || yst.grp !== "genre";
-  return `<div class="frow yt">${b("pri", priLab, pl.length)}${b("genre", gLab, yst.genre !== "すべて")}<button type="button" class="fb srt${sOn ? " on" : ""}" data-ytpop="sort" aria-expanded="${yst.fp === "sort"}" aria-label="分け方・並び順：${esc(sortLab)}">${SORT_IC}</button></div>`;
+  return `<div class="frow yt">${b("genre", gLab, yst.genre !== "すべて")}<button type="button" class="fb srt${sOn ? " on" : ""}" data-ytpop="sort" aria-expanded="${yst.fp === "sort"}" aria-label="分け方・並び順：${esc(sortLab)}">${SORT_IC}</button></div>`;
 }
 function ytPopHtml(panels) {
   const k = yst.fp;
   if (!panels[k]) return "";
-  const T = { pri: "視聴", genre: "ジャンル", sort: "分け方・並び順" };
+  const T = { genre: "ジャンル", sort: "分け方・並び順" };
   return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-ytpop="${k}">完了</button></div>${panels[k]}</div>`;
 }
 function renderYt() {
-  let list = ytItems.filter(
-    x =>
-      (yst.author === "すべて" || x.a === yst.author) &&
-      ytGenreOk(x) &&
-      (!yst.pri.length || yst.pri.includes(ytSt(x) || UNSEEN)),
-  );
-  if (yst.q) {
-    const qs = yst.q.split(/[\s　]+/).map(norm).filter(Boolean);
-    list = list.filter(x => {
-      const h = norm(x.t + " " + x.a + " " + x.g + " " + ytCat(x));
-      return qs.every(q => h.includes(q));
-    });
-  }
-  const base = ytItems.filter(x => (yst.author === "すべて" || x.a === yst.author) && ytGenreOk(x));
+  /* 検索：全角・半角などのゆれをそろえ、空白で区切ると「どれも含む」 */
+  const qs = yst.q ? yst.q.split(/[\s　]+/).map(norm).filter(Boolean) : [];
+  const qOk = x => !qs.length || (h => qs.every(q => h.includes(q)))(norm(x.t + " " + x.a + " " + x.g + " " + ytCat(x)));
+  const priOk = x => !yst.pri.length || yst.pri.includes(ytSt(x) || UNSEEN);
+  const pre = ytItems.filter(x => (yst.author === "すべて" || x.a === yst.author) && ytGenreOk(x) && qOk(x));
+  /* 未入力あり（PCだけ） */
+  const mN = pre.filter(x => priOk(x) && ytMissingOf(x).length).length;
+  const segBase = pre.filter(x => !yst.missOnly || !IS_PC() || ytMissingOf(x).length > 0);
+  let list = segBase.filter(priOk);
+  const msw = `<button type="button" class="unsw misw${yst.missOnly ? " on" : ""}" data-ytmissw role="switch" aria-checked="${yst.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
   const ab = ytItems.filter(x => yst.author === "すべて" || x.a === yst.author);
   const by = new Map();
   list.forEach(x => {
@@ -212,10 +238,10 @@ function renderYt() {
   if (yst.genre !== "すべて") act.push(["data-ytg", "すべて", yst.genre]);
   if (yst.sub !== "すべて") act.push(["data-ytsub", "すべて", yst.sub]);
   const grp = (lab, body) => `<div class="fgroup"><h5>${lab}</h5>${body}</div>`;
-  const priBody = grp(
-      '視聴 <span class="hint" style="font-weight:400">複数選べます</span>',
-      `<div class="chips" role="group" aria-label="視聴ステータスで絞り込み">${chipBtn("data-ytpri", "すべて", !yst.pri.length, "すべて")}${pris.map(p => chipBtn("data-ytpri", p, yst.pri.includes(p), stLabel(p), base.filter(x => (ytSt(x) || UNSEEN) === p).length, YT_CLS[p])).join("")}</div>`,
-  );
+  /* 一覧の上の視聴ステータス（アニメ・ドラマなどと同じ。1つだけ選ぶ。同じものをもう一度押すと「すべて」） */
+  const one = yst.pri.length === 1 ? yst.pri[0] : yst.pri.length ? "*" : "";
+  const sb = (v, lab, n) => `<button type="button" role="radio" data-ytstf="${esc(v)}" aria-checked="${one === v}">${lab}<small>${n}</small></button>`;
+  const seg = `<div class="stseg" role="radiogroup" aria-label="視聴ステータス">${sb("", "すべて", segBase.length)}${pris.map(p => sb(p, stLabel(p), segBase.filter(x => (ytSt(x) || UNSEEN) === p).length)).join("")}</div>`;
   const genreBody =
     grp(
       "ジャンル",
@@ -231,8 +257,9 @@ function renderYt() {
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
   const srt = [srt0[0], (yst.grp === "year" ? "年ごと・" : "ジャンルごと・") + srt0[1]];
   return `<div class="ftools"><input id="ytq" type="search" placeholder="動画タイトル・投稿者で検索" value="${esc(yst.q)}" aria-label="検索"></div>
-    <div class="fwrap">${ytRowHtml(srt[1])}${ytPopHtml({ pri: priBody, genre: genreBody, sort: sBody })}</div>
-    <p class="count">${list.length}本${act.length ? `<button type="button" class="clear" data-ytreset="1">条件をすべて解除</button>` : ""}</p>
+    ${seg}
+    <div class="fwrap">${ytRowHtml(srt[1])}${ytPopHtml({ genre: genreBody, sort: sBody })}</div>
+    <p class="count">${list.length}本${act.length ? `<button type="button" class="clear" data-ytreset="1">条件をすべて解除</button>` : ""}${msw}</p>
     ${
       !list.length
         ? ""
@@ -338,6 +365,7 @@ function ytDetailHtml(x) {
   const pw = +x.pw || 0,
     n = +x.n || 0;
   const un = t => `<span class="unset">${t}</span>`;
+  const nf = k => (x.noF || []).includes(k);
   const J = (k, v, t) => `<dt data-jump="${t}">${k}</dt><dd data-jump="${t}">${v || un("未設定")}</dd>`;
   const I = (k, v, key, ty, raw) => `<dt>${k}</dt><dd data-inl="${key}" data-inltype="${ty}" data-inlv="${esc(raw ?? "")}">${v || un("未設定")}<span class="pen" aria-hidden="true">✎</span></dd>`;
   const st = x.s || "";
@@ -347,7 +375,7 @@ function ytDetailHtml(x) {
     J("投稿者", esc(x.a), "yfAuthor"),
     J("ジャンル", ytGenreLab(x), "yfGenre"),
     I("初回投稿日", x.up ? `<span class="inum">${esc(fmtD(x.up))}</span>` : "", "up", "text", fmtD(x.up)),
-    I("再生時間", x.dur ? `<span class="inum">${esc(x.dur)}</span>` : "", "dur", "text", x.dur),
+    I("再生時間", x.dur ? `<span class="inum">${esc(x.dur)}</span>` : nf("dur") ? un("なし") : "", "dur", "text", x.dur),
     I("パート数", n || x._at ? `${n ? `<span class="inum">全${n}本</span>` : ""}${x._at ? `<span class="lastmod">最終変更 ${fmtShortDay(x._at)}</span>` : ""}` : "", "n", "number", n || ""),
   ];
   const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span></div><dl class="idl">${rows.join("")}</dl></div>`;
@@ -362,31 +390,66 @@ function ytDetailHtml(x) {
   const links = `<div class="ilinks">${
     x.pl
       ? `<a class="ilk ivod" href="${esc(x.pl)}" target="_blank" rel="noopener">${IC_PLAY}<span class="ilt">再生リスト</span></a>`
-      : `<button type="button" class="ilk off" data-jump="y-pl">再生リスト未設定</button>`
+      : nf("pl")
+        ? ""
+        : `<button type="button" class="ilk off" data-jump="y-pl">再生リスト未設定</button>`
   }${
     x.sm
       ? `<a class="ilk" href="${esc(x.sm)}" target="_blank" rel="noopener"><span class="ilt">まとめ動画</span>${IC_EXT}</a>`
-      : `<button type="button" class="ilk off" data-jump="y-sm">まとめ動画未設定</button>`
+      : nf("sm")
+        ? ""
+        : `<button type="button" class="ilk off" data-jump="y-sm">まとめ動画未設定</button>`
   }</div>`;
-  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">YouTube</span>${stBtn}</div><div class="hdrow"><button type="button" class="editbtn" id="ytEdit">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
-    <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3></div>
+  const nv = ytNeighbors(x.id);
+  const navB = (d, lab, ic) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] ? "" : "disabled"}>${ic}</button>`;
+  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">YouTube</span>${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", "‹")}${navB(1, "次の作品", "›")}<button type="button" class="editbtn" id="ytEdit">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+    <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>${ytMissDetail(x)}</div>
     <div class="ydbody">${info}${prog}${links}
     <div class="links"><button type="button" class="delsm" id="ytDel">削除</button></div></div>`;
 }
-function ytOpenDetail(id) {
+/* 前・次の作品：詳細を開いた画面に出ていた並び（作品の詳細と同じ） */
+let ytNavIds = [];
+function ytScreenIds() {
+  const seen = new Set();
+  return [...document.querySelectorAll("#main [data-yt]")].map(el => el.dataset.yt).filter(id => !seen.has(id) && seen.add(id) && ytItems.some(x => x.id === id));
+}
+function ytNeighbors(id) {
+  const i = ytNavIds.indexOf(id);
+  return i < 0 ? [null, null] : [ytNavIds[i - 1] || null, ytNavIds[i + 1] || null];
+}
+function ytDetailNav(d) {
+  if (!ytOpen || $("#ytIn input.inl")) return;
+  const id = ytNeighbors(ytOpen)[d < 0 ? 0 : 1];
+  if (id) ytOpenDetail(id, d);
+}
+function ytOpenDetail(id, dir) {
   const x = ytItems.find(y => y.id === id);
   if (!x) return;
+  if (!dir) ytNavIds = ytScreenIds();
   ytOpen = id;
   ytStMenu = false;
+  ytMissKeep = false;
   openId = null;
   form = null;
+  /* 前・次へ移るときはシートを作り直さず中身だけ入れかえ */
+  const inn = dir && $("#layer .sheet #ytIn");
+  if (inn) {
+    const sh = inn.closest(".sheet");
+    sh.setAttribute("aria-label", x.t);
+    inn.innerHTML = ytDetailHtml(x);
+    sh.scrollTop = 0;
+    return;
+  }
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(x.t)}"><div class="wrap" id="ytIn">${ytDetailHtml(x)}</div></div>`;
 }
 function ytRefresh() {
   const x = ytItems.find(y => y.id === ytOpen);
   const el = $("#ytIn");
-  if (x && el) el.innerHTML = ytDetailHtml(x);
+  if (!x || !el) return;
+  const d = el.querySelector(".dmiss");
+  if (d) ytMissKeep = d.open;
+  el.innerHTML = ytDetailHtml(x);
 }
 async function ytSave(id, patch, msg) {
   const o = { ...(ytOver[id] || {}), ...patch, _at: Date.now() };
@@ -622,7 +685,8 @@ const YT_ACTIONS = [
     }),
   ],
   ["[data-ytsub]", ytUI(el => (yst.sub = el.dataset.ytsub))],
-  ["[data-ytpri]", ytUI(el => (yst.pri = el.dataset.ytpri === "すべて" ? [] : toggle(yst.pri, el.dataset.ytpri)))],
+  ["[data-ytstf]", ytUI(el => (yst.pri = !el.dataset.ytstf || (yst.pri.length === 1 && yst.pri[0] === el.dataset.ytstf) ? [] : [el.dataset.ytstf]))],
+  ["[data-ytmissw]", ytUI(() => (yst.missOnly = !yst.missOnly))],
   ["[data-yt]", el => ytOpenDetail(el.dataset.yt)],
   [null, (el, x, e) => !!yform && runActions(YT_FORM_ACTIONS, e)],
   [
@@ -662,6 +726,16 @@ const YT_FORM_ACTIONS = [
 /* 詳細画面（x＝開いている再生リスト） */
 const YT_DETAIL_ACTIONS = [
   ["#ytEdit", (el, x) => ytOpenForm(x)],
+  ["[data-dnav]", el => ytDetailNav(+el.dataset.dnav)],
+  /* 未入力アラートの「なし」 */
+  [
+    "[data-ynof]",
+    (el, x) => {
+      const k = el.dataset.ynof;
+      ytMissKeep = true;
+      ytSave(x.id, { noF: [...new Set([...(x.noF || []), k])] }, `${YT_NOF_LAB[k]}を「なし」にしました`);
+    },
+  ],
   /* 視聴ステータスのラベル：押すと選択肢を開く／閉じる。ほかの場所を押したら閉じる */
   [
     "#ytStOpen",

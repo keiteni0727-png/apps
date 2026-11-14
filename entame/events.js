@@ -610,14 +610,15 @@ addEventListener(
   },
   { passive: true },
 );
-/* 作品の詳細：← → キーで前・次の作品へ（入力欄・選択肢にカーソルがないとき） */
+/* 作品・YouTubeの詳細：← → キーで前・次の作品へ（入力欄・選択肢にカーソルがないとき） */
 document.addEventListener("keydown", e => {
   if ((e.key !== "ArrowLeft" && e.key !== "ArrowRight") || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-  if (!openId || !$("#layer .sheet:not(.form) #sheetIn") || subAsk) return;
+  const yt = ytOpen && $("#layer .sheet:not(.form) #ytIn");
+  if (!yt && (!openId || !$("#layer .sheet:not(.form) #sheetIn") || subAsk)) return;
   const t = e.target;
   if (t && t.closest && t.closest("input,textarea,select,[contenteditable]")) return;
   e.preventDefault();
-  detailNav(e.key === "ArrowLeft" ? -1 : 1);
+  (yt ? ytDetailNav : detailNav)(e.key === "ArrowLeft" ? -1 : 1);
 });
 /* 作品の詳細：スマホは左右にスワイプして前・次の作品へ（縦のスクロールや入力欄の操作とは区別する） */
 let dSw = null;
@@ -626,7 +627,7 @@ document.addEventListener(
   e => {
     dSw = null;
     const sh = e.target.closest && e.target.closest("#layer .sheet:not(.form)");
-    if (!sh || !openId || e.touches.length !== 1 || e.target.closest("input,textarea,select,.sp-list,.stmenu")) return;
+    if (!sh || !(openId || ytOpen) || e.touches.length !== 1 || e.target.closest("input,textarea,select,.sp-list,.stmenu")) return;
     const p = e.touches[0];
     dSw = { x: p.clientX, y: p.clientY, t: Date.now() };
   },
@@ -641,7 +642,7 @@ document.addEventListener(
       dy = p.clientY - dSw.y;
     const ok = Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2 && Date.now() - dSw.t < 700;
     dSw = null;
-    if (ok) detailNav(dx < 0 ? 1 : -1);
+    if (ok) (ytOpen ? ytDetailNav : detailNav)(dx < 0 ? 1 : -1);
   },
   { passive: true },
 );
