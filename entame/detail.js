@@ -442,7 +442,8 @@ async function saveEps(it, list, msg) {
     saveDoc("titles", it.id, o).catch(fail);
   }
   const p = {
-    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, w: e.w ? 1 : 0, ...(e.nt ? { nt: 1 } : {}) })),
+    /* wt＝チェックを付けた日時（視聴記録用）。チェックを外した話は持たない */
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, w: e.w ? 1 : 0, ...(e.nt ? { nt: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
   };
   prog[it.id] = p;
   render();
@@ -458,6 +459,7 @@ function toggleEp(it, idx, val) {
   const l = episodes(it);
   if (!l[idx]) return;
   l[idx].w = val;
+  l[idx].wt = val ? Date.now() : 0;
   saveEps(it, l, `${l[idx].n}を${val ? "視聴済み" : "未視聴"}にしました`);
   if (val) askSub(it, idx);
 }

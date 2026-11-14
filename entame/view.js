@@ -18,6 +18,7 @@ const MODE_IC = {
   d: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8z"/><path d="M4 11l-.6-3.4a1 1 0 0 1 .8-1.2l13.6-2.4a1 1 0 0 1 1.2.8L19.6 7z"/><path d="M8.5 5.8l2.4 3.6M13.5 4.9l2.4 3.6"/></svg>',
   m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 12h4M3 16h4M17 8h4M17 12h4M17 16h4"/></svg>',
   s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13M8.2 15.3a5.5 5.5 0 0 1 0-6.6M15.8 8.7a5.5 5.5 0 0 1 0 6.6"/><path d="M10.6 9.8v4.4l3.6-2.2z" fill="currentColor"/></svg>',
+  h: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
   yt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
 };
 /* PC：左の折りたためるメニュー */
@@ -41,7 +42,7 @@ function renderSidebar() {
   const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
   const subOf = m => {
     if (m === "yt") return ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, null]);
-    if (m === "w") return [];
+    if (m === "w" || m === "h") return [];
     const l = items.filter(i => inMode(m, i));
     if (m === "m")
       return [
@@ -648,7 +649,7 @@ function render() {
   renderSidebar();
   if (!loaded) return;
   const y = lockY ?? scrollY;
-  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : renderList();
+  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : renderList();
   /* 「すべて開く／閉じる」は件数と同じ行の右端に置く */
   const gb = /<span class="gbulk">[\s\S]*?<\/span>/.exec(body);
   const ci = body.indexOf('<p class="count">');
@@ -670,7 +671,7 @@ function setMode(m) {
   state.sub = "all";
   state.wday = "";
   state.xser = false;
-  if (m === "w" || m === "yt") return;
+  if (m === "w" || m === "yt" || m === "h") return;
   if (m === "m" || m === "s") state.type = [];
   state.limit = 200;
   state.series = [];
@@ -683,7 +684,7 @@ const go = () => {
 /* シリーズの作品一覧を開く（アニメ・ドラマ・映画・配信をまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
 function showSeries(name, g) {
   close();
-  if (state.mode === "w" || state.mode === "yt") setMode(g === "d" ? "d" : "a");
+  if (state.mode === "w" || state.mode === "yt" || state.mode === "h") setMode(g === "d" ? "d" : "a");
   Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
   go();
 }

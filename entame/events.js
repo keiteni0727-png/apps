@@ -182,6 +182,7 @@ const ROW_ACTIONS = [
       const i = l.findIndex(x => !x.w && aired(x));
       if (i < 0) return;
       l[i].w = true;
+      l[i].wt = Date.now();
       saveEps(it, l, `${it.t.slice(0, 14)} ${l[i].n}を視聴済みにしました`);
       askSub(it, i);
     },
@@ -263,6 +264,7 @@ const CLICK_HANDLERS = [
   closeDropdownOnOutsideClick,
   onSubPopClick,
   e => state.mode === "yt" && runActions(YT_ACTIONS, e),
+  e => state.mode === "h" && runActions(HIST_ACTIONS, e),
   e => runActions(ROW_ACTIONS, e),
   e => state.mode !== "yt" && runActions(SAVED_FILTER_ACTIONS, e),
   e => runActions(FILTER_ACTIONS, e),
