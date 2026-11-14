@@ -595,10 +595,12 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .miss b{font-size:9.5px;font-weight:900;letter-spacing:.04em;background:var(--u-warn);color:var(--u-on);border-radius:999px;padding:0 6px;margin-right:5px}
 .miss.hot{color:var(--u-danger);background:var(--u-danger2)}
 .miss.hot b{background:var(--u-danger)}
+.miss{display:inline-flex}
+.miss.pconly{display:none}
 @media (min-width:900px){.miss.pconly{display:inline-flex}}
-/* 詳細：1行に畳んだアラート。開くと項目ごとのボタン（押すとその項目の編集へ） */
-.dmiss{display:none}
-@media (min-width:900px){
+/* 詳細：1行に畳んだアラート。開くと項目ごとのボタン（押すとその項目の編集へ）。YouTube（.ypc）はPCだけ */
+@media (max-width:899px){.dmiss.ypc{display:none}}
+@media (min-width:0px){
   .dmiss{display:block;margin:10px 0 0;border-radius:var(--u-r);background:var(--u-warn2);color:var(--u-warn);font-size:12.5px}
   .dmiss.hot{background:var(--u-danger2);color:var(--u-danger)}
   .dmiss summary{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;list-style:none;font-weight:700}
@@ -615,9 +617,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .dmiss .mi button:first-child:not(:last-child){border-radius:999px 0 0 999px}
   .dmiss .mi .nb{border-left:0;border-radius:0 999px 999px 0;padding:3px 9px;font-weight:500;opacity:.85}
 }
-/* 絞り込み：未入力ありスイッチ（番組表・ライブラリ）と項目ごとの絞り込み */
-.misw{display:none}
-@media (min-width:900px){
+/* 絞り込み：未入力ありスイッチ（ライブラリ）と項目ごとの絞り込み。YouTube（.ypc）はPCだけ */
+@media (max-width:899px){.misw.ypc{display:none}}
+@media (min-width:0px){
   .misw{display:inline-flex}
     .unsw.misw.on{border-color:var(--u-warn);color:var(--u-warn)}
   .unsw.misw.on .tr{background:var(--u-warn)}
@@ -1224,3 +1226,21 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .ntm small{font-size:12px;color:var(--u-sub);font-family:var(--u-num)}
 .ntx{flex:none;width:40px;border:0;border-left:1px solid var(--u-line);background:transparent;color:var(--u-sub);font-size:14px}
 .ntx:active{background:var(--u-chip)}
+
+/* スマホの未入力：一覧の印は件数だけ、項目の絞り込みは横スクロール、詳細のボタンは少し大きく */
+.miss .mc{display:none}
+@media (max-width:899px){
+  .row .miss{padding:0 7px 0 3px}
+  .miss .mh{display:none}
+  .miss .mc{display:inline;font-family:var(--u-num)}
+  .miss b{margin-right:3px}
+  .count{flex-wrap:wrap}
+  .count .unsw{margin-left:auto;padding:3px 5px 3px 10px;font-size:12px}
+  .mkeys{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px 8px;padding:0 16px}
+  .mkeys::-webkit-scrollbar{display:none}
+  .mkeys button{flex:none}
+  .dmiss{margin:8px 0 0;font-size:12px}
+  .dmiss summary{padding:8px 12px}
+  .dmiss .mbtns button{padding:5px 12px;font-size:12.5px}
+  .dmiss .mi .nb{padding:5px 10px}
+}

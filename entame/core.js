@@ -693,10 +693,11 @@ function missBadge(i) {
   if (!l.length) return "";
   const names = l.map(x => x.k);
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  return `<span class="miss pconly${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b>${esc(head)}</span>`;
+  /* PCは項目名まで、スマホは件数だけ */
+  return `<span class="miss${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span><span class="mc">${names.length}</span></span>`;
 }
 function missOk(i) {
-  if (!state.missOnly || !IS_PC()) return true;
+  if (!state.missOnly) return true;
   const l = missingOf(i);
   return state.missKey ? l.some(x => x.k === state.missKey) : l.length > 0;
 }

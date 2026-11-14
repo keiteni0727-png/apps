@@ -137,14 +137,14 @@ function ytMissBadge(x) {
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
   return `<span class="miss pconly" title="未入力：${esc(names.join("・"))}"><b>未入力</b>${esc(head)}</span>`;
 }
-/* 詳細のアラート（PCだけ。作品の詳細と同じ）：ふだんは1行に畳み、開くと項目ボタン */
+/* 詳細のアラート（YouTubeはPCだけ）：ふだんは1行に畳み、開くと項目ボタン */
 let ytMissKeep = false;
 function ytMissDetail(x) {
   const l = ytMissingOf(x);
   if (!l.length) return "";
   const btn = m =>
     `<span class="mi"><button type="button" data-jump="${m.j}">✎ ${esc(m.k)}</button>${m.n ? `<button type="button" class="nb" data-ynof="${m.n}" title="${esc(m.k)}を「なし」にする">なし</button>` : ""}</span>`;
-  return `<details class="dmiss"${ytMissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(m => m.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+  return `<details class="dmiss ypc"${ytMissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(m => m.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function ytRow(x) {
   const pw = +x.pw || 0,
@@ -222,7 +222,7 @@ function renderYt() {
   const mN = pre.filter(x => priOk(x) && ytMissingOf(x).length).length;
   const segBase = pre.filter(x => !yst.missOnly || !IS_PC() || ytMissingOf(x).length > 0);
   let list = segBase.filter(priOk);
-  const msw = `<button type="button" class="unsw misw${yst.missOnly ? " on" : ""}" data-ytmissw role="switch" aria-checked="${yst.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
+  const msw = `<button type="button" class="unsw misw ypc${yst.missOnly ? " on" : ""}" data-ytmissw role="switch" aria-checked="${yst.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
   const ab = ytItems.filter(x => yst.author === "すべて" || x.a === yst.author);
   const by = new Map();
   list.forEach(x => {

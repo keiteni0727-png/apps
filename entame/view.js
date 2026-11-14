@@ -592,7 +592,7 @@ function renderList() {
   const anyF = ["series", "type", "era", "cour", "sf"].some(k => state[k].length) || state.vod;
   /* 開いている絞り込みの中身だけ作る */
   const panel = { vod: vodPanelHtml, time: timePanelHtml, series: seriesPanelHtml, sv: svPanelHtml, sort: () => sortHtml }[state.fOpen];
-  /* 未入力あり（PCだけ）：オンのときは項目ごとの件数ボタンで、さらに1項目に絞れる */
+  /* 未入力あり：オンのときは項目ごとの件数ボタンで、さらに1項目に絞れる */
   const mBase = (() => {
     const keep = state.missOnly;
     state.missOnly = false;
