@@ -190,7 +190,7 @@ setInterval(() => {
 }, 30000);
 
 /* ---------- ライブラリの一覧と、画面全体の描画 ---------- */
-/* ライブラリ一覧のラベル：TV・配信・映画の大分類＋見られる配信サイト名だけ */
+/* ライブラリ一覧のラベル：見られる配信サイト名、そのあとにシリーズ（PCのみ） */
 function libLabels(i) {
   const m = mediaOf(i);
   const cc = contCours(i);
@@ -198,10 +198,8 @@ function libLabels(i) {
     (i.series ? `<span class="lab s pconly">${esc(i.series)}</span>` : "") +
     (cc >= 2 ? `<span class="lab cc pconly">${cc}クール連続</span>` : "");
   const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
-  return (
-    pc +
-    sites.map(v => `${vlab(v)}`).join("")
-  );
+  /* 並び：配信サイト → シリーズ・クール連続 */
+  return sites.map(v => `${vlab(v)}`).join("") + pc;
 }
 /* ライブラリ一覧でタイトルの前に出す種別（TV・映画・OVA・配信）。シリーズや配信サイトのラベルとは別の形・色 */
 const mediaTag = i => {
