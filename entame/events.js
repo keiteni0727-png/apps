@@ -5,7 +5,7 @@
 
 /* PC：左メニューの開閉と設定の歯車 */
 const SHELL_ACTIONS = [
-  ["#gearBtn,[data-gear]", () => openSettings()],
+  ["[data-gear]", () => openSettings()],
   /* 表示の切り替え：自動 → ライト → ダーク → 自動 */
   [
     "#hTheme",

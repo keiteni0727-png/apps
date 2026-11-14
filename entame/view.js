@@ -1,16 +1,8 @@
 /* ===================== 画面：左メニュー・番組表・ライブラリ一覧 ===================== */
 
 /* ---------- 表示の部品：アイコン・左メニュー・上の切り替え・ラベル ---------- */
-/* YouTubeの投稿者の切り替え（スマホの画面下メニュー）のアイコン */
-const TB_ICON = {
-  all: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg>',
-  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
-};
-/* YouTubeの投稿者の絵文字（左メニュー・画面下メニュー） */
+/* YouTubeの投稿者の絵文字（左メニュー・上の帯の切り替え） */
 const EMO = { キヨ: "🐱", 牛沢: "🐮", レトルト: "🦀" };
-/* PC：検索窓の上の切り替え（番組表／ライブラリ、YouTubeは投稿者）と設定の歯車 */
-const GEAR =
-  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>';
 /* メニューのアイコン（線のアイコンで統一。色はそれぞれのメニューの色） */
 const MODE_IC = {
   w: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h3M13.5 13.5h3M7.5 17h3"/></svg>',
@@ -94,53 +86,15 @@ function renderThemeBtn() {
   b.title = `表示：${TH_NAME[v]}`;
 }
 /* PCも上の帯（スマホと同じ）に切り替えと設定を出すので、検索窓の上の切り替えは使わない */
-function renderVbar() {
-  const v = $("#vbar");
-  if (!v) return;
-  v.innerHTML = "";
-  return;
-  const yt = state.mode === "yt";
-  const opts = yt
-    ? ytAuthors().map(a => [a, a, yst.author === a])
-    : state.mode === "m"
-      ? [
-          ["all", "すべて", state.sub === "all"],
-          ["a", "アニメ映画", state.sub === "a"],
-          ["d", "ドラマ・実写", state.sub === "d"],
-        ]
-      : [];
-  v.innerHTML = `<div class="vseg" role="tablist"${opts.length ? "" : " hidden"}>${opts.map(([k, l, on]) => `<button type="button" role="tab" data-tb="${esc(k)}" aria-selected="${on}">${esc(l)}</button>`).join("")}</div><button type="button" class="vgear" id="gearBtn" aria-label="設定（マスタ）">${GEAR}</button>`;
-}
-function renderTabbar() {
-  const nav = $("#tabbar");
-  if (!nav) return;
-  const yt = state.mode === "yt";
-  const items = yt
-    ? ytAuthors().map(a => [
-        a,
-        a,
-        a === "すべて" ? TB_ICON.all : EMO[a] ? `<i class="temo" aria-hidden="true">${EMO[a]}</i>` : TB_ICON.user,
-        yst.author === a,
-      ])
-    : [];
-  nav.className = "tabbar n" + items.length;
-  const gear = $("#tbGear");
-  if (gear && !gear.firstChild) gear.innerHTML = GEAR;
+/* スマホの上の帯：YouTubeの投稿者の切り替え（ほかの画面では空）。表示の切り替えボタンもここで描く */
+function renderHseg() {
   renderThemeBtn();
   const hs = $("#hseg");
-  if (hs) {
-    hs.innerHTML = items
-      .map(([v, l, , on, html]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}"${html ? ' class="wdt"' : ""}>${html || esc(l)}</button>`)
-      .join("");
-    const on = hs.querySelector('[aria-selected="true"]');
-    if (on && hs.scrollWidth > hs.clientWidth) hs.scrollLeft = on.offsetLeft - (hs.clientWidth - on.offsetWidth) / 2;
-  }
-  nav.innerHTML = items
-    .map(
-      ([v, l, ic, on]) =>
-        `<button type="button" data-tb="${esc(v)}"${on ? ' aria-current="page"' : ""}>${ic}<span>${esc(l)}</span></button>`,
-    )
-    .join("");
+  if (!hs) return;
+  const items = state.mode === "yt" ? ytAuthors().map(a => [a, yst.author === a]) : [];
+  hs.innerHTML = items.map(([v, on]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${esc(v)}</button>`).join("");
+  const on = hs.querySelector('[aria-selected="true"]');
+  if (on && hs.scrollWidth > hs.clientWidth) hs.scrollLeft = on.offsetLeft - (hs.clientWidth - on.offsetWidth) / 2;
 }
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
 /* バラエティタブ：ジャンル「バラエティ」（k="r"、恋愛リアリティなど）だけ。配信オリジナルのアニメ・ドラマはそれぞれの側で放送形態「配信」として出る */
@@ -670,8 +624,7 @@ function render() {
   if (hc)
     hc.innerHTML =
       `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>${hSubLab() ? `<span class="hsub ${state.mode}">${esc(hSubLab())}</span>` : ""}`;
-  renderTabbar();
-  renderVbar();
+  renderHseg();
   renderSidebar();
   if (!loaded) return;
   const y = lockY ?? scrollY;

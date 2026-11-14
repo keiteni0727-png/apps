@@ -23,9 +23,6 @@ main{padding-bottom:48px}
 .slot{display:grid;flex:1;min-width:0;border:0;background:transparent;text-align:left;-webkit-tap-highlight-color:transparent;grid-template-columns:52px 1fr auto;gap:10px;padding:8px 10px;align-items:start}
 @media (hover:hover){
   .slot:hover{background:var(--u-chip)}
-  .edl dd[data-jump]:hover,.edl dd[data-inl]:hover{background:var(--u-chip)}
-  .edl dd:hover .pen{opacity:1}
-  .vgear:hover{background:var(--u-chip);color:var(--u-ink)}
 }
 .slot:active{background:var(--u-chip)}
 .time{font-family:var(--u-num);font-weight:600;font-variant-numeric:tabular-nums;font-size:13.5px;display:grid;gap:3px;justify-items:start;padding-top:1px}
@@ -194,15 +191,12 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
   .sg-f{grid-template-columns:1fr}
 }
 .sheet.form.mini{max-width:600px}
-.stt{font-weight:700}
-.sar{color:var(--u-sub);margin-left:2px}
 .sernew{display:flex;gap:8px;margin-top:8px}
 .sernew input{flex:1;min-width:0}
 .sernew button{flex:none;border:1px solid var(--u-line);background:var(--u-bg);border-radius:10px;padding:0 14px;font-weight:700;font-size:14px}
 .field .chips button[aria-pressed="true"]{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
 .mtag{display:inline-block;vertical-align:2px;margin-right:7px;font-family:var(--u-f);font-size:10.5px;font-weight:700;line-height:1;padding:3px 5px 3px 6px;border-radius:3px;border-left:3px solid currentColor;letter-spacing:.04em;white-space:nowrap}
 .labs .mtag{margin:0;vertical-align:0}
-.imed{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .time .mtag{margin:0;vertical-align:0;font-size:10px;padding:3px 4px 3px 5px}
 .mtag.m-tv{color:#3d5a80;background:#e3eaf3}
 .mtag.m-movie{color:#7a3e9d;background:#f1e6f7}
@@ -264,15 +258,11 @@ html,body{overscroll-behavior:none}
 }
 /* YouTube */
 .kind.yauth{background:var(--yt)}
-.seg.yseg{grid-template-columns:repeat(4,1fr)}
 .tick.yplay{text-decoration:none;color:var(--u-sub)}
 .tick.yplay span{border-color:var(--yt);color:var(--yt);font-size:11px}
 .tick.yplay:hover span{background:var(--yt);color:#fff}
 .ybar{display:inline-block;width:80px;height:5px;border-radius:3px;background:var(--u-chip);overflow:hidden;vertical-align:middle}
 .ybar i{display:block;height:100%;background:var(--u-ok)}
-.yopen{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
-.ylink{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;flex:1 1 180px}
-.primary.ylink{background:var(--yt)}
 .ystep{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ystep>button:not(.ghost){width:40px;height:40px;border-radius:50%;border:1px solid var(--u-line);background:var(--u-bg);font-size:20px;font-weight:700}
 .ystep>button:disabled{opacity:.35}
@@ -293,12 +283,6 @@ html,body{overscroll-behavior:none}
 .delsm.armed{color:var(--u-accent);font-weight:700}
 #ytIn .links,#sheetIn .links{display:flex;justify-content:flex-end;margin-top:20px}
 /* 詳細の項目（押すと編集） */
-.edl dt[data-jump],.edl dd[data-jump],.edl dd[data-inl]{cursor:pointer}
-.edl dd{position:relative;padding-right:22px;border-radius:6px}
-.edl dd .pen{position:absolute;right:2px;top:1px;color:var(--u-sub);font-size:12px;opacity:.45}
-.edl dd:active{background:var(--u-chip)}
-.edl .unset{color:var(--u-sub);font-size:12.5px}
-.urltxt{font-family:var(--u-num);font-size:12px;color:var(--u-sub);overflow-wrap:anywhere}
 .editing{background:transparent!important}
 .editing .pen{display:none}
 input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:7px 9px;font:inherit;font-size:16px;font-weight:inherit}
@@ -378,7 +362,6 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
           .sheet:not(.form) .epset{gap:6px;margin-bottom:8px}
       .sheet:not(.form) .prog{margin-bottom:8px}
   .sheet:not(.form) .links{margin-top:10px;padding-bottom:12px}
-  .sheet:not(.form) .yopen a{padding:8px 12px;font-size:13px}
               .ttl .meta{margin-top:2px;gap:3px}
     .ttl .lab{font-size:9.5px;line-height:1.45}
   .ttl .pill{font-size:9.5px;padding:1px 7px}
@@ -522,7 +505,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .fsdrop #seriesQ{font-size:14px}
 }
 .nosong{color:var(--u-sub);font-size:13px}
-.nob{margin-left:8px}
 /* 「○○なし」は項目名の行の右端に置く（入力欄の下にはみ出さない） */
 .field:has(>.nofl){position:relative}
 /* 「なし」にした項目は入力欄ごと隠す */
@@ -545,10 +527,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @media (max-width:899px){
   :root{--tbh:58px}
     /* 下部メニュー（共通部品）：このアプリではシートを手前に出す。2項目のときは狭く */
-      .tabbar .temo{display:grid;place-items:center;width:22px;height:22px;padding:3px 14px;box-sizing:content-box;border-radius:999px;font-style:normal;font-size:19px;line-height:1}
-  .tabbar button[aria-current="page"] .temo{background:var(--u-accent2)}
-  .tabbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .vbarw{display:none}
   .ftools input{padding:5px 10px}
   .fsdrop #seriesQ{padding:3px 8px}
   .ftools input::placeholder,.fsdrop #seriesQ::placeholder{font-size:12px}
@@ -557,31 +535,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .icard{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:12px 14px;margin-bottom:10px}
 .icard [data-jump]{cursor:pointer;border-radius:6px}
 .icard [data-jump]:active{background:var(--u-chip)}
-.ilb{font-size:11.5px;font-weight:700;color:var(--u-sub);margin-bottom:4px}
-.ibig{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.ibig>span:first-child{font-family:var(--u-num);font-size:21px;font-weight:700;letter-spacing:.01em}
-.ibig .unset{font-family:var(--u-f);font-size:14px}
 .icour{font-size:12px;font-weight:700;color:var(--u-sub);background:var(--u-chip);border-radius:6px;padding:1px 8px}
-.iper{font-family:var(--u-num);font-size:12.5px;color:var(--u-sub);margin:4px 0 8px}
 .icard .unset{color:var(--u-sub);font-size:12.5px}
-.isongs{padding-top:4px;padding-bottom:4px}
-.isg{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--u-line)}
-.isg:first-child{border-top:0}
 .itag{flex:none;min-width:34px;text-align:center;font-size:11px;font-weight:700;color:var(--u-sub);background:var(--u-chip);border-radius:6px;padding:2px 6px;margin-top:2px}
 .itag.t-op,.itag.t-ed,.itag.t-th{background:var(--sgc);color:#fff;min-width:44px}
-.isgrp{border-left:3px solid var(--sgc);padding-left:9px;margin:6px 0}
-.isgrp+.isgrp{border-top:0;margin-top:10px}
-.isgrp .isg{border-top:0}
-.isgrp .isg1+.isg1{border-top:1px dashed var(--u-line)}
-.isgv{flex:1;min-width:0}
-.isgv .stt{display:block;font-size:14px;font-weight:700;line-height:1.4}
-.isgv .sar{display:block;margin:1px 0 0;font-size:12px;color:var(--u-sub)}
-.isgv .dlb,.isg1>.dlb{padding:3px 11px;font-size:12px}
-.isg1{align-items:center;padding:7px 0}
-.isg1 .itag{margin-top:0}
-.isg1+.isg1{border-top:1px solid var(--u-line)}
-.irg{flex:none;width:68px;font-family:var(--u-num);font-size:11px;color:var(--u-sub);white-space:nowrap}
-.isg1 .isgv .stt{font-size:14px}
 .ilinks{display:flex;gap:8px;margin-bottom:6px}
 .ilk{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center;border:1px solid var(--u-line);background:transparent;border-radius:var(--u-r);padding:10px 6px;font:inherit;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer}
 .ilk.off{color:var(--u-sub);font-weight:500;border-style:dashed}
@@ -616,8 +573,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .sheet:not(.form) .dp-ep>h4{font-size:12.5px}
   .sheet:not(.form) dl{grid-template-columns:84px 1fr;gap:10px 8px;font-size:13px}
   .sheet:not(.form) dt{font-size:12.5px}
-  .sheet:not(.form) .edl dd{padding-right:0}
-  .sheet:not(.form) .edl .pen{display:none}
   .sheet:not(.form) .epset button{padding:7px 12px;font-size:12.5px}
   .sheet:not(.form) .epset>button{flex:1}
   .sheet:not(.form) .ep{gap:8px;grid-template-columns:24px 46px 1fr auto;padding:10px 12px;font-size:13px}
@@ -674,14 +629,8 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .mkeys button[aria-pressed="true"]{border-color:var(--u-warn);background:var(--u-warn);color:var(--u-on)}
 }
 /* PC：検索窓の上の切り替え＋歯車（ヘッダーの番組表／ライブラリ・投稿者は出さない） */
-.vbar{display:flex;align-items:center;gap:10px;padding-top:14px}
-.vseg{display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;flex-wrap:wrap}
-.vseg button{border:0;background:none;color:var(--u-sub);padding:7px 16px;border-radius:8px;font-size:13.5px;font-weight:700;min-width:120px;text-align:center}
 @media (min-width:900px){
-          .vbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
-  .vseg{grid-column:2;justify-self:center}
   header .wrap{max-width:1100px}
-  .vbarw{display:none}
   .wrap{max-width:1100px}
   .sb-add{display:flex;align-items:center;justify-content:center;gap:4px;border:0;background:var(--u-accent);color:var(--u-on);border-radius:10px;padding:10px;font-weight:700;font-size:14px;margin-bottom:8px;white-space:nowrap}
   .sb-st{font-size:11.5px;padding:4px 10px;display:flex;flex-direction:column;gap:2px}
@@ -708,9 +657,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .ttl .lab{font-size:11.5px}
   .ttl .next{font-size:12.5px}
 }
-.vseg button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
-.vgear{margin-left:auto;width:38px;height:38px;border:0;background:none;color:var(--u-sub);border-radius:999px;display:grid;place-items:center;padding:0}
-.vgear svg{width:21px;height:21px}
 /* 設定（マスタ） */
 .sheet.setsheet{max-width:640px;height:min(640px,calc(100% - 48px));display:flex;flex-direction:column;overflow:hidden}
 .setsheet>.wrap{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:16px;width:100%}
@@ -749,10 +695,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .madd2{margin-top:10px}
 .madd2 input{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--u-r);padding:9px 10px;font:inherit;font-size:14px}
 /* PC：切り替えを真ん中に大きく */
-@media (min-width:900px){
-  .vseg button{min-width:180px;padding:9px 22px;font-size:14.5px}
-  .vgear{grid-column:3;justify-self:end;margin-left:0}
-}
 /* ===== PC：左の折りたためるメニュー ===== */
 .u-app{display:contents}
 .u-app .totop{z-index:15}
@@ -871,7 +813,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wc-tick:hover{background:var(--u-chip)}
 .wcard.un .wc-tick{background:color-mix(in srgb,var(--u-ok) 10%,transparent)}
 .wc-ok{flex:1;text-align:center;font-size:13px;color:var(--u-sub);padding:11px 14px}
-.vseg[hidden]{display:none}
 .wtabs{display:flex;gap:4px;background:var(--u-chip);border-radius:12px;padding:4px;margin-top:16px}
 .wtabs button{flex:1;display:grid;justify-items:center;gap:1px;border:0;background:none;color:var(--u-sub);border-radius:9px;padding:7px 4px;position:relative;font:inherit;line-height:1.2}
 .wtabs button b{font-size:15px}
@@ -933,10 +874,6 @@ body.sbc .u-app .sb .sb-it i{margin:0}
   .wcard .pconly{display:none}
   .frow .fb{padding-left:4px;padding-right:4px}
   .frow .fb .chev{display:none}
-  .hseg button.wdt{display:grid;justify-items:center;gap:0;padding:4px 6px;min-width:38px;position:relative;line-height:1.15}
-  .hseg button.wdt b{font-size:13.5px}
-  .hseg button.wdt small{font-family:var(--u-num);font-size:9.5px;font-weight:600}
-  .hseg button.wdt .wdot{position:absolute;top:3px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--st-now)}
 }
 .mic{display:inline-grid;place-items:center;width:22px;height:22px;line-height:0}
 .mic svg{width:20px;height:20px}
@@ -945,7 +882,6 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .hcur .mic svg{width:24px;height:24px}
 /* ===== スマホ：上の帯に ☰・切り替え・設定。追加は ☰ のメニューの中 ===== */
 @media (max-width:899px){
-  .u-app .tbwrap{z-index:12;display:none}
   body{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
   .hbar{gap:8px}
   .hcur{flex:none;gap:0}
@@ -1124,7 +1060,6 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .imsg.notnow .imn,.imsg.notnow .ima{opacity:.55}
 
 /* ===== 上の帯：PCもスマホと同じ形（☰・今のメニュー・切り替え）。PCだけ右端に設定 ===== */
-.hgear{display:none}
 @media (min-width:900px){
   .hbar{display:flex;gap:12px;padding-block:10px}
   .hcur{flex:none}
@@ -1133,18 +1068,8 @@ body.sbc .u-app .sb .sb-it i{margin:0}
   .hseg::-webkit-scrollbar{display:none}
   .hseg button{flex:1 0 auto;border:0;background:none;color:var(--u-sub);padding:7px 12px;border-radius:8px;font-size:13.5px;font-weight:700;white-space:nowrap}
   .hseg button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
-  .hseg button.wdt{display:grid;justify-items:center;gap:0;padding:4px 6px;position:relative;line-height:1.2}
-  .hseg button.wdt b{font-size:14px}
-  .hseg button.wdt small{font-family:var(--u-num);font-size:10.5px;font-weight:600}
-  .hseg button.wdt .wdot{position:absolute;top:4px;right:calc(50% - 20px);width:6px;height:6px;border-radius:50%;background:var(--st-now)}
-  .hgear{display:grid;place-items:center;flex:none;margin-left:auto;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);padding:0}
-  .hgear svg{width:20px;height:20px}
 }
 /* 設定：表示（自動／ライト／ダーク） */
-.thseg{display:flex;gap:3px;background:var(--u-chip);border-radius:11px;padding:3px;margin:4px 0 14px}
-.thseg button{flex:1;border:0;background:none;color:var(--u-sub);border-radius:8px;padding:8px 4px;font:inherit;font-size:13px;font-weight:700}
-.thseg button[aria-pressed="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
-.thh{font-size:12px;font-weight:700;color:var(--u-sub);margin-top:6px}
 
 /* ===== PC：左上の☰は左メニューの中。上の帯と左メニューの見出しの高さ・下線をそろえる ===== */
 @media (min-width:900px){

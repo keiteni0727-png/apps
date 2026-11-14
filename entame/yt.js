@@ -275,10 +275,6 @@ const YT_SORTS = [
 const chipBtn = (attr, val, on, label, n, cls) =>
   `<button type="button" ${attr}="${esc(val)}" aria-pressed="${on}" class="${on && cls ? "pri " + cls : ""}${attr === "data-vod" && VOD_COLOR[val] ? " vc" : ""}"${attr === "data-vod" ? vcStyle(val) : ""}>${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
 
-/* 詳細の項目を押して編集。editRow：押すと編集画面（data-jump）、data-inl：その場で書き換え */
-function editRow(k, v, attr) {
-  return `<dt ${attr}>${k}</dt><dd ${attr}>${v || `<span class="unset">未設定</span>`}<span class="pen" aria-hidden="true">✎</span></dd>`;
-}
 function startInline(el) {
   if (el.querySelector("input.inl")) return;
   const key = el.dataset.inl,

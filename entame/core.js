@@ -180,11 +180,6 @@ const songText = i =>
    s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
 const songJoin = (st, ar) => [st.trim(), ar.trim()].filter(Boolean).join(" ");
-/* 詳細のカード用：曲名とアーティストを2段で */
-const songCard = x => {
-  const { st, ar } = songTA(x);
-  return `${st ? `<span class="stt">${esc(st)}</span>` : ""}${ar ? `<span class="sar">${esc(ar)}</span>` : ""}`;
-};
 function epSpan(it) {
   const ns = (it ? episodes(it) : []).map(e => parseInt(String(e.n).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n));
   return ns.length ? [Math.min(...ns), Math.max(...ns)] : null;
@@ -346,18 +341,12 @@ async function mergeDoc(col, id, patch) {
 /* ---------- 同期：開いた直後や、しばらく裏にいたあとは、最新のデータが届くまで「同期中」 ---------- */
 var syncOk = { titles: false, progress: false };
 var syncHold = false; // 裏から戻った直後の待ち
-var syncWait = [];
 function isSynced() {
   return syncOk.titles && syncOk.progress && !syncHold;
 }
 function syncChanged() {
   updateSaveNote();
-  if (isSynced()) {
-    syncWait.forEach(f => f());
-    syncWait = [];
-  }
 }
-const whenSynced = () => (isSynced() ? Promise.resolve() : new Promise(r => syncWait.push(r)));
 /* 話数のチェックなど、まとめて保存するものは同期中は止める */
 function syncBlock() {
   if (isSynced()) return false;

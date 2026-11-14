@@ -246,14 +246,6 @@ function toast(m) {
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
   ["[data-logout]", () => doLogout()],
-  /* 表示：自動（端末に合わせる）／ライト／ダーク */
-  [
-    "[data-theme-set]",
-    el => {
-      U.setTheme(el.dataset.themeSet);
-      document.querySelectorAll("[data-theme-set]").forEach(b => b.setAttribute("aria-pressed", b === el));
-    },
-  ],
   /* 上のタブ（シリーズ・放送局…） */
   [
     "[data-mkey]",
