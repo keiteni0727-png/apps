@@ -242,7 +242,7 @@ function epOneHtml(it, e, i) {
   return `<div class="epw e1${A ? "" : " nosub"}" role="listitem" data-e1="${i}">
     <input class="e1-n" value="${esc(e.n)}" aria-label="話数" autocomplete="off">
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
-    <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="20180825" value="${j ? j.day : ""}" aria-label="放送日（例：20180825）">
+    <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
     <div class="e1-b"><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
 }
 function epEditorHtml(it) {
@@ -256,7 +256,7 @@ function epEditorHtml(it) {
             return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}">
       <input class="er-n" value="${esc(e.n)}" aria-label="話数">
       ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
-      <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="20180825" value="${j ? j.day : ""}" aria-label="放送日（例：20180825）">
+      <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
       <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button></div>`;
           })
           .join("")
@@ -855,7 +855,7 @@ function saveEpOne(it) {
     return refreshSheet();
   }
   const day = normDate(r.querySelector(".e1-d").value);
-  if (day === null) return toast("日付は 20180825 のように入力してください");
+  if (day === null) return toast("日付は 2018/08/25 のように入力してください");
   x.n = r.querySelector(".e1-n").value.trim() || x.n;
   const s = r.querySelector(".e1-s");
   if (s) x.sub = s.value.trim();

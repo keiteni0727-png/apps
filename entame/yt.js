@@ -285,7 +285,7 @@ function startInline(el) {
     type = el.dataset.inltype || "text",
     val = el.dataset.inlv || "";
   el.classList.add("editing");
-  el.innerHTML = `<input class="inl" data-inlkey="${key}" type="${type}" value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
+  el.innerHTML = `<input class="inl${key === "up" ? " dto" : ""}" data-inlkey="${key}" type="${type}"${key === "up" ? ' inputmode="numeric"' : ""} value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
   const i = el.querySelector("input");
   i.dataset.orig = val;
   i.focus();
@@ -473,7 +473,7 @@ function ytFormHtml() {
     ${sec(
       "動画の情報",
       `
-      <label class="field"><span>初回投稿日 <span class="hint">YouTubeの日付を貼り付けできます</span></span><input id="y-up" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>
+      <label class="field"><span>初回投稿日 <span class="hint">YouTubeの日付を貼り付けできます</span></span><input id="y-up" class="dto" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>
       <label class="field"><span>パート数</span><input id="y-n" type="number" min="0" inputmode="numeric" placeholder="12" value="${f.n || ""}"></label>
       <label class="field"><span>再生時間 <span class="hint">「630」で6時間30分</span></span><input id="y-dur" inputmode="numeric" autocomplete="off" placeholder="630" value="${esc(f.dur)}"><span class="hint" id="yDurMsg"></span></label>`,
     )}

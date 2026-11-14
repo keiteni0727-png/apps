@@ -395,13 +395,14 @@ const CHANGE_ACTIONS = [
       const it = items.find(x => x.id === openId);
       const i = +t.closest("[data-er]").dataset.er;
       const l = epEdit.list;
-      if (!t.value) {
+      const day = normDate(t.value);
+      if (!day) {
         l[i].t = 0;
         return refreshEditor();
       }
       const hm = l[i].t ? jst(l[i].t).hm : hasTime(it) ? it.time : "9:00";
       if (!l[i].t) l[i].nt = !hasTime(it);
-      const t0 = dayTimeToT(t.value, hm);
+      const t0 = dayTimeToT(day, hm);
       l.forEach(x => (x.moved = false));
       for (let k = i; k < l.length; k++) {
         const keep = l[k].t ? jst(l[k].t).hm : hm;
@@ -420,7 +421,8 @@ const INPUT_ACTIONS = [
     "#f-time,#f-from",
     t => {
       if (!form) return false;
-      form[t.id === "f-time" ? "time" : "from"] = t.value;
+      if (t.id === "f-time") form.time = t.value;
+      else form.from = normDate(t.value) || "";
       updSched();
     },
   ],
@@ -595,8 +597,86 @@ function normDate(v) {
   if (dt.getFullYear() !== +y || dt.getMonth() !== +m - 1 || dt.getDate() !== +d) return null;
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
+/* 日付は yyyy/MM/dd で表示する（保存は 2018-08-25 のまま。読むときは normDate を通す） */
+const dtShow = d => (d ? String(d).replace(/-/g, "/") : "");
+const isDt = el => !!(el && el.classList && (el.classList.contains("dtx") || el.classList.contains("dto")));
+const DT_POS = [0, 1, 2, 3, 5, 6, 8, 9]; // yyyy/MM/dd の数字の位置
+const DT_FULL = /^\d{4}\/\d{2}\/\d{2}$/;
+const dtFmt = s => s.slice(0, 4) + (s.length > 4 ? "/" + s.slice(4, 6) : "") + (s.length > 6 ? "/" + s.slice(6, 8) : "");
+const dtSend = el => {
+  el.dataset.sent = el.value;
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+};
+/* 入力欄に入ったら、カーソルを一番左へ（入力済みのときは左から上書きしていける） */
 document.addEventListener("focusin", e => {
-  if (e.target.classList && e.target.classList.contains("dtx")) e.target.dataset.prev = e.target.value;
+  const el = e.target;
+  if (!isDt(el)) return;
+  el.dataset.prev = el.value;
+  el.dataset.sent = el.value;
+  setTimeout(() => {
+    if (document.activeElement === el && DT_FULL.test(el.value))
+      try {
+        el.setSelectionRange(0, 0);
+      } catch (_) {}
+  }, 30);
+});
+/* 上書き入力：数字を打つと、カーソルの位置の数字を置きかえて次へ（/ は飛ばす）。
+   空のときは打った順に yyyy/MM/dd の形で入る。最後の数字まで打つか、入力欄を離れたら確定 */
+document.addEventListener(
+  "beforeinput",
+  e => {
+    const el = e.target;
+    if (!isDt(el)) return;
+    const t = e.inputType,
+      v = el.value,
+      p = el.selectionStart ?? v.length,
+      q = el.selectionEnd ?? p;
+    const set = (val, c) => {
+      el.value = val;
+      try {
+        el.setSelectionRange(c, c);
+      } catch (_) {}
+    };
+    if (t === "insertText" || t === "insertReplacementText") {
+      const ds = zen(e.data || "").replace(/\D/g, "");
+      if (!ds || ds.length !== (e.data || "").length) return;
+      if (DT_FULL.test(v) && !(p === 0 && q === v.length)) {
+        e.preventDefault();
+        const d = v.replace(/\D/g, "").split("");
+        let k = DT_POS.findIndex(x => x >= p);
+        if (k < 0) return;
+        for (const c of ds) {
+          if (k > 7) break;
+          d[k++] = c;
+        }
+        set(dtFmt(d.join("")), k <= 7 ? DT_POS[k] : 10);
+        if (k > 7) dtSend(el);
+        return;
+      }
+      /* 空・途中まで（全部選んで打ち直すときも）：後ろに足していく */
+      const base = p === 0 && q === v.length ? "" : v;
+      if (!/^[\d/]*$/.test(base)) return;
+      e.preventDefault();
+      const s = (base.replace(/\D/g, "") + ds).slice(0, 8);
+      set(dtFmt(s), dtFmt(s).length);
+      if (s.length === 8) dtSend(el);
+      return;
+    }
+    /* 入力済みのときの ← 削除：消さずに1つ左の数字へ戻る（全部選んでいるときはふつうに消す） */
+    if (t === "deleteContentBackward" && DT_FULL.test(v) && p === q) {
+      e.preventDefault();
+      const k = DT_POS.filter(x => x < p).length;
+      set(v, k > 0 ? DT_POS[k - 1] : 0);
+    }
+  },
+  true,
+);
+/* 途中まで上書きして離れたときも確定する */
+document.addEventListener("focusout", e => {
+  const el = e.target;
+  if (!isDt(el) || !el.isConnected) return;
+  if (el.value.endsWith("/")) el.value = el.value.replace(/\/+$/, "");
+  if (el.value !== el.dataset.sent) dtSend(el);
 });
 document.addEventListener(
   "input",
@@ -606,9 +686,9 @@ document.addEventListener(
     if (/^[0-9０-９]{8}$/.test(el.value.trim())) {
       const n = normDate(el.value);
       if (n) {
-        el.value = n;
-        el.dataset.prev = n;
-        el.dispatchEvent(new Event("change", { bubbles: true }));
+        el.value = dtShow(n);
+        el.dataset.prev = el.value;
+        dtSend(el);
       }
     }
   },
@@ -622,13 +702,15 @@ document.addEventListener(
     const n = normDate(el.value);
     if (n === null) {
       e.stopImmediatePropagation();
-      toast("日付は 20180825 のように入力してください");
+      toast("日付は 2018/08/25 のように入力してください");
       el.value = el.dataset.prev || "";
       return;
     }
-    if (n !== el.value) el.value = n;
-    if (n === el.dataset.prev && e.isTrusted === false) return;
-    el.dataset.prev = n;
+    const sh = dtShow(n);
+    if (sh !== el.value) el.value = sh;
+    el.dataset.sent = sh;
+    if (sh === el.dataset.prev && e.isTrusted === false) return;
+    el.dataset.prev = sh;
   },
   true,
 );
