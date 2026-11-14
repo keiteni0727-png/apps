@@ -324,7 +324,11 @@ function inlineAnchor(target, el) {
     const l = [...document.querySelectorAll(`#sheetIn [data-jump="${target}"]`)];
     el = l.find(x => x.offsetParent !== null) || l[0];
   }
-  return el && (el.closest(".icard,.dmiss,.ilinks") || el);
+  if (!el) return null;
+  /* 未入力アラート（上に固定の見出しの中）から開いたときは、見出しの中ではなく見出しのすぐ下に出す。
+     見出しの中に出すと、固定の見出しが伸びてスクロールや矢印キーでの移動がおかしくなるため */
+  if (el.closest(".dhead")) return el.closest(".dhead");
+  return el.closest(".icard,.dmiss,.ilinks") || el;
 }
 function openInlineForm(target, el) {
   const anc = inlineAnchor(target, el);
@@ -339,7 +343,10 @@ function openInlineForm(target, el) {
   readForm();
   form.init = JSON.stringify({ ...form, init: 0 });
   const box = $("#formIn");
-  box.scrollIntoView({ block: "nearest" });
+  const sh = box.closest(".sheet");
+  if (anc.classList.contains("dhead") && sh) sh.scrollTop = 0;
+  else if (typeof navScroll === "function") navScroll(box);
+  else box.scrollIntoView({ block: "nearest" });
   const i = box.querySelector(".fgrid.only input:not([type=date]):not([type=checkbox]):not([type=file])");
   if (i && !TOUCH) i.focus({ preventScroll: true });
 }
