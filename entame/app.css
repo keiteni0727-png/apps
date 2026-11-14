@@ -1264,3 +1264,10 @@ body:has(#layer .sheet) .bdock{display:none}
 .idl dd[data-inl]:hover{background:var(--u-chip)}
 .idl dd .lastmod{font-size:11.5px;color:var(--u-sub)}
 .iprog .prog{margin:2px 0 10px}
+/* 放送局の選択もPCでは1行に（配信サイトと同じ小ささ） */
+.field .chips:has(>button[data-fst]){gap:4px}
+.field .chips>button[data-fst]{padding:4px 7px;font-size:11.5px;letter-spacing:-.01em}
+@media (min-width:900px){
+  .field .chips:has(>button[data-fst]){flex-wrap:nowrap;gap:3px}
+  .field .chips>button[data-fst]{flex:1 1 auto!important;min-width:0!important;padding-left:4px!important;padding-right:4px!important;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
