@@ -309,11 +309,15 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     rows.push(row("配信", labsOr(m.vods, m.vods.map(vlab).join(""), "vods"), "fMedia"));
   }
   const bc = `<div class="icard ibc"><div class="ich"><span class="ilamp onair">ON AIR</span></div><dl class="idl">${rows.join("")}</dl></div>`;
+  /* 外部リンクのアイコン（公式サイト＝外に開く、配信＝再生） */
+  const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
   /* MUSIC：1曲1行。左に種類、曲名（太字）、その下に「アーティスト・使われた話」、右端にDL */
   const songs = songRows
     .map(r => {
       const { st, ar } = songTA(r.x);
-      const sub = [ar.trim() ? esc(ar) : "", r.rng ? `<span class="inum">${esc(r.rng)}</span>` : ""].filter(Boolean).join("<i>・</i>");
+      /* 2行目：「歌」ラベル＋アーティスト、使われた話は枠つきの小さなラベルで見分けやすく */
+      const sub = [ar.trim() ? `<span class="iar"><b>歌</b>${esc(ar)}</span>` : "", r.rng ? `<span class="iep inum">${esc(r.rng)}</span>` : ""].filter(Boolean).join("");
       return `<div class="imsg" data-jump="sgList"><span class="itag ${SG_CLS[r.k]}">${r.k}</span><span class="imn">${st.trim() ? esc(st) : un("曲名 未設定")}</span>${sub ? `<span class="ima">${sub}</span>` : ""}<button type="button" class="dlb${r.x.dl ? " on" : ""}" data-sgdl="${r.i}" aria-pressed="${!!r.x.dl}" aria-label="${esc(r.x.s)}を${r.x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.x.dl ? "♪DL" : "DL"}</button></div>`;
     })
     .join("");
@@ -323,11 +327,11 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       : `<button type="button" class="ilk off" data-jump="fSeries">シリーズ未設定</button>`
   }${
     it.url
-      ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener">公式サイト ↗</a>`
+      ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener"><span class="ilt">公式サイト</span>${IC_EXT}</a>`
       : `<button type="button" class="ilk off" data-jump="f-url">公式サイト${nofHas(it, "url") ? "なし" : "未設定"}</button>`
   }${
     it.vurl
-      ? `<a class="ilk" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
+      ? `<a class="ilk ivod" href="${esc(it.vurl)}" target="_blank" rel="noopener" aria-label="${esc(vodName(it))}で見る">${IC_PLAY}<span class="ilt">${esc(vodName(it))}</span></a>`
       : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL${nofHas(it, "vurl") ? "なし" : "未設定"}</button>`
   }</div>`;
   return bc + (songs ? `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span></div>${songs}</div>` : "") + links;
