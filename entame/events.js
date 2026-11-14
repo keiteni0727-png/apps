@@ -200,7 +200,7 @@ const ROW_ACTIONS = [
       if (i < 0) return;
       l[i].w = true;
       l[i].wt = Date.now();
-      saveEps(it, l, `${it.t.slice(0, 14)} ${l[i].n}を視聴済みにしました`);
+      saveWatch(it, l, [i], `${it.t.slice(0, 14)} ${l[i].n}を視聴済みにしました`);
       askSub(it, i);
     },
   ],

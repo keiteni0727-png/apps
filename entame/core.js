@@ -347,7 +347,7 @@ function isSynced() {
 function syncChanged() {
   updateSaveNote();
 }
-/* 話数のチェックなど、まとめて保存するものは同期中は止める */
+/* 話数の編集など、リストをまとめて保存するものは同期中は止める（視聴チェックは話ごとに保存するので止めない） */
 function syncBlock() {
   if (isSynced()) return false;
   toast("最新のデータを読み込み中です。少しだけ待ってからもう一度お試しください");
@@ -504,6 +504,7 @@ async function initStore() {
       prog = docsOf(s);
       got.progress = true;
       done();
+      if (s.fromCache === false) migrateProg();
     },
     onErr,
     { meta: true },
@@ -542,11 +543,59 @@ const epWhen = (e, it, withYear) => {
   if (!j) return "";
   return `${withYear && j.y !== new Date().getFullYear() ? j.y + "/" : ""}${j.md}(${j.dow})${noTime(e, it) ? "" : " " + j.hm}`;
 };
+/* 話ごとの「見た」の印は progress の w に { 話のキー: 見た日時 } で持つ（1＝日時なし、null・なし＝未視聴）。
+   話のキー＝話の名前（同じ名前が2つ以上あるときは2つ目から「#2」…を付ける）。
+   w がない作品は前の形（eps の各話に w・wt）として読む */
+function epKeys(list) {
+  const c = {};
+  return list.map((e, i) => {
+    const b = String(e.n || "").trim() || `#${i + 1}`;
+    c[b] = (c[b] || 0) + 1;
+    return c[b] > 1 ? `${b}#${c[b]}` : b;
+  });
+}
+const hasWMap = p => !!(p && p.w && typeof p.w === "object" && !Array.isArray(p.w));
 function episodes(it) {
   const p = prog[it.id];
-  return p && Array.isArray(p.eps)
-    ? p.eps.map(e => ({ n: e.n || "", sub: e.s || "", t: e.t || 0, w: !!e.w, nt: !!e.nt, wt: e.wt || 0 }))
-    : [];
+  if (!p || !Array.isArray(p.eps)) return [];
+  const m = hasWMap(p) ? p.w : null;
+  const ks = m ? epKeys(p.eps) : null;
+  return p.eps.map((e, i) => {
+    const v = m ? +m[ks[i]] || 0 : e.w ? +e.wt || 1 : 0;
+    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0 };
+  });
+}
+/* 話数リストまるごとの保存用の中身（eps の w・wt は前の版の画面が開いたままの端末のための控え。読むときは w の印を使う） */
+function progDoc(list) {
+  const ks = epKeys(list),
+    w = {};
+  list.forEach((e, i) => {
+    if (e.w) w[ks[i]] = e.wt || 1;
+  });
+  return {
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
+    w,
+  };
+}
+/* 前の形のままの話数を、今の形に直して保存し直す（最新のデータが届いたあと、1回だけ） */
+let progMigrated = false;
+async function migrateProg() {
+  if (progMigrated || !db) return;
+  progMigrated = true;
+  const list = Object.entries(prog)
+    .filter(([, p]) => p && Array.isArray(p.eps) && !hasWMap(p))
+    .map(([id, p]) => {
+      const d = progDoc(episodes({ id }));
+      if (p._at) d._at = p._at;
+      prog[id] = d;
+      return [`progress/${id}`, d];
+    });
+  if (!list.length) return;
+  try {
+    for (let i = 0; i < list.length; i += 400) await write(() => db.setMany(list.slice(i, i + 400)));
+  } catch (e) {
+    fail(e);
+  }
 }
 const aired = e => !e.t || e.t <= NOWMIN();
 function nextInfo(it) {

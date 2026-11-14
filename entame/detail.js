@@ -489,30 +489,53 @@ function autoStatus(it, list) {
   if (!any && it.s === "視聴済み") return "視聴中";
   return null;
 }
+/* 視聴チェックで作品のステータスが変わるときは、ステータスも保存してメッセージに足す */
+function applyAutoStatus(it, list, msg) {
+  const ns = autoStatus(it, list);
+  if (!ns) return msg;
+  over[it.id] = { ...(over[it.id] || {}), s: ns };
+  rebuild();
+  mergeDoc("titles", it.id, { s: ns }).catch(fail);
+  return (msg ? msg + "・" : "") + `「${ns}」にしました`;
+}
+function epsChanged(it, msg) {
+  render();
+  if (openId === it.id && !epEdit) refreshSheet();
+  if (msg) toast(msg);
+}
+/* 話数リストをまるごと保存（話数・サブタイトルの編集など） */
 async function saveEps(it, list, msg) {
-  /* 話数はリストをまとめて保存するので、最新のデータが届くまでは保存しない（古い話数で上書きしないため） */
+  /* リストをまとめて保存するので、最新のデータが届くまでは保存しない（古い話数で上書きしないため） */
   if (syncBlock()) {
     if (openId === it.id && !epEdit) refreshSheet();
     return;
   }
-  const ns = autoStatus(it, list);
-  if (ns) {
-    const o = { ...(over[it.id] || {}), s: ns };
-    over[it.id] = o;
-    rebuild();
-    msg = (msg ? msg + "・" : "") + `「${ns}」にしました`;
-    mergeDoc("titles", it.id, { s: ns }).catch(fail);
-  }
-  const p = {
-    /* wt＝チェックを付けた日時（視聴記録用）。チェックを外した話は持たない */
-    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, w: e.w ? 1 : 0, ...(e.nt ? { nt: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
-  };
+  msg = applyAutoStatus(it, list, msg);
+  const p = progDoc(list);
   prog[it.id] = p;
-  render();
-  if (openId === it.id && !epEdit) refreshSheet();
-  if (msg) toast(msg);
+  epsChanged(it, msg);
   try {
     await saveDoc("progress", it.id, p);
+  } catch (e) {
+    fail(e);
+  }
+}
+/* 「見た」の印だけを話ごとに保存（idxs＝変えた話の番号）。ほかの端末で同時にチェックしても消し合わない */
+async function saveWatch(it, list, idxs, msg) {
+  const p = prog[it.id];
+  /* 前の形のままの作品は、まとめて保存して今の形にする */
+  if (!hasWMap(p) || !db) return saveEps(it, list, msg);
+  const ks = epKeys(list),
+    patch = {};
+  idxs.forEach(i => (patch[ks[i]] = list[i].w ? list[i].wt || 1 : null));
+  if (!Object.keys(patch).length) return;
+  msg = applyAutoStatus(it, list, msg);
+  const at = Date.now();
+  prog[it.id] = { ...p, w: { ...p.w, ...patch }, _at: at };
+  lastAt = at;
+  epsChanged(it, msg);
+  try {
+    await write(() => db.doc(`progress/${it.id}`).update({ w: patch, _at: at }));
   } catch (e) {
     fail(e);
   }
@@ -522,7 +545,7 @@ function toggleEp(it, idx, val) {
   if (!l[idx]) return;
   l[idx].w = val;
   l[idx].wt = val ? Date.now() : 0;
-  saveEps(it, l, `${l[idx].n}を${val ? "視聴済み" : "未視聴"}にしました`);
+  saveWatch(it, l, [idx], `${l[idx].n}を${val ? "視聴済み" : "未視聴"}にしました`);
   if (val) askSub(it, idx);
 }
 /* サブタイトルが空の話を視聴済みにしたら、その場で入力できる小さな画面を出す（アニメのみ） */
@@ -771,19 +794,30 @@ const DETAIL_ACTIONS = [
   [
     "#allAired",
     (el, it) => {
-      const l = episodes(it);
-      l.forEach(x => {
-        if (aired(x)) x.w = true;
+      const l = episodes(it),
+        ch = [];
+      l.forEach((x, i) => {
+        if (aired(x) && !x.w) {
+          x.w = true;
+          ch.push(i);
+        }
       });
-      saveEps(it, l, "放送済みの話を全部チェックしました");
+      saveWatch(it, l, ch, "放送済みの話を全部チェックしました");
     },
   ],
   [
     "#clearAll",
     (el, it) => {
-      const l = episodes(it);
-      l.forEach(x => (x.w = false));
-      saveEps(it, l, "チェックを全部外しました");
+      const l = episodes(it),
+        ch = [];
+      l.forEach((x, i) => {
+        if (x.w) {
+          x.w = false;
+          x.wt = 0;
+          ch.push(i);
+        }
+      });
+      saveWatch(it, l, ch, "チェックを全部外しました");
     },
   ],
   /* 編（〇〇編）の登録 */
