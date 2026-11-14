@@ -325,59 +325,60 @@ function commitInline(i, cancel) {
   if (ytOpen) ytSave(ytOpen, { [key]: v }, "保存しました");
   done();
 }
-/* ---------- 詳細 ---------- */
+/* ---------- 詳細：作品の詳細と同じ形（上にジャンル・ステータスのラベルと編集・閉じる、タイトルとコピー、
+   情報はカード（YOUTUBE）に「項目名　内容」で1行ずつ、進み具合もカード、リンクは下にボタンを並べる） ---------- */
 let ytOpen = null;
+let ytStMenu = false; // 視聴ステータスの選択肢を開いているか
+const YT_ST = [
+  ["", UNSEEN],
+  ["視聴中", "視聴中"],
+  ["視聴済み", "視聴済み"],
+  ["見ない", "見ない"],
+];
 function ytDetailHtml(x) {
   const pw = +x.pw || 0,
     n = +x.n || 0;
-  const J = t => `data-jump="${t}"`,
-    I = (k, ty, v) => `data-inl="${k}" data-inltype="${ty}" data-inlv="${esc(v ?? "")}"`;
+  const un = t => `<span class="unset">${t}</span>`;
+  const J = (k, v, t) => `<dt data-jump="${t}">${k}</dt><dd data-jump="${t}">${v || un("未設定")}</dd>`;
+  const I = (k, v, key, ty, raw) => `<dt>${k}</dt><dd data-inl="${key}" data-inltype="${ty}" data-inlv="${esc(raw ?? "")}">${v || un("未設定")}<span class="pen" aria-hidden="true">✎</span></dd>`;
+  const st = x.s || "";
+  const stCls = "s-" + (st || UNSEEN);
+  const stBtn = `<span class="stw"><button type="button" class="pill dst ${stCls}" id="ytStOpen" aria-haspopup="true" aria-expanded="${ytStMenu}">${esc(stLabel(st || UNSEEN))}<span class="stv" aria-hidden="true">▾</span></button>${ytStMenu ? `<span class="stmenu" role="menu">${YT_ST.map(([v, l]) => `<button type="button" role="menuitemradio" data-yts="${v}" aria-checked="${st === v}" class="s-${l}">${stLabel(l)}</button>`).join("")}</span>` : ""}</span>`;
   const rows = [
-    ["投稿者", esc(x.a), J("yfAuthor")],
-    ["ジャンル", ytGenreLab(x), J("yfGenre")],
-    ["初回投稿日", fmtD(x.up), I("up", "text", fmtD(x.up))],
-    ["再生時間", esc(x.dur), I("dur", "text", x.dur)],
-    [
-      "パート数",
-      n || x._at
-        ? `${n ? `全${n}本` : ""}${x._at ? `<span class="lastmod">最終変更 ${fmtShortDay(x._at)}</span>` : ""}`
-        : "",
-      I("n", "number", n || ""),
-    ],
-    [
-      "再生リスト",
-      x.pl ? `<span class="urltxt">${esc(x.pl.replace(/^https?:\/\//, ""))}</span>` : "",
-      I("pl", "url", x.pl),
-    ],
+    J("投稿者", esc(x.a), "yfAuthor"),
+    J("ジャンル", ytGenreLab(x), "yfGenre"),
+    I("初回投稿日", x.up ? `<span class="inum">${esc(fmtD(x.up))}</span>` : "", "up", "text", fmtD(x.up)),
+    I("再生時間", x.dur ? `<span class="inum">${esc(x.dur)}</span>` : "", "dur", "text", x.dur),
+    I("パート数", n || x._at ? `${n ? `<span class="inum">全${n}本</span>` : ""}${x._at ? `<span class="lastmod">最終変更 ${fmtShortDay(x._at)}</span>` : ""}` : "", "n", "number", n || ""),
   ];
-  return `<div class="hdrow"><div class="meta"><span class="kind yauth">YouTube</span></div><div class="hdrow"><button type="button" class="editbtn" id="ytEdit">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
-    <h3>${esc(x.t)}</h3>
-    <div class="seg yseg" role="group" aria-label="視聴ステータス">${[
-      ["", UNSEEN, "s-未視聴"],
-      ["視聴中", "視聴中", "s-視聴中"],
-      ["視聴済み", "視聴済", "s-視聴済み"],
-      ["見ない", "見ない", "s-見ない"],
-    ]
-      .map(
-        ([v, l, c]) =>
-          `<button type="button" data-yts="${v}" aria-pressed="${(x.s || "") === v}" class="${(x.s || "") === v ? c : ""}">${l}</button>`,
-      )
-      .join("")}</div>
-    <div class="yopen">${x.pl ? `<a class="u-btn pri primary ylink" href="${esc(x.pl)}" target="_blank" rel="noopener">▶ 再生リストを開く</a>` : ""}${x.sm ? `<a class="u-btn ghost ylink" href="${esc(x.sm)}" target="_blank" rel="noopener">まとめ動画を開く ↗</a>` : ""}</div>
-    <dl class="edl">${rows.map(([k, v, at]) => (at.startsWith("data-inl") ? `<dt>${k}</dt><dd ${at}>${v || `<span class="unset">未設定</span>`}<span class="pen" aria-hidden="true">✎</span></dd>` : editRow(k, v, at))).join("")}</dl>
-    <h4>見たところ <small>${n ? `${pw} / ${n}本` : "パート数を入れると進み具合を記録できます"}</small></h4>
-    ${
-      n
-        ? `<div class="prog"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></div>
+  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span></div><dl class="idl">${rows.join("")}</dl></div>`;
+  const prog = `<div class="icard iprog"><div class="ich"><span class="ilamp progl">PROGRESS</span><span class="inow">${n ? `${pw} / ${n}本 見た` : "パート数を入れると進み具合を記録できます"}</span></div>${
+    n
+      ? `<div class="prog"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></div>
       <div class="ystep"><button type="button" data-ytp="-1" aria-label="1本戻す" ${pw <= 0 ? "disabled" : ""}>−</button><span><b>${pw}</b>本目まで見た</span><button type="button" data-ytp="1" aria-label="1本進める" ${pw >= n ? "disabled" : ""}>＋</button><button type="button" class="u-btn sm ghost" data-ytp="all" ${pw >= n ? "disabled" : ""}>最後まで見た</button>${pw ? `<button type="button" class="u-btn sm ghost" data-ytp="reset">リセット</button>` : ""}</div>`
-        : ""
-    }
-    <div class="links"><button type="button" class="delsm" id="ytDel">削除</button></div>`;
+      : ""
+  }</div>`;
+  const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
+  const links = `<div class="ilinks">${
+    x.pl
+      ? `<a class="ilk ivod" href="${esc(x.pl)}" target="_blank" rel="noopener">${IC_PLAY}<span class="ilt">再生リスト</span></a>`
+      : `<button type="button" class="ilk off" data-jump="y-pl">再生リスト未設定</button>`
+  }${
+    x.sm
+      ? `<a class="ilk" href="${esc(x.sm)}" target="_blank" rel="noopener"><span class="ilt">まとめ動画</span>${IC_EXT}</a>`
+      : `<button type="button" class="ilk off" data-jump="y-sm">まとめ動画未設定</button>`
+  }</div>`;
+  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">YouTube</span>${stBtn}</div><div class="hdrow"><button type="button" class="editbtn" id="ytEdit">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+    <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3></div>
+    <div class="ydbody">${info}${prog}${links}
+    <div class="links"><button type="button" class="delsm" id="ytDel">削除</button></div></div>`;
 }
 function ytOpenDetail(id) {
   const x = ytItems.find(y => y.id === id);
   if (!x) return;
   ytOpen = id;
+  ytStMenu = false;
   openId = null;
   form = null;
   $("#layer").innerHTML =
@@ -547,6 +548,10 @@ function ytOpenForm(x, target) {
     yform.only = target;
     $(".sheet.form").classList.add("mini");
     $("#ytFormIn").innerHTML = ytFormHtml();
+  } else if (target && document.getElementById(target)) {
+    const el = document.getElementById(target);
+    el.scrollIntoView({ block: "center" });
+    if (!TOUCH) el.focus({ preventScroll: true });
   } else if (!TOUCH) $("#y-t").focus({ preventScroll: true });
 }
 async function ytSubmit() {
@@ -658,6 +663,28 @@ const YT_FORM_ACTIONS = [
 /* 詳細画面（x＝開いている再生リスト） */
 const YT_DETAIL_ACTIONS = [
   ["#ytEdit", (el, x) => ytOpenForm(x)],
+  /* 視聴ステータスのラベル：押すと選択肢を開く／閉じる。ほかの場所を押したら閉じる */
+  [
+    "#ytStOpen",
+    () => {
+      ytStMenu = !ytStMenu;
+      ytRefresh();
+    },
+  ],
+  [
+    null,
+    el => {
+      if (ytStMenu && !el.closest(".stw")) {
+        ytStMenu = false;
+        ytRefresh();
+      }
+      return false;
+    },
+  ],
+  [
+    "#ytCopy",
+    (el, x) => U.copy(x.t).then(ok => toast(ok ? "タイトルをコピーしました" : "コピーできませんでした")),
+  ],
   [
     "[data-inl]",
     (el, x, e) => {
@@ -669,7 +696,9 @@ const YT_DETAIL_ACTIONS = [
     "[data-yts]",
     (el, x) => {
       const v = el.dataset.yts;
+      ytStMenu = false;
       if ((x.s || "") !== v) ytSave(x.id, { s: v }, v ? `「${v}」にしました` : "未視聴にしました");
+      else ytRefresh();
     },
   ],
   /* 見たところ：−・＋・最後まで・リセット。最後まで見たら視聴済み、途中なら視聴中に */

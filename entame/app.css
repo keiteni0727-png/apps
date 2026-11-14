@@ -1253,3 +1253,14 @@ body:has(#layer .sheet) .bdock{display:none}
 .bnowl .hint{width:100%;margin:0;font-size:11.5px}
 .bnow{font-size:12px;border:1px solid var(--u-line);border-radius:999px;padding:2px 9px;background:var(--u-bg)}
 .bnow small{font-family:var(--u-num);font-size:10.5px;color:var(--u-sub);margin-left:4px}
+/* YouTubeの詳細も作品の詳細と同じカード表示 */
+.ydhead{padding-bottom:10px!important}
+.ydbody{padding-top:12px}
+.ilamp.ytl{background:#e62117}
+.ilamp.progl{background:var(--u-ink);color:var(--u-surface)}
+.ich .inow{margin-left:10px;font-size:12px;color:var(--u-sub);font-weight:600}
+.idl dd[data-inl]{position:relative;padding-right:22px;border-radius:6px}
+.idl dd[data-inl] .pen{position:absolute;right:2px;top:50%;transform:translateY(-50%);color:var(--u-sub);font-size:12px;opacity:.45}
+.idl dd[data-inl]:hover{background:var(--u-chip)}
+.idl dd .lastmod{font-size:11.5px;color:var(--u-sub)}
+.iprog .prog{margin:2px 0 10px}
