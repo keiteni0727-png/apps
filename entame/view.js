@@ -76,9 +76,12 @@ function renderSidebar() {
     ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
+/* PCも上の帯（スマホと同じ）に切り替えと設定を出すので、検索窓の上の切り替えは使わない */
 function renderVbar() {
   const v = $("#vbar");
   if (!v) return;
+  v.innerHTML = "";
+  return;
   const yt = state.mode === "yt";
   const opts = yt
     ? ytAuthors().map(a => [a, a, yst.author === a])
@@ -108,6 +111,8 @@ function renderTabbar() {
   nav.className = "tabbar n" + items.length;
   const gear = $("#tbGear");
   if (gear && !gear.firstChild) gear.innerHTML = GEAR;
+  const hg = $("#hGear");
+  if (hg && !hg.firstChild) hg.innerHTML = GEAR;
   const hs = $("#hseg");
   if (hs) {
     hs.innerHTML = items
@@ -429,11 +434,7 @@ function renderWeek() {
     h += `<section class="wday"><div class="wdayhd"><h2>未視聴のある作品</h2><small>${l.length}本</small></div><div class="wgrid">${l.map(([x, i]) => card(x, i, true)).join("")}</div></section>`;
     return h;
   }
-  /* PC・スマホとも1日ずつ。PCは曜日タブを画面の上に、スマホは上の帯に出す */
-  if (IS_PC())
-    h += `<div class="wtabs" role="tablist" aria-label="曜日">${weekDayTabs()
-      .map(([v, , , on, html]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${html}</button>`)
-      .join("")}</div>`;
+  /* PC・スマホとも1日ずつ。曜日は上の帯で選ぶ */
   const cur = g.find(x => x.k === state.wday) || g[0];
   h += `<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div><div class="wgrid">${cur.list.map(i => card(cur, i)).join("")}</div></section>`;
   return h;

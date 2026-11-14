@@ -14,6 +14,35 @@
       db   … doc(path) と collection(path) を持つ。どちらの保存先でも同じ書き方で使える
       uid  … 利用者のID（取れないときは null） */
 const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null }, window.U_APP || {}), FB_VER: "12.15.0" };
+/* ---------- 表示（ライト／ダーク）：auto＝端末に合わせる。アプリごと・端末ごとに覚える ----------
+   開いた瞬間に白く光らないよう、各アプリの index.html の head でも同じ処理を先に行う */
+U.THEME_KEY = "u-theme:" + U.app.id;
+U.theme = () => {
+  try {
+    const v = localStorage.getItem(U.THEME_KEY);
+    return v === "light" || v === "dark" ? v : "auto";
+  } catch (_) {
+    return "auto";
+  }
+};
+U.applyTheme = (v = U.theme()) => {
+  const r = document.documentElement;
+  if (v === "auto") r.removeAttribute("data-theme");
+  else r.setAttribute("data-theme", v);
+  /* iPhoneの上の帯などの色も合わせる */
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => {
+    if (!m.dataset.orig) m.dataset.orig = m.content;
+    m.content = v === "light" ? "#ffffff" : v === "dark" ? "#16181d" : m.dataset.orig;
+  });
+};
+U.setTheme = v => {
+  try {
+    if (v === "auto") localStorage.removeItem(U.THEME_KEY);
+    else localStorage.setItem(U.THEME_KEY, v);
+  } catch (_) {}
+  U.applyTheme(v);
+};
+U.applyTheme();
 (() => {
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   U.esc = esc;

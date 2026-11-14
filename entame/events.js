@@ -227,6 +227,14 @@ function setDrawer(on) {
 function onDrawerClick(e) {
   const d = e.target.closest("[data-drawer]");
   if (d) {
+    /* PCの☰は左メニューの折りたたみ（«»と同じ） */
+    if (d.dataset.drawer === "open" && !matchMedia("(max-width:899px)").matches) {
+      sbCollapsed = !sbCollapsed;
+      ls.set("adb.v3.sbc", sbCollapsed);
+      document.body.classList.toggle("sbc", sbCollapsed);
+      renderSidebar();
+      return true;
+    }
     if (d.dataset.drawer === "open") renderSidebar();
     setDrawer(d.dataset.drawer === "open");
     return true;

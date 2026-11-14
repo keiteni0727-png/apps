@@ -680,12 +680,10 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .vseg{display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;flex-wrap:wrap}
 .vseg button{border:0;background:none;color:var(--u-sub);padding:7px 16px;border-radius:8px;font-size:13.5px;font-weight:700;min-width:120px;text-align:center}
 @media (min-width:900px){
-    .hbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
           .vbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
   .vseg{grid-column:2;justify-self:center}
-  header .wrap{max-width:1040px}
-  :root{--hdh:0px}
-  header,.vbarw{display:none}
+  header .wrap{max-width:1100px}
+  .vbarw{display:none}
   .wrap{max-width:1100px}
   .sb-add{display:flex;align-items:center;justify-content:center;gap:4px;border:0;background:var(--u-accent);color:var(--u-on);border-radius:10px;padding:10px;font-weight:700;font-size:14px;margin-bottom:8px;white-space:nowrap}
   .sb-st{font-size:11.5px;padding:4px 10px;display:flex;flex-direction:column;gap:2px}
@@ -1126,3 +1124,26 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .ima .iep.now{background:var(--sgc);border-color:var(--sgc);color:#fff;font-weight:700}
 .ima .iep.now::before{content:"▶ ";font-size:9px;vertical-align:1px}
 .imsg.notnow .imn,.imsg.notnow .ima{opacity:.55}
+
+/* ===== 上の帯：PCもスマホと同じ形（☰・今のメニュー・切り替え）。PCだけ右端に設定 ===== */
+.hgear{display:none}
+@media (min-width:900px){
+  .hbar{display:flex;gap:12px;padding-block:10px}
+  .hcur{flex:none}
+  .hseg{flex:1;min-width:0;max-width:640px;display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;overflow-x:auto;scrollbar-width:none}
+  .hseg:empty{visibility:hidden}
+  .hseg::-webkit-scrollbar{display:none}
+  .hseg button{flex:1 0 auto;border:0;background:none;color:var(--u-sub);padding:7px 12px;border-radius:8px;font-size:13.5px;font-weight:700;white-space:nowrap}
+  .hseg button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+  .hseg button.wdt{display:grid;justify-items:center;gap:0;padding:4px 6px;position:relative;line-height:1.2}
+  .hseg button.wdt b{font-size:14px}
+  .hseg button.wdt small{font-family:var(--u-num);font-size:10.5px;font-weight:600}
+  .hseg button.wdt .wdot{position:absolute;top:4px;right:calc(50% - 20px);width:6px;height:6px;border-radius:50%;background:var(--st-now)}
+  .hgear{display:grid;place-items:center;flex:none;margin-left:auto;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);padding:0}
+  .hgear svg{width:20px;height:20px}
+}
+/* 設定：表示（自動／ライト／ダーク） */
+.thseg{display:flex;gap:3px;background:var(--u-chip);border-radius:11px;padding:3px;margin:4px 0 14px}
+.thseg button{flex:1;border:0;background:none;color:var(--u-sub);border-radius:8px;padding:8px 4px;font:inherit;font-size:13px;font-weight:700}
+.thseg button[aria-pressed="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.thh{font-size:12px;font-weight:700;color:var(--u-sub);margin-top:6px}
