@@ -598,12 +598,29 @@ function navGo(e, el) {
   if (!el) return false;
   e.preventDefault();
   el.focus({ preventScroll: true });
-  el.scrollIntoView({ block: "nearest" });
+  navScroll(el);
   if (!isDt(el))
     try {
       el.select();
     } catch (_) {}
   return true;
+}
+/* 移った欄が見えるようにスクロール。上に固定の見出し（作品名・タブ）、下に固定のボタン（保存など）があるので、
+   その下・上に隠れないよう、さらに1行分の余白をとって先回りしてスクロールする */
+function navScroll(el) {
+  const sc = el.closest(".sheet");
+  if (!sc) return el.scrollIntoView({ block: "nearest" });
+  const box = sc.getBoundingClientRect(),
+    r = el.getBoundingClientRect();
+  const vis = x => x && x.offsetParent !== null && getComputedStyle(x).position === "sticky";
+  const hd = [...sc.querySelectorAll(".dhead")].find(vis),
+    ft = [...sc.querySelectorAll(".ffoot")].find(vis);
+  const top = box.top + (hd ? hd.getBoundingClientRect().height : 0),
+    bot = box.bottom - (ft ? ft.getBoundingClientRect().height : 0);
+  const row = el.closest("[data-er],[data-ar],.sg,.field,label") || el;
+  const pad = Math.min(64, row.getBoundingClientRect().height + 8);
+  if (r.top < top + pad) sc.scrollTop -= top + pad - r.top;
+  else if (r.bottom > bot - pad) sc.scrollTop += r.bottom - (bot - pad);
 }
 /* カーソルが文字の左端・右端にあるか（数字の欄など、カーソル位置が取れない欄は端とみなす） */
 const atEdge = (t, left) => {
