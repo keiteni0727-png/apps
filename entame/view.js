@@ -412,9 +412,10 @@ function stSegHtml() {
 function filtered() {
   let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
   if (state.q) {
-    const qq = state.q.toLowerCase();
-    list = list.filter(i =>
-      (
+    /* 全角・半角、ひらがな・カタカナ、大文字・小文字、記号のゆれをそろえて探す。空白で区切ると「どれも含む」 */
+    const qs = state.q.split(/[\s　]+/).map(norm).filter(Boolean);
+    list = list.filter(i => {
+      const h = norm(
         i.t +
         " " +
         songText(i) +
@@ -425,11 +426,10 @@ function filtered() {
         " " +
         (i.vods || []).join(" ") +
         " " +
-        (i.series || "")
-      )
-        .toLowerCase()
-        .includes(qq),
-    );
+        (i.series || ""),
+      );
+      return qs.every(q => h.includes(q));
+    });
   }
   const S = {
     time: (a, b) => (a.dow < 0 ? 9 : a.dow) - (b.dow < 0 ? 9 : b.dow) || mins(a.time) - mins(b.time),

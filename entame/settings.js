@@ -88,8 +88,78 @@ function settingsHtml() {
     <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
     ${ser ? seriesSettingsHtml() : masterListHtml()}
     <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>
+    ${backupHtml()}
     ${accountHtml()}`;
 }
+/* ---------- バックアップ：全データ（作品・話数・マスタ・YouTube）を1つのファイルに書き出す／ファイルから戻す ---------- */
+let bkPending = null; // 読み込んだファイルの中身（戻す前の確認中）
+let bkArm = false;
+const BK_COLS = [
+  ["titles", "作品", () => over],
+  ["progress", "話数", () => prog],
+  ["master", "マスタ", () => ({ all: master })],
+  ["yt", "YouTube", () => ytOver],
+];
+function backupHtml() {
+  const p = bkPending;
+  const cnt = d => BK_COLS.map(([k, l]) => `${l} ${Object.keys(d[k] || {}).length}件`).join("・");
+  return `<div class="bkbox bkdata"><div class="bkhd"><b>データのバックアップ</b><span class="bkrow"><button type="button" class="u-btn sm" data-bkout="1">ファイルに書き出す</button><label class="u-btn sm ghost bkin">ファイルから戻す<input type="file" id="bkFile" accept="application/json,.json" hidden></label></span></div>
+    <p class="hint">作品・話数・マスタ・YouTubeを1つのファイルに保存し、消してしまったときなどにそのファイルから戻せます。</p>
+    ${
+      p
+        ? `<div class="bkconf"><p><b>${esc(p.name)}</b>（${esc(p.at)}）<br>${cnt(p.data)}</p><p class="hint">ファイルにある作品などを、ファイルの内容で上書きします。ファイルにない作品はそのまま残ります。</p><div class="bkrow"><button type="button" class="u-btn sm ghost" data-bkcancel="1">やめる</button><button type="button" class="u-btn sm pri${bkArm ? " armed" : ""}" data-bkgo="1">${bkArm ? "もう一度押すと戻す" : "このファイルで戻す"}</button></div></div>`
+        : ""
+    }</div>`;
+}
+function backupOut() {
+  const data = {};
+  BK_COLS.forEach(([k, , f]) => (data[k] = f()));
+  const d = new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const blob = new Blob([JSON.stringify({ app: "entame", v: 1, at: d.toISOString(), data })], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `entame-backup-${ymd}.json`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1000);
+  toast("バックアップのファイルを書き出しました");
+}
+async function backupRead(file) {
+  try {
+    const j = JSON.parse(await file.text());
+    if (!j || j.app !== "entame" || !j.data || typeof j.data.titles !== "object") throw new Error("形式が違います");
+    const at = j.at ? new Date(j.at) : null;
+    bkPending = { name: file.name, at: at ? `${at.getFullYear()}/${at.getMonth() + 1}/${at.getDate()} ${at.getHours()}:${String(at.getMinutes()).padStart(2, "0")} に書き出し` : "日時不明", data: j.data };
+  } catch (e) {
+    bkPending = null;
+    toast("このファイルは読み込めませんでした（エンタメ管理のバックアップではありません）");
+  }
+  bkArm = false;
+  refreshSettings();
+}
+async function backupRestore() {
+  const d = bkPending && bkPending.data;
+  if (!d || !db) return;
+  const list = [];
+  BK_COLS.forEach(([k]) => Object.entries(d[k] || {}).forEach(([id, v]) => v && typeof v === "object" && list.push([`${k}/${id}`, v])));
+  bkPending = null;
+  bkArm = false;
+  refreshSettings();
+  toast(`${list.length}件を戻しています…`);
+  try {
+    for (let i = 0; i < list.length; i += 400) await write(() => db.setMany(list.slice(i, i + 400)));
+    toast(`${list.length}件をバックアップから戻しました`);
+  } catch (e) {
+    fail(e);
+  }
+}
+document.addEventListener("change", e => {
+  if (e.target.id === "bkFile" && e.target.files[0]) backupRead(e.target.files[0]);
+});
 /* 設定の一覧：⠿を押さえたまま上下に動かして並び替え（マウス・指どちらでも） */
 let mDrag = null;
 document.addEventListener("pointerdown", e => {
@@ -138,6 +208,8 @@ const endDrag = () => {
 document.addEventListener("pointerup", endDrag);
 document.addEventListener("pointercancel", endDrag);
 function openSettings() {
+  bkPending = null;
+  bkArm = false;
   openId = null;
   ytOpen = null;
   form = null;
@@ -246,6 +318,26 @@ function toast(m) {
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
   ["[data-logout]", () => doLogout()],
+  ["[data-bkout]", () => backupOut()],
+  [
+    "[data-bkcancel]",
+    () => {
+      bkPending = null;
+      bkArm = false;
+      refreshSettings();
+    },
+  ],
+  [
+    "[data-bkgo]",
+    () => {
+      if (!bkArm) {
+        bkArm = true;
+        refreshSettings();
+        return;
+      }
+      backupRestore();
+    },
+  ],
   /* 上のタブ（シリーズ・放送局…） */
   [
     "[data-mkey]",

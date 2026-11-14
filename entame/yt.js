@@ -190,8 +190,11 @@ function renderYt() {
       (!yst.pri.length || yst.pri.includes(ytSt(x) || UNSEEN)),
   );
   if (yst.q) {
-    const q = norm(yst.q);
-    list = list.filter(x => norm(x.t + " " + x.a + " " + x.g + " " + ytCat(x)).includes(q));
+    const qs = yst.q.split(/[\s　]+/).map(norm).filter(Boolean);
+    list = list.filter(x => {
+      const h = norm(x.t + " " + x.a + " " + x.g + " " + ytCat(x));
+      return qs.every(q => h.includes(q));
+    });
   }
   const base = ytItems.filter(x => (yst.author === "すべて" || x.a === yst.author) && ytGenreOk(x));
   const ab = ytItems.filter(x => yst.author === "すべて" || x.a === yst.author);

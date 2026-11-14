@@ -1154,3 +1154,15 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
   .field .chips:has(>button[data-fst]){flex-wrap:nowrap;gap:3px}
   .field .chips>button[data-fst]{flex:1 1 auto!important;min-width:0!important;padding-left:4px!important;padding-right:4px!important;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+/* バックアップ */
+.bkdata{display:grid;gap:4px}
+.bkdata .hint{margin:0;font-size:12px}
+.bkin{cursor:pointer}
+.bkconf{border:1px solid var(--u-line);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--u-bg);font-size:13px}
+.bkconf p{margin:0 0 4px}
+.bkconf .armed{background:var(--u-accent);border-color:var(--u-accent);color:#fff}
+.bkdata .bkhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bkdata .bkhd .bkrow{margin:0 0 0 auto}
+.setsheet .mlist{min-height:180px}
+.setsheet>.wrap{overflow-y:auto}
+.setsheet>.wrap>*:not(.mlist){flex:none}
