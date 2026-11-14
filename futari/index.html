@@ -454,6 +454,80 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .akind button b{font-size:22px;font-weight:400}
 .akind button.on{border-color:var(--pink);background:var(--pink-l);color:var(--pink-d);font-weight:700}
 .newmark{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--pink-d);border-radius:99px;padding:0 6px;margin-left:4px}
+/* ---- うりぼーメニュー ---- */
+.utab .ustage{height:200px;overflow:hidden;border-radius:18px}
+.udeco{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.ufall{position:absolute;top:-24px;font-size:16px;opacity:.85;animation:ufallk linear infinite}
+@keyframes ufallk{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(240px) rotate(300deg);opacity:0}}
+.uprop{position:absolute;left:6px;bottom:4px;font-size:34px;pointer-events:none}
+.uban{text-align:center;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#f4a3b8,#b8a6e6);border-radius:99px;padding:4px 12px;margin:8px auto 0;width:fit-content;max-width:100%}
+.ucoop{text-align:center;font-size:12px;color:var(--muted);margin-top:6px}
+.ucoop b{color:var(--pink-d);font-size:14px}
+.umini{cursor:pointer;padding:12px 14px}
+.umrow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.umini .ustage{height:88px;width:92px;flex:none;margin:0}
+.umini .uri{width:86px!important;height:86px!important;cursor:pointer}
+.umini .main{flex:1;min-width:0}
+.umini .uhead .nm{font-size:16px;color:var(--pink-d)}
+.umsay{font-size:13px;font-weight:700;background:#fff;border-radius:12px;padding:4px 10px;margin:4px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fade .3s}
+.umini .ubar span{width:auto}
+.umini .go{color:var(--lav-d);font-size:22px}
+.umini .ufood{left:auto!important;right:-6px;font-size:22px}
+.umini .uflash{width:120px;height:120px;margin-left:-60px}
+/* おてがみ */
+.ov.mid{align-items:center;padding:20px}
+.lcard{background:var(--bg);border-radius:28px;padding:20px;width:100%;max-width:400px;text-align:center;animation:lpop .3s ease;max-height:88vh;overflow:auto}
+@keyframes lpop{from{transform:scale(.85);opacity:0}}
+.lstage{position:relative;height:150px;display:grid;place-items:end center;overflow:hidden}
+.lstage .uri{cursor:default}
+.uwalk{animation:uwalkk 1.5s ease-out}
+@keyframes uwalkk{0%{transform:translateX(-170px)}15%{transform:translateX(-130px) translateY(-8px)}30%{transform:translateX(-90px)}45%{transform:translateX(-55px) translateY(-8px)}60%{transform:translateX(-20px)}80%{transform:translateY(-14px)}100%{transform:none}}
+.lenv{position:absolute;left:50%;bottom:30px;margin-left:22px;font-size:34px;animation:uwalkk 1.5s ease-out,lenvk 1.2s 1.5s ease-in-out infinite alternate}
+@keyframes lenvk{to{transform:rotate(-12deg) translateY(-4px)}}
+.lttl{font-size:18px;font-weight:700;color:var(--pink-d);margin-top:6px}
+.lpaper{background:#fff;border-radius:18px;padding:18px 18px 14px;text-align:left;box-shadow:var(--shadow);background-image:repeating-linear-gradient(transparent 0 29px,#f6e3ea 29px 30px);background-position:0 12px;line-height:30px}
+.lto{font-weight:700;color:var(--pink-d)}
+.ltxt{white-space:pre-wrap;word-break:break-word;margin:4px 0 8px}
+.lfrom{text-align:right;font-size:13px;color:var(--muted)}
+.lstat{text-align:center;font-size:12px;color:var(--muted);margin-top:10px}
+.litem{display:flex;gap:8px;align-items:center;background:#fff;border-radius:16px;padding:10px 14px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer}
+.litem.new{border:1.5px solid var(--pink)}
+.litem .main{flex:1;min-width:0}
+.litem .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.litem small{color:var(--muted);font-size:11px}
+/* きせかえ */
+.wprev{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;background:linear-gradient(160deg,#fff8ee,#fde8ee 55%,#f0ebfb);border-radius:22px;padding:8px}
+.wprev .uri{cursor:default}
+.wbal{font-size:20px;font-weight:700;color:#b5871f;display:flex;flex-direction:column}
+.wbal small{font-size:11px;color:var(--muted);font-weight:400}
+.wgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.witem{border:1.5px solid var(--line);background:#fff;border-radius:18px;padding:6px 4px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.3}
+.witem .uri{width:66px;height:66px;cursor:inherit}
+.witem b{font-size:12px}
+.witem small{font-size:10.5px;color:var(--muted)}
+.witem.on{border-color:var(--pink);background:var(--pink-l)}
+.witem.on small{color:var(--pink-d);font-weight:700}
+.witem.lock{opacity:.6;cursor:default}
+.witem.lock .uri{filter:grayscale(1)}
+.witem.poor small{color:#d46a7e}
+/* どんぐり拾い */
+.gscore{display:flex;gap:8px}
+.gscore div{flex:1;text-align:center;background:var(--butter-l);border-radius:16px;padding:6px}
+.gscore small{display:block;font-size:11px;color:var(--muted)}
+.gscore b{font-size:22px;color:#b5871f}
+.ugame{position:fixed;inset:0;z-index:50;background:linear-gradient(180deg,#e8f1fb 0,#fdf8f4 60%,#e7f6ef 100%);touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+.ugame canvas{position:absolute;inset:0;display:block;touch-action:none}
+.ugtop{position:absolute;left:0;right:0;top:0;z-index:2;display:flex;gap:8px;align-items:center;padding:calc(env(safe-area-inset-top) + 10px) 14px 0;pointer-events:none}
+.ugtop>*{pointer-events:auto}
+.ugx{border:0;background:#fff;width:38px;height:38px;border-radius:50%;box-shadow:var(--shadow);font-size:20px;color:var(--muted);cursor:pointer}
+.ugpill{background:#fff;border-radius:99px;padding:5px 14px;font-weight:700;box-shadow:var(--shadow);font-size:15px}
+.ugpill:last-child{margin-left:auto}
+.ugmsg{position:absolute;inset:0;z-index:3;display:grid;place-items:center;padding:20px;background:rgba(253,248,244,.6)}
+.ugbox{background:#fff;border-radius:28px;padding:20px;width:100%;max-width:360px;text-align:center;box-shadow:var(--shadow);animation:lpop .3s ease}
+.ugbox h3{margin:4px 0;color:var(--pink-d);font-size:20px}
+.ugbox p{font-size:13.5px;margin:6px 0}
+.ugbox .uri{cursor:default}
+.ugbest{color:var(--pink-d);font-weight:700}
 </style>
 </head>
 <body>
@@ -487,6 +561,7 @@ const IC = {
   list: '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
   home: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-5.5h-6v5.5H5.5A1.5 1.5 0 0 1 4 19z"/></svg>',
   memo: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M4 15.5l4.5-4 3.5 3 2.5-2 5.5 4.5"/><circle cx="15" cy="8" r="1.6"/></svg>',
+  uri: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><path d="M6.6 8.6 5.2 4.6l4.1 2.1M17.4 8.6l1.4-4-4.1 2.1"/><ellipse cx="12" cy="13.2" rx="7.6" ry="7"/><ellipse cx="12" cy="15.6" rx="3.3" ry="2.4"/><path d="M8.9 11.6h.01M15.1 11.6h.01M11 15.6h.01M13 15.6h.01" stroke-width="2.4"/></svg>',
   cal: '<svg viewBox="0 0 24 24" stroke-linejoin="round" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="4"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M12 17.6s-2.6-1.6-3.2-3.1c-.4-1.1.3-2.1 1.3-2.1.8 0 1.3.5 1.9 1.2.6-.7 1.1-1.2 1.9-1.2 1 0 1.7 1 1.3 2.1-.6 1.5-3.2 3.1-3.2 3.1z" fill="currentColor" stroke="none"/></svg>'
 };
 
@@ -587,7 +662,7 @@ const db = getFirestore(fbApp);
 
 /* ---------- 状態 ---------- */
 const S = {
-  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, qa:{}, tickets:[], pet:null, needRules:false, tkTab:"got", extraErr:null, subs:[], noteEdit:null,
+  user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, qa:{}, tickets:[], letters:[], pet:null, needRules:false, tkTab:"got", extraErr:null, subs:[], noteEdit:null,
   calY:null, calM:null, calSel:null, qv:null,
   tab:"home", cat:"all", who:"all", sort:"new", q:"",
   authMode:"login", busy:false
@@ -876,7 +951,15 @@ function openRoom(roomId, fresh){
   S.subs.push(onSnapshot(doc(db, "rooms", roomId, "meta", "pet"), snap => {
     S.pet = snap.exists() ? snap.data() : {};
     uriBirth(roomId);
+    uriCoopCheck();
     if (gotRoom && gotPlaces && !uriBusy && !document.activeElement?.closest?.(".qaform")) render();
+  }, needRules));
+  S.letters = [];
+  S.subs.push(onSnapshot(collection(db, "rooms", roomId, "letters"), snap => {
+    S.letters = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0));
+    if (gotRoom && gotPlaces && !uriBusy && !document.activeElement?.closest?.(".qaform")) render();
+    if (document.getElementById("lhist")) document.getElementById("lhist").innerHTML = letterHistHtml();
+    setTimeout(() => letterDeliver(), 700);
   }, needRules));
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "tickets"), snap => {
     S.tickets = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0));
@@ -920,7 +1003,8 @@ function renderMain(){
     ["home", IC.home, "ホーム"],
     ["list", IC.list, "行きたい", both],
     ["cal", IC.cal, "よてい"],
-    ["memo", IC.memo, "おもいで", S.tab === "memo" ? 0 : notesNew().length, "NEW"]
+    ["memo", IC.memo, "おもいで", S.tab === "memo" ? 0 : notesNew().length, "NEW"],
+    ["uri", IC.uri, "ウリ", lettersIn().length, lettersIn().length ? "💌" : ""]
   ];
   $nav.innerHTML = `
   ${S.tab === "list" ? `<button class="fab" data-a="add" aria-label="候補を追加">${IC.plus}</button>` : ""}
@@ -934,6 +1018,7 @@ function view(){
   if (S.tab === "home") return viewHome();
   if (S.tab === "memo") { const h = viewMemo(); markNotesSeen(); return h; }
   if (S.tab === "cal") return viewCal();
+  if (S.tab === "uri") return viewUri();
   return viewList();
 }
 
@@ -1119,7 +1204,7 @@ function whoOk(p){
 function viewHome(){
   const matches = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
   const nn = notesNew();
-  return `${uriHtml()}${S.extraErr ? "" : countdownHtml()}${annivHtml()}
+  return `${uriMiniHtml()}${S.extraErr ? "" : countdownHtml()}${annivHtml()}
   ${ticketAlertsHtml()}
   ${qaHtml()}
   ${annivUpcomingHtml()}
@@ -1344,7 +1429,7 @@ const UPARTS = [
   { c:"#8e6143", d:"#6a452e", hr:[28,25], hy:45, br:[46,30], L:15, e:4.1, sn:[16,10.5],so:18,ear:1.05,sp:.15 },
   { c:"#946646", d:"#6a452e", hr:[28,25], hy:45, br:[46,30], L:15, e:4.1, sn:[16,10.5],so:18,ear:1.05,sp:.12 }
 ];
-function uriSvg(stage, mood){
+function uriSvg(stage, mood, wear){
   const st = Math.max(0, Math.min(UPARTS.length - 1, stage | 0)), P = UPARTS[st];
   const [hx, hy0] = [60, P.hy], [hrx, hry] = P.hr, [brx, bry] = P.br;
   const hy = hy0, ground = 112, by = ground - P.L + 3 - bry;
@@ -1418,11 +1503,15 @@ function uriSvg(stage, mood){
     neck = `<circle cx="${hx}" cy="${hy+hry+4}" r="4" fill="#f2c94c"/><circle cx="${hx}" cy="${hy+hry+4}" r="1.8" fill="#fff"/>`;
     deco = sparkle(12, 30, 6, "#f2c94c") + sparkle(108, 52, 5, "#f2c94c") + sparkle(14, 86, 4, "#fbcfe8") + sparkle(106, 96, 3.5, "#c7b8ef");
   }
+  const WR = wear || {};
+  if (WR.head) { headTop = st >= 6 ? mane : ""; if (st === 4 || st === 5) acc = ""; }
+  if (WR.neck) neck = "";
+  const wz = uriWearSvg(WR, { hx, hy, hrx, hry, top, ey, ex, e: P.e, by, brx });
   const legX = [hx - brx * .55, hx + brx * .55], legW = 8 + st * .9;
   return `<svg viewBox="0 0 120 120" class="urisvg" aria-hidden="true">
     <defs><clipPath id="uh${st}"><ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}"/></clipPath><clipPath id="ub${st}"><ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}"/></clipPath></defs>
     <ellipse cx="60" cy="${ground}" rx="${Math.max(24, brx * .85)}" ry="5" fill="rgba(176,128,160,.18)"/>
-    ${deco}${back}
+    ${deco}${back}${wz.back}
     ${legX.map(x => `<rect x="${x - legW/2}" y="${ground - P.L - 6}" width="${legW}" height="${P.L + 6}" rx="${legW/2}" fill="${P.d}"/><rect x="${x - legW/2}" y="${ground - 4}" width="${legW}" height="4" rx="2" fill="#5a3a26" opacity=".55"/>`).join("")}
     <ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}" fill="${P.c}"/>
     <ellipse cx="${hx}" cy="${by + bry*.35}" rx="${brx*.55}" ry="${bry*.55}" fill="${light}" opacity=".55"/>
@@ -1430,9 +1519,9 @@ function uriSvg(stage, mood){
     <ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}" fill="${P.c}"/>
     ${sp}${neck}${headTop}${acc === tusks ? "" : acc}
     <ellipse cx="${hx-hrx*.7}" cy="${sy-1}" rx="6.5" ry="4.2" fill="#f4a3b8" opacity=".55"/><ellipse cx="${hx+hrx*.7}" cy="${sy-1}" rx="6.5" ry="4.2" fill="#f4a3b8" opacity=".55"/>
-    ${brows}${eyes}${tear}${sweat}
+    ${brows}${eyes}${tear}${sweat}${wz.face}
     <ellipse cx="${hx}" cy="${sy}" rx="${P.sn[0]}" ry="${P.sn[1]}" fill="${snout}"/><ellipse cx="${hx - P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="${nose}"/><ellipse cx="${hx + P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="${nose}"/>
-    ${st >= 6 ? tusks : ""}${mouth}${zzz}
+    ${st >= 6 ? tusks : ""}${mouth}${wz.front}${zzz}
   </svg>`;
 }
 
@@ -1457,6 +1546,8 @@ function uriEvents(){
   });
   S.dates.forEach(d => add(ms(d.createdAt), d.by, "デートの予定を入れた", 5));
   S.tickets.forEach(t => { add(t.at, t.from, `「${t.t}」を贈った`, 3); if (t.status === "done") add(t.doneAt, t.from, `「${t.t}」をかなえた`, 10); });
+  const cp = S.pet?.coop; if (cp?.total) ev.push({ at: cp.at || 0, who: null, t: `ふたりそろってごはん（これまで${cp.total}日）`, xp: 5 * cp.total });
+  const lseen = new Set(); (S.letters || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0)).forEach(l => { const k = l.from + localDay(l.at || 0); if (lseen.has(k) || !mem.includes(l.from)) return; lseen.add(k); add(l.at, l.from, "おてがみをあずけた", 3); });
   Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { const n = (f?.n || 0) - (fb[u] || 0); if (mem.includes(u) && n > 0) ev.push({ at: f.at || dayMs(f.last), who: u, t: n > 1 ? `ごはんをあげた（これまで${n}回）` : "ごはんをあげた", xp: 3 * n }); });
   return ev.sort((a, b) => b.at - a.at);
 }
@@ -1493,10 +1584,10 @@ function uriCheckEvolve(st){
     const el = document.getElementById("uri"), stg = document.getElementById("ustage"); if (!el || !stg) return;
     uriBusy = true;
     const fl = document.createElement("div"); fl.className = "uflash"; stg.appendChild(fl);
-    el.className = `uri s${st} a-evolve`; el.innerHTML = uriSvg(st, "happy");
+    el.className = `uri s${st} a-evolve`; el.innerHTML = uriSvg(st, "happy", uw());
     uriFx(["✨", "🌸", "⭐", "💖"], 8);
     uriSay(`${USTAGES[st][1]}になったぷぎ！`);
-    setTimeout(() => { fl.remove(); uriBusy = false; const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood); } }, 1800);
+    setTimeout(() => { fl.remove(); uriBusy = false; const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood, uw()); } }, 1800);
   }, 120);
 }
 function localDay(at){ const d = new Date(at); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
@@ -1513,6 +1604,18 @@ function uriLines(u){
   if (an && dayDiff(today(), an.o) <= 7) L.push(`もうすぐ${an.a.t}だよ！`);
   if (tkGot().some(t => t.status === "new")) L.push("チケット、使ってみたら？");
   if (pu) L.push(`${nameOf(me())}と${nameOf(pu)}、だいすき！`, `${nameOf(pu)}のこと、すき？`);
+  const ss = uriSeason(); L.push(ss.line); if (uriSpecial()) L.push(ss.line, ss.line);
+  if (lettersIn().length) L.push("おてがみあずかってるぷぎ！はやくよんで〜");
+  const lo = S.letters.find(l => l.from === me());
+  if (lo && !lo.read) L.push("おてがみ、とどけにいくのたのしみぷぎ");
+  if (lo && lo.read && Date.now() - (lo.readAt || 0) < 2 * 86400000 && pu) L.push(`${nameOf(pu)}、おてがみよんでくれたよ！`);
+  if (pu && !S.letters.length) L.push(`${nameOf(pu)}におてがみ、とどけようか？`);
+  if (pu) { const gb = gameInfo(pu).best, mb = gameInfo(me()).best; if (gb > mb) L.push(`${nameOf(pu)}のどんぐり記録、${gb}こだって！まけないで！`); else if (mb > 0) L.push(`どんぐり${mb}こ、すごかったぷぎ！`); }
+  if (Object.keys(uw()).length) L.push("このかっこう、にあう？", "おしゃれしてうれしいぷぎ♪");
+  const cheap = UITEMS.filter(it => it.p && !owned(it)).map(it => it.p).sort((a, b) => a - b)[0];
+  if (cheap && (S.pet?.acorns || 0) >= cheap) L.push("どんぐりたまったね！おみせ行こ？");
+  if (u.fedMe && u.fedHim) L.push("ふたりからごはん、しあわせぷぎ〜");
+  if (coopNow().streak >= 3) L.push(`ふたりそろってごはん${coopNow().streak}日れんぞく！`);
   L.push("ぷぎっ！", "なでなでうれしい〜", "えへへ", "ぷぎぷぎ♪", "いっしょにおでかけしたいな");
   return L;
 }
@@ -1521,16 +1624,19 @@ function uriHtml(){
   const u = uriState(), pu = partnerUid();
   const pct = u.next ? Math.round((u.xp - u.cur) / (u.next - u.cur) * 100) : 100;
   uriCheckEvolve(u.st);
+  uriCoopFx();
   return `<div class="card uricard" id="uricard">
-    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())}</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><button class="linkbtn" data-a="uriInfo">くわしく ›</button></div>
-    <div class="ustage" id="ustage"><div class="ububble" id="ububble">${esc(S.uriSay || (u.mood === "sleep" ? "すやすや…" : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
-      <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood)}</div></div>
+    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())}</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><button class="linkbtn" data-a="wardrobe">🎀 きせかえ</button></div>
+    ${uriSeason().ban ? `<div class="uban">${esc(uriSeason().ban)}</div>` : ""}
+    <div class="ustage" id="ustage">${uriDecoHtml()}<div class="ububble" id="ububble">${esc(S.uriSay || (lettersIn().length ? "おてがみあずかってるぷぎ！" : u.mood === "sleep" ? "すやすや…" : uriSpecial() ? uriSeason().line : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
+      <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood, uw())}</div></div>
     <div class="ubars">
       <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div><em>${u.energy}%</em></div>
       <div class="ubar"><span>せいちょう</span><div class="tr"><i class="g" style="width:${pct}%"></i></div><em>${u.next ? `あと${u.next - u.xp}` : "MAX"}</em></div>
     </div>
     ${u.fedMe ? `<button class="btn ghost block" disabled>🍠 きょうはごはんをあげたよ</button>` : `<button class="btn block" data-a="uriFeed">🍠 ごはんをあげる</button>`}
     ${pu ? `<div class="ufed"><span>${esc(nameOf(me()))} ${u.fedMe ? "✅" : "…"}</span><span>${esc(nameOf(pu))} ${u.fedHim ? "✅" : "…"}</span></div>` : ""}
+    ${pu ? (() => { const c = coopNow(); return `<div class="ucoop">${c.total ? `🤝 ふたりそろってごはん${c.streak ? ` ・ れんぞく<b>${c.streak}</b>日` : ""} ・ これまで${c.total}日${c.todayDone ? " 💞" : ""}` : "🤝 ふたりとも同じ日にごはんをあげるとボーナス！"}</div>`; })() : ""}
   </div>`;
 }
 function uriFx(emoji, n = 5){
@@ -1542,15 +1648,15 @@ let uriBusy = false;
 function uriTap(){
   const el = document.getElementById("uri"); if (!el || uriBusy) return;
   let u = uriState();
-  if (u.mood === "sleep") { S.uriAwake = true; u = uriState(); el.innerHTML = uriSvg(u.st, "happy"); el.className = `uri s${u.st} idle`; uriSay("…はっ！おはようぷぎ！"); uriFx("💤", 2); setTimeout(() => { const e2 = document.getElementById("uri"); if (e2) e2.innerHTML = uriSvg(u.st, u.mood); }, 1400); return; }
+  if (u.mood === "sleep") { S.uriAwake = true; u = uriState(); el.innerHTML = uriSvg(u.st, "happy", uw()); el.className = `uri s${u.st} idle`; uriSay("…はっ！おはようぷぎ！"); uriFx("💤", 2); setTimeout(() => { const e2 = document.getElementById("uri"); if (e2) e2.innerHTML = uriSvg(u.st, u.mood, uw()); }, 1400); return; }
   const acts = [["a-jump", ["💕", "✨"]], ["a-spin", ["⭐", "✨"]], ["a-wiggle", ["🎵", "🎶"]], ["a-roll", ["💫"]], ["a-squish", ["💗"]], ["a-dash", ["💨"]]];
   const [cls, fx] = acts[Math.floor(Math.random() * acts.length)];
   uriBusy = true;
-  el.innerHTML = uriSvg(u.st, "happy");
+  el.innerHTML = uriSvg(u.st, "happy", uw());
   el.className = `uri s${u.st} ${cls}`;
   uriFx(fx, 4);
   const L = uriLines(u); uriSay(L[Math.floor(Math.random() * L.length)]);
-  setTimeout(() => { uriBusy = false; const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood); } }, 1000);
+  setTimeout(() => { uriBusy = false; const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood, uw()); } }, 1000);
 }
 async function uriFeed(btn){
   const u = uriState(); if (u.fedMe || uriBusy) return;
@@ -1563,7 +1669,7 @@ async function uriFeed(btn){
   try {
     await setDoc(doc(db, "rooms", S.roomId, "meta", "pet"), { feeds: { [me()]: val } }, { merge: true });
     S.pet = { ...(S.pet || {}), feeds: { ...(S.pet?.feeds || {}), [me()]: val } };
-    setTimeout(() => { f.remove(); if (el) { el.className = `uri s${u.st} idle`; el.innerHTML = uriSvg(u.st, "eat"); } uriSay(`${food} もぐもぐ…おいしいぷぎ！`); }, 600);
+    setTimeout(() => { f.remove(); if (el) { el.className = `uri s${u.st} idle`; el.innerHTML = uriSvg(u.st, "eat", uw()); } uriSay(`${food} もぐもぐ…おいしいぷぎ！`); }, 600);
     setTimeout(() => { uriFx(["💕", "+3"], 4); uriBusy = false; render(); uriSay("ごちそうさまぷぎ！"); }, 2300);
   } catch (e) {
     f.remove(); uriBusy = false; btn.disabled = false;
@@ -1580,9 +1686,8 @@ function openUriInfo(){
     <div class="muted">これまでのごはん ${u.xp}${u.next ? ` ・ 次のすがたまで あと${u.next - u.xp}` : " ・ さいごまで育ったよ！"}</div>
     ${S.pet?.bornAt ? `<div class="muted" style="font-size:12px">${esc(fmtShort(localDay(S.pet.bornAt)))}にうまれたよ（${dayDiff(localDay(S.pet.bornAt), today()) + 1}日目）</div>` : ""}
   </div>
-  <div class="ustages">${USTAGES.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st + 1 ? "？？？" : esc(nm)}<br>${n}</div>`).join("")}</div>
   <div class="sec">ごはんになること</div>
-  <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10</div>
+  <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10<br>🤝 ふたりともごはんをあげた日 +5<br>💌 おてがみをあずける +3（1日1回ぶん）</div>
   <div class="sec">さいきんのごはん</div>
   <div class="card" style="padding:4px 16px">${log.length ? log.map(e => `<div class="ulog"><div class="main">${e.who ? esc(nameOf(e.who)) + "：" : "ふたりで："}${esc(e.t)}<small>${e.at ? esc(fmtShort(localDay(e.at))) : ""}</small></div><b>+${e.xp}</b></div>`).join("") : `<p class="muted">まだありません</p>`}</div>
   <p class="muted" style="text-align:center;font-size:12px">何日もかまわないと、げんきが減ってしょんぼりします。</p>`);
@@ -1595,6 +1700,391 @@ function openUriName(){
     try { await setDoc(doc(db, "rooms", S.roomId, "meta", "pet"), { name: n }, { merge: true }); S.pet = { ...(S.pet || {}), name: n }; closeSheet(); render(); uriSay(`${n}になったぷぎ！うれしい！`); }
     catch (e) { toast(e.code === "permission-denied" ? "保存できませんでした。Firebaseのルール更新が必要です" : "保存できませんでした（" + (e.code || e.message) + "）"); }
   };
+}
+
+
+/* =============== うりぼー専用メニュー =============== */
+const petRef = () => doc(db, "rooms", S.roomId, "meta", "pet");
+const uw = () => S.pet?.wear || {};
+const visitedCount = () => S.places.filter(p => p.visited).length;
+/* きせかえアイテム（p: どんぐりの値段 / m: 買える月 / v: 「行った！」の数でもらえるおみやげ） */
+const UITEMS = [
+  { id:"ribbon",  s:"head", n:"リボン",         e:"🎀", p:30 },
+  { id:"bowtie",  s:"neck", n:"ちょうネクタイ", e:"🎗️", p:40 },
+  { id:"glasses", s:"face", n:"まるメガネ",     e:"👓", p:50 },
+  { id:"beret",   s:"head", n:"ベレー帽",       e:"🎨", p:60 },
+  { id:"bell",    s:"neck", n:"すず",           e:"🔔", p:70 },
+  { id:"straw",   s:"head", n:"むぎわら帽子",   e:"👒", p:80 },
+  { id:"knit",    s:"head", n:"ニット帽",       e:"🧶", p:100 },
+  { id:"sun",     s:"face", n:"サングラス",     e:"🕶️", p:120 },
+  { id:"crown",   s:"head", n:"おうかん",       e:"👑", p:200 },
+  { id:"sakura",  s:"head", n:"さくらのかみかざり", e:"🌸", p:30, m:[3, 4] },
+  { id:"pumpkin", s:"head", n:"かぼちゃぼう",   e:"🎃", p:30, m:[10] },
+  { id:"santa",   s:"head", n:"サンタぼう",     e:"🎅", p:30, m:[12] },
+  { id:"leaf",    s:"head", n:"はっぱ",         e:"🌿", v:1 },
+  { id:"camera",  s:"neck", n:"カメラ",         e:"📷", v:3 },
+  { id:"balloon", s:"side", n:"ふうせん",       e:"🎈", v:5 },
+  { id:"tiara",   s:"head", n:"ティアラ",       e:"💎", v:10 }
+];
+const USLOTS = { head:"あたま", face:"かお", neck:"くび", side:"もちもの" };
+const itemOf = id => UITEMS.find(x => x.id === id);
+const owned = it => !!(S.pet?.items?.[it.id] || (it.v && visitedCount() >= it.v));
+
+/* きせかえの絵（うり坊の頭や首の位置に合わせて描く） */
+function uriWearSvg(W, g){
+  const { hx, hy, hrx, hry, top, ey, ex, e, by, brx } = g, ny = hy + hry + 3;
+  let back = "", front = "";
+  const flower = (x, y, c) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map(a => `<ellipse rx="3.2" ry="5" cy="-4.6" fill="${c}" transform="rotate(${a})"/>`).join("")}<circle r="2.6" fill="#fde68a"/></g>`;
+  const H = {
+    ribbon: `<g transform="translate(${hx + hrx * .5} ${top + 5}) rotate(15)"><path d="M0 0l-11-7v14zM0 0l11-7v14z" fill="#f4a3b8"/><circle r="3.4" fill="#e2809c"/></g>`,
+    beret: `<path d="M${hx - hrx * .88} ${top + hry * .4}Q${hx - hrx * .95} ${top - 9} ${hx + 2} ${top - 8}Q${hx + hrx * 1.05} ${top - 7} ${hx + hrx * .88} ${top + hry * .4}Q${hx} ${top + hry * .16} ${hx - hrx * .88} ${top + hry * .4}z" fill="#9580d0"/><path d="M${hx + 1} ${top - 8}q1-5 5-6" stroke="#9580d0" stroke-width="2.6" stroke-linecap="round" fill="none"/>`,
+    straw: `<ellipse cx="${hx}" cy="${top + hry * .3}" rx="${hrx * 1.32}" ry="6.5" fill="#efc96f"/><path d="M${hx - hrx * .62} ${top + hry * .3}Q${hx - hrx * .62} ${top - 13} ${hx} ${top - 13}Q${hx + hrx * .62} ${top - 13} ${hx + hrx * .62} ${top + hry * .3}z" fill="#f7e0a3"/><path d="M${hx - hrx * .62} ${top + hry * .3 - 2}h${hrx * 1.24}v-5h${-hrx * 1.24}z" fill="#f4a3b8"/>`,
+    crown: `<path d="M${hx - 14} ${top + 4}l-2-15l7 7l9-12l9 12l7-7l-2 15z" fill="#f2c94c" stroke="#d9a92c" stroke-width="1"/><circle cx="${hx}" cy="${top - 1}" r="2.6" fill="#f4a3b8"/><circle cx="${hx - 9}" cy="${top + 1}" r="1.8" fill="#9fd3ee"/><circle cx="${hx + 9}" cy="${top + 1}" r="1.8" fill="#a6d9c4"/>`,
+    knit: `<path d="M${hx - hrx * .92} ${top + hry * .45}Q${hx - hrx} ${top - 11} ${hx} ${top - 11}Q${hx + hrx} ${top - 11} ${hx + hrx * .92} ${top + hry * .45}z" fill="#a6d9c4"/><path d="M${hx - hrx * .5} ${top - 4}v${hry * .4}M${hx} ${top - 9}v${hry * .5}M${hx + hrx * .5} ${top - 4}v${hry * .4}" stroke="#8fcbb2" stroke-width="2"/><rect x="${hx - hrx * .96}" y="${top + hry * .34}" width="${hrx * 1.92}" height="7" rx="3.5" fill="#6fbb9c"/><circle cx="${hx}" cy="${top - 12}" r="5.5" fill="#fff"/>`,
+    santa: `<path d="M${hx - hrx * .88} ${top + hry * .38}Q${hx - hrx * .2} ${top - 24} ${hx + hrx * 1.05} ${top - 6}Q${hx + hrx * .55} ${top + 2} ${hx + hrx * .88} ${top + hry * .38}z" fill="#e25b5b"/><rect x="${hx - hrx * .95}" y="${top + hry * .3}" width="${hrx * 1.9}" height="7" rx="3.5" fill="#fff"/><circle cx="${hx + hrx * 1.05}" cy="${top - 6}" r="4.8" fill="#fff"/>`,
+    pumpkin: `<ellipse cx="${hx}" cy="${top + 1}" rx="${hrx * .72}" ry="${hry * .4}" fill="#f5a04a"/><path d="M${hx - hrx * .3} ${top - hry * .35}q-4 ${hry * .4} 0 ${hry * .75}M${hx + hrx * .3} ${top - hry * .35}q4 ${hry * .4} 0 ${hry * .75}" stroke="#e08a35" stroke-width="1.8" fill="none"/><path d="M${hx} ${top - hry * .38}q1-6 5-7" stroke="#6fbb9c" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+    sakura: flower(hx - hrx * .72, top + 6, "#f9c4d2") + flower(hx - hrx * .3, top - 1, "#fbd3df"),
+    leaf: `<path d="M${hx} ${top + 2}q0-8 0-12" stroke="#6fbb9c" stroke-width="2.4" stroke-linecap="round"/><path d="M${hx} ${top - 8}q-11-7-15 3q10 5 15-3z" fill="#8fd1b3"/><path d="M${hx} ${top - 10}q10-9 15 0q-8 6-15 0z" fill="#a9ddc5"/>`,
+    tiara: `<path d="M${hx - 15} ${top + 6}q15-10 30 0" stroke="#d9d0f2" stroke-width="3" fill="none"/><path d="M${hx - 9} ${top + 1}l2-7l2 6zM${hx - 2} ${top - 1}l2-9l2 9zM${hx + 5} ${top}l2-7l2 7z" fill="#d9d0f2"/><circle cx="${hx}" cy="${top - 2}" r="2.4" fill="#f4a3b8"/><circle cx="${hx - 7}" cy="${top + 1}" r="1.6" fill="#9fd3ee"/><circle cx="${hx + 7}" cy="${top + 1}" r="1.6" fill="#9fd3ee"/>`
+  };
+  const r = e * 1.9 + 1;
+  const F = {
+    glasses: `<g fill="rgba(255,255,255,.25)" stroke="#7a5a48" stroke-width="1.8"><circle cx="${hx - ex}" cy="${ey}" r="${r}"/><circle cx="${hx + ex}" cy="${ey}" r="${r}"/></g><path d="M${hx - ex + r} ${ey}h${2 * (ex - r)}" stroke="#7a5a48" stroke-width="1.8"/>`,
+    sun: `<rect x="${hx - ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><rect x="${hx + ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><path d="M${hx - ex + r} ${ey - 1}h${2 * (ex - r)}" stroke="#4a3540" stroke-width="2"/><path d="M${hx - ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}M${hx + ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>`
+  };
+  const N = {
+    bowtie: `<path d="M${hx} ${ny}l-11-7v14zM${hx} ${ny}l11-7v14z" fill="#e2809c"/><circle cx="${hx}" cy="${ny}" r="3.2" fill="#f4a3b8"/>`,
+    bell: `<path d="M${hx - hrx * .62} ${ny - 6}q${hrx * .62} 9 ${hrx * 1.24} 0" stroke="#e2809c" stroke-width="3.2" fill="none" stroke-linecap="round"/><circle cx="${hx}" cy="${ny + 3}" r="5" fill="#f2c94c" stroke="#d9a92c" stroke-width="1"/><path d="M${hx - 3} ${ny + 4}h6" stroke="#b5871f" stroke-width="1.4"/>`,
+    camera: `<path d="M${hx - hrx * .62} ${ny - 6}L${hx - 6} ${ny + 3}M${hx + hrx * .62} ${ny - 6}L${hx + 6} ${ny + 3}" stroke="#9580d0" stroke-width="2"/><rect x="${hx - 9}" y="${ny + 1}" width="18" height="12" rx="3" fill="#5d4e60"/><circle cx="${hx}" cy="${ny + 7}" r="3.6" fill="#b8a6e6" stroke="#fff" stroke-width="1.3"/><rect x="${hx + 3}" y="${ny - 1}" width="4" height="3" rx="1" fill="#5d4e60"/>`
+  };
+  const SIDE = {
+    balloon: `<path d="M${hx + brx * .7} ${by - 4}Q${hx + brx + 10} ${by - 30} 103 37" stroke="#b8a6e6" stroke-width="1.2" fill="none"/><ellipse cx="103" cy="25" rx="9.5" ry="11.5" fill="#f4a3b8"/><ellipse cx="99.5" cy="20" rx="2.6" ry="3.6" fill="#fff" opacity=".6"/><path d="M101 36.5h4l-2 2.5z" fill="#e2809c"/>`
+  };
+  if (W.side && SIDE[W.side]) back += SIDE[W.side];
+  if (W.neck && N[W.neck]) front += N[W.neck];
+  if (W.head && H[W.head]) front += H[W.head];
+  return { back, front, face: W.face && F[W.face] ? F[W.face] : "" };
+}
+
+/* ---------- 季節と特別な日 ---------- */
+function uriSpecial(){
+  try { const l = annivOn(today()); return l.length ? l[0] : null; } catch (e) { return null; }
+}
+function uriSeason(){
+  const sp = uriSpecial();
+  if (sp) return { fall: ["🎉", "🎊", "✨"], prop: "🎂", ban: `${sp.e} きょうは${sp.t}！`, line: `${sp.t}、おめでとうぷぎ！` };
+  const d = new Date(), m = d.getMonth() + 1, day = d.getDate();
+  if (m === 1 && day <= 7) return { fall: ["✨"], prop: "🎍", line: "あけましておめでとうぷぎ！ことしもよろしくね" };
+  if (m === 2 && day === 14) return { fall: ["💗", "💝"], prop: "🍫", line: "きょうはバレンタインぷぎ！" };
+  if (m === 10 && day >= 25) return { fall: ["🦇", "🍂"], prop: "🎃", line: "トリック・オア・トリート！ぷぎ" };
+  if (m === 12 && day >= 20 && day <= 25) return { fall: ["❄️", "✨"], prop: "🎄", line: "メリークリスマスぷぎ！" };
+  if (m === 12 || m <= 2) return { fall: ["❄️"], prop: "⛄", line: "さむいぷぎ…くっついてあったまろ" };
+  if (m <= 4) return { fall: ["🌸"], prop: "🌷", line: "さくらがきれいぷぎ！おはなみ行きたいな" };
+  if (m === 5) return { fall: ["🍃"], prop: "🌱", line: "ぽかぽかで、おでかけびよりぷぎ〜" };
+  if (m === 6) return { fall: ["💧"], prop: "☔", line: "雨の日はおうちデートもいいね" };
+  if (m <= 8) return { fall: ["🫧"], prop: "🌻", line: "あついぷぎ…かき氷たべたいな" };
+  return { fall: ["🍁", "🍂"], prop: "🍄", line: "秋はおいしいものいっぱいぷぎ！" };
+}
+function uriDecoHtml(){
+  const s = uriSeason();
+  const parts = Array.from({ length: 7 }, (_, i) => `<span class="ufall" style="left:${(i * 14 + 4) % 96}%;animation-delay:${(i * 1.3) % 5}s;animation-duration:${6 + (i % 3) * 1.5}s">${s.fall[i % s.fall.length]}</span>`).join("");
+  return `<div class="udeco">${parts}</div><span class="uprop">${s.prop}</span>`;
+}
+
+/* ---------- ふたりそろってごはん ---------- */
+function uriCoopCheck(){
+  const t = today(), pu = partnerUid(); if (!pu || !S.pet || !S.roomId) return;
+  const f = S.pet.feeds || {}; if (f[me()]?.last !== t || f[pu]?.last !== t) return;
+  const c = S.pet.coop || {}; if (c.last === t) return;
+  const val = { last: t, streak: c.last === addDays(t, -1) ? (c.streak || 0) + 1 : 1, total: (c.total || 0) + 1, at: Date.now() };
+  S.pet = { ...S.pet, coop: val };
+  setDoc(petRef(), { coop: val }, { merge: true }).catch(() => {});
+}
+function coopNow(){ const c = S.pet?.coop || {}, t = today(); return { streak: c.last === t || c.last === addDays(t, -1) ? (c.streak || 0) : 0, total: c.total || 0, todayDone: c.last === t }; }
+function uriCoopFx(){
+  if (!coopNow().todayDone) return;
+  const k = "uriCoop_" + S.roomId; try { if (localStorage.getItem(k) === today()) return; localStorage.setItem(k, today()); } catch (e) { return; }
+  setTimeout(() => { if (!document.getElementById("uri") || uriBusy) return; uriFx(["💞", "🤝", "💕", "+5"], 6); uriSay("ふたりからごはん！ボーナスぷぎ！"); }, 900);
+}
+
+/* ---------- おみやげ（「行った！」の数でもらえる） ---------- */
+function uriSouvCheck(){
+  const k = "uriSouv_" + S.roomId; let seen = [];
+  try { seen = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return; }
+  const got = UITEMS.filter(it => it.v && visitedCount() >= it.v).map(it => it.id);
+  try { localStorage.setItem(k, JSON.stringify(got)); } catch (e) {}
+  if (seen === null) return; // はじめては演出なし
+  const nw = got.filter(id => !seen.includes(id));
+  if (!nw.length) return;
+  const it = itemOf(nw[nw.length - 1]);
+  setTimeout(() => { uriFx(["🎁", it.e, "✨"], 5); uriSay(`おでかけのおみやげに${it.n}をもらったぷぎ！`); toast(`${it.e} おみやげ「${it.n}」をもらいました！きせかえで使えるよ`); }, 700);
+}
+
+/* ---------- 成長アルバム ---------- */
+function uriStageDates(){
+  const ev = uriEvents().slice().sort((a, b) => a.at - b.at); let x = 0; const out = { 0: S.pet?.bornAt };
+  ev.forEach(e => { const b = x; x += e.xp; USTAGES.forEach(([n], i) => { if (i > 0 && b < n && x >= n && !out[i]) out[i] = e.at || Date.now(); }); });
+  return out;
+}
+function albumHtml(){
+  const u = uriState(), dts = uriStageDates();
+  const born = S.pet?.bornAt;
+  return `<div class="card"><h2>📖 成長アルバム<button class="linkbtn" style="margin-left:auto;padding:0;font-weight:400" data-a="uriInfo">ごはんの記録 ›</button></h2>
+  <div class="ustages">${USTAGES.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st + 1 ? "？？？" : esc(nm)}<br>${i <= u.st && dts[i] ? esc(fmtShort(localDay(dts[i])).replace(/\(.\)/, "")) : i > u.st ? `あと${n - u.xp}` : "—"}</div>`).join("")}</div>
+  ${born ? `<p class="muted" style="text-align:center;font-size:12px;margin:0">${esc(fmtShort(localDay(born)))}にうまれて、きょうで${dayDiff(localDay(born), today()) + 1}日目</p>` : ""}</div>`;
+}
+
+/* ---------- 伝言係（おてがみ） ---------- */
+const lettersIn = () => S.letters.filter(l => l.to === me() && !l.read).sort((a, b) => (a.at || 0) - (b.at || 0));
+const lDelivered = new Set();
+function letterDeliver(force){
+  if (!S.room || !S.roomId) return;
+  const l = lettersIn()[0];
+  if (!l) return;
+  if (!force && (lDelivered.has(l.id) || $layer.innerHTML)) return;
+  lDelivered.add(l.id);
+  const u = uriState();
+  $layer.innerHTML = `<div class="ov mid" data-a="ovclose"><div class="lcard">
+    <div class="lstage"><div class="uri s${u.st} uwalk">${uriSvg(u.st, "happy", uw())}</div><span class="lenv">💌</span></div>
+    <div class="lttl">${esc(nameOf(l.from))}からおてがみだよ！</div>
+    <p class="muted" style="margin:2px 0 14px">${esc(uriName())}があずかってきたぷぎ</p>
+    <button class="btn block" data-a="letterRead" data-id="${l.id}">ひらく</button>
+    <button class="linkbtn" data-a="close">あとで</button>
+  </div></div>`;
+}
+async function letterRead(id){
+  const l = S.letters.find(x => x.id === id); if (!l) return;
+  const mine = l.from === me();
+  $layer.innerHTML = `<div class="ov mid" data-a="ovclose"><div class="lcard">
+    <div class="lpaper"><div class="lto">${esc(nameOf(l.to))}へ</div><div class="ltxt">${esc(l.t)}</div><div class="lfrom">${esc(fmtShort(localDay(l.at || Date.now())))}　${esc(nameOf(l.from))}より</div></div>
+    ${mine ? `<p class="muted" style="margin:10px 0 0">${l.read ? `${esc(nameOf(l.to))}が読んでくれたよ💗` : "まだとどけ中…"}</p>` : ""}
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" style="flex:1" data-a="letterDone">とじる</button>${mine ? "" : `<button class="btn" style="flex:1" data-a="letterNew">おへんじを書く</button>`}</div>
+  </div></div>`;
+  if (l.to === me() && !l.read) {
+    try { await updateDoc(doc(db, "rooms", S.roomId, "letters", id), { read: true, readAt: Date.now() }); } catch (e) {}
+  }
+}
+function openLetterNew(){
+  const pu = partnerUid(); if (!pu) { toast("恋人が参加してから使えるよ"); return; }
+  openSheet(`<h3>💌 おてがみをあずける<button class="x" data-a="close">×</button></h3>
+  <p class="muted" style="margin-top:-6px">${esc(nameOf(pu))}がアプリを開いたら、${esc(uriName())}が届けにいくよ。</p>
+  <form id="lf" class="lform"><textarea class="in" name="t" rows="7" maxlength="300" placeholder="いつもありがとう。こんどの週末たのしみだね" required></textarea><div class="gap"></div><button class="btn block">${esc(uriName())}にあずける</button></form>`);
+  document.getElementById("lf").onsubmit = async ev => {
+    ev.preventDefault();
+    const t = String(ev.target.t.value || "").trim().slice(0, 300); if (!t) return;
+    const btn = ev.target.querySelector("button"); btn.disabled = true;
+    try {
+      await addDoc(collection(db, "rooms", S.roomId, "letters"), { from: me(), to: pu, t, at: Date.now(), read: false });
+      closeSheet();
+      if (S.tab !== "uri") { S.tab = "uri"; render(); window.scrollTo(0, 0); }
+      setTimeout(() => { uriFx(["💌", "💕"], 4); uriSay("あずかったぷぎ！とどけてくるね"); }, 200);
+    } catch (e) { btn.disabled = false; toast("あずけられませんでした（" + (e.code || e.message) + "）"); }
+  };
+}
+function letterHistHtml(){
+  const tab = S.lTab || "in";
+  const list = S.letters.filter(l => tab === "in" ? l.to === me() : l.from === me());
+  if (!list.length) return `<p class="muted" style="text-align:center">まだありません</p>`;
+  return list.map(l => `<div class="litem ${tab === "in" && !l.read ? "new" : ""}" data-a="letterRead" data-id="${l.id}">
+    <div class="main"><div class="t">${esc(l.t)}</div><small>${esc(fmtShort(localDay(l.at || Date.now())))} ・ ${tab === "in" ? (l.read ? "よんだ" : "まだ読んでない") : (l.read ? `${esc(nameOf(l.to))}が読んだ💗` : "とどけ中…")}</small></div>
+    ${tab === "out" ? `<button class="linkbtn" data-a="letterDel" data-id="${l.id}">けす</button>` : ""}</div>`).join("");
+}
+function openLetters(tab){
+  if (tab) S.lTab = tab;
+  const t = S.lTab || "in", nIn = S.letters.filter(l => l.to === me()).length, nOut = S.letters.filter(l => l.from === me()).length;
+  openSheet(`<h3>💌 これまでのおてがみ<button class="x" data-a="close">×</button></h3>
+  <div class="seg"><button class="${t === "in" ? "on" : ""}" data-a="lTab" data-v="in">もらった ${nIn}</button><button class="${t === "out" ? "on" : ""}" data-a="lTab" data-v="out">おくった ${nOut}</button></div>
+  <div id="lhist">${letterHistHtml()}</div>`);
+}
+function letterCardHtml(){
+  const pu = partnerUid(), pn = pu ? nameOf(pu) : "恋人", nIn = lettersIn().length;
+  const lastOut = S.letters.find(l => l.from === me());
+  return `<div class="card"><h2>💌 うりぼーの伝言係</h2>
+    ${nIn ? `<button class="btn lav block" data-a="letterGet">${esc(pn)}からのおてがみ（${nIn}通）をうけとる</button><div class="gap"></div>` : ""}
+    <button class="btn block" data-a="letterNew">${esc(pn)}へおてがみをあずける</button>
+    <div class="lstat">${lastOut ? (lastOut.read ? `さいごのおてがみは、${esc(pn)}が読んでくれたよ💗` : `さいごのおてがみは、いまとどけ中…`) : `あずけると、${esc(pn)}がアプリを開いたときに${esc(uriName())}が届けにいくよ`}</div>
+    ${S.letters.length ? `<div style="text-align:center"><button class="linkbtn" data-a="letters">これまでのおてがみ ›</button></div>` : ""}
+  </div>`;
+}
+
+/* ---------- きせかえ・おみせ ---------- */
+function wearCardHtml(){
+  const w = uw(), bal = S.pet?.acorns || 0;
+  const on = Object.values(w).map(itemOf).filter(Boolean);
+  return `<div class="card swipebar" data-a="wardrobe"><span class="ic">🎀</span><div class="main"><b>きせかえ・おみせ</b><span class="muted">${on.length ? "つけてる：" + on.map(it => it.e + esc(it.n)).join("・") : "なにもつけてないよ"} ・ 🌰${bal}こ</span></div><span class="go">›</span></div>`;
+}
+function openWardrobe(tab){
+  if (tab) S.wTab = tab;
+  const t = S.wTab || "have", u = uriState(), w = uw(), bal = S.pet?.acorns || 0, vc = visitedCount(), mon = new Date().getMonth() + 1;
+  const have = UITEMS.filter(owned);
+  const shop = UITEMS.filter(it => !owned(it) && (it.v || !it.m || it.m.includes(mon)));
+  const cell = (it, foot, act, cls) => `<button class="witem ${cls || ""}" ${act ? `data-a="${act}" data-id="${it.id}"` : "disabled"}><div class="uri">${uriSvg(u.st, "happy", { [it.s]: it.id })}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
+  const body = t === "have"
+    ? (have.length ? have.map(it => cell(it, w[it.s] === it.id ? "つけてる ✓" : USLOTS[it.s], "uriWear", w[it.s] === it.id ? "on" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">まだ持ってないよ。おみせで買ってみよう</p>`)
+    : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : cell(it, `🌰${it.p}${it.m ? " ・ 期間限定" : ""}`, "uriBuy", bal < it.p ? "poor" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
+  openSheet(`<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
+  <div class="wprev"><div class="uri s${u.st}">${uriSvg(u.st, "happy", w)}</div><div class="wbal">🌰 ${bal}こ<small>ふたりのおさいふ</small></div></div>
+  <div class="seg"><button class="${t === "have" ? "on" : ""}" data-a="wTab" data-v="have">もちもの ${have.length}</button><button class="${t === "shop" ? "on" : ""}" data-a="wTab" data-v="shop">おみせ</button></div>
+  <div class="wgrid">${body}</div>
+  <p class="muted" style="text-align:center;font-size:12px">${t === "have" ? "タップでつける・はずす（同じ場所のものは1つまで）" : "🌰はミニゲーム「どんぐり拾い」でたまるよ。「行った！」を記録すると、おみやげがもらえることも"}</p>`);
+}
+async function uriBuy(id){
+  const it = itemOf(id), bal = S.pet?.acorns || 0; if (!it || owned(it)) return;
+  if (bal < it.p) { toast(`どんぐりがあと${it.p - bal}こ足りないよ`); return; }
+  try {
+    await setDoc(petRef(), { acorns: increment(-it.p), items: { [id]: true }, wear: { [it.s]: id } }, { merge: true });
+    S.pet = { ...(S.pet || {}), acorns: bal - it.p, items: { ...(S.pet?.items || {}), [id]: true }, wear: { ...uw(), [it.s]: id } };
+    S.wTab = "have"; openWardrobe(); render();
+    toast(`${it.e} ${it.n}を手に入れた！`);
+    setTimeout(() => { uriFx(["✨", it.e], 4); uriSay(`${it.n}、にあう？ぷぎ♪`); }, 100);
+  } catch (e) { toast("買えませんでした（" + (e.code || e.message) + "）"); }
+}
+async function uriWear(id){
+  const it = itemOf(id); if (!it) return;
+  const on = uw()[it.s] === id, w = { ...uw() };
+  if (on) delete w[it.s]; else w[it.s] = id;
+  S.pet = { ...(S.pet || {}), wear: w };
+  openWardrobe(); render();
+  try { await setDoc(petRef(), { wear: { [it.s]: on ? deleteField() : id } }, { merge: true }); }
+  catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+}
+
+/* ---------- どんぐり拾い（ミニゲーム） ---------- */
+const GAME_SEC = 30, GAME_REWARD_N = 3, GAME_REWARD_MAX = 50;
+function gameInfo(uid){ const g = S.pet?.game?.[uid] || {}; return { best: g.best || 0, plays: g.day === today() ? (g.plays || 0) : 0 }; }
+function gameCardHtml(){
+  const pu = partnerUid(), mi = gameInfo(me()), pi = pu ? gameInfo(pu) : null, left = Math.max(0, GAME_REWARD_N - mi.plays);
+  return `<div class="card gcard"><h2>🌰 どんぐり拾い</h2>
+    <div class="gscore"><div><small>${esc(nameOf(me()))}のベスト</small><b>${mi.best}</b></div>${pi ? `<div><small>${esc(nameOf(pu))}のベスト</small><b>${pi.best}</b></div>` : ""}</div>
+    <p class="muted" style="text-align:center;margin:4px 0 10px">${left ? `きょうのごほうび あと${left}回` : "きょうのごほうびはおしまい（あそぶのは何回でもOK）"} ・ 🌰${S.pet?.acorns || 0}こ</p>
+    <button class="btn block" data-a="gameOpen">あそぶ</button></div>`;
+}
+let G = null;
+function svgImg(svg){ const im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ')); return im; }
+function openGame(){
+  const u = uriState(), mi = gameInfo(me()), left = Math.max(0, GAME_REWARD_N - mi.plays);
+  $layer.innerHTML = `<div class="ugame" id="ugame">
+    <div class="ugtop"><button class="ugx" data-a="gameClose" aria-label="とじる">×</button><span class="ugpill" id="ugT">⏱ ${GAME_SEC}</span><span class="ugpill" id="ugS">🌰 0</span></div>
+    <canvas id="ugc"></canvas>
+    <div class="ugmsg" id="ugM"><div class="ugbox">
+      <div class="uri s${u.st}" style="margin:0 auto">${uriSvg(u.st, "happy", uw())}</div>
+      <h3>どんぐり拾い</h3>
+      <p>ゆびで左右にうごかして、🌰をキャッチ！<br>🍠は3こぶん。🐝にあたると少しうごけなくなるよ。<br>5こ連続でとるとボーナス！</p>
+      <p class="muted">${left ? `きょうのごほうび あと${left}回（とった数がおさいふに入るよ）` : "きょうのごほうびはおしまい。記録はのこるよ"}</p>
+      <button class="btn block" data-a="gameStart">スタート</button>
+    </div></div>
+  </div>`;
+  const c = document.getElementById("ugc"), wrap = document.getElementById("ugame");
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  c.width = W * dpr; c.height = H * dpr; c.style.width = W + "px"; c.style.height = H + "px";
+  const ctx = c.getContext("2d"); ctx.scale(dpr, dpr);
+  G = { ctx, W, H, run: false, px: W / 2, tx: W / 2, items: [], score: 0, combo: 0, t0: 0, last: 0, spawn: 0, stun: 0, pops: [],
+    img: svgImg(uriSvg(u.st, "happy", uw())), imgSad: svgImg(uriSvg(u.st, "sad", uw())) };
+  const setX = e => { const r = c.getBoundingClientRect(); G.tx = Math.max(30, Math.min(G.W - 30, e.clientX - r.left)); };
+  c.addEventListener("pointerdown", setX); c.addEventListener("pointermove", setX);
+  wrap.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
+  gameDraw(0);
+}
+function gameStart(){
+  if (!G) return;
+  document.getElementById("ugM").classList.add("hide");
+  Object.assign(G, { run: true, items: [], score: 0, combo: 0, stun: 0, pops: [], spawn: 0, t0: performance.now(), last: performance.now(), px: G.W / 2, tx: G.W / 2 });
+  requestAnimationFrame(gameLoop);
+}
+function gameLoop(now){
+  if (!G || !G.run) return;
+  const dt = Math.min(.05, (now - G.last) / 1000); G.last = now;
+  const el = (now - G.t0) / 1000, left = Math.max(0, GAME_SEC - el);
+  const speed = 150 + el * 7, every = Math.max(.26, .6 - el * .012);
+  G.spawn -= dt;
+  if (G.spawn <= 0) {
+    G.spawn = every;
+    const r = Math.random(), bee = Math.min(.34, .16 + el * .006);
+    const k = r < bee ? "bee" : r < bee + .08 ? "imo" : "nut";
+    G.items.push({ k, x: 24 + Math.random() * (G.W - 48), y: -30, vy: speed * (k === "bee" ? 1.15 : .85 + Math.random() * .3), w: k === "bee" ? Math.sin(Math.random() * 6) : 0 });
+  }
+  if (G.stun > 0) G.stun -= dt; else G.px += (G.tx - G.px) * Math.min(1, dt * 14);
+  const py = G.H - 120;
+  G.items.forEach(it => {
+    it.y += it.vy * dt; if (it.k === "bee") it.x += Math.sin(now / 250 + it.w * 3) * 60 * dt;
+    if (!it.dead && it.y > py - 30 && it.y < py + 30 && Math.abs(it.x - G.px) < 40) {
+      it.dead = true;
+      if (it.k === "bee") { G.stun = .8; G.combo = 0; G.pops.push({ x: it.x, y: py - 40, t: "ちくっ！", a: 1 }); }
+      else { const n = it.k === "imo" ? 3 : 1; G.combo++; const bonus = G.combo % 5 === 0 ? 1 : 0; G.score += n + bonus; G.pops.push({ x: it.x, y: py - 40, t: bonus ? `+${n + bonus} ${G.combo}コンボ！` : `+${n}`, a: 1 }); }
+    } else if (!it.dead && it.y > G.H + 20) { it.dead = true; if (it.k !== "bee") G.combo = 0; }
+  });
+  G.items = G.items.filter(it => !it.dead);
+  G.pops.forEach(p => { p.y -= 50 * dt; p.a -= dt * 1.3; }); G.pops = G.pops.filter(p => p.a > 0);
+  const tEl = document.getElementById("ugT"), sEl = document.getElementById("ugS");
+  if (tEl) tEl.textContent = `⏱ ${Math.ceil(left)}`; if (sEl) sEl.textContent = `🌰 ${G.score}`;
+  gameDraw(now);
+  if (left <= 0) { G.run = false; gameEnd(); return; }
+  requestAnimationFrame(gameLoop);
+}
+function gameDraw(now){
+  const { ctx, W, H } = G; ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = "rgba(166,217,196,.55)"; ctx.fillRect(0, H - 62, W, 62);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = "30px sans-serif";
+  G.items.forEach(it => ctx.fillText(it.k === "bee" ? "🐝" : it.k === "imo" ? "🍠" : "🌰", it.x, it.y));
+  const s = 96, py = G.H - 120, im = G.stun > 0 ? G.imgSad : G.img;
+  if (im.complete && im.naturalWidth) { if (!(G.stun > 0 && Math.floor(now / 90) % 2)) ctx.drawImage(im, G.px - s / 2, py - s / 2 - 6, s, s); }
+  else { ctx.font = "54px sans-serif"; ctx.fillText("🐗", G.px, py); }
+  ctx.font = "bold 17px 'Zen Maru Gothic', sans-serif";
+  G.pops.forEach(p => { ctx.globalAlpha = Math.max(0, p.a); ctx.fillStyle = p.t === "ちくっ！" ? "#d46a7e" : "#e2809c"; ctx.fillText(p.t, p.x, p.y); });
+  ctx.globalAlpha = 1;
+}
+async function gameEnd(){
+  const score = G.score, mi = gameInfo(me()), t = today();
+  const reward = mi.plays < GAME_REWARD_N ? Math.min(score, GAME_REWARD_MAX) : 0;
+  const isBest = score > mi.best, pu = partnerUid(), pb = pu ? gameInfo(pu).best : 0;
+  const val = { best: Math.max(mi.best, score), day: t, plays: mi.plays + 1 };
+  const m = document.getElementById("ugM"); if (!m) return;
+  const st = uriState().st;
+  m.classList.remove("hide");
+  m.innerHTML = `<div class="ugbox">
+    <div class="uri s${st}" style="margin:0 auto">${uriSvg(st, score >= 10 ? "happy" : "normal", uw())}</div>
+    <h3>🌰 ${score}こ！</h3>
+    ${isBest ? `<p class="ugbest">じこベスト更新！🎉</p>` : `<p class="muted">ベスト ${mi.best}こ</p>`}
+    ${pu ? `<p class="muted">${esc(nameOf(pu))}のベスト ${pb}こ${score > pb && pb > 0 ? " → 勝った！" : ""}</p>` : ""}
+    <p>${reward ? `ふたりのおさいふに 🌰+${reward}` : mi.plays >= GAME_REWARD_N ? "きょうのごほうびはおしまい" : "こんどはもっととろう！"}</p>
+    <div style="display:flex;gap:8px"><button class="btn ghost" style="flex:1" data-a="gameClose">とじる</button><button class="btn" style="flex:1" data-a="gameStart">もういちど</button></div>
+  </div>`;
+  try {
+    await setDoc(petRef(), { game: { [me()]: val }, ...(reward ? { acorns: increment(reward) } : {}) }, { merge: true });
+    S.pet = { ...(S.pet || {}), game: { ...(S.pet?.game || {}), [me()]: val }, acorns: (S.pet?.acorns || 0) + reward };
+  } catch (e) { toast("記録を保存できませんでした（" + (e.code || e.message) + "）"); }
+}
+function gameClose(){ if (G) G.run = false; G = null; closeSheet(); render(); }
+
+/* ---------- うりぼーメニュー ---------- */
+function viewUri(){
+  if (S.needRules) return `<div class="card"><p class="muted">うりぼーを使うには、Firebaseのルール更新が必要です</p></div>`;
+  uriSouvCheck();
+  return `<div class="utab">${uriHtml()}</div>
+  ${letterCardHtml()}
+  ${wearCardHtml()}
+  ${gameCardHtml()}
+  ${albumHtml()}`;
+}
+/* ホーム用の小さいうりぼー */
+function uriMiniHtml(){
+  if (S.needRules) return "";
+  const u = uriState(), nIn = lettersIn().length;
+  uriCheckEvolve(u.st);
+  const say = nIn ? "おてがみあずかってるぷぎ！" : u.mood === "sleep" ? "すやすや…" : uriSpecial() ? uriSeason().line : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！";
+  return `<div class="card uricard umini" data-a="tab" data-v="uri">
+    <div class="umrow">
+      <div class="ustage" id="ustage"><div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri">${uriSvg(u.st, u.mood, uw())}</div></div>
+      <div class="main"><div class="uhead"><b class="nm">${esc(uriName())}</b><span class="tag lav">${esc(USTAGES[u.st][1])}</span></div>
+        <div class="umsay" id="ububble">${esc(S.uriSay || say)}</div>
+        <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div></div>
+      </div><span class="go">›</span>
+    </div>
+    ${nIn ? `<button class="btn lav block sm" data-a="letterGet">💌 おてがみをうけとる</button><div style="height:8px"></div>` : ""}
+    ${u.fedMe ? `<button class="btn ghost block sm" disabled>🍠 きょうはごはんをあげたよ</button>` : `<button class="btn block sm" data-a="uriFeed">🍠 ごはんをあげる</button>`}
+  </div>`;
 }
 
 /* =============== 今日の質問 =============== */
@@ -2356,6 +2846,20 @@ document.addEventListener("click", async ev => {
     case "uriFeed": uriFeed(el); break;
     case "uriInfo": openUriInfo(); break;
     case "uriName": openUriName(); break;
+    case "wardrobe": openWardrobe(); break;
+    case "wTab": openWardrobe(el.dataset.v); break;
+    case "uriBuy": uriBuy(id); break;
+    case "uriWear": uriWear(id); break;
+    case "letterNew": openLetterNew(); break;
+    case "letterGet": letterDeliver(true); break;
+    case "letterRead": letterRead(id); break;
+    case "letterDone": closeSheet(); setTimeout(() => letterDeliver(), 400); break;
+    case "letters": openLetters(); break;
+    case "lTab": openLetters(el.dataset.v); break;
+    case "letterDel": try { await deleteDoc(doc(db, "rooms", S.roomId, "letters", id)); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
+    case "gameOpen": openGame(); break;
+    case "gameStart": gameStart(); break;
+    case "gameClose": gameClose(); break;
     case "planDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { plan: (d.plan || []).filter((_, i) => i !== +el.dataset.v) }); break; }
     case "itemToggle": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).map((x, i) => i === +el.dataset.v ? { ...x, done: !x.done } : x) }); break; }
     case "itemDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).filter((_, i) => i !== +el.dataset.v) }); break; }
