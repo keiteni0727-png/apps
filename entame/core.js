@@ -350,11 +350,11 @@ function saveDoc(col, id, data) {
   lastAt = data._at;
   return write(() => db.doc(`${col}/${id}`).set(data));
 }
-/* 渡した項目だけ書きかえる（ほかの端末で変えた項目は消さない）。最新のデータが届くまでは待ってから書く */
+/* 渡した項目だけ書きかえる（ほかの端末で変えた項目は消さない）。
+   変えた項目だけなので、最新のデータが届くのを待たずにすぐ書く（待つと、電波が悪いときや裏に回したときに書き込みが止まったままになり、ほかの端末に届かない） */
 async function mergeDoc(col, id, patch) {
   const data = { ...patch, _at: Date.now() };
   lastAt = data._at;
-  await whenSynced();
   return write(() => db.doc(`${col}/${id}`).set(data, { merge: true }));
 }
 /* ---------- 同期：開いた直後や、しばらく裏にいたあとは、最新のデータが届くまで「同期中」 ---------- */
