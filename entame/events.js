@@ -515,7 +515,10 @@ function searchSoon() {
   clearTimeout(sTimer);
   sTimer = setTimeout(render, 120);
 }
+/* 変換を確定した直後の時刻。Safari などは確定の Enter が「変換中ではない Enter」として届くので、その Enter を見分ける */
+let compEndAt = 0;
 document.addEventListener("compositionend", e => {
+  compEndAt = Date.now();
   if (e.target.id === "q") {
     state.q = e.target.value;
     state.limit = 200;
@@ -527,7 +530,19 @@ document.addEventListener("compositionend", e => {
   }
 });
 /* キー：Enter（日本語の変換中は除く）で決定、Escで取り消し・閉じる */
-const isEnter = e => e.key === "Enter" && !e.isComposing;
+/* 変換の確定の Enter：変換中フラグ・keyCode 229（Safari）・確定の直後に届いた Enter のどれか */
+const imeEnter = e => e.isComposing || e.keyCode === 229 || Date.now() - compEndAt < 60;
+const isEnter = e => e.key === "Enter" && !imeEnter(e);
+/* 編集画面の入力欄で、変換の確定の Enter によってフォームが送信（保存）されないようにする */
+document.addEventListener(
+  "keydown",
+  e => {
+    if (e.key !== "Enter" || e.isComposing || !imeEnter(e)) return;
+    const t = e.target;
+    if (t && t.tagName === "INPUT" && t.form) e.preventDefault();
+  },
+  true,
+);
 /* Enter／Esc で別々の処理をする入力欄 */
 const enterEsc = (onEnter, onEsc) => (t, e) => {
   if (isEnter(e)) {
