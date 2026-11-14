@@ -2,7 +2,7 @@
    「選択」を押すと選択モード。行を押すと選ぶ／外す、見出しの「全部選ぶ」でグループごと、下の帯から一括編集 */
 let bsel = null; // 選択モード中は選んだ作品の id の Set、ふだんは null
 let bGroups = new Map(); // 見出しのキー → その見出しの作品 id（groupedHtml が描くたびに入れ直す）
-let bOpen = ""; // 一括編集の画面で開いている項目
+
 let bDraft = {}; // 一括編集の画面の入力中の値
 const bOn = () => !!bsel && state.mode !== "w" && state.mode !== "yt" && state.mode !== "h";
 
@@ -39,33 +39,57 @@ function bRefresh() {
   if (d) d.innerHTML = bDockHtml();
 }
 
-/* ---------- 一括編集の画面 ---------- */
+/* ---------- 一括編集の画面：作品の編集画面と同じ形（セクション・項目名・下に保存）。項目ごとに「どうするか」を選ぶ
+   今は放送クールだけ。項目は必要に応じて足す ---------- */
 const bItems = () => items.filter(i => bsel && bsel.has(i.id));
-const B_NOF = [...Object.entries(NOF_LAB).map(([k, l]) => [k, l]), ["OP", "OP"], ["ED", "ED"], ["主題歌", "主題歌"]];
+const B_COP = [
+  ["", "変更しない"],
+  ["set", "置き換える"],
+  ["add", "足す"],
+  ["del", "外す"],
+  ["none", "なしにする"],
+];
 function bulkHtml() {
-  const n = bsel.size;
-  const sec = (k, ic, lab, body) =>
-    `<div class="bsec${bOpen === k ? " open" : ""}${k === "del" ? " dng" : ""}"><button type="button" class="bhd" data-bopen="${k}" aria-expanded="${bOpen === k}"><span class="bic" aria-hidden="true">${ic}</span>${lab}<span class="bchev" aria-hidden="true">${bOpen === k ? "▾" : "›"}</span></button>${bOpen === k ? `<div class="bbody">${body}</div>` : ""}</div>`;
-  const chip = (attr, v, on, l, st = "") => `<button type="button" ${attr}="${esc(v)}" aria-pressed="${!!on}"${st}>${esc(l)}</button>`;
-  const apply = (lab = `${n}件に適用`) => `<div class="bap"><button type="button" class="u-btn" data-bopen="">キャンセル</button><button type="button" class="u-btn pri" data-bapply="${bOpen}">${lab}</button></div>`;
   const d = bDraft;
-  const ser = M("series");
-  return `<div class="hdrow"><h3>${n}件をまとめて変える</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
-    <div class="blist">
-    ${sec("st", "◉", "視聴ステータス", `<div class="chips">${STATUSES.map(v => chip("data-bv", v, d.st === v, stLabel(v))).join("")}</div>${apply()}`)}
-    ${sec("ser", "▤", "シリーズ", `<input id="bSer" list="bSerL" value="${esc(d.ser || "")}" placeholder="シリーズ名（登録済みから選ぶか、新しく入力）" autocomplete="off"><datalist id="bSerL">${ser.map(x => `<option value="${esc(x)}">`).join("")}</datalist><p class="hint">空のまま適用すると、シリーズを外します。</p>${apply()}`)}
-    ${sec("vod", "▶", "見られる配信", `<div class="chips">${[["add", "足す"], ["del", "外す"], ["set", "置き換える"]].map(([v, l]) => chip("data-bvm", v, (d.vm || "add") === v, l)).join("")}</div><div class="chips">${M("vods").map(v => `<button type="button" data-bvod="${esc(v)}" aria-pressed="${(d.vods || []).includes(v)}" class="${VOD_COLOR[v] ? "vc" : ""}"${vcStyle(v)}>${esc(v)}</button>`).join("")}</div>${apply()}`)}
-    ${sec("nof", "⊘", "「なし」の設定", `<div class="chips">${[["on", "なしにする"], ["off", "なしを外す"]].map(([v, l]) => chip("data-bnm", v, (d.nm || "on") === v, l)).join("")}</div><div class="chips">${B_NOF.map(([k, l]) => chip("data-bnof", k, (d.nof || []).includes(k), l + "なし")).join("")}</div><p class="hint">「なしにする」は、その項目に入っている値も消します（OP・ED・主題歌は曲が入っていない作品だけ）。</p>${apply()}`)}
-    ${sec("ep", "✓", "全話を視聴済みにする／外す", `<div class="chips">${[["on", "全話を視聴済みにする"], ["off", "視聴済みを全部外す"]].map(([v, l]) => chip("data-bem", v, (d.em || "on") === v, l)).join("")}</div><p class="hint">話数が登録されている作品だけ変わります。ステータスも自動で変わります。</p>${apply()}`)}
-    ${sec("del", "🗑", "削除", `<p class="hint">選んだ${n}件を削除します。削除のあと少しの間は「元に戻す」ができます。</p>${apply(d.delArm ? `もう一度押すと${n}件を削除` : `${n}件を削除`)}`)}
-    </div>`;
+  const list = bItems();
+  const sch = list.filter(i => !noSched(mediaOf(i).media));
+  const n = list.length,
+    skip = n - sch.length;
+  /* 選んだ作品の今のクール（多い順に少しだけ） */
+  const cnt = {};
+  sch.forEach(i => {
+    const cs = coursOf(i);
+    const ks = cs.length ? cs : [(i.noF || []).includes("cours") ? "なし" : "未設定"];
+    ks.forEach(k => (cnt[k] = (cnt[k] || 0) + 1));
+  });
+  const now = Object.entries(cnt)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([k, v]) => `<span class="bnow">${esc(k === ALLYEAR ? "通年" : /^\d{4}/.test(k) ? courLabel(k) : k)}<small>${v}</small></span>`)
+    .join("");
+  const y = new Date().getFullYear();
+  const years = [];
+  for (let k = y + 1; k >= 1960; k--) years.push(k);
+  const op = d.cop || "";
+  const pick = op === "set" || op === "add" || op === "del";
+  const dc = d.cours || [];
+  const field = `<div class="field full"><span>放送クール</span>
+      <div class="segc bop" role="radiogroup" aria-label="放送クールをどうするか">${B_COP.map(([v, l]) => `<button type="button" role="radio" data-bcop="${v}" aria-checked="${op === v}" aria-pressed="${op === v}">${l}</button>`).join("")}</div>
+      ${pick ? `<div class="cours">${dc.includes(ALLYEAR) ? `<button type="button" class="tag" data-bcdel="${ALLYEAR}">通年</button>` : ""}${dc.filter(c => c !== ALLYEAR).map(c => `<button type="button" class="tag" data-bcdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${dc.length ? "" : `<span class="none">${op === "del" ? "外すクールを選んでください" : "クールを選んでください"}</span>`}
+        <button type="button" class="sugbtn${dc.includes(ALLYEAR) ? " on" : ""}" data-bcall="1" aria-pressed="${dc.includes(ALLYEAR)}">${dc.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button></div>
+        <div class="courpick"><select id="bCy" aria-label="年">${years.map(k => `<option ${k === (d.cy || y) ? "selected" : ""}>${k}</option>`).join("")}</select><div class="segc" role="group" aria-label="季節を追加">${SEASONS.map(x => `<button type="button" data-bcadd="${x}">${x}</button>`).join("")}</div></div>` : ""}
+      <p class="hint" style="margin:6px 0 0">${{ "": "変えないときはこのまま。", set: "選んだクールに入れ替えます。", add: "今のクールはそのままで、選んだクールを足します。", del: "選んだクールを外します。", none: "クールを空にして「放送クールなし」にします（未入力アラートが出なくなります）。" }[op]}${skip ? `映画・OVA・TV SPの${skip}件は放送クールがないので変わりません。` : ""}</p>
+      ${now ? `<div class="bnowl"><span class="hint">選んだ作品の今のクール</span>${now}</div>` : ""}</div>`;
+  const sec = (title, body) => `<section class="fsec"><h4>${title}</h4><div class="fgrid">${body}</div></section>`;
+  return `<div class="hdrow"><h3>${n}件をまとめて編集</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
+    <div class="bform">${sec("放送", field)}</div>
+    <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button type="button" class="u-btn pri primary" data-bsave="1"${op && (op === "none" || dc.length) ? "" : " disabled"}>${n}件に保存</button></div>`;
 }
 function openBulk() {
   if (!bsel || !bsel.size) return;
   openId = null;
   form = null;
-  bOpen = "";
-  bDraft = {};
+  bDraft = { cy: new Date().getFullYear() };
   lockScroll(true);
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form bsheet" role="dialog" aria-modal="true" aria-label="一括編集"><div class="wrap" id="bIn">${bulkHtml()}</div></div>`;
@@ -73,11 +97,12 @@ function openBulk() {
 function refreshBulk() {
   const el = $("#bIn");
   if (!el) return;
-  if ($("#bSer")) bDraft.ser = $("#bSer").value;
+  const cy = $("#bCy");
+  if (cy) bDraft.cy = +cy.value;
   el.innerHTML = bulkHtml();
 }
 /* 作品ごとの変更をまとめて書く（変えた項目だけ） */
-async function bPatchAll(fn, msg) {
+function bPatchAll(fn, msg) {
   const ch = [];
   bItems().forEach(it => {
     const p = fn(it);
@@ -90,84 +115,29 @@ async function bPatchAll(fn, msg) {
   toast(ch.length ? `${ch.length}件の${msg}を変えました` : "変わった作品はありませんでした");
   for (const [id, p] of ch) mergeDoc("titles", id, p).catch(fail);
 }
-function bApply(k) {
-  const d = bDraft;
-  if (k === "st") {
-    if (!d.st) return toast("ステータスを選んでください");
-    bPatchAll(it => (it.s === d.st ? null : { s: d.st }), "ステータス");
-  } else if (k === "ser") {
-    const v = ($("#bSer")?.value || "").trim();
-    bPatchAll(it => ((it.series || "") === v ? null : { series: v }), "シリーズ");
-  } else if (k === "vod") {
-    const vs = d.vods || [];
-    const vm = d.vm || "add";
-    if (!vs.length && vm !== "set") return toast("配信サイトを選んでください");
-    bPatchAll(it => {
-      const cur = mediaOf(it).vods;
-      const nx = vm === "set" ? [...vs] : vm === "add" ? [...new Set([...cur, ...vs])] : cur.filter(v => !vs.includes(v));
-      return nx.length === cur.length && nx.every(v => cur.includes(v)) ? null : { vods: nx };
-    }, "見られる配信");
-  } else if (k === "nof") {
-    const ks = d.nof || [];
-    if (!ks.length) return toast("項目を選んでください");
-    const on = (d.nm || "on") === "on";
-    const songs = ks.filter(x => SONG_TYPES.includes(x)),
-      fs = ks.filter(x => !SONG_TYPES.includes(x));
-    const clr = { time: { time: "" }, st: { stations: [] }, plat: { plat: [] }, vods: { vods: [] }, cours: { cours: [] }, url: { url: "" }, vurl: { vurl: "" } };
-    bPatchAll(it => {
-      const nf0 = it.noF || [],
-        ns0 = it.noSongs || [];
-      const sl = songsOf(it);
-      const nf = on ? [...new Set([...nf0, ...fs])] : nf0.filter(x => !fs.includes(x));
-      const addS = on ? songs.filter(t => !sl.some(x => x.type === t && (x.s || "").trim())) : [];
-      const ns = on ? [...new Set([...ns0, ...addS])] : ns0.filter(x => !songs.includes(x));
-      const p = {};
-      if (nf.length !== nf0.length) {
-        p.noF = nf;
-        if (on) fs.filter(x => !nf0.includes(x)).forEach(x => Object.assign(p, clr[x]));
-      }
-      if (ns.length !== ns0.length) p.noSongs = ns;
-      return Object.keys(p).length ? p : null;
-    }, "「なし」の設定");
-  } else if (k === "ep") {
-    if (syncBlock()) return;
-    const on = (d.em || "on") === "on";
-    let n = 0;
-    bItems().forEach(it => {
-      const l = episodes(it);
-      if (!l.length || l.every(e => !!e.w === on)) return;
-      const now = Date.now();
-      saveEps(
-        it,
-        l.map(e => ({ ...e, w: on, wt: on ? e.wt || now : 0 })),
-      );
-      n++;
-    });
-    toast(n ? `${n}件の話数を${on ? "全話視聴済みに" : "未視聴に"}しました` : "変わった作品はありませんでした");
-  } else if (k === "del") {
-    if (!d.delArm) {
-      d.delArm = true;
-      refreshBulk();
-      return;
+function bSave() {
+  const d = bDraft,
+    op = d.cop,
+    dc = d.cours || [];
+  if (!op) return;
+  const same = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+  bPatchAll(it => {
+    if (noSched(mediaOf(it).media)) return null;
+    const cur = coursOf(it),
+      nf = it.noF || [];
+    let nx;
+    if (op === "none") {
+      if (!cur.length && nf.includes("cours")) return null;
+      return { cours: [], noF: [...new Set([...nf, "cours"])] };
     }
-    const list = bItems();
-    const prev = list.map(it => [it.id, { ...(over[it.id] || {}) }]);
-    list.forEach(it => delete over[it.id]);
-    bsel = new Set();
-    rebuild();
-    close();
-    render();
-    list.forEach(it => removeDoc("titles", it.id).catch(fail));
-    toastUndo(`${list.length}件を削除しました`, () => {
-      prev.forEach(([id, o]) => {
-        over[id] = o;
-        saveDoc("titles", id, o).catch(fail);
-      });
-      rebuild();
-      render();
-    });
-    return;
-  }
+    if (op === "set") nx = [...dc];
+    else if (op === "add") nx = [...new Set([...cur, ...dc])];
+    else nx = cur.filter(c => !dc.includes(c));
+    const p = {};
+    if (!same(nx, cur)) p.cours = nx;
+    if (op !== "del" && nf.includes("cours")) p.noF = nf.filter(x => x !== "cours");
+    return Object.keys(p).length ? p : null;
+  }, "放送クール");
   close();
   bRefresh();
 }
@@ -217,37 +187,33 @@ const BULK_ACTIONS = [
 ];
 /* 一括編集の画面の中 */
 const BULK_SHEET_ACTIONS = [
+  ["[data-bcop]", el => ((bDraft.cop = el.dataset.bcop), refreshBulk())],
   [
-    "[data-bopen]",
+    "[data-bcadd]",
     el => {
-      bOpen = bOpen === el.dataset.bopen ? "" : el.dataset.bopen;
-      bDraft.delArm = false;
+      const cy = $("#bCy");
+      const k = `${cy ? cy.value : new Date().getFullYear()}${el.dataset.bcadd}`;
+      const l = bDraft.cours || [];
+      if (!l.includes(k)) bDraft.cours = [...l, k].sort((a, b) => (a === ALLYEAR ? -1 : b === ALLYEAR ? 1 : groupRank(a) - groupRank(b)));
       refreshBulk();
     },
   ],
-  ["[data-bv]", el => ((bDraft.st = el.dataset.bv), refreshBulk())],
-  ["[data-bvm]", el => ((bDraft.vm = el.dataset.bvm), refreshBulk())],
   [
-    "[data-bvod]",
-    el => {
-      const v = el.dataset.bvod,
-        l = bDraft.vods || [];
-      bDraft.vods = l.includes(v) ? l.filter(x => x !== v) : [...l, v];
+    "[data-bcall]",
+    () => {
+      const l = bDraft.cours || [];
+      bDraft.cours = l.includes(ALLYEAR) ? l.filter(x => x !== ALLYEAR) : [ALLYEAR, ...l];
       refreshBulk();
     },
   ],
-  ["[data-bnm]", el => ((bDraft.nm = el.dataset.bnm), refreshBulk())],
   [
-    "[data-bnof]",
+    "[data-bcdel]",
     el => {
-      const v = el.dataset.bnof,
-        l = bDraft.nof || [];
-      bDraft.nof = l.includes(v) ? l.filter(x => x !== v) : [...l, v];
+      bDraft.cours = (bDraft.cours || []).filter(x => x !== el.dataset.bcdel);
       refreshBulk();
     },
   ],
-  ["[data-bem]", el => ((bDraft.em = el.dataset.bem), refreshBulk())],
-  ["[data-bapply]", el => bApply(el.dataset.bapply)],
+  ["[data-bsave]", () => bSave()],
 ];
 function onBulkClick(e) {
   if ($("#bIn") && e.target.closest("#bIn")) return runActions(BULK_SHEET_ACTIONS, e);

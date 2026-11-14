@@ -1247,3 +1247,9 @@ body.bmode #toTop{display:none}
 .bsec.dng .bap .pri{background:var(--u-accent)}
 body:has(#layer .sheet) .bdock{display:none}
 @media (max-width:899px){.bgrp .bgl{display:none}.bgrp{white-space:nowrap;padding:2px 4px;margin-left:auto}}
+.bsheet .bop{flex-wrap:wrap}
+.bsheet .bop button{flex:1 1 auto;white-space:nowrap}
+.bnowl{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
+.bnowl .hint{width:100%;margin:0;font-size:11.5px}
+.bnow{font-size:12px;border:1px solid var(--u-line);border-radius:999px;padding:2px 9px;background:var(--u-bg)}
+.bnow small{font-family:var(--u-num);font-size:10.5px;color:var(--u-sub);margin-left:4px}
