@@ -582,6 +582,26 @@ const KEY_ACTIONS = [
 ];
 document.addEventListener("keydown", e => runInputs(KEY_ACTIONS, e));
 
+/* 一覧のグループ見出し：画面の上に貼りついている見出しに下線を付け、下を流れる作品との境目をはっきりさせる */
+function markStuck() {
+  document.querySelectorAll(".ghd").forEach(el => {
+    const nx = el.nextElementSibling;
+    const r = el.getBoundingClientRect();
+    el.classList.toggle("stuck", !!nx && nx.getBoundingClientRect().top < r.bottom - 1 && nx.getBoundingClientRect().bottom > r.bottom);
+  });
+}
+let ghdRaf = 0;
+addEventListener(
+  "scroll",
+  () => {
+    if (!ghdRaf)
+      ghdRaf = requestAnimationFrame(() => {
+        ghdRaf = 0;
+        markStuck();
+      });
+  },
+  { passive: true },
+);
 /* 作品の詳細：← → キーで前・次の作品へ（入力欄・選択肢にカーソルがないとき） */
 document.addEventListener("keydown", e => {
   if ((e.key !== "ArrowLeft" && e.key !== "ArrowRight") || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;

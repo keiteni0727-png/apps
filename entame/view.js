@@ -669,6 +669,7 @@ function render() {
   }
   setMain(body + `<p class="note savenote" id="saveNote">${saveNoteHtml()}</p>`);
   if (lockY === null) scrollTo(0, y);
+  if (typeof markStuck === "function") markStuck();
   saveUI();
   const hd = document.querySelector("header");
   if (hd && hd.offsetHeight) document.documentElement.style.setProperty("--hdh", hd.offsetHeight + "px");

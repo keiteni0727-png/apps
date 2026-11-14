@@ -290,17 +290,31 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const when = [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim();
   const per = periodOf(it);
   const cour = cs.map(courLabel).join("・");
-  const head = { tv: "放送", sp: "放送", movie: "上映", ova: "発売", stream: "配信" }[md] || "放送";
-  const perLab = mv ? "公開日" : md === "sp" ? "放送日" : md === "ova" ? "発売期間" : "期間";
-  const bc = `<div class="icard ibc"><div class="ilb">${head}</div>
-    ${ns || (!when && nofHas(it, "time") && !cour) ? "" : `<div class="ibig">${!when && nofHas(it, "time") ? "" : `<span data-jump="f-time">${when ? esc(when) : un("曜日・時間 未設定")}</span>`}${cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : ""}</div>`}
-    <div class="iper" data-jump="f-from">${per ? `${perLab}　${esc(per)}` : un(perLab + " 未設定")}</div>
-    <div class="imed" data-jump="fMedia">${stv ? `<span class="labs">${mediaLabels(it, true)}</span>` : `<span class="labs">${mediaTag(it)}</span>`}${stv ? "" : nofHas(it, md === "stream" ? "plat" : hasSt(md) ? "st" : "vods") ? nn({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] ? ({ tv: "放送局", sp: "放送局", stream: "配信サイト" }[md] + "なし") : "配信なし") : un("放送局・配信 未設定")}</div></div>`;
+  /* ON AIR：「項目名　内容」を1行ずつ。押すとその項目をその場で編集 */
+  const m = mediaOf(it);
+  const row = (lab, val, jump) => `<dt data-jump="${jump}">${lab}</dt><dd data-jump="${jump}">${val}</dd>`;
+  const courChip = cour ? `<span class="icour" data-jump="coursBox">${esc(cour)}</span>` : "";
+  const rows = [];
+  if (!ns) {
+    const tLab = md === "stream" ? "配信時間" : "放送時間";
+    if (when || !nofHas(it, "time")) rows.push(row(tLab, `${when ? `<b class="iwhen">${esc(when)}</b>` : un("未設定")}${courChip}`, "f-time"));
+    else if (cour) rows.push(row("放送クール", courChip, "coursBox"));
+  }
+  const perLab = mv ? "公開日" : md === "sp" ? "放送日" : md === "ova" ? "発売期間" : md === "stream" ? "配信期間" : "放送期間";
+  rows.push(row(perLab, per ? `<span class="inum">${esc(per)}</span>` : un("未設定"), "f-from"));
+  const labsOr = (l, html, nofKey) => (l.length ? `<span class="labs">${html}</span>` : nofHas(it, nofKey) ? nn("なし") : un("未設定"));
+  if (md === "stream") rows.push(row("配信サイト", labsOr(m.plat, m.plat.map(vlab).join(""), "plat"), "fMedia"));
+  else {
+    if (hasSt(md)) rows.push(row("放送局", labsOr(m.stations, m.stations.map(x => `<span class="lab">${esc(x)}</span>`).join(""), "st"), "fMedia"));
+    rows.push(row("配信", labsOr(m.vods, m.vods.map(vlab).join(""), "vods"), "fMedia"));
+  }
+  const bc = `<div class="icard ibc"><div class="ich"><span class="ilamp onair">ON AIR</span></div><dl class="idl">${rows.join("")}</dl></div>`;
+  /* MUSIC：1曲1行。左に種類、曲名（太字）、その下に「アーティスト・使われた話」、右端にDL */
   const songs = songRows
-    .map(([k, rows]) => {
-      /* 種類ごとにまとめ、色の帯と種類のラベルは最初の曲だけに出す */
-      if (rows.length) return `<div class="isgrp ${SG_CLS[k]}">${rows.map((r, j) => `<div class="isg isg1" data-jump="sgList"><span class="itag ${SG_CLS[k]}"${j ? ' aria-hidden="true" style="visibility:hidden"' : ""}>${k}</span>${r}</div>`).join("")}</div>`;
-      return ""; // 入力されている曲だけ出す（未設定・なしは出さない）
+    .map(r => {
+      const { st, ar } = songTA(r.x);
+      const sub = [ar.trim() ? esc(ar) : "", r.rng ? `<span class="inum">${esc(r.rng)}</span>` : ""].filter(Boolean).join("<i>・</i>");
+      return `<div class="imsg" data-jump="sgList"><span class="itag ${SG_CLS[r.k]}">${r.k}</span><span class="imn">${st.trim() ? esc(st) : un("曲名 未設定")}</span>${sub ? `<span class="ima">${sub}</span>` : ""}<button type="button" class="dlb${r.x.dl ? " on" : ""}" data-sgdl="${r.i}" aria-pressed="${!!r.x.dl}" aria-label="${esc(r.x.s)}を${r.x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.x.dl ? "♪DL" : "DL"}</button></div>`;
     })
     .join("");
   const links = `<div class="ilinks">${
@@ -316,7 +330,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       ? `<a class="ilk" href="${esc(it.vurl)}" target="_blank" rel="noopener">${esc(vodName(it))}で見る ↗</a>`
       : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL${nofHas(it, "vurl") ? "なし" : "未設定"}</button>`
   }</div>`;
-  return bc + (songs ? `<div class="icard isongs">${songs}</div>` : "") + links;
+  return bc + (songs ? `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span></div>${songs}</div>` : "") + links;
 }
 function renderDetail(it) {
   const cs = coursOf(it);
@@ -329,13 +343,8 @@ function renderDetail(it) {
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
   /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
   const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeTxt(x)));
-  const songRows = byType.map(([tp, l]) => [
-    tp,
-    l.map(
-      ([x, k]) =>
-        `${showRng ? `<span class="irg">${rangeTxt(x) || (l.length === 1 ? "全話" : "")}</span>` : ""}<div class="isgv${x.dl ? " isdl" : ""}">${songCard(x)}</div><button type="button" class="dlb${x.dl ? " on" : ""}" data-sgdl="${k}" aria-pressed="${!!x.dl}" aria-label="${esc(x.s)}を${x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${x.dl ? "♪DL" : "DL"}</button>`,
-    ),
-  ]);
+  /* 曲の行のデータ（種類の順・同じ種類の中は登録順）。rng＝使われた話 */
+  const songRows = byType.flatMap(([tp, l]) => l.map(([x, k]) => ({ k: tp, x, i: k, rng: showRng ? rangeTxt(x) || (l.length === 1 ? "全話" : "") : "" })));
   const md = mediaOf(it).media,
     mv = md === "movie",
     ns = noSched(md);
@@ -347,10 +356,10 @@ function renderDetail(it) {
   const nv = navNeighbors(it.id),
     busy = !!(epEdit || arcEdit || subPaste || epOne != null);
   const navB = (d, lab, ic) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${ic}</button>`;
-  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", "‹")}${navB(1, "次の作品", "›")}<button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${MEDIA_LAB[md] ? `<button type="button" class="dmt mtag m-${md}" data-jump="fMedia" title="放送形態を変える">${MEDIA_LAB[md]}</button>` : ""}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", "‹")}${navB(1, "次の作品", "›")}<button type="button" class="editbtn" id="editItem">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
     ${missDetail(it)}
-    <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">基本情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
+    <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
