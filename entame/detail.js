@@ -318,8 +318,8 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       const { st, ar } = songTA(r.x);
       /* 2行目：「歌」ラベル＋アーティスト、使われた話は枠つきの小さなラベルで見分けやすく */
       /* 話は範囲ごとに1つずつの枠ラベル（飛び飛びでも [1〜10話] [13話] [20〜30話] と分けて並べる） */
-      const sub = [ar.trim() ? `<span class="iar"><b>歌</b>${esc(ar)}</span>` : "", r.rng.length ? `<span class="ieps">${r.rng.map(t => `<span class="iep inum">${esc(t)}</span>`).join("")}</span>` : ""].filter(Boolean).join("");
-      return `<div class="imsg" data-jump="sgList"><span class="itag ${SG_CLS[r.k]}">${r.k}</span><span class="imn">${st.trim() ? esc(st) : un("曲名 未設定")}</span>${sub ? `<span class="ima">${sub}</span>` : ""}<button type="button" class="dlb${r.x.dl ? " on" : ""}" data-sgdl="${r.i}" aria-pressed="${!!r.x.dl}" aria-label="${esc(r.x.s)}を${r.x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.x.dl ? "♪DL" : "DL"}</button></div>`;
+      const sub = [ar.trim() ? `<span class="iar"><b>歌</b>${esc(ar)}</span>` : "", r.rng.length ? `<span class="ieps">${r.rng.map((t, j) => `<span class="iep inum${j === r.now ? " now " + SG_CLS[r.k] : ""}">${esc(t)}</span>`).join("")}</span>` : ""].filter(Boolean).join("");
+      return `<div class="imsg${songRows.nowN == null ? "" : r.now >= 0 ? " isnow" : " notnow"}" data-jump="sgList"><span class="itag ${SG_CLS[r.k]}">${r.k}</span><span class="imn">${st.trim() ? esc(st) : un("曲名 未設定")}</span>${sub ? `<span class="ima">${sub}</span>` : ""}<button type="button" class="dlb${r.x.dl ? " on" : ""}" data-sgdl="${r.i}" aria-pressed="${!!r.x.dl}" aria-label="${esc(r.x.s)}を${r.x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.x.dl ? "♪DL" : "DL"}</button></div>`;
     })
     .join("");
   const links = `<div class="ilinks">${
@@ -335,7 +335,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       ? `<a class="ilk ivod" href="${esc(it.vurl)}" target="_blank" rel="noopener" aria-label="${esc(vodName(it))}で見る">${IC_PLAY}<span class="ilt">${esc(vodName(it))}</span></a>`
       : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL${nofHas(it, "vurl") ? "なし" : "未設定"}</button>`
   }</div>`;
-  return bc + (songs ? `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span></div>${songs}</div>` : "") + links;
+  return bc + (songs ? `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}</div>${songs}</div>` : "") + links;
 }
 function renderDetail(it) {
   const cs = coursOf(it);
@@ -349,7 +349,19 @@ function renderDetail(it) {
   /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
   const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeList(x).length));
   /* 曲の行のデータ（種類の順・同じ種類の中は登録順）。rng＝使われた話 */
-  const songRows = byType.flatMap(([tp, l]) => l.map(([x, k]) => ({ k: tp, x, i: k, rng: showRng ? (rangeList(x).length ? rangeList(x) : l.length === 1 ? ["全話"] : []) : [] })));
+  /* 視聴中の作品は、最後に見た話（並びで一番後ろの視聴済みの話）で流れた曲を目立たせる。now＝塗るラベルの番号 */
+  const lastW = it.s === "視聴中" ? [...episodes(it)].reverse().find(e => e.w) : null;
+  const nowN = lastW ? epNum(lastW.n) : NaN;
+  const hasNow = showRng && Number.isFinite(nowN) && nowN > 0;
+  const songRows = byType.flatMap(([tp, l]) =>
+    l.map(([x, k]) => {
+      const rl = rangeList(x);
+      const rng = showRng ? (rl.length ? rl : l.length === 1 ? ["全話"] : []) : [];
+      const now = !hasNow || !rng.length ? -1 : rl.length ? rangeHit(x, nowN) : 0;
+      return { k: tp, x, i: k, rng, now };
+    }),
+  );
+  songRows.nowN = hasNow && songRows.some(r => r.now >= 0) ? nowN : null;
   const md = mediaOf(it).media,
     mv = md === "movie",
     ns = noSched(md);

@@ -1119,3 +1119,9 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .sg .sg-xdel:hover{background:var(--u-chip);color:var(--u-danger)}
 .sg .sg-exadd{display:block;justify-self:start;width:auto;text-align:left;margin:4px 0 0 78px;border:0;background:none;padding:2px 0;font:inherit;font-size:11.5px;font-weight:700;color:var(--sgc,var(--accent));opacity:.85}
 @media (max-width:560px){.sg .sg-x .sg-xh{display:none}}
+
+/* MUSIC：視聴中の作品は、最後に見た話で流れた曲のラベルを曲の色で塗る。ほかの曲は少し薄く */
+.ich .inow{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--st-now);background:color-mix(in srgb,var(--st-now) 12%,transparent);border-radius:999px;padding:3px 10px}
+.ima .iep.now{background:var(--sgc);border-color:var(--sgc);color:#fff;font-weight:700}
+.ima .iep.now::before{content:"▶ ";font-size:9px;vertical-align:1px}
+.imsg.notnow .imn,.imsg.notnow .ima{opacity:.55}
