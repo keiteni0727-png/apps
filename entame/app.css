@@ -1212,3 +1212,38 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .dhead .dnav,.dhead .editbtn,.sheet:not(.form) .dhead .close{box-sizing:border-box;height:30px;display:inline-flex;align-items:center;justify-content:center;padding-top:0;padding-bottom:0;line-height:1}
 .dhead .dnav{width:30px}
 .sheet:not(.form) .dhead .close{width:30px;padding:0}
+
+/* ===== 一括選択・一括編集 ===== */
+.bselbtn{margin-left:10px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:3px 12px;font:inherit;font-size:12.5px;font-weight:700}
+.bselbtn.on{background:var(--u-ink);color:var(--u-surface);border-color:var(--u-ink)}
+.bgrp{border:0;background:none;color:var(--accent);font:inherit;font-size:12px;font-weight:700;padding:2px 6px;margin-left:6px}
+.row.lst{position:relative}
+.row.lst .bck{position:absolute;left:10px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:20px;height:20px;border-radius:6px;border:2px solid var(--u-line);color:transparent;font-size:12px;background:var(--u-surface);pointer-events:none}
+.row.lst.bsel .bck{background:var(--accent);border-color:var(--accent);color:#fff}
+.row.lst.bsel .slot{background:color-mix(in srgb,var(--accent) 8%,var(--u-surface))}
+body.bmode .row.lst .slot{padding-left:40px}
+#bdockw:empty{display:none}
+.bdock{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:8px;width:min(720px,calc(100% - 24px));background:var(--u-ink);color:var(--u-surface);border-radius:14px;padding:9px 12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.bdock b{font-size:14px;white-space:nowrap}
+.bdock .bsp{flex:1}
+.bdock button{border:0;border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;background:rgba(255,255,255,.15);color:inherit;white-space:nowrap}
+.bdock button.pri{background:var(--u-accent);color:#fff}
+.bdock button:disabled{opacity:.45}
+.bdock .bx{padding:7px 9px}
+body.bmode main{padding-bottom:90px}
+body.bmode #toTop{display:none}
+@media (min-width:900px){.bdock{left:calc(50% + var(--sbw,0px)/2)}}
+@media (max-width:899px){.bdock [data-ball]{display:none}.bdock{gap:6px;padding:8px 10px}}
+.bsheet .blist{display:grid;gap:6px;margin-top:6px}
+.bsec{border:1px solid var(--u-line);border-radius:12px;overflow:hidden;background:var(--u-surface)}
+.bsec .bhd{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:12px 14px;font:inherit;font-size:14.5px;font-weight:700;color:var(--u-ink);text-align:left}
+.bsec .bic{width:20px;text-align:center;color:var(--u-sub)}
+.bsec .bchev{margin-left:auto;color:var(--u-sub)}
+.bsec.dng .bhd{color:var(--u-accent)}
+.bsec .bbody{padding:2px 14px 14px;display:grid;gap:8px}
+.bsec .bbody input{width:100%}
+.bsec .bbody .hint{margin:0;font-size:12px}
+.bap{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.bsec.dng .bap .pri{background:var(--u-accent)}
+body:has(#layer .sheet) .bdock{display:none}
+@media (max-width:899px){.bgrp .bgl{display:none}.bgrp{white-space:nowrap;padding:2px 4px;margin-left:auto}}

@@ -288,6 +288,7 @@ const CLICK_HANDLERS = [
   e => runActions(NAV_ACTIONS, e),
   closeDropdownOnOutsideClick,
   onSubPopClick,
+  onBulkClick,
   e => state.mode === "yt" && runActions(YT_ACTIONS, e),
   e => state.mode === "h" && runActions(HIST_ACTIONS, e),
   e => runActions(ROW_ACTIONS, e),
