@@ -239,7 +239,7 @@ function pcInfo(i) {
 /* ライブラリの1行 */
 function slotRow(i) {
   return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
-    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || state.xser ? kindTag(i) : ""}</span>
+    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || (state.xser && state.series.length) ? kindTag(i) : ""}</span>
     <span class="ttl"><strong>${esc(i.t)}</strong><span class="meta"><span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}</span></span>
     ${pcInfo(i)}<span class="pwide">${stPill(i)}</span></button></div>`;
 }
@@ -635,7 +635,16 @@ function hSubLab() {
   if (m === "s") return { a: "アニメ", x: "ドラマ・バラエティ" }[state.sub] || "";
   return "";
 }
+/* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す。やめたら true */
+function leaveXser() {
+  if (!state.xser) return false;
+  state.xser = false;
+  state.series = [];
+  return true;
+}
 function render() {
+  /* シリーズの絞り込みを外したら、ジャンルをまたぐ表示（アニメ・ドラマのラベルも）も終わり */
+  if (state.xser && !state.series.length) state.xser = false;
   const yt = state.mode === "yt";
   /* YouTubeは「すべて」をなくし、投稿者ごとのタブだけ。今の投稿者がいなければ先頭にする */
   const al = ytAuthors();

@@ -35,6 +35,7 @@ const NAV_ACTIONS = [
   [
     "[data-tygo]",
     el => {
+      leaveXser();
       setMode(el.dataset.go);
       state.type = el.dataset.tygo ? [el.dataset.tygo] : [];
       state.limit = 200;
@@ -45,6 +46,7 @@ const NAV_ACTIONS = [
   [
     "[data-skgo]",
     el => {
+      leaveXser();
       setMode("s");
       state.sub = el.dataset.skgo;
       state.limit = 200;
@@ -55,7 +57,10 @@ const NAV_ACTIONS = [
   [
     "[data-mk]",
     el => {
-      if (el.dataset.go) setMode(el.dataset.go);
+      if (el.dataset.go) {
+        leaveXser();
+        setMode(el.dataset.go);
+      }
       state.sub = el.dataset.mk;
       state.limit = 200;
       render();
@@ -123,7 +128,8 @@ const NAV_ACTIONS = [
       const m = el.dataset.mode;
       sbOnly(m);
       renderSidebar();
-      if (state.mode === m && !state.type.length && state.sub === "all") return;
+      const wasX = leaveXser();
+      if (!wasX && state.mode === m && !state.type.length && state.sub === "all") return;
       setMode(m);
       state.type = [];
       state.sub = "all";
