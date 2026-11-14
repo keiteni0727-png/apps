@@ -230,6 +230,53 @@ function isFinOn(i, day) {
   const j = jst(e.t);
   return !!j && j.day === day;
 }
+/* ---------- お知らせ（番組表のいちばん上）：今日から始まる作品・今日か明日の最終回・未視聴がたまっている作品
+   「✕」を押したものは、その日は出さない（端末ごとに覚える。日付が変わると全部また出す） ---------- */
+const K_NOTICE = "adb.v3.notice";
+function noticeOff() {
+  const today = jst(NOWMIN()).day;
+  const v = ls.get(K_NOTICE);
+  return v && v.d === today && Array.isArray(v.off) ? v.off : [];
+}
+function noticeList() {
+  const now = NOWMIN(),
+    today = jst(now).day,
+    tmr = jst(now + 1440).day;
+  const out = [];
+  items.forEach(i => {
+    if (i.s === "見ない" || i.s === "視聴済み") return;
+    const eps = episodes(i);
+    /* 今日から：最初の話の放送日（話がなければ開始日）が今日 */
+    const j0 = eps.length && eps[0].t ? jst(eps[0].t) : null;
+    if ((j0 ? j0.day : i.from) === today)
+      out.push({ k: "start", it: i, lab: "今日から", txt: j0 && !noTime(eps[0], i) ? `${j0.hm}から ${eps[0].n}` : mediaOf(i).media === "movie" ? "公開日です" : "放送・配信が始まります" });
+    /* 最終回：今日か明日に最終話（まだ見ていない） */
+    const fi = finIdx(i);
+    if (fi >= 0 && !eps[fi].w) {
+      const j = jst(eps[fi].t);
+      if (j && (j.day === today || j.day === tmr))
+        out.push({ k: "fin", it: i, lab: "最終回", txt: `${j.day === today ? "今日" : "明日"}${noTime(eps[fi], i) ? "" : " " + j.hm} ${eps[fi].n}` });
+    }
+    /* たまっています：視聴中で、放送済みの未視聴が3話以上 */
+    if (i.s === "視聴中") {
+      const n = nextInfo(i).back.length;
+      if (n >= 3) out.push({ k: "pile", it: i, lab: "たまっています", txt: `未視聴 ${n}話`, n });
+    }
+  });
+  const ord = { fin: 0, start: 1, pile: 2 };
+  const off = noticeOff();
+  return out.filter(x => !off.includes(x.k + ":" + x.it.id)).sort((a, b) => ord[a.k] - ord[b.k] || (b.n || 0) - (a.n || 0));
+}
+function noticeHtml() {
+  const l = noticeList();
+  if (!l.length) return "";
+  return `<section class="ntc" aria-label="お知らせ"><h3 class="ntc-h">お知らせ<small>${l.length}件</small></h3><div class="ntl">${l
+    .map(
+      x =>
+        `<div class="ntr"><button type="button" class="ntb" data-id="${esc(x.it.id)}"><span class="ntt n-${x.k}">${x.lab}</span><span class="ntm"><b>${esc(x.it.t)}</b><small>${esc(x.txt)}</small></span></button><button type="button" class="ntx" data-ntoff="${esc(x.k + ":" + x.it.id)}" aria-label="今日はこのお知らせを出さない" title="今日は出さない">✕</button></div>`,
+    )
+    .join("")}</div></section>`;
+}
 /* ---------- 番組表（アニメ・ドラマ）：作品が少ないので1作品を大きいカードで。PCは1週間を曜日ごとに2列、スマホは上の曜日タブで1日ずつ ---------- */
 /* 番組表に出すのは「視聴中」で、今が放送期間の中の作品だけ（昔の作品は出さない）
    ・話の放送日がある：1話が1週間以内に始まる〜最終話の放送から14日以内（見逃した分を追いかける猶予）。最終話が先なら放送中
@@ -371,7 +418,7 @@ function renderWeek() {
     if (nxId) break;
   }
   weekSig = g.map(x => x.k + ":" + x.list.map(i => i.id).join(",")).join("|") + "#" + [...liveIds].join(",") + "#" + nxId;
-  let h = `<div class="wtop" id="clock">${weekTopHtml()}</div>`;
+  let h = `<div class="wtop" id="clock">${weekTopHtml()}</div>${noticeHtml()}`;
   const card = (x, i, preferBack) => {
     const key = i.id + "@" + x.k;
     return weekCard(i, x.day && !preferBack ? dkey(x.day) : null, key === nxId, liveIds.has(key), preferBack);
