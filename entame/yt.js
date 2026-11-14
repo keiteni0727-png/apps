@@ -730,18 +730,13 @@ const YT_DETAIL_ACTIONS = [
         return;
       }
       const id = x.id,
-        prev = { ...(ytOver[id] || {}) };
-      delete ytOver[id];
+        at = Date.now();
+      ytOver[id] = { ...(ytOver[id] || {}), deleted: at };
       ytRebuild();
       close();
       render();
-      removeDoc("yt", id).catch(fail);
-      toastUndo(`「${x.t.slice(0, 18)}」を削除しました`, () => {
-        ytOver[id] = prev;
-        ytRebuild();
-        render();
-        saveDoc("yt", id, prev).catch(fail);
-      });
+      mergeDoc("yt", id, { deleted: at }).catch(fail);
+      toastUndo(`「${x.t.slice(0, 18)}」をゴミ箱に移しました`, () => trashRestore("yt", id, true));
     },
   ],
 ];

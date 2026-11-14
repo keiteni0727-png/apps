@@ -88,8 +88,48 @@ function settingsHtml() {
     <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
     ${ser ? seriesSettingsHtml() : masterListHtml()}
     <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>
+    ${trashHtml()}
     ${backupHtml()}
     ${accountHtml()}`;
+}
+/* ---------- ゴミ箱：削除した作品（アニメ・ドラマなどとYouTube）。30日間は戻せる ---------- */
+let trashOpen = false,
+  trashArm = "";
+function trashList() {
+  const a = Object.entries(over)
+    .filter(([, o]) => o && o.deleted && typeof o.t === "string")
+    .map(([id, o]) => ({ col: "titles", id, t: o.t, at: +o.deleted, tag: kindTag({ k: "a", ...o }) }));
+  const b = Object.entries(ytOver)
+    .filter(([, o]) => o && o.deleted && o.t)
+    .map(([id, o]) => ({ col: "yt", id, t: o.t, at: +o.deleted, tag: `<span class="kind yauth">YouTube</span>` }));
+  return [...a, ...b].sort((x, y) => y.at - x.at);
+}
+function trashHtml() {
+  const l = trashList();
+  const row = x => {
+    const key = `${x.col}/${x.id}`,
+      d = new Date(x.at),
+      left = Math.max(1, Math.ceil((x.at + TRASH_DAYS * 864e5 - Date.now()) / 864e5)),
+      arm = trashArm === key;
+    return `<div class="trrow"><span class="trk">${x.tag}</span><span class="trt"><b>${esc(x.t)}</b><small>${d.getMonth() + 1}/${d.getDate()} に削除・あと${left}日で完全に削除</small></span><span class="trb"><button type="button" class="u-btn sm" data-trback="${esc(key)}">戻す</button><button type="button" class="u-btn sm ghost${arm ? " armed" : ""}" data-trdel="${esc(key)}">${arm ? "もう一度押すと完全に削除" : "完全に削除"}</button></span></div>`;
+  };
+  return `<div class="bkbox bkdata trash"><div class="bkhd"><b>ゴミ箱</b><span class="trn">${l.length ? `${l.length}件` : "空です"}</span>${
+    l.length ? `<span class="bkrow"><button type="button" class="u-btn sm ghost" data-trtog="1" aria-expanded="${trashOpen}">${trashOpen ? "閉じる" : "中を見る"}</button></span>` : ""
+  }</div>
+    <p class="hint">削除した作品は${TRASH_DAYS}日間ここに残り、戻せます。${TRASH_DAYS}日を過ぎると完全に削除します。</p>
+    ${trashOpen && l.length ? `<div class="trlist">${l.map(row).join("")}</div>` : ""}</div>`;
+}
+/* ゴミ箱から戻す（fromToast＝削除した直後の「元に戻す」から） */
+function trashRestore(col, id, fromToast) {
+  const src = col === "yt" ? ytOver : over;
+  if (!src[id]) return;
+  src[id] = { ...src[id], deleted: null };
+  if (col === "yt") ytRebuild();
+  else rebuild();
+  render();
+  refreshSettings();
+  mergeDoc(col, id, { deleted: null }).catch(fail);
+  if (!fromToast) toast(`「${String(src[id].t || "").slice(0, 18)}」を戻しました`);
 }
 /* ---------- バックアップ：全データ（作品・話数・マスタ・YouTube）を1つのファイルに書き出す／ファイルから戻す ---------- */
 let bkPending = null; // 読み込んだファイルの中身（戻す前の確認中）
@@ -209,6 +249,8 @@ document.addEventListener("pointerup", endDrag);
 document.addEventListener("pointercancel", endDrag);
 function openSettings() {
   bkPending = null;
+  trashOpen = false;
+  trashArm = "";
   bkArm = false;
   openId = null;
   ytOpen = null;
@@ -318,6 +360,40 @@ function toast(m) {
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
   ["[data-logout]", () => doLogout()],
+  [
+    "[data-trtog]",
+    () => {
+      trashOpen = !trashOpen;
+      trashArm = "";
+      refreshSettings();
+    },
+  ],
+  [
+    "[data-trback]",
+    el => {
+      const [col, id] = el.dataset.trback.split("/");
+      trashArm = "";
+      trashRestore(col, id);
+    },
+  ],
+  [
+    "[data-trdel]",
+    el => {
+      const key = el.dataset.trdel;
+      if (trashArm !== key) {
+        trashArm = key;
+        refreshSettings();
+        return;
+      }
+      const [col, id] = key.split("/");
+      const src = col === "yt" ? ytOver : over;
+      const t = String((src[id] || {}).t || "").slice(0, 18);
+      trashArm = "";
+      trashGone(col, id);
+      refreshSettings();
+      toast(`「${t}」を完全に削除しました`);
+    },
+  ],
   ["[data-bkout]", () => backupOut()],
   [
     "[data-bkcancel]",

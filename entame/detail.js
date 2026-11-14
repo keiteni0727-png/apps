@@ -859,7 +859,7 @@ const DETAIL_ACTIONS = [
     },
   ],
   [null, (el, it, e) => !!epEdit && runActions(EPEDIT_ACTIONS, e, it)],
-  /* 削除：もう一度押すと削除（元に戻せる） */
+  /* 削除：もう一度押すとゴミ箱へ（30日間は設定のゴミ箱から戻せる） */
   [
     "#delItem",
     (el, it) => {
@@ -870,18 +870,13 @@ const DETAIL_ACTIONS = [
         return;
       }
       const id = it.id,
-        prev = { ...(over[id] || {}) };
-      delete over[id];
+        at = Date.now();
+      over[id] = { ...(over[id] || {}), deleted: at };
       rebuild();
       close();
       render();
-      removeDoc("titles", id).catch(fail);
-      toastUndo(`「${it.t.slice(0, 18)}」を削除しました`, () => {
-        over[id] = prev;
-        rebuild();
-        render();
-        saveDoc("titles", id, prev).catch(fail);
-      });
+      mergeDoc("titles", id, { deleted: at }).catch(fail);
+      toastUndo(`「${it.t.slice(0, 18)}」をゴミ箱に移しました`, () => trashRestore("titles", id, true));
     },
   ],
 ];

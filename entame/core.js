@@ -454,6 +454,26 @@ function fixOldData() {
     if (loaded) rebuild();
   });
 }
+/* ゴミ箱：削除した作品は deleted（削除した日時）を付けて30日残し、過ぎたら完全に削除する（最新のデータが届いたあと1回だけ） */
+const TRASH_DAYS = 30;
+const purged = { titles: false, yt: false };
+function trashGone(col, id) {
+  const src = col === "yt" ? ytOver : over;
+  delete src[id];
+  removeDoc(col, id).catch(fail);
+  if (col === "titles") {
+    delete prog[id];
+    removeDoc("progress", id).catch(fail);
+  }
+}
+function purgeTrash(col) {
+  if (purged[col] || !db) return;
+  purged[col] = true;
+  const lim = Date.now() - TRASH_DAYS * 864e5;
+  Object.entries(col === "yt" ? ytOver : over).forEach(([id, o]) => {
+    if (o && o.deleted && +o.deleted < lim) trashGone(col, id);
+  });
+}
 /* 保存先につないで、作品・視聴記録・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
 async function initStore() {
   const conn = await U.store();
@@ -492,6 +512,7 @@ async function initStore() {
     s => {
       syncMark("titles", s);
       over = docsOf(s);
+      if (s.fromCache === false) purgeTrash("titles");
       got.titles = true;
       done();
     },
@@ -519,6 +540,7 @@ async function initStore() {
   }, onErr);
   db.collection("yt").onSnapshot(s => {
     ytOver = docsOf(s);
+    if (s.fromCache === false) purgeTrash("yt");
     calcLastAt();
     ytRebuild();
     render();
