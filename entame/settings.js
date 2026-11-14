@@ -88,6 +88,7 @@ function settingsHtml() {
     <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
     ${ser ? seriesSettingsHtml() : masterListHtml()}
     <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>
+    ${tmpSongSplitHtml()}
     ${accountHtml()}`;
 }
 /* 設定の一覧：⠿を押さえたまま上下に動かして並び替え（マウス・指どちらでも） */
@@ -244,8 +245,44 @@ function toast(m) {
   U.toast(stLabel(m), { ms: 2000 });
 }
 /* 設定画面の中の操作 */
+/* ===== 一時的な処理（終わったら消す）：曲名の欄に「「曲名」アーティスト」の形で入っている曲を、まとめて入力と同じルールで曲名とアーティストに分ける ===== */
+function tmpSongSplitList() {
+  const ch = [];
+  items.forEach(it => {
+    let n = 0;
+    const songs = songsOf(it).map(x => {
+      const { st, ar } = songTA(x);
+      if (ar.trim()) return x;
+      const p = songParse(st);
+      if (!p || !p.st) return x;
+      n++;
+      return { ...x, st: p.st, ar: p.ar, s: songJoin(p.st, p.ar) };
+    });
+    if (n) ch.push([it.id, songs, n]);
+  });
+  return ch;
+}
+function tmpSongSplitHtml() {
+  const ch = tmpSongSplitList();
+  const n = ch.reduce((a, c) => a + c[2], 0);
+  return `<div class="tmpbox"><b>一時的な処理：曲名とアーティストを分ける</b><p class="hint">曲名の欄に「「曲名」アーティスト」の形で入っている曲を、まとめて入力と同じルールで分けます。${n ? `対象：${ch.length}作品・${n}曲` : "対象の曲はありません（処理は終わっています）"}</p>${n ? `<button type="button" class="u-btn sm" data-tmpsplit="1">${n}曲を分ける</button>` : ""}</div>`;
+}
 const SETTINGS_ACTIONS = [
   ["[data-logout]", () => doLogout()],
+  [
+    "[data-tmpsplit]",
+    () => {
+      const ch = tmpSongSplitList();
+      ch.forEach(([id, songs]) => {
+        over[id] = { ...(over[id] || {}), songs };
+        mergeDoc("titles", id, { songs }).catch(fail);
+      });
+      rebuild();
+      render();
+      refreshSettings();
+      toast(`${ch.reduce((a, c) => a + c[2], 0)}曲を曲名とアーティストに分けました`);
+    },
+  ],
   /* 表示：自動（端末に合わせる）／ライト／ダーク */
   [
     "[data-theme-set]",

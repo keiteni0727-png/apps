@@ -1271,3 +1271,6 @@ body:has(#layer .sheet) .bdock{display:none}
   .field .chips:has(>button[data-fst]){flex-wrap:nowrap;gap:3px}
   .field .chips>button[data-fst]{flex:1 1 auto!important;min-width:0!important;padding-left:4px!important;padding-right:4px!important;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
+/* 一時的な処理（終わったら消す） */
+.tmpbox{border:1px dashed var(--accent);border-radius:12px;padding:10px 12px;margin:12px 0;display:grid;gap:6px;justify-items:start}
+.tmpbox .hint{margin:0;font-size:12px}
