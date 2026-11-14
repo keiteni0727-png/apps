@@ -401,6 +401,8 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
 .sg-f{display:grid;grid-template-columns:1fr!important;gap:5px}
 .sg-f label{display:grid;min-width:0;grid-template-columns:72px 1fr;align-items:center;gap:6px}
 .sg-f label span{font-size:11px}
+.sg-f .sg-q span{color:var(--sgc)}
+.sg .sg-f .sg-qi{border-style:dashed;background:transparent}
 .sg .sg-f input,.sg .sg-r input,.sg .sg-r select{font-size:13px!important;padding:5px 8px;line-height:1.35;border-radius:7px}
 .sg .sg-r{gap:5px;font-size:12px;row-gap:4px}
 .sg .sg-r .sg-rl{width:72px;flex:none;margin:0 1px 0 0;font-size:11px} /* 曲名・アーティスト欄と左端をそろえる（ラベル72px＋すき間6px） */

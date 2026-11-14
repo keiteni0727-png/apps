@@ -171,6 +171,20 @@ const songText = i =>
 /* 曲名とアーティストは入力欄ごとに別々に保存（自動で分けたりつないだりしない）。
    s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
+/* まとめて入力：「曲名」アーティスト を曲名とアーティストに分ける。
+   曲名の中の「」も対応を数えるので「作品No.2「春」イ長調」のような曲名も切れない。形が違えば null（どちらの欄も変えない） */
+const songParse = v => {
+  const s = (v || "").trim();
+  const open = s[0],
+    close = { "「": "」", "『": "』" }[open];
+  if (!close) return null;
+  let d = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === open) d++;
+    else if (s[i] === close && --d === 0) return { st: s.slice(1, i).trim(), ar: s.slice(i + 1).trim() };
+  }
+  return null;
+};
 const songJoin = (st, ar) => [st.trim(), ar.trim()].filter(Boolean).join(" ");
 /* 詳細のカード用：曲名とアーティストを2段で */
 const songCard = x => {

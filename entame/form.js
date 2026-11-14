@@ -58,7 +58,8 @@ function songRowsHtml() {
   const none = !f.songs.length && (f.noSongs || []).length > 0;
   const card = (x, k) => {
     return `<div class="sg" data-sg="${k}">
-    <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
+    <div class="sg-f"><label class="sg-q"><span>まとめて入力</span><input class="sg-qi" placeholder="「曲名」アーティスト で入れると下に分けて入ります" autocomplete="off" enterkeyhint="done"></label>
+      <label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
     <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"><span>話</span>${x.a == null && x.b == null ? `<span class="sg-all">全話</span>` : ""}
       <span class="sg-sp"></span>
@@ -502,7 +503,7 @@ const FORM_ACTIONS = [
         const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
         form.songs.push({ type: el.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
       },
-      () => document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-st`)?.focus(),
+      () => document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-qi`)?.focus(),
     ),
   ],
   ["[data-sgdel]", formEdit(el => form.songs.splice(+el.dataset.sgdel, 1))],

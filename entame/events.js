@@ -477,6 +477,17 @@ const INPUT_ACTIONS = [
       if (!e.isComposing) searchSoon();
     },
   ],
+  /* 曲のまとめて入力：「曲名」アーティスト の形になったら、曲名とアーティストの欄に分けて入れる */
+  [
+    "[data-sg] .sg-qi",
+    t => {
+      const p = songParse(t.value);
+      if (!p) return;
+      const r = t.closest("[data-sg]");
+      r.querySelector(".sg-st").value = p.st;
+      r.querySelector(".sg-ar").value = p.ar;
+    },
+  ],
   /* 話数の編集：話数・サブタイトル */
   [
     "[data-er] input",
