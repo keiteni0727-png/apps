@@ -1597,7 +1597,7 @@ document.addEventListener('click', async e => {
       case 'zoom':
         $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg" style="align-items:center"><img src="${el.src}" style="max-width:94vw;max-height:86vh;border-radius:18px" data-a="close"></div>`; break;
     }
-  }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : 'うまくいきませんでした')); }
+  }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : ((!err.code && err.message) || 'うまくいきませんでした'))); }
 });
 </script>
 </body>
