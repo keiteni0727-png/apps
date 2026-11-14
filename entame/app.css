@@ -598,8 +598,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .miss{display:inline-flex}
 .miss.pconly{display:none}
 @media (min-width:900px){.miss.pconly{display:inline-flex}}
-/* 詳細：1行に畳んだアラート。開くと項目ごとのボタン（押すとその項目の編集へ）。YouTube（.ypc）はPCだけ */
-@media (max-width:899px){.dmiss.ypc{display:none}}
+/* 詳細：1行に畳んだアラート。開くと項目ごとのボタン（押すとその項目の編集へ） */
 @media (min-width:0px){
   .dmiss{display:block;margin:10px 0 0;border-radius:var(--u-r);background:var(--u-warn2);color:var(--u-warn);font-size:12.5px}
   .dmiss.hot{background:var(--u-danger2);color:var(--u-danger)}
@@ -617,8 +616,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .dmiss .mi button:first-child:not(:last-child){border-radius:999px 0 0 999px}
   .dmiss .mi .nb{border-left:0;border-radius:0 999px 999px 0;padding:3px 9px;font-weight:500;opacity:.85}
 }
-/* 絞り込み：未入力ありスイッチ（ライブラリ）と項目ごとの絞り込み。YouTube（.ypc）はPCだけ */
-@media (max-width:899px){.misw.ypc{display:none}}
+/* 絞り込み：未入力ありスイッチ（ライブラリ・YouTube）と項目ごとの絞り込み */
 @media (min-width:0px){
   .misw{display:inline-flex}
     .unsw.misw.on{border-color:var(--u-warn);color:var(--u-warn)}
@@ -1230,7 +1228,7 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 /* スマホの未入力：一覧の印は件数だけ、項目の絞り込みは横スクロール、詳細のボタンは少し大きく */
 .miss .mc{display:none}
 @media (max-width:899px){
-  .row .miss{padding:0 7px 0 3px}
+  .row .miss,.yrow .miss{padding:0 7px 0 3px}
   .miss .mh{display:none}
   .miss .mc{display:inline;font-family:var(--u-num)}
   .miss b{margin-right:3px}
