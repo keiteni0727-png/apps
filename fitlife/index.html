@@ -180,7 +180,7 @@ form[data-gtype=time] .gstr, form[data-gtype=time] .gstr-i, form[data-gtype=str]
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { FOODS } from "./foods.js";
 import { EXERCISES, EX_CATS } from "./exercises.js";
 
@@ -256,7 +256,7 @@ const S = {
   user:null, role:null, cfg:{}, share:{}, profile:{}, cheers:[], invite:null,
   data:{ meals:[], gym:[], weights:[], water:[], sleep:[] }, denied:{},
   privMeta:undefined, key:null, priv:{ logs:[], photos:[] },
-  game:{}, gchars:[],
+  game:{}, gameReady:false, gchars:[],
   tab:'home',
 };
 let subs = [], colSubs = [], privSubs = [];
@@ -298,7 +298,7 @@ if(!configured){
 
 async function onUser(user){
   unsub(subs); unsub(colSubs); unsub(privSubs);
-  Object.assign(S, { user, role:null, cheers:[], invite:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, game:{}, gchars:[], tab:'home' });
+  Object.assign(S, { user, role:null, cheers:[], invite:null, cfg:{}, share:{}, profile:{}, denied:{}, privMeta:undefined, key:null, priv:{logs:[],photos:[]}, game:{}, gameReady:false, gchars:[], tab:'home' });
   S.data = { meals:[], gym:[], weights:[], water:[], sleep:[] };
   if(!user){ renderLogin(); return; }
   $app.innerHTML = `<div class="center">${IC.heart.replace('<svg','<svg class="big-heart"')}<p class="muted">読み込み中…</p></div>`;
@@ -345,7 +345,7 @@ function startListeners(){
     S.gchars = s.docs.map(d => ({ id:'c_' + d.id, docId:d.id, ...d.data() })); render();
   }, ()=>{}));
   if(S.role === 'member') startColListeners();
-  else subs.push(onSnapshot(doc(db,'game','main'), s => { S.game = s.data()||{}; render(); }, () => { S.game = {}; }));
+  else subs.push(onSnapshot(doc(db,'game','main'), { includeMetadataChanges:true }, s => { if(s.metadata.fromCache && !S.gameReady) return; S.game = s.data()||{}; S.gameReady = true; render(); }, () => { S.gameReady = false; render(); }));
 }
 
 function startColListeners(){
@@ -362,7 +362,7 @@ function startColListeners(){
     }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
   }
   colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
-  colSubs.push(onSnapshot(doc(db,'game','main'), s => { S.game = s.data()||{}; render(); }, () => { S.game = {}; }));
+  colSubs.push(onSnapshot(doc(db,'game','main'), { includeMetadataChanges:true }, s => { if(s.metadata.fromCache && !S.gameReady) return; S.game = s.data()||{}; S.gameReady = true; render(); }, () => { S.gameReady = false; render(); }));
 }
 
 /* ===== ミッション・ガチャのしくみ ===== */
@@ -370,29 +370,49 @@ const allChars = () => [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARI
 const charPic = c => `<img src="${c.img}" alt="">`;
 const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], ...S.game });
 const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.rarity, at:Date.now(), kind }, ...(g.history || [])].slice(0, 50); };
-async function saveGame(g){
-  // 2週間より前の受け取り記録は消して、データを小さく保つ
-  const cut = daysAgo(14);
-  g.claimed = Object.fromEntries(Object.entries(g.claimed || {}).filter(([d]) => d >= cut));
-  g.cheerDone = (g.cheerDone || []).slice(-100);
+// ガチャのデータは、毎回サーバーの最新データを読んでから書き換える（画面の古いデータで上書きしない）
+async function updateGame(fn){
+  if(!S.gameReady) throw new Error('読み込み中だよ。少し待ってからもう一度押してね');
+  const ref = doc(db,'game','main');
+  let out;
+  const g = await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    const g = { tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], ...(snap.exists() ? snap.data() : {}) };
+    out = fn(g);
+    // 「どの日にどのミッションを受け取ったか」の印だけ2週間で整理（ずかん・履歴は消えない）
+    const cut = daysAgo(14);
+    g.claimed = Object.fromEntries(Object.entries(g.claimed || {}).filter(([d]) => d >= cut));
+    g.cheerDone = (g.cheerDone || []).slice(-100);
+    tx.set(ref, g);
+    return g;
+  });
   S.game = g; render();
-  await setDoc(doc(db,'game','main'), g);
+  return out;
 }
 const claimedToday = () => G().claimed[today()] || [];
 const pendingGifts = () => { const done = new Set(G().cheerDone); return S.cheers.filter(c => c.ticket && !done.has(c.id)); };
 async function claim(k){
-  const g = G(), t = today(), got = [...(g.claimed[t] || [])];
-  if(got.includes(k)) return;
+  const t = today();
   if(k !== 'rest'){ const m = MISSIONS.find(x => x.k === k); if(!m || !m.ok(t)) throw new Error('まだクリアしていないよ'); }
-  got.push(k); let add = 1, msg = 'チケット＋1 🎟️';
-  if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
-  g.claimed = { ...g.claimed, [t]: got }; g.tickets = (g.tickets || 0) + add;
-  await saveGame(g); toast(msg);
+  const msg = await updateGame(g => {
+    const got = [...(g.claimed[t] || [])];
+    if(got.includes(k)) return '';
+    got.push(k); let add = 1, msg = 'チケット＋1 🎟️';
+    if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
+    g.claimed = { ...g.claimed, [t]: got }; g.tickets = (g.tickets || 0) + add;
+    return msg;
+  });
+  if(msg) toast(msg);
 }
 async function claimGifts(){
-  const gifts = pendingGifts(); if(!gifts.length) return;
-  const g = G(); g.cheerDone = [...g.cheerDone, ...gifts.map(c => c.id)]; g.tickets += gifts.length;
-  await saveGame(g); toast(`${FROM}からチケット＋${gifts.length} 🎟️`);
+  if(!pendingGifts().length) return;
+  const n = await updateGame(g => {
+    const done = new Set(g.cheerDone || []);
+    const ids = S.cheers.filter(c => c.ticket && !done.has(c.id)).map(c => c.id);
+    g.cheerDone = [...(g.cheerDone || []), ...ids]; g.tickets = (g.tickets || 0) + ids.length;
+    return ids.length;
+  });
+  if(n) toast(`${FROM}からチケット＋${n} 🎟️`);
 }
 function rollChar(){
   const chars = allChars();
@@ -403,19 +423,27 @@ function rollChar(){
   if(!pool.length) pool = chars;
   return pool[Math.floor(Math.random() * pool.length)];
 }
+let PULLING = false;
 async function pullGacha(){
-  const g = G();
+  if(PULLING) return;
   if(!allChars().length){ toast('まだキャラがいないよ'); return; }
-  if(g.tickets < 1){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
-  const c = rollChar(), had = (g.coll[c.id] || 0) > 0;
-  g.tickets--; g.pulls = (g.pulls || 0) + 1;
-  g.coll = { ...g.coll, [c.id]: (g.coll[c.id] || 0) + 1 };
-  let bonus = 0;
-  if(had){ g.shards = (g.shards || 0) + 1; while(g.shards >= SHARD_NEED){ g.shards -= SHARD_NEED; g.tickets++; bonus++; } }
-  addHist(g, c, had ? 'dup' : 'new');
-  $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet" style="text-align:center">${capsuleSVG()}<p class="muted">ガチャガチャ…</p></div></div>`;
-  await saveGame(g);
-  setTimeout(() => showResult(c, had, bonus), 1300);
+  if(G().tickets < 1){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
+  PULLING = true;
+  try{
+    const r = await updateGame(g => {
+      if(g.tickets < 1) return null;
+      const c = rollChar(), had = (g.coll[c.id] || 0) > 0;
+      g.tickets--; g.pulls = (g.pulls || 0) + 1;
+      g.coll = { ...g.coll, [c.id]: (g.coll[c.id] || 0) + 1 };
+      let bonus = 0;
+      if(had){ g.shards = (g.shards || 0) + 1; while(g.shards >= SHARD_NEED){ g.shards -= SHARD_NEED; g.tickets++; bonus++; } }
+      addHist(g, c, had ? 'dup' : 'new');
+      return { c, had, bonus };
+    });
+    if(!r){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
+    $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet" style="text-align:center">${capsuleSVG()}<p class="muted">ガチャガチャ…</p></div></div>`;
+    setTimeout(() => showResult(r.c, r.had, r.bonus), 1300);
+  }finally{ PULLING = false; }
 }
 function showResult(c, dup, bonus = 0){
   $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><div class="reveal sparkle">
@@ -682,7 +710,9 @@ function viewHome(){
   return html + pastCheers();
 }
 const FROM = 'Keisuke';
+const gameWait = () => `<div class="card"><p class="muted" style="margin:0">ガチャのデータを読み込み中…</p></div>`;
 function missionCard(){
+  if(!S.gameReady) return gameWait();
   const t = today(), got = claimedToday(), g = G(), gifts = pendingGifts();
   const allDone = MISSIONS.every(m => got.includes(m.k));
   return `<div class="card"><h2>🌟 今日のミッション<span class="sub"><span class="tix">🎟️ ${g.tickets}</span></span></h2>
@@ -697,6 +727,7 @@ function missionCard(){
   </div>`;
 }
 function viewGacha(){
+  if(!S.gameReady) return gameWait();
   const g = G(), chars = allChars();
   if(!chars.length) return `<div class="card gacha-top"><p style="font-size:40px;margin:6px 0">🎁</p><p style="margin:0">ガチャのキャラを準備中だよ</p>
     <p class="muted">${FROM}がキャラを入れてくれるのを待っててね。チケットはためておけます（いま 🎟️ ${g.tickets}枚）</p></div>`;
@@ -744,6 +775,7 @@ function viewOwnerHome(){
   return html;
 }
 function ownerGachaCard(){
+  if(!S.gameReady) return `<div class="card"><h2>🎰 彼女のガチャ</h2><p class="muted" style="margin:0">読み込み中…（ずっとこのままなら、Firebaseのルールを確認してね）</p></div>`;
   const g = G(), chars = allChars();
   const owned = chars.filter(c => g.coll[c.id] > 0).length;
   const when = ms => { const d = new Date(ms); return `${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`; };
