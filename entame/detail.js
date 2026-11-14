@@ -127,7 +127,8 @@ function parseSubtitles(text) {
   return out.filter(e => e.sub && !seen.has(e.n) && seen.add(e.n));
 }
 
-let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}
+let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
+let epOne = null; // 1話だけ編集中の話の番号
 /* 長編の「〇〇編」：作品の arcs = [{name, a:最初の話, b:最後の話(なし=最後まで)}] */
 let arcEdit = null, // 編集中の下書き
   arcFold = new Map(); // 編ごとの開閉を手で変えたもの（名前#最初の話 → 開いているか）
@@ -173,7 +174,7 @@ function subPasteHtml(it) {
     <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " miss" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span>${esc(r.sub)}${r.idx >= 0 && r.old && r.old !== r.sub ? `<small>今：${esc(r.old)}</small>` : ""}</span>${r.dateCh ? `<small class="dch${p.useDate ? " on" : ""}">日付 ${md(r.oldDay)} → <b>${md(r.date)}</b>${r.date.slice(0, 4) !== r.oldDay.slice(0, 4) ? `（${r.date.slice(0, 4)}年）` : ""}</small>` : ""}<span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
     ${dch ? `<div class="dconfirm"><b>貼り付けた放送日が、登録済みの日付と${dch}話分違います。</b><label class="yr"><input type="checkbox" id="spDate" ${p.useDate ? "checked" : ""}>日付も貼り付けた内容に更新する（時刻はそのまま）</label></div>` : ""}
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
 }
 /* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
 function nextIdx(eps) {
@@ -181,13 +182,12 @@ function nextIdx(eps) {
   return a >= 0 ? a : eps.findIndex(e => !e.w);
 }
 function epListHtml(it, eps) {
-  if (subPaste) return subPasteHtml(it);
   if (arcEdit) return arcEditHtml();
   const A = it.k === "a";
   if (!eps.length)
     return (
       (A
-        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加するか、各話リストを貼り付けてください。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button><button type="button" id="spOpen">各話リストを貼り付け</button></div>`
+        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加してください（その中の「Wikiから貼り付け」で各話リストも取り込めます）。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`
         : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加できます。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`)
     );
   const w = eps.filter(e => e.w).length;
@@ -197,9 +197,11 @@ function epListHtml(it, eps) {
     const n = epNum(e.n);
     return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
   };
+  /* 1話の行：押すと視聴チェック、右端の ✎ でその話だけ編集 */
   const epRow = (e, i) => {
+    if (epOne === i) return epOneHtml(it, e, i);
     const fut = !aired(e);
-    return `<button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button>`;
+    return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
   };
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
   let rowsHtml,
@@ -230,13 +232,23 @@ function epListHtml(it, eps) {
       .join("");
     arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
   } else rowsHtml = eps.map(epRow).join("");
-  return `<div class="epset"><button type="button" id="allAired">放送済みを全部 ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<span class="epmore"><button type="button" id="epMore" aria-label="その他の操作" aria-expanded="false">…</button><span class="epmenu" id="epMenu" hidden>${A ? `<button type="button" id="spOpen">サブタイトルを貼り付け</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編（〇〇編）を登録</button></span></span></div>
+  return `<div class="epset"><button type="button" id="allAired">放送済み<span class="epx">を全部</span> ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編を登録</button></div>
     ${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps" role="list">${rowsHtml}</div>`;
+}
+/* 1話だけ編集：その行を話数・サブタイトル・放送日の入力欄にする */
+function epOneHtml(it, e, i) {
+  const A = it.k === "a";
+  const j = jst(e.t);
+  return `<div class="epw e1${A ? "" : " nosub"}" role="listitem" data-e1="${i}">
+    <input class="e1-n" value="${esc(e.n)}" aria-label="話数" autocomplete="off">
+    ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
+    <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="20180825" value="${j ? j.day : ""}" aria-label="放送日（例：20180825）">
+    <div class="e1-b"><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
 }
 function epEditorHtml(it) {
   const l = epEdit.list;
   const A = it.k === "a";
-  return `<div class="eped${A ? "" : " nosub"}">${
+  return `${A ? `<div class="edtop"><button type="button" id="spOpen">Wikiから貼り付け</button><span class="hint">各話リストからサブタイトル・放送日を読み取ります</span></div>` : ""}<div class="eped${A ? "" : " nosub"}">${
     l.length
       ? l
           .map((e, i) => {
@@ -327,7 +339,7 @@ function renderDetail(it) {
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
-    <div id="epArea">${epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
+    <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
 /* 詳細のアラート（PCだけ）：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */
 let dmissKeep = false;
@@ -355,7 +367,7 @@ function refreshSheet() {
 function refreshEditor() {
   const it = items.find(x => x.id === openId);
   const a = $("#epArea");
-  if (it && a && epEdit) a.innerHTML = epEditorHtml(it);
+  if (it && a && epEdit && !subPaste) a.innerHTML = epEditorHtml(it);
 }
 function openDetail(id) {
   const it = items.find(x => x.id === id);
@@ -363,6 +375,7 @@ function openDetail(id) {
   openId = id;
   epEdit = null;
   subPaste = null;
+  epOne = null;
   arcEdit = null;
   arcFold = new Map();
   dmissKeep = false;
@@ -500,11 +513,11 @@ function readPaste(it) {
     toast("話数とサブタイトルを読み取れませんでした。「第1話」「1話」などで始まる行が必要です");
     return;
   }
-  const eps = episodes(it);
+  const eps = epEdit ? epEdit.list : episodes(it);
   const fy = yearOf(it) || new Date().getFullYear();
   subPaste = {
     text,
-    addMissing: false,
+    addMissing: !eps.length,
     useDate: false,
     rows: parsed.map(r => {
       const idx = eps.findIndex(x => epNum(x.n) === r.n);
@@ -529,7 +542,7 @@ function readPaste(it) {
 }
 /* 読み取った内容でサブタイトル（選んだときは日付も）を更新し、ない話は追加 */
 function applyPaste(it) {
-  const l = episodes(it);
+  const l = epEdit ? epEdit.list : episodes(it);
   let n = 0,
     dn = 0;
   const p = subPaste;
@@ -568,7 +581,14 @@ function applyPaste(it) {
     l.sort((a, b) => (epNum(a.n) ?? 0) - (epNum(b.n) ?? 0));
   }
   subPaste = null;
-  saveEps(it, l, [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : ""].filter(Boolean).join("・") + "を更新しました");
+  const msg = [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : ""].filter(Boolean).join("・");
+  /* 話数の編集の中から開いたときは、編集中の話数に入れて編集画面に戻る（保存は「話数を保存」で） */
+  if (epEdit) {
+    refreshSheet();
+    toast(`${msg}を反映しました。「話数を保存」で保存されます`);
+    return;
+  }
+  saveEps(it, l, msg + "を更新しました");
   refreshSheet();
 }
 /* 作品の詳細画面（it＝開いている作品） */
@@ -611,24 +631,24 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["[data-dtab]", el => setDTab(el.dataset.dtab)],
-  /* 話数の「…」メニュー。ほかの場所を押したら閉じる */
+  /* 1話だけ編集 */
   [
-    "#epMore",
-    () => {
-      const m = $("#epMenu");
-      if (!m) return;
-      m.hidden = !m.hidden;
-      $("#epMore").setAttribute("aria-expanded", String(!m.hidden));
+    "[data-epone]",
+    (el, it) => {
+      epOne = +el.dataset.epone;
+      refreshSheet();
+      const r = $(".e1");
+      if (r) (r.querySelector(".e1-s") || r.querySelector(".e1-n")).focus({ preventScroll: true });
     },
   ],
   [
-    null,
+    "#e1Cancel",
     () => {
-      const m = $("#epMenu");
-      if (m) m.hidden = true;
-      return false;
+      epOne = null;
+      refreshSheet();
     },
   ],
+  ["#e1Save", (el, it) => saveEpOne(it)],
   ["[data-set]", (el, it) => setStatus(it, el.dataset.set)],
   /* 話の視聴チェック */
   [
@@ -689,6 +709,7 @@ const DETAIL_ACTIONS = [
     "#epEditBtn",
     (el, it) => {
       subPaste = null;
+      epOne = null;
       epEdit = { list: episodes(it).map(x => ({ ...x })) };
       refreshSheet();
     },
@@ -786,6 +807,7 @@ const EPEDIT_ACTIONS = [
     "#erCancel",
     () => {
       epEdit = null;
+      subPaste = null;
       refreshSheet();
     },
   ],
@@ -821,6 +843,31 @@ const EPEDIT_ACTIONS = [
     },
   ],
 ];
+/* 1話だけ編集の保存：その話だけを書き換える（ほかの話の日付はずらさない） */
+function saveEpOne(it) {
+  const r = $(".e1");
+  const l = episodes(it);
+  const x = r && l[epOne];
+  if (!x) {
+    epOne = null;
+    return refreshSheet();
+  }
+  const day = normDate(r.querySelector(".e1-d").value);
+  if (day === null) return toast("日付は 20180825 のように入力してください");
+  x.n = r.querySelector(".e1-n").value.trim() || x.n;
+  const s = r.querySelector(".e1-s");
+  if (s) x.sub = s.value.trim();
+  const j = jst(x.t);
+  if (!day) x.t = 0;
+  else if (!j || j.day !== day) {
+    const hm = j ? j.hm : hasTime(it) ? it.time : "9:00";
+    if (!x.t) x.nt = !hasTime(it);
+    x.t = dayTimeToT(day, hm);
+  }
+  const name = x.n;
+  epOne = null;
+  saveEps(it, l, `${name}を保存しました`);
+}
 function onDetailClick(e) {
   const it = openId && items.find(x => x.id === openId);
   return !!it && runActions(DETAIL_ACTIONS, e, it);

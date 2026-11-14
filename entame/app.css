@@ -601,12 +601,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .nxt{margin-left:8px;color:var(--st-now);font-weight:700}
 .ep.next{background:color-mix(in srgb,var(--st-now) 13%,transparent)}
 .ep.next .epn{color:var(--st-now)}
-.epmore{position:relative;display:inline-flex}
-.epset #epMore{padding-left:14px;padding-right:14px;letter-spacing:.1em}
-.epmenu{position:absolute;right:0;top:calc(100% + 4px);z-index:5;display:grid;min-width:190px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r);box-shadow:var(--u-shadow);padding:4px}
-.epmenu[hidden]{display:none}
-.epset .epmenu button{border:0;background:transparent;text-align:left;padding:10px 12px;font-weight:700}
-.epset .epmenu button:active{background:var(--u-chip)}
 @media (max-width:600px){
   .sheet:not(.form){border-radius:14px;width:calc(100% - 20px);top:calc(56px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-height:calc(100% - 56px - 150px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
   .sheet:not(.form) .wrap{padding:0 14px}
@@ -965,3 +959,35 @@ body.sbc .u-app .sb .sb-fold{display:none}
 .sheet input::placeholder,.sheet textarea::placeholder{color:var(--u-sub);opacity:.45}
 .sg .sg-f input::placeholder{font-size:12px}
 .sg .sg-r .sg-a::placeholder,.sg .sg-r .sg-b::placeholder{font-size:11px}
+
+/* 話数：1話の行（視聴チェックのボタン＋右端の ✎）と、1話だけ編集の行 */
+.epw{display:grid;grid-template-columns:1fr auto;align-items:stretch;border-top:1px solid var(--u-line)}
+.epw>.ep.ep{border-top:0;background:transparent;padding-right:4px}
+.epw.seen{background:color-mix(in srgb,var(--u-ok) 11%,transparent)}
+.epw.next{background:color-mix(in srgb,var(--st-now) 13%,transparent)}
+.epe{border:0;background:transparent;color:var(--u-sub);font-size:14px;padding:0 12px;min-width:38px}
+.epe:active{color:var(--u-ink)}
+.e1{grid-template-columns:64px 1fr 118px;gap:6px;padding:8px 10px;background:var(--u-chip)}
+.e1.nosub{grid-template-columns:64px 1fr}
+.e1 input{min-width:0;width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:6px;padding:6px 7px;font:inherit;font-size:13.5px}
+.e1-b{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+.e1-b button{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--u-r);padding:7px 14px;font-size:13px;font-weight:700}
+.e1-b .pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+@media (max-width:560px){
+  .e1{grid-template-columns:58px 1fr}
+  .e1 .e1-s{grid-column:1/-1;grid-row:2}
+  .e1 input{font-size:13px}
+}
+.edtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.edtop button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:var(--u-r);padding:8px 12px;font-size:13px;font-weight:700}
+.edtop .hint{font-size:11.5px;margin:0}
+/* スマホ：話数の上の4つのボタンを1段に収める */
+@media (max-width:560px){
+  .sheet:not(.form) .epset{flex-wrap:nowrap}
+  .sheet:not(.form) .epset>button{flex:1 1 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
+  .epset .epx{display:none}
+}
+@media (max-width:360px){
+  .sheet:not(.form) .epset{flex-wrap:wrap}
+  .epe{padding:0 8px;min-width:30px}
+}

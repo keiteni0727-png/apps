@@ -548,6 +548,7 @@ const KEY_ACTIONS = [
   ["#spopIn", enterEsc(saveSub, closeSub)],
   [null, (t, e) => (e.key === "Escape" && subAsk ? closeSub() : false)],
   [".inl", enterEsc(t => commitInline(t), t => commitInline(t, true))],
+  [".e1 input", enterEsc(() => $("#e1Save")?.click(), () => $("#e1Cancel")?.click())],
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
   [null, (t, e) => (e.key === "Escape" ? close() : false)],
   ["#f-serq", enterClick("#fSerSug [data-fser]")],
