@@ -911,6 +911,9 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .u-app .sb .sb-sub{gap:0;margin:0 0 4px 20px}
 .u-app .sb .sb-sub .sb-it{padding-top:5px;padding-bottom:5px}
 body.sbc .u-app .sb .sb-fold{display:none}
+/* 折りたたみ時：アイコンを枠の真ん中に */
+body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
+body.sbc .u-app .sb .sb-it i{margin:0}
 @media (max-width:899px){
   .wtop{padding-top:10px;gap:8px}
   .wt-clock{flex-direction:column;gap:4px;justify-content:center}
