@@ -70,7 +70,7 @@ function renderSidebar() {
       )
       .join("")}</div>` : ""}</div>`;
   };
-  sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${matchMedia("(max-width:899px)").matches ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : `<button type="button" class="sb-tog" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}">${sbCollapsed ? "»" : "«"}</button>`}</div>
+  sb.innerHTML = `<div class="sb-top"><span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${matchMedia("(max-width:899px)").matches ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : ""}</div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
     ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
