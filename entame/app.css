@@ -426,6 +426,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
 .dtcal{flex:none;width:42px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-sub);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
 .dtcal svg{width:18px;height:18px}
 .dtpick{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
+@media (hover:none),(pointer:coarse){.dtpick{pointer-events:auto;z-index:1;font-size:16px;-webkit-appearance:none;appearance:none;border:0;padding:0;margin:0;cursor:pointer}}
 /* 日付欄：iPhoneでは日付欄が枠からはみ出すので、標準の見た目を外して幅に収める */
 input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;display:block;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left}

@@ -888,7 +888,16 @@ document.addEventListener("click", e => {
     pk.click();
   }
 });
-document.addEventListener("change", e => {
+/* スマホ：カレンダーのボタンの上に透明の日付入力を重ね、直接タップでiPhoneのカレンダーを開く。開く前に今の日付を入れておく */
+const dtSeed = e => {
+  const pk = e.target.closest && e.target.closest("[data-dtfor]");
+  if (!pk) return;
+  const t = document.getElementById(pk.dataset.dtfor);
+  if (t) pk.value = normDate(t.value) || "";
+};
+document.addEventListener("touchstart", dtSeed, { passive: true, capture: true });
+document.addEventListener("pointerdown", dtSeed, true);
+const dtTake = e => {
   const pk = e.target.closest && e.target.closest("[data-dtfor]");
   if (!pk) return;
   const t = document.getElementById(pk.dataset.dtfor);
@@ -897,7 +906,9 @@ document.addEventListener("change", e => {
   t.dataset.prev = "";
   t.dispatchEvent(new Event("input", { bubbles: true }));
   t.dispatchEvent(new Event("change", { bubbles: true }));
-});
+};
+document.addEventListener("change", dtTake);
+document.addEventListener("input", dtTake);
 /* 配信URL：NetflixのURLは作品ページ（/title/番号）の形に直す
    browse・検索・ジャンル画面の ?jbv=番号（PCで作品を開いたとき）・title/番号?…（共有リンク）を変換。watch/番号は1話分なのでそのまま */
 function normVurl(u) {
