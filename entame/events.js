@@ -215,7 +215,7 @@ const COMMON_ACTIONS = [
     },
   ],
   ["[data-close]", () => close()],
-  ["#addBtn,#sbAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
+  ["#sbAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
 ];
 /* スマホ：☰メニューの開閉。メニュー内で画面を選んだら閉じる */
 function setDrawer(on) {
@@ -230,7 +230,7 @@ function onDrawerClick(e) {
     setDrawer(d.dataset.drawer === "open");
     return true;
   }
-  if (document.body.classList.contains("drawer") && e.target.closest("#sb [data-mode],#sb [data-go],#sb [data-tb],#sb [data-gear]"))
+  if (document.body.classList.contains("drawer") && e.target.closest("#sb [data-mode],#sb [data-go],#sb [data-tb],#sb [data-gear],#sbAdd"))
     setDrawer(false);
   return false;
 }

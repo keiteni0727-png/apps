@@ -344,7 +344,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
   .u-app .sb-sub .sb-it{font-size:14px;padding:8px 10px}
   .u-app .sb-sub .sb-it[aria-current="page"]{background:var(--u-chip);color:var(--u-ink)}
   .u-app .sb-foot{margin-top:auto;border-top:1px solid var(--u-line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
-  .u-app .sb-add{display:none}
+  .u-app .sb-add{display:flex;align-items:center;justify-content:center;gap:4px;border:0;background:var(--u-accent);color:var(--u-on);border-radius:10px;padding:11px;font-weight:700;font-size:15px;margin:2px 0 10px;white-space:nowrap}
   .u-app .sb-st{font-size:11.5px;padding:4px 10px;display:flex;flex-direction:column;gap:2px}
 }
 @media (max-width:520px){
@@ -602,7 +602,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .ep.next{background:color-mix(in srgb,var(--st-now) 13%,transparent)}
 .ep.next .epn{color:var(--st-now)}
 @media (max-width:600px){
-  .sheet:not(.form){border-radius:14px;width:calc(100% - 20px);top:calc(56px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-height:calc(100% - 56px - 150px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+  .sheet:not(.form){border-radius:14px;width:calc(100% - 20px);top:calc(56px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-height:calc(100% - 56px - 64px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
   .sheet:not(.form) .wrap{padding:0 14px}
   .sheet:not(.form) .dhead{position:sticky;top:0;z-index:4;background:var(--u-surface);margin:0 -14px;padding:12px 14px 0}
   .sheet:not(.form) h3{margin:2px 0 4px;font-size:18px}
@@ -939,11 +939,10 @@ body.sbc .u-app .sb .sb-fold{display:none}
 .mic.w{color:var(--u-accent)}.mic.a{color:var(--anime)}.mic.d{color:var(--drama)}.mic.m{color:var(--movie)}.mic.s{color:var(--stream)}.mic.yt{color:var(--yt)}
 .hcur .mic{width:26px;height:26px}
 .hcur .mic svg{width:24px;height:24px}
-/* ===== スマホ：上の帯に ☰・切り替え・設定、追加は右下の丸ボタン ===== */
-.fab{display:none}
+/* ===== スマホ：上の帯に ☰・切り替え・設定。追加は ☰ のメニューの中 ===== */
 @media (max-width:899px){
   .u-app .tbwrap{z-index:12;display:none}
-  body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));--u-toast-b:86px}
+  body{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
   .hbar{gap:8px}
   .hcur{flex:none;gap:0}
   .hcur .hname{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -951,8 +950,7 @@ body.sbc .u-app .sb .sb-fold{display:none}
   .hseg::-webkit-scrollbar{display:none}
   .hseg button{flex:1 0 auto;border:0;background:none;color:var(--u-sub);padding:7px 10px;border-radius:8px;font-size:13.5px;font-weight:700;white-space:nowrap}
   .hseg button[aria-selected="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
-      .fab{display:grid;place-items:center;position:fixed;z-index:12;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border:0;border-radius:50%;background:var(--u-accent);color:var(--u-on);font-size:30px;font-weight:400;line-height:1;padding:0;box-shadow:0 8px 24px rgba(16,24,40,.28)}
-  .u-app .totop{right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+  .u-app .totop{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 }
 
 /* 入力欄の例文（placeholder）：入力済みの文字と見分けやすいよう、薄く小さく */
