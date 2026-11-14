@@ -85,17 +85,6 @@ function renderThemeBtn() {
   b.setAttribute("aria-label", `表示：${TH_NAME[v]}（押すと切り替え）`);
   b.title = `表示：${TH_NAME[v]}`;
 }
-/* PCも上の帯（スマホと同じ）に切り替えと設定を出すので、検索窓の上の切り替えは使わない */
-/* スマホの上の帯：YouTubeの投稿者の切り替え（ほかの画面では空）。表示の切り替えボタンもここで描く */
-function renderHseg() {
-  renderThemeBtn();
-  const hs = $("#hseg");
-  if (!hs) return;
-  const items = state.mode === "yt" ? ytAuthors().map(a => [a, yst.author === a]) : [];
-  hs.innerHTML = items.map(([v, on]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${esc(v)}</button>`).join("");
-  const on = hs.querySelector('[aria-selected="true"]');
-  if (on && hs.scrollWidth > hs.clientWidth) hs.scrollLeft = on.offsetLeft - (hs.clientWidth - on.offsetWidth) / 2;
-}
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
 /* バラエティタブ：ジャンル「バラエティ」（k="r"、恋愛リアリティなど）だけ。配信オリジナルのアニメ・ドラマはそれぞれの側で放送形態「配信」として出る */
 /* 作品詳細のシリーズ名から開いたときは、アニメ・ドラマ・映画・配信をまたいでそのシリーズを全部出す（xser） */
@@ -604,6 +593,7 @@ function hSubLab() {
   if (m === "a" || m === "d") return state.type.length === 1 ? (MEDIA.find(([md]) => md === state.type[0]) || [])[1] || "" : "";
   if (m === "m") return { a: "アニメ映画", d: "実写映画" }[state.sub] || "";
   if (m === "s") return state.vod || "";
+  if (m === "yt") return yst.author || "";
   return "";
 }
 /* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す。やめたら true */
@@ -624,7 +614,7 @@ function render() {
   if (hc)
     hc.innerHTML =
       `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>${hSubLab() ? `<span class="hsub ${state.mode}">${esc(hSubLab())}</span>` : ""}`;
-  renderHseg();
+  renderThemeBtn();
   renderSidebar();
   if (!loaded) return;
   const y = lockY ?? scrollY;

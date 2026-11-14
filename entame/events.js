@@ -254,7 +254,7 @@ function onDrawerClick(e) {
   return false;
 }
 /* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉、画面は指に合わせて横に動かし、離すと番組表／ライブラリなど隣の画面へ */
-const segBtns = () => [...document.querySelectorAll("#hseg [data-tb], #main .wtabs [data-tb]")];
+const segBtns = () => [...document.querySelectorAll("#main .wtabs [data-tb]")];
 const segIdx = () => segBtns().findIndex(b => b.getAttribute("aria-selected") === "true");
 uSwipe({
   sb: "#sb",
