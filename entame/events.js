@@ -204,14 +204,6 @@ const ROW_ACTIONS = [
       askSub(it, i);
     },
   ],
-  /* お知らせの「✕」：その日は出さない */
-  [
-    "[data-ntoff]",
-    el => {
-      ls.set(K_NOTICE, { d: jst(NOWMIN()).day, off: [...noticeOff(), el.dataset.ntoff] });
-      render();
-    },
-  ],
   ["[data-id]", el => openDetail(el.dataset.id)],
 ];
 /* もっと見る・戻る・閉じる・追加 */
