@@ -403,19 +403,23 @@ function refreshSheet() {
   if (form && form.inline) return;
   const it = items.find(x => x.id === openId);
   const el = $("#sheetIn");
-  if (it && el) el.innerHTML = renderDetail(it);
+  if (!it || !el) return;
+  /* 前・次へ移ったときの横スライドは1回だけ。描き直した中身にまたかからないよう外す（保存のたびに揺れて見えるため） */
+  el.classList.remove("dsl-l", "dsl-r");
+  el.innerHTML = renderDetail(it);
 }
 function refreshEditor() {
   const it = items.find(x => x.id === openId);
   const a = $("#epArea");
   if (it && a && epEdit && !subPaste) a.innerHTML = epEditorHtml(it);
 }
-function openDetail(id, dir) {
+function openDetail(id, dir, keepNav) {
   const it = items.find(x => x.id === id);
   if (!it) return;
   /* 前・次の作品へ移るときはシートを作り直さず中身だけ入れかえ、今のタブもそのまま */
   const sh = dir && $("#layer .sheet");
-  if (!dir) navIds = screenIds();
+  /* 編集画面から戻るときは前の並びのまま（編集で絞り込みから外れても、前・次へ移れるように） */
+  if (!dir && !(keepNav && navIds.includes(id))) navIds = screenIds();
   openId = id;
   stMenu = false;
   epEdit = null;
@@ -1007,6 +1011,10 @@ function saveEpOne(it) {
   epOne = null;
   saveEps(it, l, `${name}を保存しました`);
 }
+/* 横スライドが終わったらクラスを外す（その後に項目をその場で編集したときなどに、またスライドしないように） */
+document.addEventListener("animationend", e => {
+  if (e.animationName === "dslr" || e.animationName === "dsll") e.target.parentElement?.classList.remove("dsl-l", "dsl-r");
+});
 /* 前・次の作品へ（話数の編集などの途中は移らない） */
 function detailNav(d) {
   if (!openId || epEdit || arcEdit || subPaste || epOne != null || (form && form.inline)) return;

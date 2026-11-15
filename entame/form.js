@@ -329,6 +329,7 @@ function openForm(it, target, el) {
     });
   /* 項目を指定したときは、作品の詳細の中でその項目だけ編集する */
   if (it && ONLY_A[target]) return openInlineForm(target, el);
+  form.fromDetail = !!it && openId === it.id; // 詳細から開いたか（戻るときに前・次の並びを引き継ぐ）
   openId = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form" role="dialog" aria-modal="true" aria-label="${form.id ? "作品を編集" : "作品を追加"}"><div class="wrap" id="formIn">${formHtml()}</div></div>`;
@@ -445,7 +446,7 @@ async function submitForm() {
       if (f.inline) closeInlineForm();
       else {
         close();
-        openDetail(f.id);
+        openDetail(f.id, 0, f.fromDetail);
       }
       return;
     }
@@ -459,7 +460,7 @@ async function submitForm() {
     const id = f.id;
     close();
     await saveTitle(id, patch, "保存しました");
-    openDetail(id);
+    openDetail(id, 0, f.fromDetail);
     return;
   }
   const id = "u" + Date.now().toString(36);
