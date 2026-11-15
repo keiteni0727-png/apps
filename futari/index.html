@@ -489,6 +489,37 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .newmark{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--pink-d);border-radius:99px;padding:0 6px;margin-left:4px}
 /* ---- うりぼーメニュー ---- */
 .utab .ustage{height:200px;overflow:hidden;border-radius:18px}
+.uroom{position:absolute;inset:0;z-index:0;pointer-events:none}
+.uroom svg{width:100%;height:100%;display:block}
+.utab .ustage .udeco{z-index:1}.utab .ustage .uri{position:relative;z-index:2}.utab .ustage .ububble{z-index:3}.utab .ustage .uprop{z-index:2}
+.utab .ustage.hasfl .uprop{display:none}
+.rprev{position:relative;height:170px;border-radius:22px;overflow:hidden;display:grid;place-items:end center;margin-bottom:12px}
+.rprev .uri{position:relative;z-index:1;width:120px;height:120px;margin-bottom:4px;cursor:default}
+.rprev .wbal{position:absolute;right:10px;top:8px;z-index:2;background:rgba(255,255,255,.88);border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700;color:var(--pink-d)}
+.ritem .rth{width:66px;height:66px}.ritem .rth svg{width:100%;height:100%;display:block}
+.omicard .omt{color:#d9534f}
+.omishake{position:relative;height:200px;display:flex;align-items:flex-end;justify-content:center;gap:4px}
+.omishake .uri{width:130px;height:130px;cursor:default;animation:ubreath 1s ease-in-out infinite}
+.omibox{width:56px;height:96px;margin-bottom:14px;border-radius:10px;background:linear-gradient(90deg,#c94848,#e86a5c 45%,#c94848);box-shadow:inset 0 -6px 0 rgba(0,0,0,.12),0 6px 14px rgba(201,72,72,.3);display:grid;place-items:center;transform-origin:50% 100%;animation:omishake .25s ease-in-out infinite alternate}
+.omibox span{writing-mode:vertical-rl;color:#fff;font-weight:700;letter-spacing:.2em;font-size:14px}
+@keyframes omishake{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+.omiwait{text-align:center;font-weight:700;color:var(--pink-d);margin:10px 0 0}
+.omipaper{background:linear-gradient(180deg,#fffdf6,#fff6e6);border-radius:18px;padding:0 16px 16px;box-shadow:0 6px 20px rgba(150,110,90,.15);border:1.5px solid #f3e2c7;overflow:hidden;text-align:center}
+.omipaper.pop{animation:omipop .6s cubic-bezier(.3,1.5,.5,1)}
+@keyframes omipop{from{transform:translateY(40px) scale(.85);opacity:0}}
+.omihd{margin:0 -16px 6px;background:#d9534f;color:#fff;font-size:12px;font-weight:700;padding:6px}
+.omitot{font-size:52px;font-weight:800;line-height:1.2;color:#d9534f;letter-spacing:.06em;font-family:"Hiragino Mincho ProN","Yu Mincho",serif}
+.omitot.t0{background:linear-gradient(135deg,#f2c94c,#e2809c,#9580d0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.omisay{font-size:14px;font-weight:700;margin:2px 0 12px}
+.omisay small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+.omirow{display:flex;justify-content:space-between;align-items:center;padding:6px 4px;border-top:1px dashed #efdcc0;font-size:13px}
+.omirow em{font-style:normal;color:#f2a93b;letter-spacing:.08em}.omirow em .off{color:#eadfcd}
+.omigrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 8px}
+.omigrid div,.omispot{background:#fff;border-radius:14px;padding:8px 6px}
+.omigrid small,.omispot small{display:block;font-size:10.5px;color:var(--muted)}
+.omigrid b,.omispot b{font-size:14px;color:var(--text)}
+.omiadv{margin-top:10px;font-size:13px;color:var(--lav-d);font-weight:700}
+.omibonus{text-align:center;font-weight:700;color:var(--pink-d);margin:12px 0 0}
 .udeco{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .ufall{position:absolute;top:-24px;font-size:16px;opacity:.85;animation:ufallk linear infinite}
 @keyframes ufallk{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(240px) rotate(300deg);opacity:0}}
@@ -1832,7 +1863,7 @@ function uriHtml(){
   return `<div class="card uricard" id="uricard">
     <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())}</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><button class="linkbtn" data-a="wardrobe">🎀 きせかえ</button></div>
     ${uriSeason().ban ? `<div class="uban">${esc(uriSeason().ban)}</div>` : ""}
-    <div class="ustage" id="ustage">${uriDecoHtml()}<div class="ububble" id="ububble">${esc(S.uriSay || (lettersIn().length ? "おてがみあずかってるぷぎ！" : u.mood === "sleep" ? "すやすや…" : uriSpecial() ? uriSeason().line : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
+    <div class="ustage ${roomNow().fl ? "hasfl" : ""}" id="ustage"><div class="uroom">${roomSvg()}</div>${uriDecoHtml()}<div class="ububble" id="ububble">${esc(S.uriSay || (lettersIn().length ? "おてがみあずかってるぷぎ！" : u.mood === "sleep" ? "すやすや…" : uriSpecial() ? uriSeason().line : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
       <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood, uw())}</div></div>
     <div class="ubars">
       <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div><em>${u.energy}%</em></div>
@@ -2265,10 +2296,11 @@ function letterCardHtml(){
 function wearCardHtml(){
   const w = uw(), bal = S.pet?.acorns || 0;
   const on = Object.values(w).map(itemOf).filter(Boolean);
-  return `<div class="card swipebar" data-a="wardrobe"><span class="ic">🎀</span><div class="main"><b>きせかえ・おみせ</b><span class="muted">${on.length ? "つけてる：" + on.map(it => it.e + esc(it.n)).join("・") : "なにもつけてないよ"} ・ 🌰${bal}こ</span></div><span class="go">›</span></div>`;
+  return `<div class="card swipebar" data-a="wardrobe"><span class="ic">🎀</span><div class="main"><b>きせかえ・おみせ・おへや</b><span class="muted">${on.length ? "つけてる：" + on.map(it => it.e + esc(it.n)).join("・") : "なにもつけてないよ"} ・ 🌰${bal}こ</span></div><span class="go">›</span></div>`;
 }
 function openWardrobe(tab){
   if (tab) S.wTab = tab;
+  if (S.wTab === "room") return openRoomShop();
   const t = S.wTab || "have", u = uriState(), w = uw(), bal = S.pet?.acorns || 0, vc = visitedCount(), mon = new Date().getMonth() + 1;
   const sl = S.wSlot || "all", inSl = it => sl === "all" || it.s === sl;
   const have = UITEMS.filter(owned).filter(inSl);
@@ -2279,11 +2311,295 @@ function openWardrobe(tab){
     : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : cell(it, `🌰${it.p}${it.m ? " ・ 期間限定" : ""}`, "uriBuy", bal < it.p ? "poor" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
   openSheet(`<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
   <div class="wprev"><div class="uri s${u.st}">${uriSvg(u.st, "happy", w)}</div><div class="wbal">🌰 ${bal}こ<small>ふたりのおさいふ</small></div></div>
-  <div class="seg"><button class="${t === "have" ? "on" : ""}" data-a="wTab" data-v="have">もちもの ${UITEMS.filter(owned).length}</button><button class="${t === "shop" ? "on" : ""}" data-a="wTab" data-v="shop">おみせ</button></div>
+  ${wardrobeSeg(t)}
   <div class="chips">${[["all", "すべて"], ...Object.entries(USLOTS)].map(([k, n]) => `<button class="chip ${sl === k ? "on" : ""}" data-a="wSlot" data-v="${k}">${n}</button>`).join("")}</div>
   <div class="wgrid">${body}</div>
   <p class="muted" style="text-align:center;font-size:12px">${t === "have" ? "タップでつける・はずす（同じ場所のものは1つまで）" : "🌰はミニゲーム「どんぐり拾い」でたまるよ。「行った！」を記録すると、おみやげがもらえることも"}</p>`);
 }
+/* ---------- うりぼーのおへや ---------- */
+// s:置き場所 p:どんぐり（0は最初から持っている）m:買える月 b:サムネイルの範囲（部品の座標）
+const RSLOTS = { wall:"かべがみ", floor:"ゆか", win:"まど", deco:"かべかざり", fl:"ゆか（ひだり）", fr:"ゆか（みぎ）", rug:"ラグ" };
+const RDEF = { wall: "w_pink", floor: "f_wood", win: "win_basic" };
+const RPOS = { win: [250, 58], deco: [70, 56], fl: [62, 175], fr: [282, 173], rug: [160, 187] };
+function rSky(){
+  const h = new Date().getHours();
+  if (h >= 5 && h < 10) return { a: "#bfe3f7", b: "#fde2d4", sun: "#ffd27a", night: false };
+  if (h >= 10 && h < 16) return { a: "#8fcbef", b: "#cdeafa", sun: "#ffe08a", night: false };
+  if (h >= 16 && h < 19) return { a: "#f6a07a", b: "#fcd59a", sun: "#ff8f6b", night: false };
+  return { a: "#26305e", b: "#4a4f8e", sun: "#fff6c8", night: true };
+}
+function rSkyIn(K, clip){
+  const s = rSky();
+  return `<linearGradient id="${K}sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s.a}"/><stop offset="1" stop-color="${s.b}"/></linearGradient>
+  <g clip-path="url(#${clip})"><rect x="-40" y="-40" width="80" height="80" fill="url(#${K}sk)"/>
+  ${s.night ? `<circle cx="12" cy="-12" r="8" fill="${s.sun}"/><circle cx="16" cy="-15" r="7" fill="${s.a}"/>${[[-18, -18], [-8, 6], [-22, 10], [20, 12], [2, -24]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.1" fill="#fff"/>`).join("")}`
+    : `<circle cx="14" cy="-12" r="8" fill="${s.sun}" opacity=".95"/><path d="M-26 8q4-7 11-4q4-6 11-1q7 0 6 6h-28z" fill="#fff" opacity=".9"/><path d="M4 22q3-5 8-3q4-4 9 0q5 0 4 5h-21z" fill="#fff" opacity=".8"/>`}</g>`;
+}
+const RITEMS = [
+  // かべがみ
+  { id:"w_pink",  s:"wall", n:"ももいろ",     e:"🩷", p:0 },
+  { id:"w_cream", s:"wall", n:"ハートがら",   e:"💗", p:35 },
+  { id:"w_mint",  s:"wall", n:"ミントストライプ", e:"🌿", p:35 },
+  { id:"w_lav",   s:"wall", n:"ラベンダードット", e:"💜", p:35 },
+  { id:"w_wood",  s:"wall", n:"ログハウス",   e:"🪵", p:45 },
+  { id:"w_night", s:"wall", n:"よぞら",       e:"🌙", p:45 },
+  // ゆか
+  { id:"f_wood",   s:"floor", n:"フローリング", e:"🟫", p:0 },
+  { id:"f_check",  s:"floor", n:"チェック",     e:"🏁", p:30 },
+  { id:"f_tatami", s:"floor", n:"たたみ",       e:"🎋", p:35 },
+  { id:"f_carpet", s:"floor", n:"ふかふかカーペット", e:"🧶", p:40 },
+  // まど（外の空は、いまの時間で変わる）
+  { id:"win_basic",   s:"win", n:"しかくいまど",   e:"🪟", p:0,  b:[-44, -38, 88, 82] },
+  { id:"win_curtain", s:"win", n:"カーテンのまど", e:"🎀", p:30, b:[-50, -44, 100, 88] },
+  { id:"win_round",   s:"win", n:"まるいまど",     e:"⭕", p:35, b:[-40, -40, 80, 80] },
+  { id:"win_arch",    s:"win", n:"おはなのまど",   e:"🌷", p:40, b:[-44, -44, 88, 94] },
+  // かべかざり
+  { id:"d_frame",   s:"deco", n:"ふたりのしゃしん", e:"🖼️", p:20, b:[-28, -32, 56, 64] },
+  { id:"d_clock",   s:"deco", n:"かべかけどけい",   e:"🕰️", p:25, b:[-26, -26, 52, 52] },
+  { id:"d_garland", s:"deco", n:"ガーランド",       e:"🎏", p:25, b:[-62, -22, 124, 44] },
+  { id:"d_wreath",  s:"deco", n:"リース",           e:"🎄", p:30, b:[-28, -28, 56, 60], m:[11, 12] },
+  // ゆか（ひだり）
+  { id:"bed",     s:"fl", n:"ベッド",   e:"🛏️", p:70, b:[-60, -68, 120, 72] },
+  { id:"sofa",    s:"fl", n:"ソファ",   e:"🛋️", p:60, b:[-58, -58, 116, 62] },
+  { id:"shelf",   s:"fl", n:"ほんだな", e:"📚", p:50, b:[-38, -108, 76, 112] },
+  { id:"kotatsu", s:"fl", n:"こたつ",   e:"🍊", p:60, b:[-52, -50, 104, 54], m:[11, 12, 1, 2, 3] },
+  { id:"xtree",   s:"fl", n:"クリスマスツリー", e:"🎄", p:80, b:[-42, -116, 84, 120], m:[11, 12] },
+  // ゆか（みぎ）
+  { id:"plant", s:"fr", n:"かんようしょくぶつ", e:"🪴", p:25, b:[-30, -80, 60, 84] },
+  { id:"lamp",  s:"fr", n:"フロアランプ", e:"💡", p:35, b:[-30, -110, 60, 114] },
+  { id:"kuma",  s:"fr", n:"くまのぬいぐるみ", e:"🧸", p:40, b:[-30, -58, 60, 62] },
+  { id:"gifts", s:"fr", n:"プレゼントの山", e:"🎁", p:30, b:[-32, -52, 64, 56] },
+  // ラグ
+  { id:"r_round", s:"rug", n:"まるいラグ",   e:"⚪", p:20, b:[-84, -18, 168, 36] },
+  { id:"r_heart", s:"rug", n:"ハートのラグ", e:"💗", p:30, b:[-70, -22, 140, 40] },
+  { id:"r_star",  s:"rug", n:"ほしのラグ",   e:"⭐", p:30, b:[-72, -22, 144, 40] }
+];
+const ritemOf = id => RITEMS.find(x => x.id === id);
+const rOwned = it => !it.p || !!S.pet?.ritems?.[it.id];
+const roomNow = () => { const r = { ...RDEF, ...(S.pet?.room || {}) }; Object.keys(r).forEach(k => { if (!ritemOf(r[k])) delete r[k]; }); return r; };
+/* かべがみ・ゆかの模様（defs） */
+function rWallDef(id, K){
+  const P = (w, h, body, bg) => `<pattern id="${K}wp" width="${w}" height="${h}" patternUnits="userSpaceOnUse"><rect width="${w}" height="${h}" fill="${bg}"/>${body}</pattern>`;
+  switch (id) {
+    case "w_cream": return P(36, 32, `<path transform="translate(9 9) scale(.55)" d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="#f9cfda"/><path transform="translate(27 25) scale(.55)" d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="#fbdfe6"/>`, "#fff5ea");
+    case "w_mint": return P(26, 10, `<rect width="13" height="10" fill="#d2eee1"/>`, "#e6f6ee");
+    case "w_lav": return P(24, 24, `<circle cx="6" cy="6" r="2.6" fill="#dcd1f3"/><circle cx="18" cy="18" r="2.6" fill="#dcd1f3"/>`, "#efeafb");
+    case "w_wood": return P(80, 20, `<rect y="17" width="80" height="3" fill="#cfa274"/><rect y="0" width="80" height="2" fill="#f2d6b0" opacity=".6"/><ellipse cx="24" cy="9" rx="3" ry="1.6" fill="#d4a97c"/>`, "#e7c398");
+    case "w_night": return P(60, 50, `<circle cx="10" cy="12" r="1" fill="#fff"/><circle cx="40" cy="30" r="1.3" fill="#fff6c8"/><circle cx="52" cy="8" r=".8" fill="#fff"/><path d="M25 40l1 2.4l2.4 1l-2.4 1l-1 2.4l-1-2.4l-2.4-1l2.4-1z" fill="#fde68a"/>`, "#3a4278");
+    default: return P(40, 40, ``, "#fbe6ec");
+  }
+}
+function rFloorDef(id, K){
+  const P = (w, h, body, bg) => `<pattern id="${K}fp" width="${w}" height="${h}" patternUnits="userSpaceOnUse" y="142"><rect width="${w}" height="${h}" fill="${bg}"/>${body}</pattern>`;
+  switch (id) {
+    case "f_check": return P(28, 28, `<rect width="14" height="14" fill="#fbd3df"/><rect x="14" y="14" width="14" height="14" fill="#fbd3df"/>`, "#fffafb");
+    case "f_tatami": return P(90, 30, `<rect width="90" height="30" fill="none" stroke="#a9c27a" stroke-width="1.4"/><rect y="13" width="90" height="4" fill="#6f8f5a" opacity=".55"/>`, "#d5e4ad");
+    case "f_carpet": return P(10, 10, `<circle cx="3" cy="3" r="1.2" fill="#d6cbef"/><circle cx="8" cy="8" r="1" fill="#efe9fb"/>`, "#e4dcf6");
+    default: return P(64, 24, `<rect y="10" width="64" height="2" fill="#c09068"/><rect y="22" width="64" height="2" fill="#c09068"/><rect x="40" width="1.6" height="11" fill="#c09068"/><rect x="12" y="12" width="1.6" height="11" fill="#c09068"/><rect y="0" width="64" height="3" fill="#ecc69c" opacity=".5"/>`, "#ddb286");
+  }
+}
+/* 家具など（その場所の基準点からの座標で描く） */
+function rItemSvg(id, K){
+  const heart = (x, y, k, c) => `<path transform="translate(${x} ${y - 4 * k}) scale(${k})" d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="${c}"/>`;
+  const star = (x, y, r, c) => `<path d="${Array.from({ length: 10 }, (_, i) => { const a = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 ? r * .45 : r; return (i ? "L" : "M") + (x + Math.cos(a) * rr).toFixed(1) + " " + (y + Math.sin(a) * rr).toFixed(1); }).join("")}z" fill="${c}"/>`;
+  switch (id) {
+    case "win_basic": return `<defs><clipPath id="${K}wc"><rect x="-33" y="-31" width="66" height="60" rx="2"/></clipPath>${""}</defs>${rSkyIn(K, K + "wc")}
+      <path d="M-38 -36h76v70h-76zM-33 -31v60h66v-60z" fill="#fff" fill-rule="evenodd"/><rect x="-2" y="-31" width="4" height="60" fill="#fff"/><rect x="-33" y="-3" width="66" height="4" fill="#fff"/><rect x="-43" y="33" width="86" height="7" rx="3" fill="#fff"/>`;
+    case "win_curtain": return `<defs><clipPath id="${K}wc"><rect x="-33" y="-31" width="66" height="60" rx="2"/></clipPath></defs>${rSkyIn(K, K + "wc")}
+      <path d="M-38 -36h76v70h-76zM-33 -31v60h66v-60z" fill="#fff" fill-rule="evenodd"/><rect x="-2" y="-31" width="4" height="60" fill="#fff"/><rect x="-43" y="33" width="86" height="7" rx="3" fill="#fff"/>
+      <path d="M-48 -40h22q-4 30 2 58q-8 6-24 4q4-30 0-62z" fill="#f6a8bd"/><path d="M48 -40h-22q4 30-2 58q8 6 24 4q-4-30 0-62z" fill="#f6a8bd"/><path d="M-30 14q-8 2-12 0M30 14q8 2 12 0" stroke="#e2809c" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-50 -44h100v10q-10 6-20 0q-10 6-20 0q-10 6-20 0q-10 6-20 0q-10 6-20 0z" fill="#f4a3b8"/>`;
+    case "win_round": return `<defs><clipPath id="${K}wc"><circle r="29"/></clipPath></defs>${rSkyIn(K, K + "wc")}
+      <circle r="31.5" fill="none" stroke="#c99466" stroke-width="7"/><rect x="-1.6" y="-29" width="3.2" height="58" fill="#c99466"/><rect x="-29" y="-1.6" width="58" height="3.2" fill="#c99466"/>`;
+    case "win_arch": return `<defs><clipPath id="${K}wc"><path d="M-30 30V-8a30 30 0 0 1 60 0V30z"/></clipPath></defs>${rSkyIn(K, K + "wc")}
+      <path d="M-35 34V-8a35 35 0 0 1 70 0V34zM-30 30V-8a30 30 0 0 1 60 0V30z" fill="#fff" fill-rule="evenodd"/><rect x="-1.6" y="-38" width="3.2" height="70" fill="#fff"/>
+      <rect x="-42" y="32" width="84" height="14" rx="4" fill="#c99466"/>${[[-32, "#f9b6c7"], [-18, "#fde68a"], [-4, "#f4a3b8"], [10, "#c7b8ef"], [24, "#f9b6c7"], [36, "#fde68a"]].map(([x, c]) => `<path d="M${x} 33q-2-7 0-10" stroke="#6fbb9c" stroke-width="2"/><circle cx="${x}" cy="23" r="4.2" fill="${c}"/><circle cx="${x}" cy="23" r="1.5" fill="#fff"/>`).join("")}`;
+    case "d_frame": return `<rect x="-24" y="-28" width="48" height="56" rx="4" fill="#e9c46a"/><rect x="-18" y="-22" width="36" height="44" rx="2" fill="#fff5f0"/><path d="M-18 14q10-10 20-2q8-8 16-2v12h-36z" fill="#bfe5d4"/>${heart(-5, -2, 1.1, "#f4a3b8")}${heart(6, 0, .9, "#c7b8ef")}<path d="M0 -28l-8-10M0 -28l8-10" stroke="#c9992c" stroke-width="1.4"/>`;
+    case "d_clock": { const d = new Date(), hA = (d.getHours() % 12 + d.getMinutes() / 60) * 30, mA = d.getMinutes() * 6;
+      return `<circle r="22" fill="#c7b8ef"/><circle r="18" fill="#fff"/>${Array.from({ length: 12 }, (_, i) => `<circle cx="${(Math.sin(i * Math.PI / 6) * 14).toFixed(1)}" cy="${(-Math.cos(i * Math.PI / 6) * 14).toFixed(1)}" r="${i % 3 ? .9 : 1.6}" fill="#9580d0"/>`).join("")}
+        <path d="M0 0L${(Math.sin(hA * Math.PI / 180) * 8).toFixed(1)} ${(-Math.cos(hA * Math.PI / 180) * 8).toFixed(1)}" stroke="#4a3540" stroke-width="2.6" stroke-linecap="round"/><path d="M0 0L${(Math.sin(mA * Math.PI / 180) * 12).toFixed(1)} ${(-Math.cos(mA * Math.PI / 180) * 12).toFixed(1)}" stroke="#4a3540" stroke-width="1.8" stroke-linecap="round"/><circle r="2" fill="#e2809c"/>`; }
+    case "d_garland": return `<path d="M-60 -16Q0 10 60 -16" stroke="#b8a6e6" stroke-width="1.4" fill="none"/>${Array.from({ length: 9 }, (_, i) => { const t = i / 8, x = -56 + t * 112, y = -16 + Math.sin(t * Math.PI) * 12.5; return `<path d="M${(x - 5.5).toFixed(1)} ${(y - 1).toFixed(1)}h11l-5.5 12z" fill="${["#f9b6c7", "#fde68a", "#a9ddc5", "#c7b8ef", "#bfe1f6"][i % 5]}"/>`; }).join("")}`;
+    case "d_wreath": return `${Array.from({ length: 14 }, (_, i) => { const a = i / 14 * Math.PI * 2; return `<ellipse cx="${(Math.cos(a) * 17).toFixed(1)}" cy="${(Math.sin(a) * 17).toFixed(1)}" rx="8" ry="5" fill="${i % 2 ? "#5aa886" : "#6fbb9c"}" transform="rotate(${(a * 180 / Math.PI + 90).toFixed(0)} ${(Math.cos(a) * 17).toFixed(1)} ${(Math.sin(a) * 17).toFixed(1)})"/>`; }).join("")}
+      ${[[-10, -12], [13, -6], [-14, 10], [8, 14]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6" fill="#e25b5b"/>`).join("")}<path d="M0 18l-9-6v14zM0 18l9-6v14z" fill="#e25b5b"/><circle cy="18" r="2.6" fill="#c94848"/><path d="M-2 20l-5 10M2 20l5 10" stroke="#e25b5b" stroke-width="3" stroke-linecap="round"/>`;
+    case "bed": return `<rect x="-58" y="-66" width="15" height="66" rx="6" fill="#c99466"/><rect x="-58" y="-66" width="15" height="7" rx="3" fill="#e0b184"/>
+      <rect x="-50" y="-9" width="6" height="9" fill="#a87650"/><rect x="47" y="-9" width="6" height="9" fill="#a87650"/><rect x="51" y="-34" width="7" height="34" rx="3" fill="#c99466"/>
+      <rect x="-46" y="-32" width="100" height="24" rx="9" fill="#fff"/><rect x="-42" y="-45" width="27" height="15" rx="7" fill="#fff" stroke="#efe2e8" stroke-width="1"/>
+      <path d="M-20 -38h66q8 0 8 10v8q0 6-8 6h-66q-6 0-6-6v-12q0-6 6-6z" fill="#f6a8bd"/>${[[-8, -28], [10, -24], [28, -30], [40, -22]].map(([x, y]) => heart(x, y, .55, "#fff")).join("")}`;
+    case "sofa": return `<rect x="-44" y="-8" width="5" height="8" fill="#7a5a3c"/><rect x="39" y="-8" width="5" height="8" fill="#7a5a3c"/>
+      <rect x="-48" y="-54" width="96" height="34" rx="15" fill="#8fc8dd"/><rect x="-46" y="-30" width="92" height="22" rx="9" fill="#b3dcea"/>
+      <rect x="-56" y="-38" width="17" height="32" rx="8" fill="#7dbbd2"/><rect x="39" y="-38" width="17" height="32" rx="8" fill="#7dbbd2"/>
+      <rect x="-34" y="-46" width="22" height="18" rx="7" fill="#fde68a" transform="rotate(-8 -23 -37)"/><rect x="14" y="-46" width="22" height="18" rx="7" fill="#f9b6c7" transform="rotate(8 25 -37)"/>${heart(25, -38, .6, "#fff")}`;
+    case "shelf": { const bk = (x, y, w, h, c) => `<rect x="${x}" y="${y - h}" width="${w}" height="${h}" rx="1.2" fill="${c}"/>`;
+      return `<rect x="-34" y="-104" width="68" height="104" rx="4" fill="#c48f5f"/>${[-98, -66, -34].map(y => `<rect x="-29" y="${y}" width="58" height="27" fill="#93643f"/>`).join("")}
+        ${bk(-27, -71, 7, 22, "#f4a3b8")}${bk(-19, -71, 6, 19, "#a9ddc5")}${bk(-12, -71, 8, 24, "#c7b8ef")}${bk(-3, -71, 6, 18, "#fde68a")}<rect x="6" y="-80" width="20" height="9" rx="2" fill="#9fd3ee"/><rect x="8" y="-89" width="16" height="9" rx="2" fill="#f9b6c7"/>
+        ${bk(-27, -39, 8, 20, "#9fd3ee")}${bk(-18, -39, 6, 23, "#f4a3b8")}${bk(-11, -39, 7, 17, "#bfe5d4")}<circle cx="12" cy="-48" r="9" fill="#fff" stroke="#efe2e8"/><circle cx="12" cy="-48" r="4" fill="#f9b6c7"/>
+        ${bk(-27, -7, 6, 21, "#c7b8ef")}${bk(-20, -7, 8, 18, "#fde68a")}${bk(-11, -7, 6, 22, "#f4a3b8")}${bk(-4, -7, 7, 16, "#a9ddc5")}<path d="M10 -7h16l-2-14h-12z" fill="#f3e2c7"/><ellipse cx="18" cy="-24" rx="7" ry="5" fill="#6fbb9c"/>
+        <path d="M-6 -104q0-6 6-6q6 0 6 6z" fill="#f3e2c7"/><path d="M0 -110q-6-10-12-6M0 -110q6-12 12-6" stroke="#6fbb9c" stroke-width="2.4" fill="none" stroke-linecap="round"/>`; }
+    case "kotatsu": return `<path d="M-48 0q-4-20 6-32h84q10 12 6 32z" fill="#f3a3a0"/>${[-30, -10, 10, 30].map(x => `<circle cx="${x}" cy="-14" r="3.2" fill="#fff" opacity=".7"/>`).join("")}<path d="M-46 -6h92" stroke="#e48683" stroke-width="2"/>
+      <rect x="-46" y="-40" width="92" height="9" rx="3" fill="#c48f5f"/><rect x="-46" y="-40" width="92" height="3" rx="1.5" fill="#dcad7f"/>
+      <ellipse cx="-4" cy="-41" rx="13" ry="3" fill="#f3e2c7"/>${[[-10, -46], [-2, -47], [6, -45], [-5, -52]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="#f5a04a"/><circle cx="${x - 1.5}" cy="${y - 1.5}" r="1.4" fill="#ffd08a"/>`).join("")}<path d="M28 -40v-6h10v6z" fill="#fff"/><path d="M30 -48q2-4 0-7M35 -48q2-4 0-7" stroke="#d9d0e3" stroke-width="1.2" fill="none"/>`;
+    case "xtree": return `<rect x="-5" y="-14" width="10" height="14" fill="#a5703f"/>
+      <path d="M0 -112l-24 38h48z" fill="#7cc4a4"/><path d="M0 -92l-31 44h62z" fill="#6fbb9c"/><path d="M0 -66l-38 52h76z" fill="#5aa886"/>
+      <path d="M-26 -50q26 10 50-6M-32 -24q32 12 64-6" stroke="#fde68a" stroke-width="2" fill="none"/>
+      ${[[-12, -78, "#e25b5b"], [10, -70, "#9fd3ee"], [-18, -44, "#f9b6c7"], [16, -40, "#e25b5b"], [-4, -56, "#fde68a"], [-26, -20, "#c7b8ef"], [24, -18, "#fde68a"], [2, -26, "#9fd3ee"]].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="${c}"/>`).join("")}
+      ${star(0, -112, 9, "#f2c94c")}<rect x="18" y="-14" width="18" height="14" rx="2" fill="#f4a3b8"/><rect x="25.5" y="-14" width="3" height="14" fill="#fff"/><rect x="-38" y="-11" width="16" height="11" rx="2" fill="#bfe1f6"/><rect x="-31.5" y="-11" width="3" height="11" fill="#fff"/>`;
+    case "plant": return `<path d="M-14 0l-3-24h34l-3 24z" fill="#f3e2c7"/><rect x="-18" y="-28" width="36" height="6" rx="3" fill="#ead2ad"/>
+      <path d="M0 -26q-2-20-4-34M0 -26q6-18 14-28M0 -26q-10-12-20-16" stroke="#5aa886" stroke-width="2.4" fill="none"/>
+      <ellipse cx="-6" cy="-62" rx="10" ry="15" fill="#6fbb9c" transform="rotate(-12 -6 -62)"/><ellipse cx="16" cy="-56" rx="10" ry="14" fill="#5aa886" transform="rotate(30 16 -56)"/><ellipse cx="-20" cy="-42" rx="9" ry="13" fill="#7cc4a4" transform="rotate(-50 -20 -42)"/>
+      <path d="M-6 -50v-22M16 -46l-6-20M-20 -34l6-16" stroke="#a9ddc5" stroke-width="1.2" fill="none"/>`;
+    case "lamp": return `<circle cx="0" cy="-86" r="26" fill="#fff3b0" opacity=".35"/><ellipse cx="0" cy="-3" rx="14" ry="4" fill="#9580d0"/><rect x="-2" y="-84" width="4" height="82" fill="#b8a6e6"/>
+      <path d="M-18 -78l6-26h24l6 26z" fill="#fff6c8"/><path d="M-18 -78h36" stroke="#f4a3b8" stroke-width="3" stroke-linecap="round"/>`;
+    case "kuma": return `<ellipse cx="0" cy="-16" rx="18" ry="16" fill="#c99466"/><ellipse cx="0" cy="-12" rx="10" ry="9" fill="#ead2ad"/><ellipse cx="-15" cy="-4" rx="7" ry="5" fill="#b8835a"/><ellipse cx="15" cy="-4" rx="7" ry="5" fill="#b8835a"/>
+      <circle cx="-13" cy="-50" r="6.5" fill="#c99466"/><circle cx="13" cy="-50" r="6.5" fill="#c99466"/><circle cx="-13" cy="-50" r="3.4" fill="#ead2ad"/><circle cx="13" cy="-50" r="3.4" fill="#ead2ad"/>
+      <circle cx="0" cy="-38" r="15" fill="#d4a074"/><ellipse cx="0" cy="-33" rx="6.5" ry="5" fill="#f3e2c7"/><ellipse cx="0" cy="-35" rx="2.4" ry="1.8" fill="#4a3540"/><circle cx="-6" cy="-41" r="1.8" fill="#4a3540"/><circle cx="6" cy="-41" r="1.8" fill="#4a3540"/>
+      <path d="M0 -24l-8-5v10zM0 -24l8-5v10z" fill="#f4a3b8"/><circle cy="-24" r="2.4" fill="#e2809c"/>`;
+    case "gifts": return `<rect x="-28" y="-26" width="32" height="26" rx="3" fill="#f4a3b8"/><rect x="-14" y="-26" width="4" height="26" fill="#fff"/><path d="M-12 -26q-8-8-2-10q4 2 2 10q6-8 10-6q0 6-10 6" fill="none" stroke="#fff" stroke-width="2"/>
+      <rect x="6" y="-20" width="22" height="20" rx="3" fill="#bfe1f6"/><rect x="15" y="-20" width="4" height="20" fill="#fde68a"/>
+      <rect x="-16" y="-46" width="22" height="20" rx="3" fill="#c7b8ef"/><rect x="-7" y="-46" width="4" height="20" fill="#fff"/><circle cx="-5" cy="-47" r="3" fill="#fde68a"/>`;
+    case "r_round": return `<ellipse rx="80" ry="14" fill="#f9c6d4"/><ellipse rx="66" ry="10" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/>`;
+    case "r_heart": return `<g transform="scale(6.2 1.9) translate(0 -5)"><path d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="#f6a8bd"/></g>`;
+    case "r_star": return `<g transform="scale(1 .3)">${star(0, 6, 66, "#fde68a")}${star(0, 6, 50, "#fff3b0")}</g>`;
+  }
+  return "";
+}
+/* 部屋ぜんぶ（うりぼーのうしろに置く） */
+function roomSvg(room){
+  room = room || roomNow();
+  const K = "r" + (roomSvg.n = (roomSvg.n || 0) + 1);
+  const at = (slot, inner) => { const p = RPOS[slot]; return inner ? `<g transform="translate(${p[0]} ${p[1]})">${inner}</g>` : ""; };
+  const it = s => room[s] ? rItemSvg(room[s], K + s) : "";
+  return `<svg class="uroomsvg" viewBox="-200 0 720 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>${rWallDef(room.wall, K)}${rFloorDef(room.floor, K)}
+      <linearGradient id="${K}ws" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#3a2230" stop-opacity=".12"/></linearGradient>
+      <linearGradient id="${K}fs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2230" stop-opacity=".22"/><stop offset=".5" stop-color="#3a2230" stop-opacity=".05"/><stop offset="1" stop-color="#fff" stop-opacity=".12"/></linearGradient>
+      <radialGradient id="${K}lt" cx=".42" cy=".1" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+      <radialGradient id="${K}vg" cx=".5" cy=".5" r=".75"><stop offset=".6" stop-color="#3a2230" stop-opacity="0"/><stop offset="1" stop-color="#3a2230" stop-opacity=".18"/></radialGradient>
+      ${uPuffy(K + "p")}</defs>
+    <rect x="-200" y="0" width="720" height="143" fill="url(#${K}wp)"/><rect x="-200" y="0" width="720" height="143" fill="url(#${K}ws)"/>
+    <rect x="-200" y="142" width="720" height="58" fill="url(#${K}fp)"/><rect x="-200" y="142" width="720" height="58" fill="url(#${K}fs)"/>
+    <rect x="-200" y="135" width="720" height="8" fill="#fff" filter="url(#${K}p)"/>
+    <g filter="url(#${K}p)">${at("win", it("win"))}${at("deco", it("deco"))}</g>
+    ${room.rug ? `<g filter="url(#${K}p)">${at("rug", it("rug"))}</g>` : ""}
+    ${["fl", "fr"].map(s => room[s] ? `<ellipse cx="${RPOS[s][0]}" cy="${RPOS[s][1] + 1}" rx="${s === "fl" ? 54 : 26}" ry="5" fill="#3a2230" opacity=".14"/><g filter="url(#${K}p)">${at(s, it(s))}</g>` : "").join("")}
+    <rect x="-200" y="0" width="720" height="200" fill="url(#${K}lt)"/><rect x="-200" y="0" width="720" height="200" fill="url(#${K}vg)"/>
+  </svg>`;
+}
+/* おみせ用の小さな見本 */
+function roomThumb(it){
+  const K = "rt" + (roomThumb.n = (roomThumb.n || 0) + 1);
+  if (it.s === "wall" || it.s === "floor") {
+    const def = it.s === "wall" ? rWallDef(it.id, K) : rFloorDef(it.id, K).replace('y="142"', "");
+    return `<svg viewBox="0 0 60 60" aria-hidden="true"><defs>${def}${uPuffy(K + "p")}</defs><rect x="4" y="4" width="52" height="52" rx="12" fill="url(#${K}${it.s === "wall" ? "wp" : "fp"})" filter="url(#${K}p)"/></svg>`;
+  }
+  if (it.s === "rug") return `<svg viewBox="-90 -90 180 180" aria-hidden="true"><defs>${uPuffy(K + "p")}</defs><g transform="scale(1 3.2)"><g filter="url(#${K}p)">${rItemSvg(it.id, K)}</g></g></svg>`;
+  const [x, y, w, h] = it.b, m = Math.max(w, h);
+  return `<svg viewBox="${x - (m - w) / 2} ${y - (m - h) / 2} ${m} ${m}" aria-hidden="true"><defs>${uPuffy(K + "p")}</defs><g filter="url(#${K}p)">${rItemSvg(it.id, K)}</g></svg>`;
+}
+
+/* おみせの「おへや」タブ */
+function openRoomShop(){
+  const u = uriState(), room = roomNow(), bal = S.pet?.acorns || 0, mon = new Date().getMonth() + 1;
+  const sl = S.rSlot || "all";
+  const list = RITEMS.filter(it => (sl === "all" || it.s === sl) && (rOwned(it) || !it.m || it.m.includes(mon)));
+  const cell = it => {
+    const on = room[it.s] === it.id, own = rOwned(it);
+    const foot = own ? (on ? "おいてる ✓" : RSLOTS[it.s]) : `🌰${it.p}${it.m ? " ・ 期間限定" : ""}`;
+    return `<button class="witem ritem ${on ? "on" : ""} ${!own && bal < it.p ? "poor" : ""}" data-a="${own ? "rmPlace" : "rmBuy"}" data-id="${it.id}"><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
+  };
+  openSheet(`<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
+  <div class="rprev"><div class="uroom">${roomSvg(room)}</div><div class="uri s${u.st}">${uriSvg(u.st, "happy", uw())}</div><div class="wbal">🌰 ${bal}こ</div></div>
+  ${wardrobeSeg("room")}
+  <div class="chips">${[["all", "すべて"], ...Object.entries(RSLOTS)].map(([k, n]) => `<button class="chip ${sl === k ? "on" : ""}" data-a="rmSlot" data-v="${k}">${n}</button>`).join("")}</div>
+  <div class="wgrid">${list.map(cell).join("")}</div>
+  <p class="muted" style="text-align:center;font-size:12px">持っているものはタップでおく・かたづける（同じ場所には1つまで）。まどの外は、いまの時間の空になるよ</p>`);
+}
+function wardrobeSeg(t){
+  return `<div class="seg"><button class="${t === "have" ? "on" : ""}" data-a="wTab" data-v="have">もちもの ${UITEMS.filter(owned).length}</button><button class="${t === "shop" ? "on" : ""}" data-a="wTab" data-v="shop">おみせ</button><button class="${t === "room" ? "on" : ""}" data-a="wTab" data-v="room">🏠 おへや</button></div>`;
+}
+async function roomBuy(id){
+  const it = ritemOf(id), bal = S.pet?.acorns || 0; if (!it || rOwned(it)) return;
+  if (bal < it.p) { toast(`どんぐりがあと${it.p - bal}こ足りないよ`); return; }
+  try {
+    await setDoc(petRef(), { acorns: increment(-it.p), ritems: { [id]: true }, room: { [it.s]: id } }, { merge: true });
+    S.pet = { ...(S.pet || {}), acorns: bal - it.p, ritems: { ...(S.pet?.ritems || {}), [id]: true }, room: { ...(S.pet?.room || {}), [it.s]: id } };
+    openRoomShop(); render();
+    toast(`${it.e} ${it.n}をおへやにおいたよ！`);
+    setTimeout(() => uriSay(`${it.n}、すてきぷぎ♪`), 100);
+  } catch (e) { toast("買えませんでした（" + (e.code || e.message) + "）"); }
+}
+async function roomPlace(id){
+  const it = ritemOf(id); if (!it || !rOwned(it)) return;
+  const cur = roomNow()[it.s], must = it.s in RDEF;
+  if (cur === id && must) return; // かべがみ・ゆか・まどは、はずせない（ほかのを選ぶ）
+  const val = cur === id ? null : id;
+  const r = { ...(S.pet?.room || {}) }; if (val) r[it.s] = val; else delete r[it.s];
+  S.pet = { ...(S.pet || {}), room: r };
+  openRoomShop(); render();
+  try { await setDoc(petRef(), { room: { [it.s]: val || deleteField() } }, { merge: true }); }
+  catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
+}
+
+/* ---------- ふたりのおみくじ ---------- */
+function omiRand(seed){ let h = 2166136261; for (const c of seed) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const OMI_TOTAL = [["大吉", 15], ["中吉", 25], ["小吉", 22], ["吉", 26], ["末吉", 12]];
+const OMI_ITEMS = ["ハンカチ", "リップクリーム", "おそろいのもの", "白いくつ下", "ヘアゴム", "手袋", "ピンクのもの", "腕時計", "イヤホン", "折りたたみ傘", "キーホルダー", "まるいもの", "ストール", "カメラ", "メガネ", "ミントのガム", "絆創膏", "花柄のもの", "ネイル", "トートバッグ", "ポーチ", "香水", "パーカー", "星のモチーフ", "あったかい飲みもの", "ふたりの写真", "手紙", "スニーカー", "ボーダーのもの", "どんぐり"];
+const OMI_FOODS = ["オムライス", "いちごパフェ", "ラーメン", "たこ焼き", "パンケーキ", "ハンバーグ", "おにぎり", "焼き鳥", "クレープ", "カレー", "お寿司", "ピザ", "焼き芋", "からあげ", "チーズケーキ", "うどん", "餃子", "ドーナツ", "タピオカ", "焼肉", "シュークリーム", "お好み焼き", "プリン", "パスタ", "鍋", "アイスクリーム", "肉まん", "みかん", "チョコレート", "ホットココア"];
+const OMI_SPOTS = ["近くのカフェ", "公園のおさんぽ", "映画館", "水族館", "本屋さん", "夜景のきれいなところ", "おうちでまったり", "ゲームセンター", "温泉", "ショッピングモール", "パン屋さん", "神社"];
+const OMI_SAY = {
+  "大吉": ["きょうは さいこうの日ぷぎ！なんでもうまくいくよ", "ふたりのなかよしパワーがMAXぷぎ！", "うれしいことが起きる予感…！ぷぎ"],
+  "中吉": ["いい日になりそうぷぎ♪ にこにこでいこ", "ふたりでいると、いいことが増えるよ", "ちょっとした幸せが見つかる日ぷぎ"],
+  "小吉": ["のんびりすごすと、いいことあるぷぎ", "ありがとうを言うと、運気アップぷぎ", "ちいさな幸せを見のがさないでね"],
+  "吉": ["ふつうの日こそ、たいせつぷぎ", "いつもどおりが いちばんのしあわせぷぎ", "おいしいものを食べると元気がでるよ"],
+  "末吉": ["これから運気がのぼっていくぷぎ！", "ゆっくりでいいよ。ぼくがついてるぷぎ", "きょうはやさしくしあう日にしよ"]
+};
+const OMI_ADV = ["手をつないで歩くといいことが", "写真を1まい撮ってみて", "「すき」を1回多く言ってみよう", "あまいものを半分こしよう", "いつもと違う道を通ってみて", "相手のいいところを1つ伝えよう", "早めに寝ると明日も好調", "おそろいのものを身につけよう", "電話で声を聞くと運気アップ", "思い出の写真を見返してみて", "ちいさなプレゼントが吉", "笑顔でおはようを言おう"];
+function omikuji(day){
+  const R = omiRand((S.roomId || "") + ":" + day), pick = a => a[Math.floor(R() * a.length)];
+  let x = R() * 100, total = "吉"; for (const [n, w] of OMI_TOTAL) { if ((x -= w) < 0) { total = n; break; } }
+  const base = { "大吉": 3, "中吉": 2, "小吉": 2, "吉": 1, "末吉": 1 }[total];
+  const star = () => Math.max(1, Math.min(5, base + Math.floor(R() * 3)));
+  const places = S.places.filter(p => !p.visited).map(p => p.title);
+  return { total, love: star(), out: star(), food: star(), item: pick(OMI_ITEMS), dish: pick(OMI_FOODS), spot: places.length ? pick(places) : pick(OMI_SPOTS), fromList: places.length > 0, say: pick(OMI_SAY[total]), adv: pick(OMI_ADV) };
+}
+const omiOpened = uid => S.pet?.omikuji?.[uid] === today();
+function omikujiCardHtml(){
+  const o = omikuji(today()), mine = omiOpened(me()), pu = partnerUid();
+  return `<div class="card swipebar omicard" data-a="omikuji"><span class="ic">🎋</span><div class="main"><b>ふたりのおみくじ</b><span class="muted">${mine ? `きょうは <b class="omt">${o.total}</b> ・ ラッキーアイテム：${esc(o.item)}` : `1日1回ひけるよ${pu && omiOpened(pu) ? `（${esc(pName())}はもうひいたよ）` : ""}`}</span></div><span class="go">›</span></div>`;
+}
+const omiStars = n => "★".repeat(n) + `<span class="off">${"★".repeat(5 - n)}</span>`;
+function omiResultHtml(o){
+  const pu = partnerUid();
+  return `<div class="omipaper">
+    <div class="omihd">ふたりの運勢 ・ ${esc(fmtShort(today()))}</div>
+    <div class="omitot t${OMI_TOTAL.findIndex(x => x[0] === o.total)}">${o.total}</div>
+    <div class="omisay">「${esc(o.say)}」<small>— ${esc(uriName())}</small></div>
+    <div class="omirow"><span>💕 恋愛運</span><em>${omiStars(o.love)}</em></div>
+    <div class="omirow"><span>🚶 おでかけ運</span><em>${omiStars(o.out)}</em></div>
+    <div class="omirow"><span>🍽 ごはん運</span><em>${omiStars(o.food)}</em></div>
+    <div class="omigrid"><div><small>ラッキーアイテム</small><b>${esc(o.item)}</b></div><div><small>ラッキーフード</small><b>${esc(o.dish)}</b></div></div>
+    <div class="omispot"><small>${o.fromList ? "きょうのおすすめ（行きたいリストから）" : "きょうのおすすめスポット"}</small><b>📍 ${esc(o.spot)}</b></div>
+    <div class="omiadv">💡 ${esc(o.adv)}</div>
+  </div>
+  ${pu ? `<p class="muted" style="text-align:center;font-size:12px;margin:10px 0 0">${omiOpened(pu) ? `${esc(pName())}もきょうのおみくじを見たよ` : `${esc(pName())}はまだひいていないよ`}</p>` : ""}`;
+}
+async function openOmikuji(){
+  const o = omikuji(today()), u = uriState();
+  if (omiOpened(me())) { openSheet(`<h3>🎋 ふたりのおみくじ<button class="x" data-a="close">×</button></h3>${omiResultHtml(o)}`); return; }
+  openSheet(`<h3>🎋 ふたりのおみくじ<button class="x" data-a="close">×</button></h3>
+    <div class="omishake"><div class="uri s${Math.min(u.st, 5)}">${uriSvg(u.st, "happy", uw())}</div><div class="omibox"><span>おみくじ</span></div></div>
+    <p class="omiwait">カラカラ…</p>`);
+  const bonus = o.total === "大吉";
+  const val = { omikuji: { [me()]: today() }, ...(bonus ? { acorns: increment(5) } : {}) };
+  setDoc(petRef(), val, { merge: true }).catch(() => {});
+  S.pet = { ...(S.pet || {}), omikuji: { ...(S.pet?.omikuji || {}), [me()]: today() }, acorns: (S.pet?.acorns || 0) + (bonus ? 5 : 0) };
+  setTimeout(() => {
+    const sh = document.querySelector(".omishake"); if (!sh) { render(); return; }
+    openSheet(`<h3>🎋 ふたりのおみくじ<button class="x" data-a="close">×</button></h3>${omiResultHtml(o)}${bonus ? `<p class="omibonus">🎉 大吉ボーナス！どんぐり5こゲット 🌰</p>` : ""}`);
+    document.querySelector(".omipaper")?.classList.add("pop");
+    render();
+  }, 1700);
+}
+
 async function uriBuy(id){
   const it = itemOf(id), bal = S.pet?.acorns || 0; if (!it || owned(it)) return;
   if (bal < it.p) { toast(`どんぐりがあと${it.p - bal}こ足りないよ`); return; }
@@ -2429,6 +2745,7 @@ function viewUri(){
   if (S.needRules) return `<div class="card"><p class="muted">うりぼーを使うには、Firebaseのルール更新が必要です</p></div>`;
   uriSouvCheck();
   return `<div class="utab">${uriHtml()}</div>
+  ${omikujiCardHtml()}
   ${letterCardHtml()}
   ${wearCardHtml()}
   ${gameCardHtml()}
@@ -3216,6 +3533,10 @@ document.addEventListener("click", async ev => {
     case "wTab": openWardrobe(el.dataset.v); break;
     case "wSlot": S.wSlot = el.dataset.v; openWardrobe(); break;
     case "uriBuy": uriBuy(id); break;
+    case "rmSlot": S.rSlot = el.dataset.v; openRoomShop(); break;
+    case "rmBuy": roomBuy(id); break;
+    case "rmPlace": roomPlace(id); break;
+    case "omikuji": openOmikuji(); break;
     case "uriWear": uriWear(id); break;
     case "letterNew": openLetterNew(); break;
     case "letterGet": letterDeliver(true); break;
