@@ -489,6 +489,50 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .newmark{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--pink-d);border-radius:99px;padding:0 6px;margin-left:4px}
 /* ---- うりぼーメニュー ---- */
 .utab .ustage{height:200px;overflow:hidden;border-radius:18px}
+/* ---- 新しいメニュー構成 ---- */
+header.hd2{align-items:flex-end}
+header.hd2 .ttl small{display:block;font-size:12px;color:var(--muted);line-height:1.2}
+header.hd2 h1{margin:0;font-size:24px;letter-spacing:.04em;line-height:1.25}
+header.hd2 .status{margin-bottom:5px}
+header.hd2 .iconbtn{align-self:center}
+.segx{display:flex;background:#fff;border-radius:18px;padding:4px;box-shadow:var(--shadow);margin-bottom:12px}
+.segx button{flex:1;border:0;background:transparent;padding:8px 0;border-radius:14px;font-size:14px;color:var(--muted);cursor:pointer;position:relative;white-space:nowrap}
+.segx button.on{background:var(--pink-l);color:var(--pink-d);font-weight:700}
+.segx small{font-size:11px;margin-left:2px}
+.bdot{position:absolute;top:5px;right:8px;width:8px;height:8px;border-radius:50%;background:#f0627f}
+.badge{display:inline-block;min-width:18px;height:18px;border-radius:9px;background:#f0627f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;padding:0 5px;font-style:normal}
+.notice{padding:8px 14px}
+.notice .nh{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.nrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--line);font-size:13.5px;cursor:pointer}
+.nrow:nth-child(2){border-top:0}
+.nrow .ni{width:34px;height:34px;border-radius:12px;display:grid;place-items:center;font-size:18px;flex:none}
+.nrow .t{flex:1;min-width:0}.nrow .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nrow small{display:block;color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nrow .go{color:var(--lav-d)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.two .card{margin:0;padding:12px 14px;cursor:pointer}
+.stat .l{font-size:11.5px;color:var(--muted)}
+.stat .n{font-size:28px;font-weight:800;color:var(--pink-d);line-height:1.2}
+.stat .n small{font-size:12px;font-weight:700;margin:0 2px}
+.stat .s{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat.today{background:linear-gradient(135deg,#fde8ee,#fff0ea)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tile{background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:12px;position:relative;min-height:100px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tile:active{transform:scale(.97)}
+.tile .ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font-size:22px;margin-bottom:6px}
+.tile b{display:block;font-size:14px}
+.tile small{display:block;font-size:11.5px;color:var(--muted);line-height:1.4}
+.tile small .omt{display:inline;font-size:12px;color:#d9534f}
+.tile .badge{position:absolute;top:10px;right:10px}
+.lbl2{font-size:12px;color:var(--muted);margin:14px 6px 6px}
+.fstrip{display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#fde8ee,#fff0ea);padding:12px 14px;cursor:pointer}
+.umfed{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 0 4px}.umfed span{font-size:11px;background:rgba(255,255,255,.85);border-radius:99px;padding:1px 8px;color:var(--muted)}
+.uacorn{margin-left:auto;font-size:12px;font-weight:700;color:#a5703f}
+.fstrip .e{font-size:30px}.fstrip .m{flex:1}
+.fstrip small{display:block;font-size:11.5px;color:var(--muted)}
+.fstrip .m b{font-size:26px;font-weight:800;color:var(--pink-d);line-height:1.1}
+.fstrip .m b small{display:inline;font-size:13px;color:var(--pink-d)}
+.fstrip .r{text-align:right}.fstrip .r b{font-size:13px;color:var(--pink-d)}
 .uroom{position:absolute;inset:0;z-index:0;pointer-events:none}
 .uroom svg{width:100%;height:100%;display:block}
 .utab .ustage .udeco{z-index:1}.utab .ustage .uri{position:relative;z-index:2}.utab .ustage .ububble{z-index:3}.utab .ustage .uprop{z-index:2}
@@ -1097,34 +1141,35 @@ function render(){
 function renderMain(){
   const paired = isPaired();
   const both = S.places.filter(p => !p.visited && isBoth(p)).length;
+  const title = S.tab === "home" ? "きょう" : isOd() ? "おでかけ" : S.tab === "futari" ? "ふたり" : "ウリ";
   $app.innerHTML = `
-  <header class="top">
-    <div class="logo">${IC.logo}<span class="h">ウリ</span><span class="b">ログ</span></div>
-    <span class="status ${paired ? "" : "wait"}">${paired ? `${esc(nameOf(me()))} ♡ ${esc(nameOf(partnerUid()))}` : "招待待ち"}</span>
+  <header class="top hd2">
+    <div class="ttl">${S.tab === "home" ? `<small>${esc(fmtShort(today()))}</small>` : ""}<h1>${title}</h1></div>
+    ${S.tab === "home" ? `<span class="status ${paired ? "" : "wait"}">${paired ? `${esc(nameOf(me()))} ♡ ${esc(nameOf(partnerUid()))}` : "招待待ち"}</span>` : ""}
     <button class="iconbtn" data-a="settings" aria-label="設定">${IC.gear}</button>
   </header>
   ${paired ? "" : `<div class="card invite"><span class="deco">💌</span><h2>恋人を招待しよう</h2><p>${S.room.partnerEmail ? `${esc(S.room.partnerEmail)} の登録を待っています。` : "恋人のメールアドレスを登録すると、ふたりで同じリストが使えます。"}</p><button class="btn sm" data-a="invite">${S.room.partnerEmail ? "招待の確認・送り直し" : "恋人のメールアドレスを登録"}</button></div>`}
   <div id="view">${view()}</div>`;
   const tabs = [
-    ["home", IC.home, "ホーム"],
-    ["list", IC.list, "行きたい", both],
-    ["cal", IC.cal, "よてい"],
-    ["memo", IC.memo, "おもいで", S.tab === "memo" ? 0 : notesNew().length, "NEW"],
-    ["uri", IC.uri, "ウリ", lettersIn().length, lettersIn().length ? "💌" : ""]
+    ["home", IC.home, "きょう", 0, "", S.tab === "home"],
+    ["od", IC.list, "おでかけ", S.tab === "memo" ? 0 : notesNew().length, "NEW", isOd()],
+    ["futari", IC.heart, "ふたり", S.needRules ? 0 : futariBadge(), "", S.tab === "futari"],
+    ["uri", IC.uri, "ウリ", 0, "", S.tab === "uri"]
   ];
   $nav.innerHTML = `
   ${S.tab === "list" ? `<button class="fab" data-a="add" aria-label="候補を追加">${IC.plus}</button>` : ""}
   ${S.tab === "cal" ? `<button class="fab" data-a="dateAdd" aria-label="予定を追加">${IC.plus}</button>` : ""}
-  <nav class="tabs"><div class="in2">${tabs.map(([id, ic, n, c, lbl]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${ic}<span>${n}${c ? `<span class="n">${lbl || c}</span>` : ""}</span></button>`).join("")}</div></nav>`;
+  <nav class="tabs"><div class="in2">${tabs.map(([id, ic, n, c, lbl, on]) => `<button class="${on ? "on" : ""}" data-a="tab" data-v="${id}">${ic}<span>${n}${c ? `<span class="n">${lbl || c}</span>` : ""}</span></button>`).join("")}</div></nav>`;
   const q = document.getElementById("q");
   if (q) q.oninput = () => { S.q = q.value; document.getElementById("plist").innerHTML = listHtml(filtered()); document.getElementById("cnt").textContent = filtered().length + "件"; };
 }
 
 function view(){
   if (S.tab === "home") return viewHome();
-  if (S.tab === "memo") { const h = viewMemo(); markNotesSeen(); return h; }
-  if (S.tab === "cal") return viewCal();
+  if (S.tab === "memo") { const h = odSeg() + viewMemo(); markNotesSeen(); return h; }
+  if (S.tab === "cal") return odSeg() + viewCal();
   if (S.tab === "uri") return viewUri();
+  if (S.tab === "futari") return viewFutari();
   return viewList();
 }
 
@@ -1194,7 +1239,7 @@ function annivHtml(){
 function viewList(){
   const arr = filtered();
   const whos = [["all", "すべて"], ["both", "ふたり♡"], ["mine", "わたしの♡"], ["new", "まだ見てない"]].filter(w => isPaired() || w[0] !== "both");
-  return `${swipeBar()}
+  return `${odSeg()}${swipeBar()}
   <div class="seg who">${whos.map(([id, n]) => `<button class="${S.who === id ? "on" : ""}" data-a="who" data-v="${id}">${n}</button>`).join("")}</div>
   <div class="search">${IC.search}<input class="in" id="q" placeholder="名前・エリア・メモでさがす" value="${esc(S.q)}"></div>
   <div class="chips">
@@ -1308,18 +1353,90 @@ function whoOk(p){
 
 /* =============== ホーム =============== */
 function viewHome(){
-  const matches = sortPlaces(S.places.filter(p => !p.visited && isBoth(p)));
+  return `${uriMiniHtml()}${noticeHtml()}${S.extraErr ? "" : statRowHtml()}${qaHtml()}`;
+}
+
+/* =============== 新しいメニュー構成（きょう・おでかけ・ふたり・ウリ） =============== */
+const OD_TABS = ["list", "cal", "memo"];
+const isOd = () => OD_TABS.includes(S.tab);
+/* おでかけの上の切りかえ［行きたい｜よてい｜おもいで］ */
+function odSeg(){
+  const c = { list: S.places.filter(p => !p.visited).length, cal: S.dates.filter(d => d.date >= today()).length, memo: S.places.filter(p => p.visited).length };
+  const nn = S.tab === "memo" ? 0 : notesNew().length;
+  return `<div class="segx">${[["list", "📍 行きたい"], ["cal", "📅 よてい"], ["memo", "📷 おもいで"]].map(([id, n]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${n}<small>${c[id]}</small>${id === "memo" && nn ? `<i class="bdot"></i>` : ""}</button>`).join("")}</div>`;
+}
+/* 「ふたり」タブに出す新しいことの数 */
+function futariBadge(){
+  const pu = partnerUid(); let n = lettersIn().length;
+  if (pu && qaAns(today(), pu) && !qaAns(today(), me())) n++;
+  if (S.tickets.length) n += tkGave().filter(t => t.status === "used").length + tkGot().filter(t => t.status === "new" && (t.at || 0) > tkSeenAt()).length;
+  if (pu) n += QSETS.filter(x => qDone(x.id, pu) && !qDone(x.id, me())).length;
+  return n;
+}
+/* いちばん近い記念日（付き合った日の100日ごと・周年・登録した記念日） */
+function annivNext(){
+  const t = today(), c = [], since = S.room?.since;
+  if (since && dayDiff(since, t) >= 0) {
+    const days = dayDiff(since, t) + 1, k = Math.ceil(days / 100) * 100;
+    c.push({ t: `${k}日目`, left: k - days });
+    const [sy, sm, sd] = since.split("-").map(Number); let y = +t.slice(0, 4), d = `${y}-${pad2(sm)}-${pad2(sd)}`;
+    if (dayDiff(t, d) < 0) { y++; d = `${y}-${pad2(sm)}-${pad2(sd)}`; }
+    if (y - sy >= 1) c.push({ t: `${y - sy}周年`, left: dayDiff(t, d) });
+  }
+  annivs().forEach(a => { const o = nextOcc(a.d); c.push({ t: a.t, left: dayDiff(t, o) }); });
+  return c.sort((x, y) => x.left - y.left)[0] || null;
+}
+const annivNextText = () => { const n = annivNext(); return n ? (n.left === 0 ? `きょうは${n.t}！` : `${n.t}まであと${n.left}日`) : "記念日を登録してね"; };
+/* きょう：おしらせ（1枚にまとめる） */
+function noticeHtml(){
+  const rows = [], pu = partnerUid(), row = (ic, bg, t, sub, act, right) => `<div class="nrow" ${act}><span class="ni" style="background:${bg}">${ic}</span><div class="t"><b>${t}</b><small>${sub}</small></div>${right || `<span class="go">›</span>`}</div>`;
+  const nIn = lettersIn().length;
+  if (nIn) rows.push(row("💌", "var(--pink-l)", `${esc(pName())}からおてがみ${nIn > 1 ? `（${nIn}通）` : ""}`, `${esc(uriName())}があずかってるよ`, "", `<button class="btn sm" data-a="letterGet">うけとる</button>`));
+  try { annivOn(today()).forEach(a => rows.push(row(esc(a.e), "var(--peach-l)", `きょうは${esc(a.t)}！`, esc(a.s || ""), `data-a="tab" data-v="futari"`))); } catch (e) {}
+  if (!S.needRules && S.tickets.length) {
+    tkGave().filter(t => t.status === "used").forEach(t => rows.push(row(esc(t.e || "🎟"), "var(--butter-l)", `「${esc(t.t)}」が使われたよ`, `${esc(pName())}のお願いをかなえてあげてね`, `data-a="tickets" data-v="gave"`)));
+    const fresh = tkGot().filter(t => t.status === "new" && (t.at || 0) > tkSeenAt());
+    if (fresh.length) rows.push(row("🎟", "var(--butter-l)", `${esc(pName())}からチケットが届いたよ`, esc(fresh.map(t => t.t).slice(0, 2).join("、")), `data-a="tickets" data-v="got"`));
+  }
   const nn = notesNew();
-  return `${uriMiniHtml()}${S.extraErr ? "" : countdownHtml()}${annivHtml()}
-  ${ticketAlertsHtml()}
-  ${qaHtml()}
-  ${annivUpcomingHtml()}
-  ${nn.length ? `<div class="card swipebar" data-a="tab" data-v="memo"><span class="ic">💬</span><div class="main"><b>${esc(pName())}がおもいでにひとこと</b><span class="muted">${esc(nn.map(p => p.title).slice(0, 2).join("、"))}${nn.length > 2 ? ` ほか${nn.length - 2}件` : ""}</span></div><span class="go">›</span></div>` : ""}
-  ${isPaired() ? `<div class="secrow"><div class="sec">ふたりとも行きたい♡ ・ ${matches.length}件</div>${matches.length > 3 ? `<button class="linkbtn" data-a="goWho" data-v="both">すべて見る ›</button>` : ""}</div>
-  ${matches.length ? matches.slice(0, 3).map(placeCard).join("") : `<div class="card anniv-empty"><span style="font-size:22px">💞</span><span class="muted">ふたりとも♡をつけた場所がここに出ます</span></div>`}` : ""}
-  ${swipeBar()}
-  ${ticketCta()}
-  ${quizCta()}`;
+  if (nn.length) rows.push(row("💬", "var(--mint-l)", `${esc(nn.map(p => p.title).slice(0, 2).join("、"))}${nn.length > 2 ? ` ほか${nn.length - 2}件` : ""}にひとこと`, `${esc(pName())} ・ おもいで`, `data-a="tab" data-v="memo"`));
+  if (pu) { const w = QSETS.filter(x => qDone(x.id, pu) && !qDone(x.id, me())).length; if (w) rows.push(row("💯", "var(--lav-l)", `${esc(pName())}が相性テストに答えたよ`, `${w}つ ・ 答えると結果が見られる`, `data-a="quiz"`)); }
+  if (!rows.length) return "";
+  return `<div class="card notice"><div class="nh">おしらせ <span class="badge">${rows.length}</span></div>${rows.join("")}</div>`;
+}
+/* きょう：次のデート・付き合って○日 */
+function statRowHtml(){
+  const n = nextDate(), since = S.room?.since, t = today();
+  let a;
+  if (n) { const left = dayDiff(t, n.date); a = `<div class="card stat ${left === 0 ? "today" : ""}" data-a="dateOpen" data-id="${n.id}"><div class="l">${left === 0 ? "きょうは" : "次のデートまで"}</div><div class="n">${left === 0 ? `<span style="font-size:20px">デートの日💕</span>` : `<small>あと</small>${left}<small>日</small>`}</div><div class="s">${esc(fmtShort(n.date))} ${esc(dateTitle(n))}</div></div>`; }
+  else a = `<div class="card stat" data-a="dateAdd"><div class="l">次のデート</div><div class="n" style="font-size:17px;padding:6px 0">予定を入れる ＋</div><div class="s">カウントダウンが出るよ</div></div>`;
+  let b;
+  if (since && dayDiff(since, t) >= 0) b = `<div class="card stat" data-a="tab" data-v="futari"><div class="l">付き合って</div><div class="n">${dayDiff(since, t) + 1}<small>日目</small></div><div class="s">${esc(annivNextText())}</div></div>`;
+  else b = `<div class="card stat" data-a="since"><div class="l">付き合った日</div><div class="n" style="font-size:17px;padding:6px 0">登録する ＋</div><div class="s">記念日カウンターが出るよ</div></div>`;
+  return `<div class="two">${a}${b}</div>`;
+}
+/* ふたり：やりとり・あそび */
+function viewFutari(){
+  if (S.needRules) return rulesNote("ふたりの機能");
+  const pu = partnerUid(), since = S.room?.since, t = today();
+  const tile = (ic, bg, n, sub, act, badge) => `<div class="tile" ${act}>${badge ? `<span class="badge">${badge}</span>` : ""}<div class="ic" style="background:${bg}">${ic}</div><b>${n}</b><small>${sub}</small></div>`;
+  const o = omikuji(t), nIn = lettersIn().length, lastOut = S.letters.find(l => l.from === me());
+  const tkN = tkGot().filter(x => x.status === "new").length, tkB = tkGave().filter(x => x.status === "used").length + tkGot().filter(x => x.status === "new" && (x.at || 0) > tkSeenAt()).length;
+  const qW = pu ? QSETS.filter(x => qDone(x.id, pu) && !qDone(x.id, me())).length : 0, qD = pu ? QSETS.filter(x => qDone(x.id, pu) && qDone(x.id, me())).length : 0;
+  const nAnniv = (since ? 1 : 0) + annivs().length;
+  return `<div class="card fstrip" data-a="${since ? "annivs" : "since"}"><span class="e">💞</span>
+      <div class="m">${since && dayDiff(since, t) >= 0 ? `<small>付き合って</small><b>${dayDiff(since, t) + 1}<small>日目</small></b>` : `<small>付き合った日</small><b style="font-size:16px">登録する ＋</b>`}</div>
+      <div class="r"><small>次の記念日</small><b>${esc(annivNextText())}</b></div></div>
+    <div class="lbl2">まいにち</div>
+    ${qaHtml()}
+    <div class="tiles">${tile("🎋", "#fdecea", "おみくじ", omiOpened(me()) ? `きょうは <b class="omt">${o.total}</b>` : "1日1回ひけるよ", `data-a="omikuji"`)}
+      ${tile("📚", "var(--lav-l)", "これまでの質問", "ふたりの答えをふりかえる", `data-a="qaHist"`)}</div>
+    <div class="lbl2">きもちを伝える</div>
+    <div class="tiles">${tile("💌", "var(--pink-l)", "おてがみ", nIn ? `${nIn}通とどいてる` : lastOut ? (lastOut.read ? "さいごのは読んでくれたよ" : "とどけ中…") : `${esc(uriName())}が届けてくれるよ`, `data-a="letterHub"`, nIn)}
+      ${tile("🎟", "var(--butter-l)", "お願いチケット", tkN ? `使えるのが${tkN}枚` : "贈ってみよう", `data-a="tickets" data-v="got"`, tkB)}</div>
+    <div class="lbl2">あそぶ・しる</div>
+    <div class="tiles">${tile("💯", "var(--mint-l)", "相性テスト", qW ? `${esc(pName())}が${qW}つ答えたよ` : `${qD} / ${QSETS.length} クリア`, `data-a="quiz"`, qW)}
+      ${tile("💝", "var(--peach-l)", "記念日", `${nAnniv}件 ・ 追加・編集`, `data-a="annivs"`)}</div>`;
 }
 
 /* =============== スワイプで決める =============== */
@@ -1861,7 +1978,7 @@ function uriHtml(){
   const pct = u.next ? Math.round((u.xp - u.cur) / (u.next - u.cur) * 100) : 100;
   uriCoopFx();
   return `<div class="card uricard" id="uricard">
-    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())}</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><button class="linkbtn" data-a="wardrobe">🎀 きせかえ</button></div>
+    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())} ✎</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><span class="uacorn">🌰 ${S.pet?.acorns || 0}こ</span></div>
     ${uriSeason().ban ? `<div class="uban">${esc(uriSeason().ban)}</div>` : ""}
     <div class="ustage ${roomNow().fl ? "hasfl" : ""}" id="ustage"><div class="uroom">${roomSvg()}</div>${uriDecoHtml()}<div class="ububble" id="ububble">${esc(S.uriSay || (lettersIn().length ? "おてがみあずかってるぷぎ！" : u.mood === "sleep" ? "すやすや…" : uriSpecial() ? uriSeason().line : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
       <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood, uw())}</div></div>
@@ -2744,12 +2861,16 @@ function gameClose(){ if (G) G.run = false; G = null; closeSheet(); render(); }
 function viewUri(){
   if (S.needRules) return `<div class="card"><p class="muted">うりぼーを使うには、Firebaseのルール更新が必要です</p></div>`;
   uriSouvCheck();
+  const mi = gameInfo(me()), left = Math.max(0, GAME_REWARD_N - mi.plays), w = Object.values(uw()).map(itemOf).filter(Boolean), r = roomNow();
+  const nR = ["deco", "fl", "fr", "rug"].filter(k => r[k]).length, u = uriState();
+  const tile = (ic, bg, n, sub, act, badge) => `<div class="tile" ${act}>${badge ? `<span class="badge">${badge}</span>` : ""}<div class="ic" style="background:${bg}">${ic}</div><b>${n}</b><small>${sub}</small></div>`;
   return `<div class="utab">${uriHtml()}</div>
-  ${omikujiCardHtml()}
-  ${letterCardHtml()}
-  ${wearCardHtml()}
-  ${gameCardHtml()}
-  ${albumHtml()}`;
+  <div class="tiles">
+    ${tile("🎀", "var(--pink-l)", "きせかえ", w.length ? w.map(x => x.e).join("") + " つけてる" : "もちもの・おみせ", `data-a="wardrobeHave"`)}
+    ${tile("🏠", "var(--butter-l)", "おへや", nR ? `家具 ${nR}こ おいてる` : "家具・かべがみ", `data-a="roomOpen"`)}
+    ${tile("🌰", "#f4ead9", "どんぐり拾い", left ? "きょうはまだ ・ 1日1回" : `きょうは${mi.last ?? 0}こ拾ったよ`, `data-a="gameOpen"`, left ? "!" : "")}
+    ${tile("📖", "var(--lav-l)", "成長アルバム", `${u.st + 1} / ${USTAGES.length} だんかい`, `data-a="albumOpen"`)}
+  </div>`;
 }
 /* ホーム用の小さいうりぼー */
 function uriMiniHtml(){
@@ -2764,8 +2885,7 @@ function uriMiniHtml(){
         <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div></div>
       </div><span class="go">›</span>
     </div>
-    ${nIn ? `<button class="btn lav block sm" data-a="letterGet">💌 おてがみをうけとる</button><div style="height:8px"></div>` : ""}
-    ${u.fedMe ? `<button class="btn ghost block sm" disabled>🍠 きょうはごはんをあげたよ</button>` : `<button class="btn block sm" data-a="uriFeed">🍠 ごはんをあげる</button>`}
+    <div class="umfed">${[me(), partnerUid()].filter(Boolean).map(id => `<span>🍠 ${esc(nameOf(id))} ${S.pet?.feeds?.[id]?.last === today() ? "✅" : "…"}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -3393,7 +3513,6 @@ function openSettings(){
   <div class="menu">
     <div class="itm">💞 メンバー<span class="r">${esc(nameOf(me()))}${paired ? " ・ " + esc(nameOf(partnerUid())) : "（招待待ち）"}</span></div>
     <button data-a="invite">💌 ${paired ? "招待の状態" : "恋人を招待する"}<span class="r">${paired ? "" : esc(S.room.partnerEmail || "")} ›</span></button>
-    <button data-a="annivs">💝 記念日<span class="r">${(S.room.since ? 1 : 0) + annivs().length}件 ›</span></button>
   </div>
   <div class="sec">わたし</div>
   <div class="menu">
@@ -3515,7 +3634,16 @@ document.addEventListener("click", async ev => {
     case "join": joinRoom(); break;
     case "joinCancel": S.skipInvite = S.invite?.roomId; S.invite = null; route(); break;
     case "recheck": { el.disabled = true; const inv = await findInvite(); if (inv && inv.roomId) renderJoin(inv); else { el.disabled = false; toast("まだ招待は届いていないみたい"); } break; }
-    case "tab": if (el.dataset.v === "memo" && S.tab !== "memo") S.notesPrev = notesSeenAt(); S.tab = el.dataset.v; S.noteEdit = null; render(); window.scrollTo(0, 0); break;
+    case "tab": {
+      let v = el.dataset.v; if (v === "od") v = S.odLast || "list";
+      if (OD_TABS.includes(v)) S.odLast = v;
+      if (v === "memo" && S.tab !== "memo") S.notesPrev = notesSeenAt();
+      S.tab = v; S.noteEdit = null; render(); window.scrollTo(0, 0); break;
+    }
+    case "wardrobeHave": S.wTab = "have"; openWardrobe(); break;
+    case "roomOpen": S.wTab = "room"; openWardrobe(); break;
+    case "albumOpen": openSheet(`<h3>📖 成長アルバム<button class="x" data-a="close">×</button></h3>${albumHtml()}`); break;
+    case "letterHub": openSheet(`<h3>💌 おてがみ<button class="x" data-a="close">×</button></h3>${letterCardHtml()}`); break;
     case "who": S.who = el.dataset.v; render(); break;
     case "goWho": S.who = el.dataset.v; S.tab = "list"; render(); window.scrollTo(0, 0); break;
     case "noteEdit": S.noteEdit = id; refreshNotes(id); break;
