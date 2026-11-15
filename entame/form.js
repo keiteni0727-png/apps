@@ -91,10 +91,11 @@ function songRowsHtml() {
         <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
           ${l.length > 1 ? `<button type="button" class="sgfoldall" data-sgfoldall="${t}">${l.every(([x, k]) => sgOpen.has(k) || !songTA(x).st.trim()) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
           ${l.length ? "" : `<button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button>`}</div>
-        ${l.length ? l.map(([x, k]) => card(x, k)).join("") + `<button type="button" class="sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : none ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
+        ${l.length ? l.map(([x, k]) => card(x, k)).join("") + `<button type="button" class="sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : ""}</div>`;
     })
     .join("");
-  const noBox = f.songs.length ? "" : `<label class="nofl sgno sgall"><input type="checkbox" class="nos" ${none ? "checked" : ""}><span>OP・ED・主題歌 なし</span></label>`;
+  /* その場の編集では「なし」は見出しの右に出す（sgNoneBox） */
+  const noBox = f.songs.length || f.only ? "" : `<label class="nofl sgno sgall"><input type="checkbox" class="nos" ${none ? "checked" : ""}><span>OP・ED・主題歌 なし</span></label>`;
   return noBox + secs;
 }
 const dowOfDate = d => {
@@ -204,13 +205,15 @@ function formHtml() {
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
-        ${f.only ? `<p class="hint" style="margin:6px 0 0">話によって曲が変わるときは、使われた話の範囲を入れます</p>` : ""}</div>`,
+</div>`,
     url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
     vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信サイト（見るページのURL）</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
-    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3><button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
+    /* OP・ED・主題歌の「なし」は見出しの行の右に（曲が1曲もないときだけ） */
+    const sgNone = f.only === "sgList" && !f.songs.length ? `<label class="nofl sgno sghno"><input type="checkbox" class="nos" ${(f.noSongs || []).length ? "checked" : ""} aria-label="OP・ED・主題歌 なし"><span>なし</span></label>` : "";
+    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
     <div class="ffoot"><button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
