@@ -1401,3 +1401,5 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 .kb .sum .sumtop>div:first-child{flex:1;min-width:0}
 .kb button.sumtog{flex:none;width:32px;height:32px;border:0;background:var(--u-chip);border-radius:999px;display:grid;place-items:center;padding:0;color:var(--u-sub)}
 .kb .sum.folded .sumbody{display:none}
+/* 家計簿の絞り込み：検索欄をなくし、分類と支払い方法の2つだけ */
+.kb .filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}

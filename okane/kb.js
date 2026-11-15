@@ -985,8 +985,8 @@ function renderList(mi) {
       (!ledger.filter.m || i.method === ledger.filter.m) &&
       (!q || ((i.memo || "") + i.category + i.method + i.amount).toLowerCase().includes(q)),
   );
-  $("fc").innerHTML = iconOpts(CATS, ledger.filter.c, "すべての分類");
-  $("fm").innerHTML = iconOpts(METHODS, ledger.filter.m, "すべての支払い方法");
+  $("fc").innerHTML = iconOpts(CATS, ledger.filter.c, "分類");
+  $("fm").innerHTML = iconOpts(METHODS, ledger.filter.m, "支払い方法");
   $("fsum").innerHTML =
     ledger.filter.q || ledger.filter.c || ledger.filter.m
       ? `<div class="row sp mt6"><span>絞り込み: ${fl.length}件 / 合計 <b class="num">${yen(sumOf(fl))}</b></span><button class="ghost" id="fclear">解除</button></div>`
@@ -1674,7 +1674,7 @@ function deleteSel() {
 }
 function showInList(k) {
   ledger.filter = { q: "", c: graph.by === "category" ? k : "", m: graph.by === "method" ? k : "" };
-  $("fq").value = "";
+  ledger.filter.q = "";
   ledger.sel.clear();
   setTab("list");
   render();
@@ -2133,7 +2133,7 @@ function clickAdd(t, d) {
 function clickLedger(t, d) {
   if (t.id === "fclear") {
     ledger.filter = { q: "", c: "", m: "" };
-    $("fq").value = "";
+    ledger.filter.q = "";
     render();
   } else if (d.del) {
     if (!arm(d.del, t, "もう一度押すと削除")) deleteItem(d.del);
