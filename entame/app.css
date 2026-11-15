@@ -1294,3 +1294,5 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 /* 曲名とアーティストを1行に：『曲名』アーティスト */
 .imn .iarn{margin-left:4px;font-size:12.5px;font-weight:500;color:var(--u-sub)}
 .sg-sum .sg-sn .sg-sa{display:inline;margin-left:4px;font-size:12px;font-weight:500;color:var(--u-sub)}
+/* アーティスト名は途中で割らない：入りきらないときは丸ごと次の行へ（1行より長いときだけ折り返す） */
+.imn .iarn,.sg-sum .sg-sn .sg-sa{display:inline-block;max-width:100%;vertical-align:baseline}
