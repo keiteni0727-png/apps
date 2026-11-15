@@ -284,6 +284,8 @@ function vodName(it) {
   const l = [...new Set(m.media === "stream" ? m.plat : m.vods)];
   return l.length === 1 ? l[0] : "配信";
 }
+/* 詳細のMUSICでたたんでいる種類（OP・EDなど）。作品をまたいで同じ状態を保つ */
+const musFold = new Set();
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
   const nn = t => `<span class="nosong">${t}</span>`;
@@ -322,7 +324,16 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       /* 2行目：「歌」ラベル＋アーティスト、使われた話は枠つきの小さなラベルで見分けやすく */
       /* 話は範囲ごとに1つずつの枠ラベル（飛び飛びでも [1〜10話] [13話] [20〜30話] と分けて並べる） */
       const sub = [r.rng.length ? `<span class="ieps">${r.rng.map((t, j) => `<span class="iep inum${j === r.now ? " now " + SG_CLS[r.k] : ""}">${esc(t)}</span>`).join("")}</span>` : ""].filter(Boolean).join("");
-      const head = j === 0 || songRows[j - 1].k !== r.k ? `<div class="imt ${SG_CLS[r.k]}"><b>${r.k}</b>${(n => (n > 1 ? `<small>${n}曲</small>` : ""))(songRows.filter(q => q.k === r.k).length)}</div>` : "";
+      /* 同じ種類に2曲以上あるときは、小見出しを押してたためる（初めは開いている） */
+      const cnt = songRows.filter(q => q.k === r.k).length;
+      const fold = cnt > 1 && musFold.has(r.k);
+      const head =
+        j === 0 || songRows[j - 1].k !== r.k
+          ? cnt > 1
+            ? `<button type="button" class="imt ${SG_CLS[r.k]}" data-imfold="${r.k}" aria-expanded="${!fold}"><b>${r.k}</b><small>${cnt}曲</small>${FOLD_IC}</button>`
+            : `<div class="imt ${SG_CLS[r.k]}"><b>${r.k}</b></div>`
+          : "";
+      if (fold) return head;
       return `${head}<div class="imsg ${SG_CLS[r.k]}${songRows.nowN == null ? "" : r.now >= 0 ? " isnow" : " notnow"}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${sub ? `<span class="ima">${sub}</span>` : ""}</div>`;
     })
     .join("");
@@ -693,6 +704,15 @@ function applyPaste(it) {
 /* 作品の詳細画面（it＝開いている作品） */
 const DETAIL_ACTIONS = [
   ["#editItem", (el, it) => openForm(it)],
+  [
+    "[data-imfold]",
+    el => {
+      const k = el.dataset.imfold;
+      if (musFold.has(k)) musFold.delete(k);
+      else musFold.add(k);
+      refreshSheet();
+    },
+  ],
   ["#copyTitle", (el, it) => U.copy(it.t).then(ok => toast(ok ? "タイトルをコピーしました" : "コピーできませんでした"))],
   /* 未入力アラートの「なし」 */
   [

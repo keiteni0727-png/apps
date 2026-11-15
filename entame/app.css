@@ -16,7 +16,7 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var
 .banner{margin-top:12px;background:var(--u-surface);border:1px solid var(--u-line);border-left:4px solid var(--u-accent);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .banner b{display:block}
 .banner button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:8px;padding:6px 10px;font-size:13px}
-main{padding-bottom:48px}
+main{padding-bottom:20px}
 .slots{background:var(--u-surface);border:1px solid var(--u-line);border-radius:10px;overflow:hidden}
 .row{display:flex;align-items:stretch;border-top:1px solid var(--u-line)}
 .row:first-child{border-top:0}
@@ -246,7 +246,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sp-r.miss .sp-st{color:var(--u-accent)}
 .spaste .ffoot{position:static;margin-top:12px;padding-bottom:0}
 .dconfirm{margin-top:10px;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
-#sheetIn,#ytIn{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+#sheetIn,#ytIn{padding-bottom:14px}
 /* popups: no background scroll, no iOS zoom on focus。画面の端で引っ張っても余白が出ないように */
 html{scrollbar-gutter:stable}
 html,body{overscroll-behavior:none}
@@ -313,7 +313,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
   .dscrim{display:block;position:fixed;inset:0;z-index:59;background:var(--u-scrim);opacity:0;pointer-events:none;transition:opacity .25s ease}
   body.drawer .dscrim{opacity:1;pointer-events:auto}
   #main{touch-action:pan-y}
-  .u-app .sb{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(280px,82vw);background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 8px calc(14px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;box-shadow:var(--u-shadow);visibility:hidden}
+  .u-app .sb{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(240px,48vw);background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 8px calc(14px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;box-shadow:var(--u-shadow);visibility:hidden}
   body.drawer .u-app .sb{transform:none;visibility:visible;transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s}
   .u-app .sb-top{display:flex;align-items:center;gap:8px;padding:2px 4px 12px;border-bottom:1px solid var(--u-line);margin-bottom:10px}
   .u-app .sb-lamp{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.1em;line-height:1;color:var(--u-on);background:var(--u-accent);padding:4px 6px 3px;border-radius:4px;white-space:nowrap;flex:none}
@@ -871,7 +871,7 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .hcur .mic svg{width:24px;height:24px}
 /* ===== スマホ：上の帯に ☰・切り替え・設定。追加は ☰ のメニューの中 ===== */
 @media (max-width:899px){
-  body{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+  body{padding-bottom:env(safe-area-inset-bottom,0px)}
   .hbar{gap:8px}
   .hcur{flex:none;gap:0}
   .hcur .hname{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
@@ -1329,3 +1329,22 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .svrow .mgrip{width:24px;height:32px;margin:0}
 .svrow.dragging{position:relative;z-index:1;background:var(--u-surface);box-shadow:var(--u-shadow);border-radius:8px}
 .svrow .cond{margin-left:30px}
+/* 詳細MUSIC：2曲以上の種類は小見出しでたためる */
+button.imt{width:100%;border:0;border-top:1px solid var(--u-line);background:none;font:inherit;text-align:left;cursor:pointer;align-items:center;color:inherit}
+.ich+button.imt{border-top:0}
+button.imt .fic{margin-left:auto}
+button.imt[aria-expanded="false"]+.imt,button.imt[aria-expanded="false"]+button.imt{margin-top:6px}
+/* スマホ：「すべて開く／閉じる」は件数の行の下、右にそろえる */
+@media (max-width:899px){
+  .count .gbulk,.count .unsw + .gbulk{flex-basis:100%;justify-content:flex-end;margin:2px 0 0}
+}
+/* 詳細の下：削除ボタンの下に余分なすき間を作らない */
+.sheet:not(.form) .links{padding-bottom:0}
+/* スマホのメニュー：幅を画面の半分弱に。見出しは詰めて✕まで収める */
+@media (max-width:899px){
+  .u-app .sb .sb-top{gap:6px;padding-left:6px;padding-right:2px}
+  .u-app .sb-top b{font-size:13.5px;letter-spacing:-.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .u-app .sb .sb-top{margin-left:-6px;margin-right:-8px;padding-left:10px;padding-right:6px}
+  .u-app .sb-top .sb-lamp{font-size:9px;padding:3px 5px}
+  .u-app .sb .sb-tog{width:30px;height:30px;font-size:13px;margin-left:0}
+}
