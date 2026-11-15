@@ -50,6 +50,9 @@ function serSugForm(q) {
 /* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
 const SONG_MAIN = ["OP", "ED", "主題歌"];
 /* 編集画面で開いている曲（番号）。入力済みの曲はふだんたたむ */
+/* OP・ED・主題歌の「なし」：見出しのすぐ右に置く（曲が1曲もないときだけ） */
+const sgNoneBox = () =>
+  form.songs.length ? "" : `<label class="nofl sgno sghno"><input type="checkbox" class="nos" ${(form.noSongs || []).length ? "checked" : ""} aria-label="OP・ED・主題歌 なし"><span>なし</span></label>`;
 let sgOpen = new Set();
 let sgAddK = -1;
 function songRowsHtml() {
@@ -94,9 +97,7 @@ function songRowsHtml() {
         ${l.length ? l.map(([x, k]) => card(x, k)).join("") + `<button type="button" class="sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : ""}</div>`;
     })
     .join("");
-  /* その場の編集では「なし」は見出しの右に出す（sgNoneBox） */
-  const noBox = f.songs.length || f.only ? "" : `<label class="nofl sgno sgall"><input type="checkbox" class="nos" ${none ? "checked" : ""}><span>OP・ED・主題歌 なし</span></label>`;
-  return noBox + secs;
+  return secs;
 }
 const dowOfDate = d => {
   if (!d) return -1;
@@ -123,12 +124,12 @@ function schedText() {
 }
 const ONLY_A = {
   fSeries: ["シリーズ", ["series"]],
-  "f-time": ["放送時間", ["time", "sched"]],
+  "f-time": ["放送時間", ["time"]],
   fMedia: ["放送局・配信", ["media"]],
-  "f-from": ["放送日", ["from", "sched"]],
+  "f-from": ["放送日", ["from"]],
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
-  onair: ["放送情報", ["media", "from", "time", "sched", "cours"]],
+  onair: ["放送情報", ["media", "from", "time", "cours"]],
   "f-url": ["公式サイト", ["url"]],
   "f-vurl": ["配信サイトURL", ["vurl"]],
 };
@@ -140,8 +141,8 @@ function formHtml() {
   const dyn = f.cours.filter(c => c !== ALLYEAR);
   const songTypes = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
   const sug = courOfDate(f.from);
-  const sec = (title, body, note = "") =>
-    `<section class="fsec"><h4>${title}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
+  const sec = (title, body, note = "", side = "") =>
+    `<section class="fsec"><h4>${title}${side}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
     title: `<label class="field full"><span>タイトル</span><input id="f-t" autocomplete="off" placeholder="例：薬屋のひとりごと 第3期" value="${esc(f.t)}"></label>`,
     kind: `<div class="field"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${seg(
@@ -173,12 +174,12 @@ function formHtml() {
       ${f.media === "movie" ? `<div class="field full"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}
       ${hasSt(f.media) ? `<div class="field full"><span>放送局</span><div class="chips">${chipsHtml("data-fst", [...new Set([...M("stations"), ...f.stations])], f.stations)}</div>${nofBox("st")}</div>` : ""}
       ${f.media === "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fplat", [...new Set([...M("vods"), ...f.plat])], f.plat, true)}</div>${nofBox("plat")}</div>` : ""}
-      ${f.media !== "stream" ? `<div class="field full"><span>${noSched(f.media) ? "配信（見られるサイト）" : "配信（見逃し・見られるサイト）"}</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods, true)}</div>${nofBox("vods", "見られる配信")}</div>` : ""}`,
+      ${f.media !== "stream" ? `<div class="field full"><span>配信サイト</span><div class="chips">${chipsHtml("data-fvod", [...new Set([...M("vods"), ...f.vods])], f.vods, true)}</div>${nofBox("vods")}</div>` : ""}`,
     from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）", sp: "放送日" }[f.media] || "開始日（第1話）"}</span><span class="dtw"><input id="f-from" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${esc(dtShow(f.from))}"><button type="button" class="dtcal" data-dtcal="f-from" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="f-from"></span></label>`,
     time:
       noSched(f.media)
         ? ""
-        : `<div class="field"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間（毎週の配信ではない）" : "放送時間（毎週の放送ではない）")}</div>`,
+        : `<div class="field"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間" : "放送時間")}</div>`,
     sched: `<div class="field full"><div class="sched" id="schedHint">${schedText()}</div>
         </div>`,
     cours:
@@ -201,18 +202,18 @@ function formHtml() {
     n:
       f.id || f.media === "movie" || f.media === "sp"
         ? ""
-        : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"><span class="hint">${f.media === "ova" ? "第1話に発売日を入れて話を作ります" : "開始日から毎週の日付で話を作ります"}</span></label>`,
+        : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"></label>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
 </div>`,
     url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
-    vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信サイト（見るページのURL）</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
+    vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信URL</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
     /* OP・ED・主題歌の「なし」は見出しの行の右に（曲が1曲もないときだけ） */
-    const sgNone = f.only === "sgList" && !f.songs.length ? `<label class="nofl sgno sghno"><input type="checkbox" class="nos" ${(f.noSongs || []).length ? "checked" : ""} aria-label="OP・ED・主題歌 なし"><span>なし</span></label>` : "";
+    const sgNone = f.only === "sgList" ? sgNoneBox() : "";
     return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
     <div class="ffoot"><button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
@@ -220,8 +221,8 @@ function formHtml() {
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
     ${sec("基本情報", P.title + P.kind + P.status + P.series)}
-    ${sec("放送", P.media + P.from + P.time + P.sched + P.cours + P.n)}
-    ${sec("OP・ED・主題歌", P.songs, "話によって曲が変わるときは、使われた話の範囲を入れます")}
+    ${sec("放送", P.media + P.from + P.time + P.cours + P.n)}
+    ${sec("OP・ED・主題歌", P.songs, "", sgNoneBox())}
     ${sec("リンク", P.url + P.vurl)}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;

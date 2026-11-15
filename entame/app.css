@@ -1297,9 +1297,17 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
   .sg-sum .sg-se{justify-self:start}
 }
 /* その場の編集：説明文は出さない・縦をつめる */
-.ined .hint,.ined .field:has(>.sched){display:none}
-.ined .hdrow .sghno{margin:0 8px 0 auto;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
+.ined .hdrow .sghno{margin:0 auto 0 12px;display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
 .ined .hdrow .sghno input{width:16px;height:16px;margin:0}
 .ined .sglist{gap:8px}
 .ined .sgsec{gap:5px}
 .ined .sgh{min-height:24px}
+/* 「なし」は項目名のすぐ右に（右端ではなく） */
+.field:has(>.nofl){display:flex;flex-wrap:wrap;align-items:center;column-gap:12px;row-gap:4px}
+.field:has(>.nofl)>*{flex:1 1 100%;order:2;min-width:0}
+.field:has(>.nofl)>span:first-child,.field:has(>.nofl)>label.field:first-child{flex:0 0 auto;order:0;width:auto}
+.field>.nofl{position:static;order:1;flex:0 0 auto;top:auto;right:auto}
+.field:has(>.nofl input:checked)>span:not(.dtw)::after,.field:has(>.nofl input:checked)>label.field>span::after{content:none}
+.fsec h4 .sghno{display:inline-flex;align-items:center;gap:5px;margin-left:12px;font-size:12.5px;font-weight:700;color:var(--u-sub)}
+.fsec h4 .sghno input{width:16px;height:16px;margin:0}
+.fsec h4:has(.sghno){justify-content:flex-start}

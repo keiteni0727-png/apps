@@ -669,7 +669,7 @@ function missingOf(i) {
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
   if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
-  if (md !== "stream" && !m.vods.length) add("見られる配信", "fMedia", "vods");
+  if (md !== "stream" && !m.vods.length) add("配信サイト", "fMedia", "vods");
   if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "cours");
   // 曲が1曲もなく「なし」にもしていないときだけ（OP・ED・主題歌まとめて1項目）
   if (!sl.some(x => (x.s || "").trim()) && !(i.noSongs || []).length) out.push({ k: "OP・ED・主題歌", j: "sgList", n: "", ns: 1 });
@@ -682,11 +682,11 @@ function missingOf(i) {
   return out;
 }
 /* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
-const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods: "見られる配信", cours: "放送クール", url: "公式サイト", vurl: "配信URL" };
+const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods: "配信サイト", cours: "放送クール", url: "公式サイト", vurl: "配信URL" };
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "見られる配信", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
+const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);

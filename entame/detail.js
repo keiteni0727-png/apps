@@ -308,7 +308,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   if (md === "stream") rows.push(row("配信サイト", labsOr(m.plat, m.plat.map(vlab).join(""), "plat"), "fMedia"));
   else {
     if (hasSt(md)) rows.push(row("放送局", labsOr(m.stations, m.stations.map(x => `<span class="lab">${esc(x)}</span>`).join(""), "st"), "fMedia"));
-    rows.push(row("配信", labsOr(m.vods, m.vods.map(vlab).join(""), "vods"), "fMedia"));
+    rows.push(row("配信サイト", labsOr(m.vods, m.vods.map(vlab).join(""), "vods"), "fMedia"));
   }
   const bc = `<div class="icard ibc"><div class="ich"><span class="ilamp onair">ON AIR</span>${edB("onair", "放送情報")}</div><dl class="idl">${rows.join("")}</dl></div>`;
   /* 外部リンクのアイコン（公式サイト＝外に開く、配信＝再生） */
