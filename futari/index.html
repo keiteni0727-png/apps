@@ -173,6 +173,7 @@ nav.tabs .n{font-size:10px;background:var(--pink-d);color:#fff;border-radius:99p
 .sheet h3{margin:0 0 14px;font-size:18px;display:flex;align-items:center;gap:8px}
 .sheet h3 .x{margin-left:auto;border:0;background:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;color:var(--muted);font-size:18px;box-shadow:var(--shadow)}
 @keyframes up{from{transform:translateY(40px);opacity:.4}}
+.sheet.tall{height:88vh;height:88dvh}
 @keyframes fade{from{opacity:0}}
 .catpick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .catpick button{border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:8px 2px;cursor:pointer;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -717,6 +718,14 @@ const catOf = id => CATS.find(c => c.id === id) || CATS[CATS.length - 1];
 function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2300); }
 function openSheet(html){ $layer.innerHTML = `<div class="ov" data-a="ovclose"><div class="sheet" role="dialog"><div class="grab"></div>${html}</div></div>`; }
 function closeSheet(){ $layer.innerHTML = ""; }
+/* 同じシートを開いたまま中身だけ入れかえる（高さ固定・スクロール位置そのまま。おみせ・おへやの切りかえ用） */
+function openSheetK(key, html){
+  const cur = $layer.querySelector(`.sheet[data-k="${key}"]`);
+  if (!cur) { $layer.innerHTML = `<div class="ov" data-a="ovclose"><div class="sheet tall" data-k="${key}" role="dialog"><div class="grab"></div>${html}</div></div>`; return; }
+  const top = cur.scrollTop, cx = [...cur.querySelectorAll(".chips,.seg")].map(c => c.scrollLeft);
+  cur.innerHTML = `<div class="grab"></div>${html}`;
+  cur.scrollTop = top; cur.querySelectorAll(".chips,.seg").forEach((c, i) => { c.scrollLeft = cx[i] || 0; });
+}
 /* 消す前の確認（開いている画面の上に重ねて出す）。「やめる」が上、「消す」が下 */
 function askConfirm(title, text, okLabel = "消す"){
   return new Promise(res => {
@@ -2426,7 +2435,7 @@ function openWardrobe(tab){
   const body = t === "have"
     ? (have.length ? have.map(it => cell(it, w[it.s] === it.id ? "つけてる ✓" : USLOTS[it.s], "uriWear", w[it.s] === it.id ? "on" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">まだ持ってないよ。おみせで買ってみよう</p>`)
     : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : cell(it, `🌰${it.p}${it.m ? " ・ 期間限定" : ""}`, "uriBuy", bal < it.p ? "poor" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
-  openSheet(`<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
+  openSheetK("ward", `<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
   <div class="wprev"><div class="uri s${u.st}">${uriSvg(u.st, "happy", w)}</div><div class="wbal">🌰 ${bal}こ<small>ふたりのおさいふ</small></div></div>
   ${wardrobeSeg(t)}
   <div class="chips">${[["all", "すべて"], ...Object.entries(USLOTS)].map(([k, n]) => `<button class="chip ${sl === k ? "on" : ""}" data-a="wSlot" data-v="${k}">${n}</button>`).join("")}</div>
@@ -2623,7 +2632,7 @@ function openRoomShop(){
     const foot = own ? (on ? "おいてる ✓" : RSLOTS[it.s]) : `🌰${it.p}${it.m ? " ・ 期間限定" : ""}`;
     return `<button class="witem ritem ${on ? "on" : ""} ${!own && bal < it.p ? "poor" : ""}" data-a="${own ? "rmPlace" : "rmBuy"}" data-id="${it.id}"><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
   };
-  openSheet(`<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
+  openSheetK("ward", `<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
   <div class="rprev"><div class="uroom">${roomSvg(room)}</div><div class="uri s${u.st}">${uriSvg(u.st, "happy", uw())}</div><div class="wbal">🌰 ${bal}こ</div></div>
   ${wardrobeSeg("room")}
   <div class="chips">${[["all", "すべて"], ...Object.entries(RSLOTS)].map(([k, n]) => `<button class="chip ${sl === k ? "on" : ""}" data-a="rmSlot" data-v="${k}">${n}</button>`).join("")}</div>
