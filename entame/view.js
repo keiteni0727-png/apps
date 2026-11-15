@@ -55,7 +55,7 @@ function renderSidebar() {
   const mode = (m, ic, l) => {
     const sub = subOf(m);
     const fold = sbFold.has(m);
-    return `<div class="sbp${state.mode === m ? " cur" : ""}"><div class="sb-row"><button type="button" class="sb-it${state.mode === m ? " on" : ""}"${state.mode === m ? ' aria-current="page"' : ""} data-mode="${m}" title="${l}"><i aria-hidden="true">${ic}</i><span class="lbl">${l}</span></button>${sub.length ? `<button type="button" class="sb-fold lbl" data-sbfold="${m}" aria-expanded="${!fold}" aria-label="${l}の項目を${fold ? "開く" : "たたむ"}">${fold ? "▸" : "▾"}</button>` : ""}</div>${sub.length && !fold ? `<div class="sb-sub">${sub
+    return `<div class="sbp${state.mode === m ? " cur" : ""}"><div class="sb-row"><button type="button" class="sb-it${state.mode === m ? " on" : ""}"${state.mode === m ? ' aria-current="page"' : ""} data-mode="${m}" title="${l}"><i aria-hidden="true">${ic}</i><span class="lbl">${l}</span></button>${sub.length ? `<button type="button" class="sb-fold lbl" data-sbfold="${m}" aria-expanded="${!fold}" aria-label="${l}の項目を${fold ? "開く" : "たたむ"}">${FOLD_IC}</button>` : ""}</div>${sub.length && !fold ? `<div class="sb-sub">${sub
       .map(
         ([attr, lab, on, n]) =>
           `<button type="button" class="sb-it${state.mode === m && on ? " on" : ""}"${state.mode === m && on ? ' aria-current="page"' : ""} data-go="${m}" ${attr}><span>${esc(lab)}</span>${n != null ? `<small>${n}</small>` : ""}</button>`,
@@ -535,7 +535,7 @@ const collapsed = new Set(ls.get("adb.v3.col") || []);
 const saveCol = () => ls.set("adb.v3.col", [...collapsed]);
 const gHead = (key, title, count) => {
   const c = collapsed.has(key);
-  return `<h2 class="ghd"><button type="button" class="gtog" data-gtog="${esc(key)}" aria-expanded="${!c}"><span class="chev" aria-hidden="true">${c ? "▸" : "▾"}</span>${title}</button><span>${count}</span></h2>`;
+  return `<h2 class="ghd"><button type="button" class="gtog" data-gtog="${esc(key)}" aria-expanded="${!c}"><span class="chev">${FOLD_IC}</span>${title}</button><span>${count}</span></h2>`;
 };
 const bulkBtns = keys =>
   keys.length > 1

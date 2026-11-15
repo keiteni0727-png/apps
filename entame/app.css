@@ -598,7 +598,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .dmiss summary::-webkit-details-marker{display:none}
   .dmiss summary .mn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;opacity:.9}
   .dmiss summary .ar{font-size:11px;transition:transform .15s}
-  .dmiss[open] summary .ar{transform:rotate(180deg)}
   .dmiss[open] summary .mn{display:none}
   .dmiss .mbtns{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
   .dmiss .mbtns button{border:1px solid currentColor;background:var(--u-surface);color:inherit;border-radius:999px;padding:3px 11px;font:inherit;font-size:12px;font-weight:700}
@@ -1250,8 +1249,6 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .sg-sum .sg-sn{font-size:13.5px;font-weight:700;min-width:0;overflow-wrap:anywhere}
 .sg-sum .sg-sa{font-size:12px;color:var(--u-sub);min-width:0;overflow-wrap:anywhere}
 .sg-sum .sg-se{font-family:var(--u-num);font-size:11px;font-weight:600;color:var(--u-sub);border:1px solid var(--u-line);border-radius:5px;padding:0 6px;line-height:1.6}
-.sg-sum .sg-sv{margin-left:auto;color:var(--u-sub);font-size:11px;transition:transform .15s}
-.sg.open .sg-sum .sg-sv{transform:rotate(180deg)}
 .sg.open .sg-sum{padding-bottom:4px;border-bottom:1px dashed var(--u-line);margin-bottom:2px}
 .sg:not(.open){padding:6px 8px}
 .sg:not(.open) .sg-body{display:none}
@@ -1276,7 +1273,6 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .ich .iedit{border-radius:999px}
 .sg .sg-sum{position:relative;padding-right:20px}
 .sg-sum .sg-sv{position:absolute;right:2px;top:50%;margin:0;transform:translateY(-50%)}
-.sg.open .sg-sum .sg-sv{transform:translateY(-50%) rotate(180deg)}
 /* 曲名とアーティストを1行に：『曲名』アーティスト */
 .imn .iarn{margin-left:4px;font-size:12.5px;font-weight:500;color:var(--u-sub)}
 .sg-sum .sg-sn .sg-sa{display:inline;margin-left:4px;font-size:12px;font-weight:500;color:var(--u-sub)}
@@ -1311,3 +1307,25 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .fsec h4 .sghno{display:inline-flex;align-items:center;gap:5px;margin-left:12px;font-size:12.5px;font-weight:700;color:var(--u-sub)}
 .fsec h4 .sghno input{width:16px;height:16px;margin:0}
 .fsec h4:has(.sghno){justify-content:flex-start}
+/* ---- 折りたたみの印（FOLD_IC）：どこでも同じ。たたむと右向き、開くと下向き ---- */
+.fic{display:inline-block;flex:none;vertical-align:-1px;transition:transform .15s;color:var(--u-sub)}
+[aria-expanded="true"]>.fic,[aria-expanded="true"] .chev>.fic,[aria-expanded="true"] .arcar>.fic,[aria-expanded="true"] .sg-sv>.fic,details[open]>summary .ar>.fic{transform:rotate(90deg)}
+.dmiss summary .ar{display:inline-flex;align-items:center}
+.dmiss summary .ar .fic{color:currentColor}
+.archd .arcar{display:inline-flex;align-items:center;justify-content:center}
+.gtog .chev .fic,.sb-fold .fic{color:currentColor}
+.sugbtn .fic,.u-btn .fic{margin-left:4px;color:currentColor}
+/* ---- 曲：2曲以上あるときだけ、⠿（並び替え）とたたむ行 ---- */
+.sg-hd{display:flex;align-items:center;gap:2px;min-width:0}
+.sg-hd .mgrip{width:24px;height:28px;margin:0 0 0 -4px;font-size:15px}
+.sg-hd .sg-sum{flex:1;min-width:0}
+.sg-sum .sg-sv{display:inline-flex}
+.sg:not(.multi){padding-top:8px}
+.sg.dragging{position:relative;z-index:1;box-shadow:var(--u-shadow)}
+.sgsec.sorting{cursor:grabbing}
+/* 入力中の曲は枠を種類の色に（画面は動かさない） */
+.sg:focus-within{border-color:var(--sgc);box-shadow:0 0 0 1px var(--sgc)}
+/* ---- 保存したフィルタの並び替え ---- */
+.svrow .mgrip{width:24px;height:32px;margin:0}
+.svrow.dragging{position:relative;z-index:1;background:var(--u-surface);box-shadow:var(--u-shadow);border-radius:8px}
+.svrow .cond{margin-left:30px}

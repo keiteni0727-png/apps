@@ -72,8 +72,8 @@ function masterListHtml() {
       rows.length
         ? rows
             .map(
-              (n, i) => `<div class="mrow2" data-mi="${i}">
-      <span class="mgrip" data-mgrip="1" aria-hidden="true">⠿</span>
+              (n, i) => `<div class="mrow2" data-mi="${i}" data-sortrow>
+      ${GRIP("master")}
       ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="mname" data-mrename="${esc(n)}">${esc(n)}</button>`}
       <small class="mcnt">${cnt[n] || 0}${unit}</small>
       <button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button></div>`,
@@ -114,7 +114,7 @@ function trashHtml() {
     return `<div class="trrow"><span class="trk">${x.tag}</span><span class="trt"><b>${esc(x.t)}</b><small>${d.getMonth() + 1}/${d.getDate()} に削除・あと${left}日で完全に削除</small></span><span class="trb"><button type="button" class="u-btn sm" data-trback="${esc(key)}">戻す</button><button type="button" class="u-btn sm ghost${arm ? " armed" : ""}" data-trdel="${esc(key)}">${arm ? "もう一度押すと完全に削除" : "完全に削除"}</button></span></div>`;
   };
   return `<div class="bkbox bkdata trash"><div class="bkhd"><b>ゴミ箱</b><span class="trn">${l.length ? `${l.length}件` : "空です"}</span>${
-    l.length ? `<span class="bkrow"><button type="button" class="u-btn sm ghost" data-trtog="1" aria-expanded="${trashOpen}">${trashOpen ? "閉じる" : "中を見る"}</button></span>` : ""
+    l.length ? `<span class="bkrow"><button type="button" class="u-btn sm ghost" data-trtog="1" aria-expanded="${trashOpen}">${trashOpen ? "閉じる" : "中を見る"}${FOLD_IC}</button></span>` : ""
   }</div>
     <p class="hint">削除した作品は${TRASH_DAYS}日間ここに残り、戻せます。${TRASH_DAYS}日を過ぎると完全に削除します。</p>
     ${trashOpen && l.length ? `<div class="trlist">${l.map(row).join("")}</div>` : ""}</div>`;
@@ -200,43 +200,11 @@ async function backupRestore() {
 document.addEventListener("change", e => {
   if (e.target.id === "bkFile" && e.target.files[0]) backupRead(e.target.files[0]);
 });
-/* 設定の一覧：⠿を押さえたまま上下に動かして並び替え（マウス・指どちらでも） */
-let mDrag = null;
-document.addEventListener("pointerdown", e => {
-  const g = e.target.closest("[data-mgrip]");
-  if (!g || e.button > 0) return;
-  const row = g.closest(".mrow2"),
-    box = row.parentElement;
-  e.preventDefault();
-  try {
-    g.setPointerCapture(e.pointerId);
-  } catch (_) {}
-  mDrag = { row, box, y: e.clientY, g };
-  row.classList.add("dragging");
-  box.classList.add("sorting");
-});
-document.addEventListener("pointermove", e => {
-  if (!mDrag) return;
-  const { row, box } = mDrag;
-  const r = box.getBoundingClientRect();
-  if (e.clientY < r.top + 24) box.scrollTop -= 8;
-  else if (e.clientY > r.bottom - 24) box.scrollTop += 8;
-  const rows = [...box.querySelectorAll(".mrow2")].filter(x => x !== row);
-  const next = rows.find(x => {
-    const b = x.getBoundingClientRect();
-    return e.clientY < b.top + b.height / 2;
-  });
-  if (next !== row.nextElementSibling) box.insertBefore(row, next || null);
-});
-const endDrag = () => {
-  if (!mDrag) return;
-  const { row, box } = mDrag;
-  row.classList.remove("dragging");
-  box.classList.remove("sorting");
-  mDrag = null;
+/* 設定の一覧：⠿を押さえたまま上下に動かして並び替え（しくみは core.js の GRIP） */
+SORT_DONE.master = (box, rows) => {
   /* 表示中の行（絞り込み中はその一部）の新しい順番を、全体の並びの同じ位置に当てはめる */
   const l = M(setKey);
-  const shown = [...box.querySelectorAll(".mrow2")].map(x => +x.dataset.mi);
+  const shown = rows.map(x => +x.dataset.mi);
   const slots = [...shown].sort((a, b) => a - b);
   const nl = [...l];
   slots.forEach((pos, k) => (nl[pos] = l[shown[k]]));
@@ -245,8 +213,6 @@ const endDrag = () => {
     setMasterList(setKey, nl);
   } else refreshSettings();
 };
-document.addEventListener("pointerup", endDrag);
-document.addEventListener("pointercancel", endDrag);
 function openSettings() {
   bkPending = null;
   trashOpen = false;
@@ -263,7 +229,7 @@ function openSettings() {
 }
 function refreshSettings(keepScroll = true) {
   const el = $("#setIn");
-  if (!el || mDrag) return;
+  if (!el || gDrag) return;
   const sh = el.closest(".sheet");
   const y = sh.scrollTop;
   const ly = el.querySelector(".mlist")?.scrollTop || 0;

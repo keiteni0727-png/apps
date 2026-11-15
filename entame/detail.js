@@ -238,7 +238,7 @@ function epListHtml(it, eps) {
           done = st.n > 0 && st.w === st.n,
           key = arcKey(r);
         const open = arcFold.has(key) ? arcFold.get(key) : !done || g.k === curK;
-        return `<button type="button" class="archd${done ? " done" : ""}${g.k === curK ? " cur" : ""}" data-arc="${esc(key)}" id="arc-${g.k}" aria-expanded="${open}"><span class="arcar" aria-hidden="true">${open ? "▼" : "▶"}</span><span class="arcnm">${esc(r.name)}</span><span class="arcrg">${arcRange(r)}</span><span class="arcct">${done ? "✓ " : ""}${st.w}/${st.n}</span></button>${open ? g.l.map(([e, i]) => epRow(e, i)).join("") : ""}`;
+        return `<button type="button" class="archd${done ? " done" : ""}${g.k === curK ? " cur" : ""}" data-arc="${esc(key)}" id="arc-${g.k}" aria-expanded="${open}"><span class="arcar">${FOLD_IC}</span><span class="arcnm">${esc(r.name)}</span><span class="arcrg">${arcRange(r)}</span><span class="arcct">${done ? "✓ " : ""}${st.w}/${st.n}</span></button>${open ? g.l.map(([e, i]) => epRow(e, i)).join("") : ""}`;
       })
       .join("");
     arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
@@ -405,7 +405,7 @@ function missDetail(it) {
         : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
   const btn = x =>
     `<span class="mi">${main(x)}${x.ns ? `<button type="button" class="nb" data-nosong="all" title="OP・ED・主題歌を「なし」にする">なし</button>` : x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする">なし</button>` : ""}</span>`;
-  return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar" aria-hidden="true">▼</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+  return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar">${FOLD_IC}</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
 }
 function refreshSheet() {
   if (form && form.inline) return;

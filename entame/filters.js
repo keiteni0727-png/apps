@@ -150,7 +150,7 @@ function svPanelHtml() {
   if (state.svMode === "edit" && l.length) {
     return `<div class="fgroup">${head}<div class="svlist">${l
       .map(
-        (f, i) => `<div class="svrow"><input value="${esc(f.name)}" maxlength="30" data-svren="${esc(f.id)}" aria-label="名前を変更"><button type="button" class="u-btn sm svbtn" data-svmove="${esc(f.id)}:-1" ${i ? "" : "disabled"} aria-label="上へ">↑</button><button type="button" class="u-btn sm svbtn" data-svmove="${esc(f.id)}:1" ${i < l.length - 1 ? "" : "disabled"} aria-label="下へ">↓</button><button type="button" class="u-btn sm svbtn" data-svover="${esc(f.id)}" ${svEmpty() || f === cur ? "disabled" : ""}>今の条件で上書き</button><button type="button" class="u-btn sm svbtn del" data-svdel="${esc(f.id)}">削除</button><p class="cond">${esc(svDesc(f) || "条件なし")}</p></div>`,
+        f => `<div class="svrow" data-sortrow data-svid="${esc(f.id)}">${GRIP("sv")}<input value="${esc(f.name)}" maxlength="30" data-svren="${esc(f.id)}" aria-label="名前を変更"><button type="button" class="u-btn sm svbtn" data-svover="${esc(f.id)}" ${svEmpty() || f === cur ? "disabled" : ""}>今の条件で上書き</button><button type="button" class="u-btn sm svbtn del" data-svdel="${esc(f.id)}">削除</button><p class="cond">${esc(svDesc(f) || "条件なし")}</p></div>`,
       )
       .join("")}<div class="done"><button type="button" class="u-btn sm svbtn pri" data-svcancel="1">完了</button></div></div></div>`;
   }
@@ -208,20 +208,6 @@ const SAVED_FILTER_ACTIONS = [
     () => {
       state.svMode = "";
       state.svName = null;
-      render();
-    },
-  ],
-  /* 並び替え（id:-1 で上へ、id:1 で下へ） */
-  [
-    "[data-svmove]",
-    el => {
-      const [id, d] = el.dataset.svmove.split(":");
-      const l = [...svList()];
-      const i = l.findIndex(x => x.id === id),
-        j = i + +d;
-      if (i < 0 || j < 0 || j >= l.length) return;
-      [l[i], l[j]] = [l[j], l[i]];
-      setSv(l);
       render();
     },
   ],
@@ -368,3 +354,12 @@ const FILTER_ACTIONS = [
     },
   ],
 ];
+
+/* 保存したフィルタの並び替え：⠿を押さえたまま上下に動かす（しくみは core.js の GRIP） */
+SORT_DONE.sv = (box, rows) => {
+  const l = svList();
+  const ids = rows.map(r => r.dataset.svid);
+  const nl = ids.map(id => l.find(x => x.id === id)).filter(Boolean);
+  if (nl.length === l.length && nl.some((x, k) => x !== l[k])) setSv(nl);
+  render();
+};
