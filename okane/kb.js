@@ -964,7 +964,7 @@ function renderSummary(mi, pi) {
   const sf = sumFolded();
   $("summary").classList.toggle("folded", sf);
   $("summary").innerHTML =
-    `<div class="sumtop"><div><div class="eyebrow">${FIN.periodLabel(view.month)}の支出<span class="rng">${md(ps)}〜${md(pe)}</span></div><div class="total">${yen(sum)}</div></div>${delta}<button type="button" class="sumtog" id="sumtog" aria-expanded="${!sf}" aria-label="${sf ? "支出の内訳を開く" : "支出の内訳をたたむ"}">${FOLD_IC}</button></div><div class="sumbody">` +
+    `<div class="sumtop"><div><div class="eyebrow">${FIN.periodLabel(view.month)}の支出<span class="rng">${md(ps)}〜${md(pe)}</span></div><div class="totrow"><span class="total">${yen(sum)}</span>${delta}</div></div><button type="button" class="sumtog" id="sumtog" aria-expanded="${!sf}" aria-label="${sf ? "支出の内訳を開く" : "支出の内訳をたたむ"}">${FOLD_IC}</button></div><div class="sumbody">` +
     (sum
       ? `<div class="stack" role="img" aria-label="分類の内訳">${top.map(([c, v]) => `<span title="${esc(c)} ${yen(v)}（${Math.round((v / sum) * 100)}%）" style="flex:${v};background:${bcol(c)}"></span>`).join("")}</div>
     <div class="legend">${top.map(([c, v]) => `<span><i style="background:${bcol(c)}"></i>${emo(c)} ${esc(c)} <b class="num">${Math.round((v / sum) * 100)}%</b></span>`).join("")}</div>`
@@ -1003,7 +1003,7 @@ function renderList(mi) {
     html +=
       i.id === ledger.editId
         ? editForm(i)
-        : `<div class="it${ledger.sel.has(i.id) ? " on" : ""}" data-edit="${i.id}"><input type="checkbox" class="ck" data-ck="${i.id}" aria-label="選択"${ledger.sel.has(i.id) ? " checked" : ""}>${ico(i.category)}<div class="itm"><div class="memo">${esc(i.memo || i.category)}</div><div class="tag">${chip(i.category)}${mchip(i.method)}</div></div><span class="amt">${yen(i.amount)}</span></div>`;
+        : `<div class="it${ledger.sel.has(i.id) ? " on" : ""}" data-edit="${i.id}"><input type="checkbox" class="ck" data-ck="${i.id}" aria-label="選択"${ledger.sel.has(i.id) ? " checked" : ""}>${ico(i.category)}<div class="itm itm2"><div class="l1">${chip(i.category)}${i.memo && i.memo !== i.category ? `<span class="memo sm">${esc(i.memo)}</span>` : ""}</div><div class="l2">${mchip(i.method)}</div></div><span class="amt">${yen(i.amount)}</span></div>`;
   });
   $("list").innerHTML = html || '<div class="mu empty">明細なし</div>';
 }

@@ -1403,3 +1403,20 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 .kb .sum.folded .sumbody{display:none}
 /* 家計簿の絞り込み：検索欄をなくし、分類と支払い方法の2つだけ */
 .kb .filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+/* 家計簿の1行：1行目＝分類と小さめのメモ、2行目＝支払い方法（2行でコンパクトに） */
+.kb #list .it{padding:8px 0;gap:10px}
+.kb #list .it.on{padding:8px 16px}
+.kb #list .itm.itm2{display:grid!important;gap:4px;align-items:start}
+.kb #list .itm2 .l1{display:flex;align-items:center;gap:7px;min-width:0}
+.kb #list .itm2 .l1 .chip{flex:none}
+.kb #list .itm2 .memo.sm{flex:1;min-width:0;font-size:12.5px;font-weight:500;color:var(--u-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb #list .itm2 .l2{display:flex;min-width:0}
+.kb #list .itm2 .l2 .chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 支出カード：見出しは1行、総額の横に前月比（重ならないように） */
+.kb .sum .eyebrow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kb .sum .totrow{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px}
+.kb .sum .totrow .delta{margin:0}
+/* 月度の切り替え：矢印を大きく、月度の名前は真ん中だけ押せる（端を押してもプルダウンが開かない） */
+.kb .mbar .mnav{justify-content:space-between;gap:6px}
+.kb .mbar .mnav .ib{width:44px;height:36px;flex:none;font-size:18px}
+.kb .mbar .mnav select{flex:0 1 auto!important;width:auto;min-width:0;text-align:center;text-align-last:center}
