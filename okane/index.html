@@ -23,18 +23,17 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
 <link rel="stylesheet" href="app.css">
 <div class="kb u-app u-btns">
 <aside class="sb" aria-label="メニュー">
-  <div class="sb-top"><span class="sb-lamp">MONEY</span><b class="lbl">おかね手帳</b><button type="button" class="sb-tog" id="sbtog" aria-label="メニューを折りたたむ">«</button><button type="button" class="sb-x" data-drawer="close" aria-label="メニューを閉じる">✕</button></div>
+  <div class="sb-top"><svg class="sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7.5" y="6.5" width="17" height="19" rx="2.6" fill="#fff"/><rect x="7.5" y="6.5" width="3.2" height="19" rx="1.2" fill="var(--u-accent)" opacity=".22"/><path d="M13.6 10.6 17.6 15.6 21.6 10.6M17.6 15.6v6.4M14.6 17h6M14.6 19.8h6" fill="none" stroke="var(--u-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><b class="lbl">おかね手帳</b><button type="button" class="sb-tog" id="sbtog" aria-label="メニューを折りたたむ">«</button><button type="button" class="sb-x" data-drawer="close" aria-label="メニューを閉じる">✕</button></div>
   <div class="sb-sec lbl">メニュー</div>
-  <button type="button" class="sb-it" data-tab="list" title="家計簿"><i aria-hidden="true" class="mic list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></i><span class="lbl">家計簿</span></button>
-  <button type="button" class="sb-it" data-tab="home" title="支払い"><i aria-hidden="true" class="mic home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg></i><span class="lbl">支払い</span></button>
-  <button type="button" class="sb-it" data-tab="an" title="分析"><i aria-hidden="true" class="mic an"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></svg></i><span class="lbl">分析</span></button>
-  <div class="sb-sub"><button type="button" class="sb-it" data-tab="graph">グラフ</button><button type="button" class="sb-it" data-tab="balance">残高と計画</button><button type="button" class="sb-it" data-tab="ai">AI分析</button></div>
+  <div class="sbp"><div class="sb-row"><button type="button" class="sb-it" data-tab="list" title="家計簿"><i aria-hidden="true" class="mic list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></i><span class="lbl">家計簿</span></button></div></div>
+  <div class="sbp"><div class="sb-row"><button type="button" class="sb-it" data-tab="home" title="支払い"><i aria-hidden="true" class="mic home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg></i><span class="lbl">支払い</span></button></div></div>
+  <div class="sbp" id="sbpan"><div class="sb-row"><button type="button" class="sb-it" data-tab="an" title="分析"><i aria-hidden="true" class="mic an"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></svg></i><span class="lbl">分析</span></button><button type="button" class="sb-fold lbl" id="anfold" aria-expanded="true" aria-label="分析の項目をたたむ"><svg class="fic" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="sb-sub"><button type="button" class="sb-it" data-tab="graph">グラフ</button><button type="button" class="sb-it" data-tab="balance">残高と計画</button><button type="button" class="sb-it" data-tab="ai">AI分析</button></div></div>
   <div class="sb-foot"><button type="button" class="sb-it" id="sbgear" title="設定"><i aria-hidden="true" class="mic gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span class="lbl">設定</span></button><div class="sb-st"><span id="sbSave" class="savest wait">接続中…</span></div></div>
 </aside>
 <header class="appbar"><div class="wrap abin">
   <button type="button" class="hmenu" data-drawer="open" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   <span class="hcur" id="hcur" aria-hidden="true"></span>
-  <div class="brand"><span class="u-mark" aria-hidden="true">MONEY</span>おかね手帳<span id="saveSt" class="savest wait" role="status" aria-live="polite">接続中…</span></div>
+  <div class="brand"><svg class="u-mark sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7.5" y="6.5" width="17" height="19" rx="2.6" fill="#fff"/><rect x="7.5" y="6.5" width="3.2" height="19" rx="1.2" fill="var(--u-accent)" opacity=".22"/><path d="M13.6 10.6 17.6 15.6 21.6 10.6M17.6 15.6v6.4M14.6 17h6M14.6 19.8h6" fill="none" stroke="var(--u-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>おかね手帳<span id="saveSt" class="savest wait" role="status" aria-live="polite">接続中…</span></div>
     <button type="button" class="mcur" id="mcur">当月</button>
   <div class="mnav"><button class="ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="ib" id="mnext" aria-label="次の月度">›</button></div>
 </div></header>
@@ -206,7 +205,7 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
   </div>
   <div id="st-master" hidden>
     <div class="seg sm" role="tablist" aria-label="マスタの種類"><button data-mk="cats">分類</button><button data-mk="mets">支払い方法</button></div>
-    <div class="mu st-desc">↑↓で並び順を変えると、入力欄やグラフの並びに反映されます。名前を変えると、登録済みの明細とルールにも反映されます。既にある名前に変えると、その項目に統合されます。</div>
+    <div class="mu st-desc">⠿を押さえたまま上下に動かして並び順を変えると、入力欄やグラフの並びに反映されます。名前を変えると、登録済みの明細とルールにも反映されます。既にある名前に変えると、その項目に統合されます。</div>
     <div id="mlist"></div>
     <div id="mconf"></div>
     <div class="madd"><input type="text" id="madde" maxlength="4" placeholder="🏷️" aria-label="アイコン（絵文字）"><input type="text" id="maddn" placeholder="新しい分類の名前" aria-label="新しい名前"><button class="pri" id="maddb">追加</button></div>
@@ -216,7 +215,7 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
     <div class="dcard"><b>収入と給料日</b><div class="mu">月度（給料日から次の給料日の前日まで。土日は直前の平日）は、家計簿・支払い・分析のすべてで使います。</div>
       <div class="rv pset"><label>標準の手取り（毎月）<input type="number" id="mIncome" inputmode="numeric"></label><label>給料日<input type="number" id="mPayday" min="1" max="28" inputmode="numeric"></label></div>
       <button class="pri" id="mSaveCfg">保存</button></div>
-    <div class="dcard"><b>引落口座（支払いの支払方法）</b><div class="mu">↑↓で並び順を変えると、支払いの入力欄の並びに反映されます。</div>
+    <div class="dcard"><b>引落口座（支払いの支払方法）</b><div class="mu">⠿を押さえたまま上下に動かして並び順を変えると、支払いの入力欄の並びに反映されます。</div>
       <div class="pml" id="mMethods"></div>
       <form id="mMethodForm" class="pmadd"><input type="text" id="mMethodIn" placeholder="例：楽天銀行" aria-label="新しい引落口座"><button class="pri">追加</button></form></div>
     <div class="dcard"><b>支払予定の作成</b><div class="mu">返済中の口座は、次の給料日以降の支払予定を いまの残高・年利・返済条件 から作り直せます（3年分）。延滞分・支払済・口座なしの支払はそのまま残ります。口座の設定を保存したときも、その口座の分は自動で作り直します。</div>

@@ -307,7 +307,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .rform .rv{border:0;padding:0;margin:8px 0}
 
 /* ===== 設定：マスタ・データ ===== */
-.kb .mrow{display:grid;grid-template-columns:46px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--u-line)}
+.kb .mrow{display:grid;grid-template-columns:28px 46px minmax(0,1fr) auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--u-line)}
 .kb .mrow:last-child{border-bottom:0}
 .kb .mrow .me{width:46px;height:40px;text-align:center;font-size:20px;padding:0;border-radius:12px;background:hsl(var(--h) var(--s,75%) 93%);border-color:transparent}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kb .mrow .me{background:hsl(var(--h) var(--s,35%) 22%)}}
@@ -318,7 +318,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .mrow .mv button{width:36px;height:36px;padding:0;font-size:15px}
 .kb .mrow .mdel{padding:6px 8px;font-size:12px}
 .kb .mrow.used .mdel{opacity:.4;cursor:default}
-.kb .mrow .info{grid-column:2/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.kb .mrow .info{grid-column:3/-1;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .kb .madd{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:6px;margin-top:12px}
 .kb .madd #madde{text-align:center;font-size:18px;padding:4px}
 .kb .mcf{background:var(--u-danger2);border-radius:var(--u-r);padding:10px 12px;margin-top:10px;font-size:13.5px}
@@ -943,7 +943,7 @@ body.sel .kb .totop{opacity:0;transform:translateY(10px);pointer-events:none}
 /* 設定：支払い（収入と給料日・引落口座・支払予定の作成） */
 .kb .pset{border:0;padding:0;margin:8px 0}
 .kb .pml{display:grid;width:100%}
-.kb .pmr{display:grid;grid-template-columns:22px minmax(0,1fr) 36px 36px auto;gap:4px;align-items:center;padding:4px 0;border-bottom:1px solid var(--u-line)}
+.kb .pmr{display:grid;grid-template-columns:28px 22px minmax(0,1fr) auto;gap:4px;align-items:center;padding:4px 0;border-bottom:1px solid var(--u-line)}
 .kb .pmr:last-child{border-bottom:0}
 .kb .pmr .mi{font-size:11px;color:var(--u-sub);text-align:center;font-family:var(--u-num)}
 .kb .pmr .mn{font-weight:700}
@@ -1335,3 +1335,49 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
 .pay .diffbox .dbtns{display:flex;gap:6px;flex-wrap:wrap}
 .pay .diffbox .dbtns button{flex:1 1 0;min-width:0;padding:7px 6px;font-size:12px;white-space:nowrap}
 .pay .diffbox[hidden]{display:none}
+/* ===== エンタメ管理とそろえた左メニュー：まとまりごとの角丸パネル・「›」で分析の項目をたたむ・ロゴはアプリアイコンと同じマーク ===== */
+.u-app .sb-logo{width:26px;height:26px;flex:none;display:block}
+.kb .brand .u-mark.sb-logo{width:24px;height:24px;padding:0;background:none}
+body.sbc .u-app .sb .sb-logo{width:26px;height:26px}
+.u-app .sb .sbp{flex:none;background:var(--u-chip);border-radius:12px;margin:0 0 6px;overflow:hidden}
+.u-app .sb .sb-row{display:flex;align-items:center;gap:0}
+.u-app .sb .sb-row>.sb-it{flex:1;min-width:0;border-radius:0;background:none;padding-left:8px}
+.u-app .sb .sbp .sb-row>.sb-it[aria-current="page"]{background:none;color:var(--u-accent)}
+.u-app .sb .sb-fold{flex:none;width:38px;align-self:stretch;border:0;border-left:1px solid var(--u-line);background:none;color:var(--u-sub);border-radius:0;padding:0;display:grid;place-items:center}
+.u-app .sb .sb-fold:hover{background:var(--u-line)}
+.u-app .sb .sbp .sb-sub{margin:0;padding:0 0 6px;border-left:0;gap:0}
+.u-app .sb .sbp .sb-sub .sb-it{border-radius:0;padding-left:24px;background:none;border-left:3px solid transparent}
+.u-app .sb .sbp .sb-sub .sb-it[aria-current="page"]{background:var(--u-surface);border-left-color:var(--u-accent);color:var(--u-ink);font-weight:700}
+.u-app .sb .sbp.folded .sb-sub{display:none}
+body.sbc .u-app .sb .sb-fold{display:none}
+body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
+@media (min-width:900px){
+  .u-app .sb .sbp{margin-bottom:4px}
+  .u-app .sb .sbp .sb-row>.sb-it{height:40px;padding-top:0;padding-bottom:0}
+  .u-app .sb .sbp .sb-sub .sb-it{height:30px;padding-top:0;padding-bottom:0;font-size:13px}
+  .u-app .sb .sb-foot .sb-it{height:36px;padding-top:0;padding-bottom:0}
+}
+/* スマホのメニュー：幅は画面の半分弱（エンタメ管理と同じ）。見出しは詰めて✕まで収める */
+@media (max-width:899px){
+  .u-app .sb{width:min(240px,48vw)}
+  .u-app .sb .sb-top{gap:6px}
+  .u-app .sb-top b{font-size:14px;letter-spacing:-.02em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .u-app .sb-logo{width:24px;height:24px}
+}
+/* 支払い：まとまりの折りたたみの印をエンタメ管理と同じ「›」に（たたむと右、開くと下） */
+.pay .fold-h h2::before{width:12px;height:12px;border:0;background:var(--u-sub);transform:rotate(90deg);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3.5 10.5 8 6 12.5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3.5 10.5 8 6 12.5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.pay .folded>.fold-h h2::before{transform:none}
+/* 編集ボタン：エンタメ管理と同じ「✎ 編集」の丸い形 */
+.kb button.editbtn{border:1px solid var(--u-line);background:transparent;color:var(--u-ink);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;min-height:0;height:auto;line-height:1.4;white-space:nowrap}
+.kb button.editbtn:hover{background:var(--u-chip)}
+/* ===== モニター（幅1600px以上）：全体を少し大きく（エンタメ管理と同じ） ===== */
+@media (min-width:1600px){
+  .u-app{zoom:1.12}
+}
+/* 下の余白：一番下までスクロールしたときの余分な空白を詰める（スマホは下のタブがないので、その分の余白はいらない） */
+@media (max-width:899px){
+  body{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .u-app .totop{bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+}
+.pay .wrap{padding-block-end:24px}
+.u-app .sb .sb-fold:hover,.u-app .sb .sb-fold:focus{border-color:transparent;border-left-color:var(--u-line)}

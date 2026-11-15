@@ -16,6 +16,7 @@ const KNOWN = "kakeibo.known.v2"; // クラウドにあると分かっている�
 const KTAB = "kakeibo.tab"; // 最後に開いた画面（文字列のまま保存）
 const KAN = "okane.an"; // 分析の中で最後に開いた画面
 const KSBC = "okane.sbc"; // PC の左メニューを折りたたんでいるか
+const KANF = "okane.anfold"; // 左メニューの「分析」の項目をたたんでいるか
 const AN = ["graph", "balance", "ai"]; // 分析にまとめた画面
 
 /* ---------- 決まった数字 ---------- */
@@ -834,6 +835,13 @@ function markTabs(t) {
     .querySelectorAll('[data-tab="an"]')
     .forEach(b => (AN.includes(t) ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
 }
+/* 左メニューの「分析」の項目（グラフ・残高と計画・AI分析）をたたむ／開く。印はエンタメ管理と同じ「›」 */
+function setAnFold(f) {
+  $("sbpan").classList.toggle("folded", f);
+  const b = $("anfold");
+  b.setAttribute("aria-expanded", String(!f));
+  b.setAttribute("aria-label", f ? "分析の項目を開く" : "分析の項目をたたむ");
+}
 /* PC：左メニューの折りたたみ */
 function setSidebar(c) {
   document.body.classList.toggle("sbc", c);
@@ -1342,7 +1350,7 @@ function renderMaster() {
   $("mlist").innerHTML = L.map((x, i) => {
     const u = mUse(setting.kind, x.n),
       used = u.c + u.r > 0;
-    return `<div class="mrow${used ? " used" : ""}"><input type="text" class="me" data-me="${i}" value="${esc(x.e)}" maxlength="4" style="${hs(x.n)}" aria-label="${esc(x.n)}のアイコン"><input type="text" class="mn" data-mn="${i}" value="${esc(x.n)}" aria-label="名前"><div class="mv"><button data-mup="${i}" aria-label="上へ"${i ? "" : " disabled"}>↑</button><button data-mdn="${i}" aria-label="下へ"${i < L.length - 1 ? "" : " disabled"}>↓</button></div><button class="ghost mdel" data-mdel="${i}"${used ? ` title="使用中のため削除できません" aria-disabled="true"` : ""}>削除</button><div class="info"><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div></div>`;
+    return `<div class="mrow${used ? " used" : ""}" data-sortrow data-mi="${i}">${GRIP("kbm")}<input type="text" class="me" data-me="${i}" value="${esc(x.e)}" maxlength="4" style="${hs(x.n)}" aria-label="${esc(x.n)}のアイコン"><input type="text" class="mn" data-mn="${i}" value="${esc(x.n)}" aria-label="名前"><button class="ghost mdel" data-mdel="${i}"${used ? ` title="使用中のため削除できません" aria-disabled="true"` : ""}>削除</button><div class="info"><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div></div>`;
   }).join("");
   $("mconf").innerHTML = setting.merge
     ? `<div class="mcf">「${esc(setting.merge.old)}」を「${esc(setting.merge.nn)}」に統合します。明細 ${mUse(setting.merge.kind, setting.merge.old).c}件の${setting.merge.kind === "cats" ? "分類" : "支払い方法"}が「${esc(setting.merge.nn)}」に変わり、「${esc(setting.merge.old)}」はマスタから消えます。<div class="row"><button class="pri" data-mcok="1">統合する</button><button class="ghost" data-mcno="1">やめる</button></div></div>`
@@ -1373,7 +1381,7 @@ function renderRules() {
           const [kc, kl] = kindOf(r);
           return `<div class="rule"><div class="top"><span class="kind ${kc}">${kl}</span><label class="ckl"><input type="checkbox" class="ck" data-rauto="${r.id}"${r.auto !== false ? " checked" : ""}> 新規に自動適用</label></div>
     <div class="rdesc">${descRule(r)}</div>
-    <div class="acts"><button data-rprev="${r.id}">既存データに適用…</button><button class="ghost" data-redit="${r.id}">編集</button><button class="ghost" data-rdel="${r.id}">削除</button></div>
+    <div class="acts"><button data-rprev="${r.id}">既存データに適用…</button><button class="ghost editbtn" data-redit="${r.id}" aria-label="ルールを編集">✎ 編集</button><button class="ghost" data-rdel="${r.id}">削除</button></div>
     ${setting.preview && setting.preview.rid === r.id ? previewHTML() : ""}</div>`;
         })
         .join("")
@@ -1869,17 +1877,17 @@ function mRename(i, nn) {
   }
   mRenameApply(setting.kind, old, nn);
 }
-function mMove(i, d) {
-  const L = MASTER[setting.kind],
-    j = i + d;
-  if (j < 0 || j >= L.length) return;
-  [L[i], L[j]] = [L[j], L[i]];
-  applyMaster();
-  saveMaster();
+/* 分類・支払い方法の並び替え：⠿を押さえたまま上下に動かす（しくみは共通の u-core.js、エンタメ管理と同じ動き） */
+SORT_DONE.kbm = (box, rows) => {
+  const L = MASTER[setting.kind];
+  const nl = rows.map(x => L[+x.dataset.mi]).filter(Boolean);
+  if (nl.length === L.length && nl.some((x, k) => x !== L[k])) {
+    L.splice(0, L.length, ...nl);
+    applyMaster();
+    saveMaster();
+  }
   render();
-  const b = document.querySelector(`[data-m${d < 0 ? "up" : "dn"}="${j}"]`);
-  if (b && !b.disabled) b.focus();
-}
+};
 function mDelete(i, btn) {
   const L = MASTER[setting.kind],
     x = L[i];
@@ -2040,6 +2048,10 @@ function clickHeader(t, d) {
   } else if (t.id === "mcur") {
     view.month = thisPeriod();
     render();
+  } else if (t.id === "anfold") {
+    const f = !$("sbpan").classList.contains("folded");
+    setAnFold(f);
+    lsSet(KANF, f ? "1" : "", true);
   } else if (t.id === "sbtog") {
     const c = !document.body.classList.contains("sbc");
     setSidebar(c);
@@ -2213,10 +2225,6 @@ function clickMaster(t, d) {
     setting.merge = null;
     setM("");
     renderMaster();
-  } else if (d.mup !== undefined) {
-    mMove(+d.mup, -1);
-  } else if (d.mdn !== undefined) {
-    mMove(+d.mdn, 1);
   } else if (d.mdel !== undefined) {
     mDelete(+d.mdel, t);
   } else if (d.mcok) {
@@ -2384,6 +2392,7 @@ rkUpdate();
   view.tab = t === "cats" ? "graph" : ["list", "graph", "home", "balance", "ai"].includes(t) ? t : "list"; // cats は以前の画面名
 }
 setSidebar(lsRaw(KSBC) === "1");
+setAnFold(lsRaw(KANF) === "1");
 setTab(view.tab);
 load();
 items.forEach(learn);

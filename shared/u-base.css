@@ -96,3 +96,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .u-login button:disabled{opacity:.5}
 .u-login .u-google{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#1f1f1f;border:1px solid #dadce0}
 .u-login .u-login-err{color:var(--u-danger)}
+/* ===== アプリ共通：並び替えの⠿・折りたたみの印（FOLD_IC） ===== */
+.mgrip{width:28px;height:32px;margin-left:-4px;display:grid;place-items:center;color:var(--u-sub);font-size:16px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;flex:none}
+.sorting{cursor:grabbing}
+.dragging{position:relative;z-index:1;box-shadow:var(--u-shadow);border-radius:8px;background:var(--u-surface)}
+.fic{display:inline-block;flex:none;vertical-align:-1px;transition:transform .15s;color:var(--u-sub)}
+[aria-expanded="true"]>.fic{transform:rotate(90deg)}

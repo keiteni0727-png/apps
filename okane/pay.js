@@ -1206,7 +1206,7 @@
     if (!a) return;
     if (!S.ad || S.ad.id !== id) S.ad = { id, tab: "future", from: ymOf(nextStart()), val: null, pp: 10000 };
     openSheet(
-      `<div class="ad-top"><h3>${esc(a.name)}</h3><div class="ad-btns"><button class="sm" data-editacc="${id}">口座を編集</button><button class="sm ghost" data-close="1">閉じる</button></div></div><div id="adBody"></div>`,
+      `<div class="ad-top"><h3>${esc(a.name)}</h3><div class="ad-btns"><button class="sm editbtn" data-editacc="${id}" aria-label="口座を編集">✎ 編集</button><button class="sm ghost" data-close="1">閉じる</button></div></div><div id="adBody"></div>`,
       () => renderAcc(),
       true,
     );
@@ -1355,7 +1355,7 @@
     $("mMethods").innerHTML = ms
       .map(
         (m, i) =>
-          `<div class="pmr"><span class="mi">${i + 1}</span><span class="mn">${esc(m)}</span><button class="mv" data-mvm="${i}" data-dir="-1" aria-label="${esc(m)}を上へ" ${i === 0 ? "disabled" : ""}>↑</button><button class="mv" data-mvm="${i}" data-dir="1" aria-label="${esc(m)}を下へ" ${i === ms.length - 1 ? "disabled" : ""}>↓</button><button class="ghost" data-rmm="${i}" aria-label="${esc(m)}を削除">削除</button></div>`,
+          `<div class="pmr" data-sortrow data-mi="${i}">${GRIP("paym")}<span class="mi">${i + 1}</span><span class="mn">${esc(m)}</span><button class="ghost" data-rmm="${i}" aria-label="${esc(m)}を削除">削除</button></div>`,
       )
       .join("");
     if (document.activeElement?.id !== "mIncome") $("mIncome").value = S.cfg.income ?? "";
@@ -1617,7 +1617,7 @@
     ].filter(r => r[1]);
     if (!rows.length)
       return `<div class="bank empty"><span>振込先が未登録です</span><button class="sm" data-editacc="${esc(it.accountId)}">振込先を登録</button></div>`;
-    return `<div class="bank"><div class="bank-h"><b>振込先</b><button class="ghost sm" data-editacc="${esc(it.accountId)}">編集</button></div>${rows
+    return `<div class="bank"><div class="bank-h"><b>振込先</b><button class="ghost sm editbtn" data-editacc="${esc(it.accountId)}" aria-label="振込先の口座を編集">✎ 編集</button></div>${rows
       .map(
         ([l, v, pre]) =>
           `<div class="bank-r"><span class="bl">${l}</span><span class="bv">${pre ? `<small>${esc(pre)}</small> ` : ""}<b>${esc(v)}</b></span><button class="ghost sm" data-copy="${esc(v)}">コピー</button></div>`,
@@ -2368,17 +2368,16 @@
     FIN.renderAll();
     saveCfg().then(ok => ok && toast("保存しました"));
   }
-  function moveMethod(i, dir) {
-    const j = i + dir;
-    const m = [...S.cfg.methods];
-    if (j < 0 || j >= m.length) return;
-    [m[i], m[j]] = [m[j], m[i]];
-    S.cfg = { ...S.cfg, methods: m };
+  /* 引落口座の並び替え：⠿を押さえたまま上下に動かす（しくみは共通の u-core.js） */
+  SORT_DONE.paym = (box, rows) => {
+    const ms = S.cfg.methods;
+    const m = rows.map(x => ms[+x.dataset.mi]).filter(x => x != null);
+    if (m.length === ms.length && m.some((x, k) => x !== ms[k])) {
+      S.cfg = { ...S.cfg, methods: m };
+      saveCfg();
+    }
     renderMaster();
-    saveCfg();
-    const b = document.querySelector(`[data-mvm="${j}"][data-dir="${dir}"]`);
-    (b && !b.disabled ? b : document.querySelector(`[data-mvm="${j}"]:not(:disabled)`))?.focus();
-  }
+  };
   function removeMethod(i) {
     S.cfg.methods = S.cfg.methods.filter((_, k) => k !== i);
     render();
@@ -2452,7 +2451,6 @@
       const m = $("mGenMonth").value;
       if (m) genMonth(m);
     } else if (t.id === "mSaveCfg") saveIncomeCfg();
-    else if (d.mvm != null) moveMethod(Number(d.mvm), Number(d.dir));
     else if (d.rmm != null) removeMethod(Number(d.rmm));
   });
 
