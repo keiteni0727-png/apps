@@ -67,7 +67,7 @@ function songRowsHtml() {
     const open = sgOpen.has(k) || !st.trim();
     const rt = [rangeTxt(x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
     return `<div class="sg${open ? " open" : ""}" data-sg="${k}">
-    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? esc(st) : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa"><b>アーティスト</b>${esc(ar)}</span>` : ""}<span class="sg-se">${esc(rt)}</span>${x.dl ? `<span class="sg-sd">♪DL</span>` : ""}<span class="sg-sv" aria-hidden="true">▾</span></button>
+    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span>${x.dl ? `<span class="sg-sd">♪DL</span>` : ""}<span class="sg-sv" aria-hidden="true">▾</span></button>
     <div class="sg-body">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>

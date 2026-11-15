@@ -1291,3 +1291,6 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .sg .sg-sum{position:relative;padding-right:20px}
 .sg-sum .sg-sv{position:absolute;right:2px;top:50%;margin:0;transform:translateY(-50%)}
 .sg.open .sg-sum .sg-sv{transform:translateY(-50%) rotate(180deg)}
+/* 曲名とアーティストを1行に：『曲名』アーティスト */
+.imn .iarn{margin-left:4px;font-size:12.5px;font-weight:500;color:var(--u-sub)}
+.sg-sum .sg-sn .sg-sa{display:inline;margin-left:4px;font-size:12px;font-weight:500;color:var(--u-sub)}
