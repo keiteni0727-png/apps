@@ -1348,3 +1348,12 @@ button.imt[aria-expanded="false"]+.imt,button.imt[aria-expanded="false"]+button.
   .u-app .sb-top .sb-lamp{font-size:9px;padding:3px 5px}
   .u-app .sb .sb-tog{width:30px;height:30px;font-size:13px;margin-left:0}
 }
+/* ===== モニター（幅1600px以上）：全体を少し大きく、一覧を広く、詳細はON AIRとMUSICを左右に ===== */
+@media (min-width:1600px){
+  .u-app{zoom:1.12}
+  header .wrap,.wrap{max-width:1250px}
+  .sheet:not(.form){max-width:1040px}
+  .sheet.t-info:not(.form) .dp-info{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:0 14px;align-items:start}
+  .sheet:not(.form) .dp-info>.icard{margin-bottom:10px}
+  .sheet:not(.form) .dp-info>.ilinks,.sheet:not(.form) .dp-info>.links,.sheet:not(.form) .dp-info>.ined:not(.incard){grid-column:1/-1}
+}
