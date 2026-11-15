@@ -49,6 +49,9 @@ function serSugForm(q) {
 }
 /* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
 const SONG_MAIN = ["OP", "ED", "主題歌"];
+/* 編集画面で開いている曲（番号）。入力済みの曲はふだんたたむ */
+let sgOpen = new Set();
+let sgAddK = -1;
 function songRowsHtml() {
   const f = form;
   /* OP・ED・主題歌はジャンル・種別に関係なくいつも出す（挿入歌は追加したときだけ） */
@@ -57,10 +60,19 @@ function songRowsHtml() {
   /* 「なし」は曲が1曲もないときだけ。OP・ED・主題歌まとめて1つ */
   const none = !f.songs.length && (f.noSongs || []).length > 0;
   const card = (x, k) => {
-    return `<div class="sg" data-sg="${k}">
+    /* 1話だけ：「最後」の欄を隠して、最初の話だけ入れる */
+    const one = !!x.one;
+    const { st, ar } = songTA(x);
+    /* 入力済みの曲は1行にたたむ（押すと開く）。新しく足した曲・曲名が空の曲は開いたまま */
+    const open = sgOpen.has(k) || !st.trim();
+    const rt = [rangeTxt(x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
+    return `<div class="sg${open ? " open" : ""}" data-sg="${k}">
+    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? esc(st) : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}<span class="sg-se">${esc(rt)}</span>${x.dl ? `<span class="sg-sd">♪DL</span>` : ""}<span class="sg-sv" aria-hidden="true">▾</span></button>
+    <div class="sg-body">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
-    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"><span>話</span>${x.a == null && x.b == null ? `<span class="sg-all">全話</span>` : ""}
+    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw"${one ? " hidden" : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one ? `<span class="sg-all">全話</span>` : ""}
+      <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label>
       <span class="sg-sp"></span>
       <label class="sg-dlw"><input type="checkbox" class="sg-dl" ${x.dl ? "checked" : ""}>♪ DL済み</label>
       <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}${t === x.type ? "" : "に変える"}</option>`).join("")}</select>
@@ -70,7 +82,7 @@ function songRowsHtml() {
         (r, j) =>
           `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほかの話</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-xh">1話だけなら「最後」は空</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
       )
-      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button></div>`;
+      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button></div></div>`;
   };
   const secs = types
     .map(t => {
@@ -78,8 +90,9 @@ function songRowsHtml() {
       if (!l.length && !main.includes(t)) return "";
       return `<div class="sgsec ${SG_CLS[t]}">
         <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
-          <button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button></div>
-        ${l.length ? l.map(([x, k]) => card(x, k)).join("") : none ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
+          ${l.length > 1 ? `<button type="button" class="sgfoldall" data-sgfoldall="${t}">${l.every(([x, k]) => sgOpen.has(k) || !songTA(x).st.trim()) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
+          ${l.length ? "" : `<button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button>`}</div>
+        ${l.length ? l.map(([x, k]) => card(x, k)).join("") + `<button type="button" class="sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : none ? "" : `<p class="hint sgempty">まだ登録されていません</p>`}</div>`;
     })
     .join("");
   const noBox = f.songs.length ? "" : `<label class="nofl sgno sgall"><input type="checkbox" class="nos" ${none ? "checked" : ""}><span>OP・ED・主題歌 なし</span></label>`;
@@ -115,6 +128,7 @@ const ONLY_A = {
   "f-from": ["放送日", ["from", "sched"]],
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
+  onair: ["放送情報", ["media", "from", "time", "sched", "cours"]],
   "f-url": ["公式サイト", ["url"]],
   "f-vurl": ["配信サイトURL", ["vurl"]],
 };
@@ -241,8 +255,9 @@ function readForm() {
   if ($("#sgList")) form.noSongs = document.querySelector(".nos:checked") ? [...SONG_MAIN] : [];
   if ($("#sgList"))
     form.songs = [...document.querySelectorAll("[data-sg]")].map(r => {
+      const one = !!r.querySelector(".sg-one")?.checked;
       const a = r.querySelector(".sg-a").value,
-        b = r.querySelector(".sg-b").value;
+        b = one ? a : r.querySelector(".sg-b").value;
       return {
         type: r.querySelector(".sg-t").value,
         st: r.querySelector(".sg-st").value,
@@ -261,6 +276,7 @@ function readForm() {
             }
           : {}),
         ...(r.querySelector(".sg-dl")?.checked ? { dl: 1 } : {}),
+        ...(one ? { one: 1 } : {}),
       };
     });
 }
@@ -320,6 +336,11 @@ function openForm(it, target, el) {
       cours: [],
       cy: y,
     };
+  sgOpen = new Set();
+  /* 1話だけの曲（最初＝最後）は「1話だけ」にチェックを入れて開く */
+  form.songs.forEach(x => {
+    if (x.a != null && x.b === x.a) x.one = 1;
+  });
   if (form.span)
     form.songs.forEach(x => {
       if (x.a == null && x.b == null) {
@@ -386,7 +407,7 @@ function commitInlineForm() {
 function buildPatch(f) {
   const t = (f.t || "").trim();
   const songs = f.songs
-    .map(({ ex, ...x }) => {
+    .map(({ ex, one, ...x }) => {
       /* 飛び飛びの話：「最初」が空の行は保存しない。最後が最初より小さいときは入れ替える */
       const e = (ex || []).filter(r => r && r.a != null).map(r => (r.b != null && r.b < r.a ? { a: r.b, b: r.a } : r.b === r.a ? { a: r.a, b: null } : r));
       return { ...x, ...(e.length ? { ex: e } : {}), st: (x.st ?? x.s ?? "").trim(), ar: (x.ar || "").trim(), s: (x.s || "").trim() };
@@ -553,16 +574,63 @@ const FORM_ACTIONS = [
     "[data-sgadd]",
     formEdit(
       el => {
-        const same = form.songs.filter(x => x.type === el.dataset.sgadd);
+        const tp = el.dataset.sgadd;
+        const same = form.songs.filter(x => x.type === tp);
         const last = same[same.length - 1];
         const sp = form.span || (+form.n ? [1, +form.n] : null);
-        const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
-        form.songs.push({ type: el.dataset.sgadd, s: "", st: "", ar: "", a: a0, b: sp ? sp[1] : null });
+        let nu;
+        /* 前の曲が「1話だけ」なら、次の曲もその次の1話だけ（例：1話→2話→3話…） */
+        if (last && last.one && last.a != null) nu = { a: last.a + 1, b: last.a + 1, one: 1 };
+        else {
+          const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
+          nu = { a: a0, b: sp ? sp[1] : null };
+        }
+        /* 同じ種類の最後の曲のすぐ後ろに入れる（種類ごとの並びを保つ） */
+        const at = last ? form.songs.lastIndexOf(last) + 1 : form.songs.length;
+        form.songs.splice(at, 0, { type: tp, s: "", st: "", ar: "", ...nu });
+        sgOpen = new Set([...sgOpen].map(k => (k >= at ? k + 1 : k)));
+        sgOpen.add(at);
+        sgAddK = at;
       },
-      () => !TOUCH && document.querySelector(`.sg[data-sg="${form.songs.length - 1}"] .sg-st`)?.focus(),
+      () => {
+        const c = document.querySelector(`.sg[data-sg="${sgAddK}"]`);
+        if (!c) return;
+        if (!TOUCH) c.querySelector(".sg-st")?.focus({ preventScroll: true });
+        c.scrollIntoView({ block: "nearest" });
+      },
     ),
   ],
-  ["[data-sgdel]", formEdit(el => form.songs.splice(+el.dataset.sgdel, 1))],
+  [
+    "[data-sgdel]",
+    formEdit(el => {
+      const d = +el.dataset.sgdel;
+      form.songs.splice(d, 1);
+      sgOpen = new Set([...sgOpen].filter(k => k !== d).map(k => (k > d ? k - 1 : k)));
+    }),
+  ],
+  /* 1話だけ：チェックで「最後」の欄を出したり隠したり */
+  ["[data-sgone]", formEdit(() => {})],
+  /* 曲をたたむ／開く */
+  [
+    "[data-sgfold]",
+    formEdit(el => {
+      const k = +el.dataset.sgfold;
+      const c = el.closest(".sg");
+      if (c && c.classList.contains("open")) {
+        sgOpen.delete(k);
+        /* 曲名が空の曲はたためない（入力途中の曲を見失わないよう） */
+        if (!songTA(form.songs[k] || {}).st.trim()) toast("曲名を入れるとたためます");
+      } else sgOpen.add(k);
+    }),
+  ],
+  [
+    "[data-sgfoldall]",
+    formEdit(el => {
+      const ks = form.songs.map((x, k) => [x, k]).filter(([x]) => x.type === el.dataset.sgfoldall);
+      const allOpen = ks.every(([x, k]) => sgOpen.has(k) || !songTA(x).st.trim());
+      ks.forEach(([, k]) => (allOpen ? sgOpen.delete(k) : sgOpen.add(k)));
+    }),
+  ],
   /* 飛び飛びの話：行を足す／消す */
   [
     "[data-sgex]",

@@ -1241,3 +1241,38 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
   .dmiss .mbtns button{padding:5px 12px;font-size:12.5px}
   .dmiss .mi .nb{padding:5px 10px}
 }
+/* ---- 詳細：カードの「編集」ボタン（中身を押しても編集しない） ---- */
+.idl dt,.idl dd{cursor:default}
+.ich .iedit{margin-left:auto;flex:none;border:1px solid var(--u-line);background:transparent;color:var(--u-sub);border-radius:999px;padding:3px 11px;font:inherit;font-size:12px;font-weight:700;line-height:1.5}
+.ich .iedit:hover{color:var(--u-ink);background:var(--u-chip)}
+.ich .inow+.iedit{margin-left:auto}
+/* ---- 詳細：MUSICを種類ごとに区切る ---- */
+.imt{display:flex;align-items:baseline;gap:6px;margin:10px 0 2px;padding-top:8px;border-top:1px solid var(--u-line)}
+.ich+.imt{margin-top:0;padding-top:0;border-top:0}
+.imt b{font-size:11.5px;font-weight:800;letter-spacing:.06em;color:#fff;background:var(--sgc);border-radius:5px;padding:2px 8px;line-height:1.4}
+.imt small{font-size:11px;font-weight:600;color:var(--u-sub)}
+.imsg{grid-template-columns:1fr auto;cursor:default;padding:7px 0 7px 10px;position:relative}
+.imsg::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:2px;background:color-mix(in srgb,var(--sgc) 55%,transparent)}
+.imt+.imsg{border-top:0}
+.imsg .ima{grid-column:1}
+.imsg .dlb{grid-column:2}
+.inos{margin:0;font-size:13px}
+/* ---- 編集：曲をたたむ・1話だけ・次を追加 ---- */
+.sg .sg-sum{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;width:100%;border:0;background:none;padding:2px 2px;font:inherit;text-align:left;color:var(--u-ink);cursor:pointer}
+.sg-sum .sg-sn{font-size:13.5px;font-weight:700;min-width:0;overflow-wrap:anywhere}
+.sg-sum .sg-sa{font-size:12px;color:var(--u-sub);min-width:0;overflow-wrap:anywhere}
+.sg-sum .sg-se{font-family:var(--u-num);font-size:11px;font-weight:600;color:var(--u-sub);border:1px solid var(--u-line);border-radius:5px;padding:0 6px;line-height:1.6}
+.sg-sum .sg-sd{font-size:11px;font-weight:700;color:var(--u-ok)}
+.sg-sum .sg-sv{margin-left:auto;color:var(--u-sub);font-size:11px;transition:transform .15s}
+.sg.open .sg-sum .sg-sv{transform:rotate(180deg)}
+.sg.open .sg-sum{padding-bottom:4px;border-bottom:1px dashed var(--u-line);margin-bottom:2px}
+.sg:not(.open){padding:6px 8px}
+.sg:not(.open) .sg-body{display:none}
+.sg-body{display:grid;gap:5px}
+.sg-bw{display:inline-flex;align-items:center;gap:5px}
+.sg-bw[hidden]{display:none}
+.sg-onew{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--u-sub);margin:0 0 0 4px;white-space:nowrap}
+.sg-onew input{width:16px!important;height:16px;margin:0;accent-color:var(--sgc,var(--u-accent))}
+.sgnext{justify-self:start;border:1px dashed color-mix(in srgb,var(--sgc) 55%,transparent);background:transparent;color:var(--sgc);border-radius:var(--u-rl);font:inherit;font-weight:700;font-size:12.5px;padding:6px 14px}
+.sgnext:hover{background:color-mix(in srgb,var(--sgc) 8%,transparent)}
+.sgfoldall{border:0;background:none;padding:2px 4px;font:inherit;font-size:11.5px;font-weight:700;color:var(--u-sub)}
