@@ -1363,3 +1363,7 @@ button.imt[aria-expanded="false"]+.imt,button.imt[aria-expanded="false"]+button.
 .idl .ilnk .iic{width:13px;height:13px;flex:none}
 .idl .ilnk .iic.ply{width:15px;height:15px}
 .idl .ilnk .ilar{font-size:15px;line-height:1}
+/* 左上のロゴ：アプリアイコンと同じマーク（ON AIRの文字の代わり） */
+.u-app .sb-logo{width:26px;height:26px;flex:none;display:block}
+body.sbc .u-app .sb .sb-logo{display:none}
+@media (max-width:899px){.u-app .sb-logo{width:24px;height:24px}}

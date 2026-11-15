@@ -62,9 +62,9 @@ function renderSidebar() {
       )
       .join("")}</div>` : ""}</div>`;
   };
-  /* PC：左上に☰（左メニューの折りたたみ）。上の帯と高さ・線をそろえる。スマホは右に✕ */
+  /* PC：左上に☰（左メニューの折りたたみ）。上の帯と高さ・線をそろえる。スマホは右に✕。ロゴはアプリアイコンと同じマーク */
   const mob = matchMedia("(max-width:899px)").matches;
-  sb.innerHTML = `<div class="sb-top">${mob ? "" : `<button type="button" class="sb-ham" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}" aria-expanded="${!sbCollapsed}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>`}<span class="sb-lamp">ON AIR</span><b class="lbl">エンタメ管理</b>${mob ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : ""}</div>
+  sb.innerHTML = `<div class="sb-top">${mob ? "" : `<button type="button" class="sb-ham" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}" aria-expanded="${!sbCollapsed}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>`}<svg class="sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7" y="9" width="18" height="12.5" rx="2.5" fill="#fff"/><path d="M14.2 12.3v6l5-3z" fill="var(--u-accent)"/><rect x="11.5" y="23.5" width="9" height="1.8" rx=".9" fill="#fff"/></svg><b class="lbl">エンタメ管理</b>${mob ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : ""}</div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
     ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
