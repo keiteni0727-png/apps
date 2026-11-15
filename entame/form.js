@@ -129,7 +129,7 @@ const ONLY_A = {
   "f-from": ["放送日", ["from"]],
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
-  onair: ["放送情報", ["media", "from", "time", "cours"]],
+  onair: ["基本情報", ["media", "from", "time", "cours", "series", "url", "vurl"]],
   "f-url": ["公式サイト", ["url"]],
   "f-vurl": ["配信サイトURL", ["vurl"]],
 };

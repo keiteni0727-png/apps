@@ -1357,3 +1357,9 @@ button.imt[aria-expanded="false"]+.imt,button.imt[aria-expanded="false"]+button.
   .sheet:not(.form) .dp-info>.icard{margin-bottom:10px}
   .sheet:not(.form) .dp-info>.ilinks,.sheet:not(.form) .dp-info>.links,.sheet:not(.form) .dp-info>.ined:not(.incard){grid-column:1/-1}
 }
+/* 詳細のON AIR：シリーズ・公式サイト・配信URLの行（文字のリンク） */
+.idl .ilnk{display:inline-flex;align-items:center;gap:5px;border:0;background:none;padding:0;font:inherit;font-size:13.5px;font-weight:700;color:var(--accent);text-decoration:none;cursor:pointer;min-width:0;overflow-wrap:anywhere;text-align:left}
+.idl .ilnk:hover{text-decoration:underline}
+.idl .ilnk .iic{width:13px;height:13px;flex:none}
+.idl .ilnk .iic.ply{width:15px;height:15px}
+.idl .ilnk .ilar{font-size:15px;line-height:1}

@@ -312,10 +312,21 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     if (hasSt(md)) rows.push(row("放送局", labsOr(m.stations, m.stations.map(x => `<span class="lab">${esc(x)}</span>`).join(""), "st"), "fMedia"));
     rows.push(row("配信サイト", labsOr(m.vods, m.vods.map(vlab).join(""), "vods"), "fMedia"));
   }
-  const bc = `<div class="icard ibc"><div class="ich"><span class="ilamp onair">ON AIR</span>${edB("onair", "放送情報")}</div><dl class="idl">${rows.join("")}</dl></div>`;
   /* 外部リンクのアイコン（公式サイト＝外に開く、配信＝再生） */
   const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
+  /* シリーズ・公式サイト・配信URLも、放送の項目と同じ並びの行で（押すとシリーズの作品一覧・サイトを開く） */
+  const host = u => {
+    try {
+      return new URL(u).hostname.replace(/^www\./, "");
+    } catch (e) {
+      return u;
+    }
+  };
+  rows.push(row("シリーズ", it.series ? `<button type="button" class="ilnk" data-series="${esc(it.series)}">${esc(it.series)}<span class="ilar" aria-hidden="true">›</span></button>` : un("未設定")));
+  rows.push(row("公式サイト", it.url ? `<a class="ilnk" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(host(it.url))}${IC_EXT}</a>` : nofHas(it, "url") ? nn("なし") : un("未設定")));
+  rows.push(row("配信URL", it.vurl ? `<a class="ilnk" href="${esc(it.vurl)}" target="_blank" rel="noopener" aria-label="${esc(vodName(it))}で見る">${IC_PLAY}${esc(vodName(it))}</a>` : nofHas(it, "vurl") ? nn("なし") : un("未設定")));
+  const bc = `<div class="icard ibc"><div class="ich"><span class="ilamp onair">ON AIR</span>${edB("onair", "基本情報")}</div><dl class="idl">${rows.join("")}</dl></div>`;
   /* MUSIC：1曲1行。左に『曲名』アーティスト、右端に使われた話 */
   /* 種類ごとに小見出し（OP・ED…）を付けて区切る。曲の行は押しても編集しない */
   const songs = songRows
@@ -337,22 +348,10 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       return `${head}<div class="imsg ${SG_CLS[r.k]}${songRows.nowN == null ? "" : r.now >= 0 ? " isnow" : " notnow"}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${sub ? `<span class="ima">${sub}</span>` : ""}</div>`;
     })
     .join("");
-  const links = `<div class="ilinks">${
-    it.series
-      ? `<button type="button" class="ilk" data-series="${esc(it.series)}">シリーズ作品</button>`
-      : `<button type="button" class="ilk off" data-jump="fSeries">シリーズ未設定</button>`
-  }${
-    it.url
-      ? `<a class="ilk" href="${esc(it.url)}" target="_blank" rel="noopener"><span class="ilt">公式サイト</span>${IC_EXT}</a>`
-      : `<button type="button" class="ilk off" data-jump="f-url">公式サイト${nofHas(it, "url") ? "なし" : "未設定"}</button>`
-  }${
-    it.vurl
-      ? `<a class="ilk ivod" href="${esc(it.vurl)}" target="_blank" rel="noopener" aria-label="${esc(vodName(it))}で見る">${IC_PLAY}<span class="ilt">${esc(vodName(it))}</span></a>`
-      : `<button type="button" class="ilk off" data-jump="f-vurl">配信URL${nofHas(it, "vurl") ? "なし" : "未設定"}</button>`
-  }</div>`;
+
   /* 曲が1曲もなくてもカードは出す（「編集」ボタンから登録できるように） */
   const noS = !songs && ((it.noSongs || []).length ? nn("OP・ED・主題歌 なし") : un("未登録"));
-  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>`}</div>` + links;
+  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>`}</div>`;
 }
 /* 前・次の矢印（文字だと丸の中で上下左右にずれるので図形で描く） */
 const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="${d < 0 ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
