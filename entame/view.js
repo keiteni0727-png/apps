@@ -192,7 +192,7 @@ function pcInfo(i) {
       if (!l.length) return "";
       const x = l[0],
         { st, ar } = songTA(x);
-      return `<span class="pci-r${x.dl ? " dl" : ""}"><b>${t}</b><span class="pci-v">${x.dl ? '<i class="pci-dl" aria-label="DL済み">♪</i>' : ""}${esc(st)}${ar ? `<small>${esc(ar)}</small>` : ""}</span>${l.length > 1 ? `<em>ほか${l.length - 1}曲</em>` : ""}</span>`;
+      return `<span class="pci-r"><b>${t}</b><span class="pci-v">${esc(st)}${ar ? `<small>${esc(ar)}</small>` : ""}</span>${l.length > 1 ? `<em>ほか${l.length - 1}曲</em>` : ""}</span>`;
     })
     .join("");
   return `<span class="pci">${song}</span>`;

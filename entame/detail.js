@@ -314,7 +314,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   /* 外部リンクのアイコン（公式サイト＝外に開く、配信＝再生） */
   const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
-  /* MUSIC：1曲1行。左に種類、曲名（太字）、その下に「アーティスト・使われた話」、右端にDL */
+  /* MUSIC：1曲1行。左に『曲名』アーティスト、右端に使われた話 */
   /* 種類ごとに小見出し（OP・ED…）を付けて区切る。曲の行は押しても編集しない */
   const songs = songRows
     .map((r, j) => {
@@ -323,7 +323,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       /* 話は範囲ごとに1つずつの枠ラベル（飛び飛びでも [1〜10話] [13話] [20〜30話] と分けて並べる） */
       const sub = [r.rng.length ? `<span class="ieps">${r.rng.map((t, j) => `<span class="iep inum${j === r.now ? " now " + SG_CLS[r.k] : ""}">${esc(t)}</span>`).join("")}</span>` : ""].filter(Boolean).join("");
       const head = j === 0 || songRows[j - 1].k !== r.k ? `<div class="imt ${SG_CLS[r.k]}"><b>${r.k}</b>${(n => (n > 1 ? `<small>${n}曲</small>` : ""))(songRows.filter(q => q.k === r.k).length)}</div>` : "";
-      return `${head}<div class="imsg ${SG_CLS[r.k]}${songRows.nowN == null ? "" : r.now >= 0 ? " isnow" : " notnow"}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${sub ? `<span class="ima">${sub}</span>` : ""}<button type="button" class="dlb${r.x.dl ? " on" : ""}" data-sgdl="${r.i}" aria-pressed="${!!r.x.dl}" aria-label="${esc(r.x.s)}を${r.x.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.x.dl ? "♪DL" : "DL"}</button></div>`;
+      return `${head}<div class="imsg ${SG_CLS[r.k]}${songRows.nowN == null ? "" : r.now >= 0 ? " isnow" : " notnow"}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${sub ? `<span class="ima">${sub}</span>` : ""}</div>`;
     })
     .join("");
   const links = `<div class="ilinks">${
@@ -352,7 +352,7 @@ function renderDetail(it) {
   const sl = songsOf(it).map(x =>
     span && (x.type === "OP" || x.type === "ED") && x.a == null && x.b == null && !exOf(x).length ? { ...x, a: span[0], b: span[1] } : x,
   );
-  /* 1曲1行：種類・使われた話・曲名／アーティスト・DL。同じ種類が複数ある作品だけ話数の列を出す */
+  /* 1曲1行：曲名／アーティスト・使われた話。同じ種類が複数ある作品だけ話数の列を出す */
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
   /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
   const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeList(x).length));
@@ -708,17 +708,6 @@ const DETAIL_ACTIONS = [
     (el, it) => {
       dmissKeep = true;
       saveTitle(it.id, { noSongs: ["OP", "ED", "主題歌"] }, "OP・ED・主題歌を「なし」にしました");
-    },
-  ],
-  /* 曲のDL済み */
-  [
-    "[data-sgdl]",
-    (el, it) => {
-      const k = +el.dataset.sgdl;
-      const l = songsOf(it).map(x => ({ ...x }));
-      if (!l[k]) return;
-      l[k].dl = l[k].dl ? 0 : 1;
-      saveTitle(it.id, { songs: l }, l[k].dl ? "ダウンロード済みにしました" : "未ダウンロードに戻しました");
     },
   ],
   /* 項目を押したら、その場で編集（作品の詳細では、その項目の入力欄を詳細の中に出す） */

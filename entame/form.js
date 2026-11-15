@@ -67,14 +67,13 @@ function songRowsHtml() {
     const open = sgOpen.has(k) || !st.trim();
     const rt = [rangeTxt(x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
     return `<div class="sg${open ? " open" : ""}" data-sg="${k}">
-    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span>${x.dl ? `<span class="sg-sd">♪DL</span>` : ""}<span class="sg-sv" aria-hidden="true">▾</span></button>
+    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span><span class="sg-sv" aria-hidden="true">▾</span></button>
     <div class="sg-body">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
     <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw"${one ? " hidden" : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one ? `<span class="sg-all">全話</span>` : ""}
       <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label>
       <span class="sg-sp"></span>
-      <label class="sg-dlw"><input type="checkbox" class="sg-dl" ${x.dl ? "checked" : ""}>♪ DL済み</label>
       <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}${t === x.type ? "" : "に変える"}</option>`).join("")}</select>
       <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div>
     ${(x.ex || [])
@@ -275,7 +274,6 @@ function readForm() {
               }),
             }
           : {}),
-        ...(r.querySelector(".sg-dl")?.checked ? { dl: 1 } : {}),
         ...(one ? { one: 1 } : {}),
       };
     });
@@ -418,7 +416,7 @@ function commitInlineForm() {
 function buildPatch(f) {
   const t = (f.t || "").trim();
   const songs = f.songs
-    .map(({ ex, one, ...x }) => {
+    .map(({ ex, one, dl, ...x }) => {
       /* 飛び飛びの話：「最初」が空の行は保存しない。最後が最初より小さいときは入れ替える */
       const e = (ex || []).filter(r => r && r.a != null).map(r => (r.b != null && r.b < r.a ? { a: r.b, b: r.a } : r.b === r.a ? { a: r.a, b: null } : r));
       return { ...x, ...(e.length ? { ex: e } : {}), st: (x.st ?? x.s ?? "").trim(), ar: (x.ar || "").trim(), s: (x.s || "").trim() };

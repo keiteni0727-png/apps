@@ -178,7 +178,6 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sgall input{width:16px;height:16px;margin:0}
 .sgempty{margin:0;font-size:12px}
 .sg-r .sg-all{font-size:11.5px;font-weight:700;color:var(--sgc);margin-left:4px}
-.sg-r .sg-dlw{margin:0;font-size:12.5px}
 .sg-r .del{font-size:12.5px}
 .sg-r .sg-a,.sg-r .sg-b{width:62px;flex:none;padding:6px 8px}
 .sg-r .sg-t{width:auto;padding:4px 6px;font-size:12px;border-radius:7px;color:var(--u-sub);max-width:110px}
@@ -389,8 +388,6 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
 .sg .sg-r .sg-rl{width:72px;flex:none;margin:0 1px 0 0;font-size:11px} /* 曲名・アーティスト欄と左端をそろえる（ラベル72px＋すき間6px） */
 .sg .sg-r .sg-a,.sg .sg-r .sg-b{width:52px;padding:5px 6px}
 .sg .sg-r .sg-t{max-width:96px;padding:4px 4px;font-size:12px!important}
-.sg .sg-dlw{font-size:12px}
-.sg .sg-dlw input{width:16px;height:16px}
 .sg .del{border:0;background:transparent;color:var(--u-danger);font-weight:700;font-size:12px;padding:4px 2px}
 .sgh{display:flex;align-items:center;gap:8px;min-height:26px}
 .sgadd{border:1px solid color-mix(in srgb,var(--sgc) 45%,transparent);background:color-mix(in srgb,var(--sgc) 8%,transparent);color:var(--sgc);border-radius:999px;font:inherit;font-weight:700;padding:3px 10px;font-size:12px}
@@ -435,11 +432,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .ftools input,.field input,.field select{border-radius:var(--u-r)}
 /* ボタンの角丸をそろえる */
 .epset button,.edfoot button,.sernew button{border-radius:var(--u-r)}
-/* 主題歌：音楽アプリにダウンロード済みかどうか */
-.dlb{flex:none;border:1px solid var(--u-line);background:transparent;color:var(--u-sub);border-radius:999px;padding:1px 8px;font:inherit;font-size:11px;font-weight:700;line-height:1.6;white-space:nowrap;margin-top:1px}
-.dlb.on{border:1px solid transparent;background:var(--u-ok2);color:var(--u-ok)}
-.sg-dlw{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
-.sg-dlw input{width:18px;height:18px;accent-color:var(--u-ok)}
 /* サブタイトル入力の小さな画面 */
 .spop-scrim{position:fixed;inset:0;z-index:40;background:var(--u-scrim)}
 .spop{position:fixed;z-index:41;left:50%;top:38%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 40px));background:var(--u-surface);border-radius:var(--u-rl);box-shadow:var(--u-shadow);padding:16px}
@@ -646,8 +638,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .pci-r b{flex:none;width:44px;font-weight:700;color:var(--u-sub);letter-spacing:.04em;font-size:11.5px}
   .pci-v{min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
   .pci-v small{font-weight:500;color:var(--u-sub);margin-left:4px;font-size:12.5px}
-  .pci-r.dl .pci-v{color:var(--u-ok)}
-  .pci-dl{font-style:normal;margin-right:3px}
   .pci-r em{font-style:normal;font-size:10.5px;color:var(--u-sub);flex:none}
     .lab.cc{background:var(--u-accent2);color:var(--u-accent);border-color:transparent;font-weight:700}
   .row.yrow .slot{grid-template-columns:62px minmax(0,1fr) 84px}
@@ -1036,7 +1026,6 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .ima .iar b{flex:none;font-size:10.5px;font-weight:700;color:var(--u-sub)}
 .ima .ieps{display:inline-flex;flex-wrap:wrap;gap:4px}
 .ima .iep{flex:none;font-size:11px;font-weight:600;color:var(--u-sub);border:1px solid var(--u-line);border-radius:5px;padding:0 6px;line-height:1.6}
-.imsg .dlb{grid-row:1/3;grid-column:3;padding:3px 11px;font-size:12px;margin:0}
 @media (max-width:560px){
   .idl{gap:7px 12px}
   .idl .iwhen{font-size:17px}
@@ -1255,15 +1244,12 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .imsg{grid-template-columns:1fr auto;cursor:default;padding:7px 0 7px 10px;position:relative}
 .imsg::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:2px;background:color-mix(in srgb,var(--sgc) 55%,transparent)}
 .imt+.imsg{border-top:0}
-.imsg .ima{grid-column:1}
-.imsg .dlb{grid-column:2}
 .inos{margin:0;font-size:13px}
 /* ---- 編集：曲をたたむ・1話だけ・次を追加 ---- */
 .sg .sg-sum{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;width:100%;border:0;background:none;padding:2px 2px;font:inherit;text-align:left;color:var(--u-ink);cursor:pointer}
 .sg-sum .sg-sn{font-size:13.5px;font-weight:700;min-width:0;overflow-wrap:anywhere}
 .sg-sum .sg-sa{font-size:12px;color:var(--u-sub);min-width:0;overflow-wrap:anywhere}
 .sg-sum .sg-se{font-family:var(--u-num);font-size:11px;font-weight:600;color:var(--u-sub);border:1px solid var(--u-line);border-radius:5px;padding:0 6px;line-height:1.6}
-.sg-sum .sg-sd{font-size:11px;font-weight:700;color:var(--u-ok)}
 .sg-sum .sg-sv{margin-left:auto;color:var(--u-sub);font-size:11px;transition:transform .15s}
 .sg.open .sg-sum .sg-sv{transform:rotate(180deg)}
 .sg.open .sg-sum{padding-bottom:4px;border-bottom:1px dashed var(--u-line);margin-bottom:2px}
@@ -1296,3 +1282,9 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .sg-sum .sg-sn .sg-sa{display:inline;margin-left:4px;font-size:12px;font-weight:500;color:var(--u-sub)}
 /* アーティスト名は途中で割らない：入りきらないときは丸ごと次の行へ（1行より長いときだけ折り返す） */
 .imn .iarn,.sg-sum .sg-sn .sg-sa{display:inline-block;max-width:100%;vertical-align:baseline}
+/* 曲の行：左に『曲名』アーティスト、右端に使われた話（基本1行。長いときは左側だけ折り返す） */
+.imsg{grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 10px}
+.imsg .ima{grid-column:2;grid-row:1;justify-content:flex-end;max-width:46vw}
+.imsg .ieps{justify-content:flex-end}
+.sg .sg-sum{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px}
+.sg-sum .sg-se{justify-self:end;white-space:nowrap}

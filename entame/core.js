@@ -170,7 +170,7 @@ const mediaLabOf = i => {
   return MEDIA_LAB[md] ? [MEDIA_LAB[md], md] : null;
 };
 const ONE_LAB = { movie: "映画", ova: "OVA", sp: "TV SP" };
-/* 主題歌: songs＝[{type,s,a,b,ex,dl}] a〜b話で使われた曲。ex＝飛び飛びのときの追加の話 [{a,b}] */
+/* 主題歌: songs＝[{type,s,a,b,ex}] a〜b話で使われた曲。ex＝飛び飛びのときの追加の話 [{a,b}] */
 const songsOf = i => i.songs || [];
 const songText = i =>
   songsOf(i)
