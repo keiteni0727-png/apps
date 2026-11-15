@@ -1288,3 +1288,11 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .imsg .ieps{justify-content:flex-end}
 .sg .sg-sum{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px}
 .sg-sum .sg-se{justify-self:end;white-space:nowrap}
+/* スマホ：話数ラベルは右ではなくアーティストの下に（PCは右端のまま） */
+@media (max-width:899px){
+  .imsg{grid-template-columns:minmax(0,1fr)}
+  .imsg .ima{grid-column:1;grid-row:2;justify-content:flex-start;max-width:none}
+  .imsg .ieps{justify-content:flex-start}
+  .sg .sg-sum{grid-template-columns:minmax(0,1fr)}
+  .sg-sum .sg-se{justify-self:start}
+}

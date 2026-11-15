@@ -596,6 +596,8 @@ const FORM_ACTIONS = [
         }
         /* 同じ種類の最後の曲のすぐ後ろに入れる（種類ごとの並びを保つ） */
         const at = last ? form.songs.lastIndexOf(last) + 1 : form.songs.length;
+        /* 新しい曲を足したら、入力済みのほかの曲はたたむ */
+        sgOpen = new Set([...sgOpen].filter(k => !songTA(form.songs[k] || {}).st.trim()));
         form.songs.splice(at, 0, { type: tp, s: "", st: "", ar: "", ...nu });
         sgOpen = new Set([...sgOpen].map(k => (k >= at ? k + 1 : k)));
         sgOpen.add(at);
@@ -723,3 +725,29 @@ function onTitleFormClick(e) {
   }
   return !!form && runActions(FORM_ACTIONS, e);
 }
+
+/* 曲の編集：別の曲の入力欄に入ったら、開いているほかの曲（曲名が入っているもの）をたたむ。
+   描き直すと入力中の欄が外れるので、たたむ曲の1行表示だけ今の入力内容で書きかえる */
+document.addEventListener("focusin", e => {
+  const card = e.target.closest && e.target.closest("#sgList .sg");
+  if (!card || !form || e.target.closest(".sg-sum")) return;
+  const k = +card.dataset.sg;
+  sgOpen.add(k);
+  document.querySelectorAll("#sgList .sg.open").forEach(c => {
+    if (c === card) return;
+    const st = c.querySelector(".sg-st").value.trim();
+    if (!st) return;
+    const ar = c.querySelector(".sg-ar").value.trim();
+    const one = !!c.querySelector(".sg-one")?.checked;
+    const num = v => (v === "" ? null : +v);
+    const a = num(c.querySelector(".sg-a").value),
+      b = one ? a : num(c.querySelector(".sg-b").value);
+    const ex = [...c.querySelectorAll(".sg-x")].map(r => ({ a: num(r.querySelector(".sg-xa").value), b: num(r.querySelector(".sg-xb").value) }));
+    const x = { a, b, ex };
+    c.querySelector(".sg-sn").innerHTML = `『${esc(st)}』${ar ? `<span class="sg-sa">${esc(ar)}</span>` : ""}`;
+    c.querySelector(".sg-se").textContent = [rangeTxt(x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
+    c.classList.remove("open");
+    c.querySelector(".sg-sum").setAttribute("aria-expanded", "false");
+    sgOpen.delete(+c.dataset.sg);
+  });
+});
