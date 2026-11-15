@@ -70,6 +70,12 @@ header.top{display:flex;align-items:center;gap:10px;padding:10px 2px 12px}
 .btn.ghost{background:#fff;color:var(--text);box-shadow:none;border:1.5px solid var(--line)}
 .btn.danger{background:#fff;color:#d46a7e;box-shadow:none;border:1.5px solid #f6d3da}
 .btn.block{width:100%}
+.cfm{position:fixed;inset:0;background:rgba(93,78,96,.38);z-index:45;display:grid;place-items:center;padding:24px;animation:fade .15s}
+.cfm .box{background:var(--bg);width:100%;max-width:340px;border-radius:24px;padding:20px 18px 16px;box-shadow:0 10px 40px rgba(93,78,96,.25)}
+.cfm h4{margin:0 0 8px;font-size:17px}
+.cfm p{margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.6;word-break:break-all}
+.cfm .btn{margin-top:8px}
+.btn.danger.fill{background:#e07a8f;color:#fff;border-color:#e07a8f}
 .btn.sm{padding:7px 14px;font-size:13px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .row.end{justify-content:flex-end}
@@ -609,6 +615,20 @@ const catOf = id => CATS.find(c => c.id === id) || CATS[CATS.length - 1];
 function toast(msg){ const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2300); }
 function openSheet(html){ $layer.innerHTML = `<div class="ov" data-a="ovclose"><div class="sheet" role="dialog"><div class="grab"></div>${html}</div></div>`; }
 function closeSheet(){ $layer.innerHTML = ""; }
+/* 消す前の確認（開いている画面の上に重ねて出す）。「やめる」が上、「消す」が下 */
+function askConfirm(title, text, okLabel = "消す"){
+  return new Promise(res => {
+    const o = document.createElement("div"); o.className = "cfm";
+    o.innerHTML = `<div class="box" role="alertdialog"><h4>${title}</h4>${text ? `<p>${text}</p>` : ""}<button class="btn ghost block" data-c="0">やめる</button><button class="btn danger fill block" data-c="1">${okLabel}</button></div>`;
+    o.addEventListener("click", e => {
+      e.stopPropagation();
+      const b = e.target.closest("[data-c]");
+      if (!b && e.target !== o) return;
+      o.remove(); res(b?.dataset.c === "1");
+    });
+    document.body.appendChild(o);
+  });
+}
 function today(){ const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 /* 写真を小さくしてJPEGの文字データにする（Firestoreに直接入れるため） */
 function loadImg(file){
@@ -2991,7 +3011,8 @@ function openSince(){
 
 function confirmSheet(title, text, okLabel, act, danger = true){
   openSheet(`<h3>${title}<button class="x" data-a="close">×</button></h3><p>${text}</p>
-  <button class="btn ${danger ? "danger" : ""} block" data-a="${act}">${okLabel}</button><div class="gap"></div><button class="btn ghost block" data-a="close">やめる</button>`);
+  ${danger ? `<button class="btn ghost block" data-a="close">やめる</button><div class="gap"></div><button class="btn danger fill block" data-a="${act}">${okLabel}</button>`
+           : `<button class="btn block" data-a="${act}">${okLabel}</button><div class="gap"></div><button class="btn ghost block" data-a="close">やめる</button>`}`);
 }
 
 /* ピンチで拡大されないようにする（ダブルタップはCSSの touch-action で止めている） */
@@ -3036,7 +3057,7 @@ document.addEventListener("click", async ev => {
     case "goWho": S.who = el.dataset.v; S.tab = "list"; render(); window.scrollTo(0, 0); break;
     case "noteEdit": S.noteEdit = id; refreshNotes(id); break;
     case "noteCancel": S.noteEdit = null; refreshNotes(id); break;
-    case "noteDel": try { await saveNote(id, ""); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
+    case "noteDel": if (!await askConfirm("ひとことを消しますか？", "書いたひとことを消します。元に戻せません。")) break; try { await saveNote(id, ""); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
     case "annivs": openAnnivs(); break;
     case "qaEdit": S.qaEdit = true; render(); document.querySelector(".qaform textarea")?.focus(); break;
     case "qaCancel": S.qaEdit = false; render(); break;
@@ -3056,13 +3077,13 @@ document.addEventListener("click", async ev => {
     case "letterDone": closeSheet(); setTimeout(() => letterDeliver(), 400); break;
     case "letters": openLetters(); break;
     case "lTab": openLetters(el.dataset.v); break;
-    case "letterDel": try { await deleteDoc(doc(db, "rooms", S.roomId, "letters", id)); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
+    case "letterDel": if (!await askConfirm("おてがみを消しますか？", "送ったおてがみを消します。まだ届いていなければ、相手には届かなくなります。")) break; try { await deleteDoc(doc(db, "rooms", S.roomId, "letters", id)); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
     case "gameOpen": openGame(); break;
     case "gameStart": gameStart(); break;
     case "gameClose": gameClose(); break;
-    case "planDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { plan: (d.plan || []).filter((_, i) => i !== +el.dataset.v) }); break; }
+    case "planDel": { const d = S.dates.find(x => x.id === id); const it = d && (d.plan || [])[+el.dataset.v]; if (!it || !await askConfirm("この予定を消しますか？", `「${esc(((it.tm ? it.tm + " " : "") + (it.tx || "")).trim())}」をしおりから消します。`)) break; saveShiori(id, { plan: (d.plan || []).filter((_, i) => i !== +el.dataset.v) }); break; }
     case "itemToggle": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).map((x, i) => i === +el.dataset.v ? { ...x, done: !x.done } : x) }); break; }
-    case "itemDel": { const d = S.dates.find(x => x.id === id); if (d) saveShiori(id, { items: (d.items || []).filter((_, i) => i !== +el.dataset.v) }); break; }
+    case "itemDel": { const d = S.dates.find(x => x.id === id); const it = d && (d.items || [])[+el.dataset.v]; if (!it || !await askConfirm("持ち物を消しますか？", `「${esc(it.tx || "")}」をしおりから消します。`)) break; saveShiori(id, { items: (d.items || []).filter((_, i) => i !== +el.dataset.v) }); break; }
     case "tickets": openTickets(el.dataset.v); break;
     case "tkTab": openTickets(el.dataset.v); break;
     case "tkNew": openTicketNew(); break;
@@ -3102,16 +3123,20 @@ document.addEventListener("click", async ev => {
       break;
     }
     case "voteReset": {
+      if (!await askConfirm("♡をリセットしますか？", "わたしが押した♡の数が0に戻ります。", "リセットする")) break;
       try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { ["votes." + me()]: deleteField() }); toast("♡をリセットしました"); }
       catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
       if (document.querySelector(".detail")) openDetail(id);
       break;
     }
     case "visit": case "visitEdit": openVisit(id); break;
-    case "unvisit":
+    case "unvisit": {
+      const p = S.places.find(x => x.id === id);
+      if (!await askConfirm("「まだ行ってない」に戻しますか？", `「${esc(p?.title || "")}」の行った日${p?.visitNote ? "と思い出メモ" : ""}が消えます。`, "戻す")) break;
       try { await updateDoc(doc(db, "rooms", S.roomId, "places", id), { visited: false, visitedAt: deleteField(), visitNote: deleteField(), updatedAt: serverTimestamp() }); closeSheet(); toast("「行きたい」に戻しました"); }
       catch (e) { toast("保存できませんでした（" + (e.code || e.message) + "）"); }
       break;
+    }
     case "del": {
       const p = S.places.find(x => x.id === id); if (!p) break;
       pendingDel = id;
@@ -3132,6 +3157,7 @@ document.addEventListener("click", async ev => {
       catch { toast("コピーできませんでした。長押ししてコピーしてね"); }
       break;
     case "uninvite":
+      if (!await askConfirm("招待を取り消しますか？", "登録したメールアドレスを消します。まだ入っていなければ、そのアドレスでは入れなくなります。", "取り消す")) break;
       try { await setPartnerEmail(""); toast("招待を取り消しました"); setTimeout(openInvite, 250); }
       catch (e) { toast("取り消せませんでした（" + (e.code || e.message) + "）"); }
       break;
@@ -3139,6 +3165,7 @@ document.addEventListener("click", async ev => {
     case "setpw": openSetPw(); break;
     case "since": openSince(); break;
     case "sinceClear":
+      if (!await askConfirm("付き合った日を消しますか？", "記念日のカウントが表示されなくなります。")) break;
       try { await updateDoc(doc(db, "rooms", S.roomId), { since: deleteField() }); closeSheet(); toast("消しました"); }
       catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
       break;

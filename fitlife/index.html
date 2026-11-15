@@ -49,6 +49,14 @@ header.top{display:flex;align-items:center;justify-content:space-between;padding
 .btn.sub{background:var(--pink-l);color:var(--pink-d);box-shadow:none}
 .btn.ghost{background:transparent;color:var(--pink-d);box-shadow:none;border:1.5px solid var(--line)}
 .btn.block{width:100%}
+.btn.danger{background:#fff;color:#d6587f;box-shadow:none;border:1.5px solid #f5c6d6}
+.btn.danger.fill{background:#e0668e;color:#fff;border-color:#e0668e}
+.cfm{position:fixed;inset:0;background:rgba(91,59,71,.4);z-index:40;display:grid;place-items:center;padding:24px;animation:cfmIn .15s}
+@keyframes cfmIn{from{opacity:0}to{opacity:1}}
+.cfm .box{background:#fff;width:100%;max-width:340px;border-radius:24px;padding:20px 18px 16px;box-shadow:0 10px 40px rgba(91,59,71,.25)}
+.cfm h4{margin:0 0 8px;font-size:17px;color:var(--pink-d)}
+.cfm p{margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.6;word-break:break-all}
+.cfm .btn{margin-top:8px}
 .btn.sm{padding:7px 13px;font-size:13px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .list{list-style:none;margin:0;padding:0}
@@ -652,7 +660,6 @@ function render(){
 const deniedCard = col => `<div class="card"><p class="empty">${COL_LABEL[col]}は共有されていません ${IC.heart.replace('<svg','<svg style="width:14px;vertical-align:-2px"')}</p></div>`;
 const canEdit = () => S.role === 'member';
 const editAttr = (col,id) => canEdit() ? ` class="editable" data-a="edit" data-col="${col}" data-id="${id}"` : '';
-const delBtn = (col,id) => canEdit() ? `<button class="del" data-a="del" data-col="${col}" data-id="${id}" aria-label="削除">×</button>` : '';
 const groupByDate = list => { const m = new Map(); for(const r of list){ if(!m.has(r.date)) m.set(r.date, []); m.get(r.date).push(r); } return [...m.entries()]; };
 
 function viewHome(){
@@ -749,6 +756,46 @@ function viewGacha(){
           <div class="nm">${n ? esc(c.name) : '？？？'}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div></div>`;
 }
 const cheerDate = c => { const d = c.ts?.toDate ? c.ts.toDate() : new Date(); return `${d.getMonth()+1}/${d.getDate()}`; };
+/* 消す前の確認（開いている画面の上に重ねて出す）。「やめる」が上、「消す」が下 */
+function askConfirm(title, text, okLabel = '削除する'){
+  return new Promise(res => {
+    const o = document.createElement('div'); o.className = 'cfm';
+    o.innerHTML = `<div class="box" role="alertdialog"><h4>${title}</h4>${text ? `<p>${text}</p>` : ''}<button class="btn ghost block" data-c="0">やめる</button><button class="btn danger fill block" data-c="1">${okLabel}</button></div>`;
+    o.addEventListener('click', e => {
+      e.stopPropagation();
+      const b = e.target.closest('[data-c]');
+      if(!b && e.target !== o) return;
+      o.remove(); res(b?.dataset.c === '1');
+    });
+    document.body.appendChild(o);
+  });
+}
+/* 消す対象を探して、確認画面に出す説明をつくる */
+function findRec(col, id){
+  if(col === 'privateLogs') return S.priv.logs.find(r => r.id === id);
+  if(col === 'privatePhotos') return S.priv.photos.find(r => r.id === id);
+  if(col === 'cheers') return S.cheers.find(r => r.id === id);
+  if(col === 'gachaChars') return S.gchars.find(r => r.docId === id);
+  return (S.data[col] || []).find(r => r.id === id);
+}
+function recLabel(col, r){
+  const d = r.date ? fmtDate(r.date) + ' ' : '';
+  switch(col){
+    case 'meals': return `${d}${r.slot || ''} ${r.name || ''}`.trim();
+    case 'gym': return `${d}${r.exercise || ''}`;
+    case 'weights': return `${d}${r.kg != null ? Number(r.kg).toFixed(1) + 'kg' : ''}`;
+    case 'water': return `${d}お水 ${r.ml}ml`;
+    case 'sleep': return `${d}睡眠 ${hm(r.minutes || 0)}`;
+    case 'privateLogs': return `${d}${r.type || ''}`;
+    case 'privatePhotos': return `${d}の体型写真`;
+    case 'cheers': { const t = String(r.text || ''); return `${cheerDate(r)} ${t.length > 30 ? t.slice(0, 30) + '…' : t}`; }
+    case 'gachaChars': return r.name || '';
+  }
+  return d;
+}
+const DEL_TITLE = { privatePhotos:'この写真を削除しますか？', cheers:'このメッセージを削除しますか？', gachaChars:'このキャラを削除しますか？' };
+const DEL_NOTE = { gachaChars:'彼女のずかんからも消えます。', cheers:'' };
+const delRecBtn = (col, id, label = 'この記録を削除') => `<button type="button" class="btn danger block" data-a="delrec" data-col="${col}" data-id="${id}">${label}</button>`;
 function pastCheers(){
   const old = S.cheers.slice(1, 15);
   if(!old.length) return '';
@@ -768,9 +815,8 @@ function viewOwnerHome(){
   html += ownerGachaCard();
   html += ownerCharCard();
   html += `<div class="card"><h2>送ったメッセージ<span class="sub">最新のものが表示されます</span></h2>
-    ${S.cheers.length ? `<ul class="list">${S.cheers.map((c,i) => `<li><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
-      <div class="s">${cheerDate(c)}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div>
-      <button class="del" data-a="delcheer" data-id="${c.id}" aria-label="削除">×</button></li>`).join('')}</ul>` : '<p class="empty">まだ送っていません</p>'}
+    ${S.cheers.length ? `<ul class="list">${S.cheers.map((c,i) => `<li class="editable" data-a="cheeropen" data-id="${c.id}"><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
+      <div class="s">${cheerDate(c)}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div></li>`).join('')}</ul>` : '<p class="empty">まだ送っていません</p>'}
     <p class="muted">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
   return html;
 }
@@ -801,8 +847,7 @@ function ownerCharCard(){
     <p class="muted" style="margin:6px 0 0">サイトの画像を長押しして「コピー」したら、「貼り付け」を押してね。</p>
     <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
     ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
-      <button class="btn ghost sm" data-a="editchar" data-id="${c.docId}">編集</button>
-      <button class="del" data-a="delchar" data-id="${c.docId}" aria-label="削除">×</button></li>`).join('')}</ul>` : ''}</div>`;
+      <button class="btn ghost sm" data-a="editchar" data-id="${c.docId}">編集</button></li>`).join('')}</ul>` : ''}</div>`;
 }
 /* ===== キャラ画像の切り抜き＋シール風加工 ===== */
 let CROP = null;
@@ -885,7 +930,7 @@ function viewMeals(){
       ${ordered.map(m => `<li${editAttr('meals', m.id)}>${m.photo ? `<img class="thumb" src="${m.photo}" alt="" data-a="zoom">` : `<div class="thumb" style="display:grid;place-items:center">${IC.meal.replace('<svg','<svg style="width:24px;stroke:#f48fb1"')}</div>`}
         <div class="main"><div class="t">${esc(m.name || m.slot)}</div>
         <div class="s">${esc(m.slot)}${m.kcal != null ? ` ・ ${m.kcal}kcal` : ''}${m.p != null || m.f != null || m.c != null ? ` ・ P${m.p ?? '-'} F${m.f ?? '-'} C${m.c ?? '-'}` : ''}</div>
-        ${m.memo ? `<div class="s">${esc(m.memo)}</div>` : ''}</div>${delBtn('meals', m.id)}</li>`).join('')}
+        ${m.memo ? `<div class="s">${esc(m.memo)}</div>` : ''}</div></li>`).join('')}
     </ul></div>`;
   }).join('');
 }
@@ -901,7 +946,7 @@ function viewGym(){
     groupByDate(list).slice(0,30).map(([date, items]) => { const dk = sumKcal(items);
       return `<div class="card"><div class="dayhead"><span>${fmtDate(date)}</span><span>${items.length}種目${dk ? ` ・ 🔥${dk}kcal` : ''}</span></div><ul class="list">
       ${items.map(g => `<li${editAttr('gym', g.id)}><div class="main"><div class="t">${esc(g.exercise)}</div>
-        ${gymDetail(g) ? `<div class="s">${gymDetail(g)}</div>` : ''}${g.memo ? `<div class="s">${esc(g.memo)}</div>` : ''}</div>${delBtn('gym', g.id)}</li>`).join('')}
+        ${gymDetail(g) ? `<div class="s">${gymDetail(g)}</div>` : ''}${g.memo ? `<div class="s">${esc(g.memo)}</div>` : ''}</div></li>`).join('')}
     </ul></div>`; }).join('');
 }
 
@@ -913,7 +958,7 @@ function viewBody(){
     const w = S.data.weights;
     html += `<div class="card"><h2>体重の推移${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="weight">＋記録</button></span>` : ''}</h2>
       ${weightChart(w, num(S.profile.goalWeight))}
-      ${w.length ? `<ul class="list" style="margin-top:8px">${w.slice(0,10).map(r => `<li${editAttr('weights', r.id)}><div class="main"><span class="t">${r.kg.toFixed(1)}kg</span> <span class="s">${fmtDate(r.date)}</span></div>${delBtn('weights', r.id)}</li>`).join('')}</ul>` : ''}</div>`;
+      ${w.length ? `<ul class="list" style="margin-top:8px">${w.slice(0,10).map(r => `<li${editAttr('weights', r.id)}><div class="main"><span class="t">${r.kg.toFixed(1)}kg</span> <span class="s">${fmtDate(r.date)}</span></div></li>`).join('')}</ul>` : ''}</div>`;
   }
   // 水分
   if(S.denied.water) html += deniedCard('water');
@@ -929,7 +974,7 @@ function viewBody(){
           <text x="${31+i*42}" y="125" font-size="10" text-anchor="middle" fill="#a8899a">${fmtDate(days[i]).replace(/\(.\)/,'')}</text>`).join('')}
       </svg><div class="muted">点線：目標 ${goal}ml</div>
       ${canEdit() ? `<div class="water-btns"><button class="btn sub sm" data-a="water" data-v="150">＋150ml</button><button class="btn sub sm" data-a="water" data-v="200">＋200ml</button><button class="btn sub sm" data-a="water" data-v="500">＋500ml</button></div>` : ''}
-      ${S.data.water.filter(x => x.date === today()).length && canEdit() ? `<ul class="list" style="margin-top:8px">${S.data.water.filter(x => x.date === today()).map(x => `<li${editAttr('water', x.id)}><div class="main"><span class="t">${x.ml}ml</span> <span class="s">今日</span></div>${delBtn('water', x.id)}</li>`).join('')}</ul>` : ''}
+      ${S.data.water.filter(x => x.date === today()).length && canEdit() ? `<ul class="list" style="margin-top:8px">${S.data.water.filter(x => x.date === today()).map(x => `<li${editAttr('water', x.id)}><div class="main"><span class="t">${x.ml}ml</span> <span class="s">今日</span></div></li>`).join('')}</ul>` : ''}
     </div>`;
   }
   // 睡眠
@@ -940,7 +985,7 @@ function viewBody(){
     const avg = recent.length ? Math.round(recent.reduce((a,s) => a + s.minutes, 0) / recent.length) : null;
     html += `<div class="card"><h2>睡眠${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="sleep">＋記録</button></span>` : ''}</h2>
       ${avg != null ? `<div class="stat"><div class="label">7日間の平均</div><div class="val" style="font-size:20px">${hm(avg)}</div></div>` : ''}
-      ${sl.length ? `<ul class="list">${sl.slice(0,10).map(s => `<li${editAttr('sleep', s.id)}><div class="main"><div class="t">${hm(s.minutes)}</div><div class="s">${fmtDate(s.date)} ・ ${esc(s.bed)} → ${esc(s.wake)}</div></div>${delBtn('sleep', s.id)}</li>`).join('')}</ul>` : '<p class="empty">まだ記録がありません</p>'}</div>`;
+      ${sl.length ? `<ul class="list">${sl.slice(0,10).map(s => `<li${editAttr('sleep', s.id)}><div class="main"><div class="t">${hm(s.minutes)}</div><div class="s">${fmtDate(s.date)} ・ ${esc(s.bed)} → ${esc(s.wake)}</div></div></li>`).join('')}</ul>` : '<p class="empty">まだ記録がありません</p>'}</div>`;
   }
   return html;
 }
@@ -1005,11 +1050,11 @@ function viewSecret(){
   }
   return `<div class="card"><h2>${IC.lock.replace('<svg','<svg style="width:16px;stroke:#e46f98"')} 生理・体調<span class="sub"><button class="btn ghost sm" data-a="lock">ロック</button></span></h2>
       ${predict || '<p class="muted">「生理開始」を記録すると、次回の目安が出ます。</p>'}
-      ${logs.length ? `<ul class="list" style="margin-top:8px">${logs.slice(0,40).map(l => `<li><div class="main"><div class="t">${esc(l.type)} <span class="s">${fmtDate(l.date)}</span></div>
-        ${(l.conds||[]).map(c => `<span class="chip">${esc(c)}</span>`).join('')}${l.memo ? `<div class="s">${esc(l.memo)}</div>` : ''}</div>${delBtn('privateLogs', l.id)}</li>`).join('')}</ul>` : '<p class="empty">右下の＋から記録してね</p>'}
+      ${logs.length ? `<ul class="list" style="margin-top:8px">${logs.slice(0,40).map(l => `<li class="editable" data-a="logopen" data-id="${l.id}"><div class="main"><div class="t">${esc(l.type)} <span class="s">${fmtDate(l.date)}</span></div>
+        ${(l.conds||[]).map(c => `<span class="chip">${esc(c)}</span>`).join('')}${l.memo ? `<div class="s">${esc(l.memo)}</div>` : ''}</div></li>`).join('')}</ul>` : '<p class="empty">右下の＋から記録してね</p>'}
     </div>
     <div class="card"><h2>体型写真<span class="sub"><button class="btn sub sm" data-a="open" data-v="photo">＋追加</button></span></h2>
-      ${photos.length ? `<div class="photos">${photos.map(ph => `<figure><img src="${ph.img}" alt="" data-a="zoom"><figcaption>${fmtDate(ph.date)}${ph.memo ? ' ' + esc(ph.memo) : ''}</figcaption>${delBtn('privatePhotos', ph.id)}</figure>`).join('')}</div>` : '<p class="empty">まだ写真がありません</p>'}
+      ${photos.length ? `<div class="photos">${photos.map(ph => `<figure><img src="${ph.img}" alt="" data-a="zoom" data-del="privatePhotos" data-id="${ph.id}"><figcaption>${fmtDate(ph.date)}${ph.memo ? ' ' + esc(ph.memo) : ''}</figcaption></figure>`).join('')}</div>` : '<p class="empty">まだ写真がありません</p>'}
       <p class="muted" style="margin-top:8px">写真も暗号化して保存しています。</p>
     </div>`;
 }
@@ -1125,7 +1170,7 @@ function openSheet(kind, rec = null){
   };
   const [title, body] = forms[kind];
   $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>${EDIT ? title.replace('記録', '編集').replace('追加', '編集') : title}<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
-    <form data-form="${kind}">${body}<button class="btn block" style="margin-top:16px">${EDIT ? '直して保存' : '保存'}</button></form></div></div>`;
+    <form data-form="${kind}">${body}<button class="btn block" style="margin-top:16px">${EDIT ? '直して保存' : '保存'}</button></form>${EDIT && canEdit() ? `<div style="margin-top:26px">${delRecBtn(EDIT.col, EDIT.id)}</div>` : ''}</div></div>`;
   if(EDIT){
     const f = $sheet.querySelector('form');
     for(const el of f.elements){
@@ -1544,12 +1589,27 @@ document.addEventListener('click', async e => {
       case 'fmult': if(FPICK){ FPICK.mult = Number(v); applyFood(); } break;
       case 'close': case 'close-bg': closeSheet(); break;
       case 'water': await addRec('water', { date:today(), ml:Number(v) }); toast(`お水 ${v}ml ♡`); break;
-      case 'del':
-        if(!confirm('この記録を削除しますか？')) return;
-        await deleteDoc(doc(db, el.dataset.col, el.dataset.id)); toast('削除しました'); break;
-      case 'delcheer':
-        if(!confirm('このメッセージを削除しますか？')) return;
-        await deleteDoc(doc(db,'cheers',el.dataset.id)); toast('削除しました'); break;
+      case 'delrec': {
+        const col = el.dataset.col, id = el.dataset.id, r = findRec(col, id); if(!r) break;
+        const note = col in DEL_NOTE ? DEL_NOTE[col] : '元に戻せません。';
+        if(!await askConfirm(DEL_TITLE[col] || 'この記録を削除しますか？', `「${esc(recLabel(col, r))}」を削除します。${note}`)) break;
+        await deleteDoc(doc(db, col, id)); closeSheet(); toast('削除しました'); break;
+      }
+      case 'logopen': {
+        const l = S.priv.logs.find(r => r.id === el.dataset.id); if(!l) break;
+        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>${esc(l.type)}<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+          <p class="muted" style="margin-top:0">${fmtDate(l.date)}</p>
+          ${(l.conds||[]).map(c => `<span class="chip">${esc(c)}</span>`).join('')}${l.memo ? `<p style="white-space:pre-wrap">${esc(l.memo)}</p>` : ''}
+          <div style="margin-top:22px">${delRecBtn('privateLogs', l.id)}</div></div></div>`;
+        break;
+      }
+      case 'cheeropen': {
+        const c = S.cheers.find(r => r.id === el.dataset.id); if(!c) break;
+        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>送ったメッセージ<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+          <p class="muted" style="margin-top:0">${cheerDate(c)}</p><p style="white-space:pre-wrap">${esc(c.text)}</p>
+          <div style="margin-top:22px">${delRecBtn('cheers', c.id, 'このメッセージを削除')}</div></div></div>`;
+        break;
+      }
       case 'lock': await lockNow(); toast('ロックしました'); break;
       case 'cropclose': if(CROP) URL.revokeObjectURL(CROP.url); CROP = null; closeSheet(); break;
       case 'pasteimg': {
@@ -1576,15 +1636,13 @@ document.addEventListener('click', async e => {
           <button class="btn block" style="margin-top:14px">保存</button></form>
           <p class="muted" style="margin:16px 0 6px">画像を変える</p>
           <div class="f2"><label class="btn sub filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop data-edit="${c.docId}"></label>
-            <button class="btn sub" data-a="pasteimg" data-edit="${c.docId}">📋 貼り付け</button></div></div></div>`;
+            <button class="btn sub" data-a="pasteimg" data-edit="${c.docId}">📋 貼り付け</button></div>
+          <div style="margin-top:26px">${delRecBtn('gachaChars', c.docId, 'このキャラを削除')}</div></div></div>`;
         break;
       }
-      case 'delchar':
-        if(!confirm('このキャラを削除しますか？（彼女のずかんからも消えます）')) return;
-        await deleteDoc(doc(db,'gachaChars',el.dataset.id)); toast('削除しました'); break;
       case 'copy': await navigator.clipboard.writeText(v); toast('コピーしました'); break;
       case 'uninvite':
-        if(!confirm('取り消しますか？（相手はログインできなくなります。記録は残ります）')) return;
+        if(!await askConfirm('登録を取り消しますか？', '相手はログインできなくなります。記録は残ります。', '取り消す')) break;
         await setDoc(doc(db,'config','app'), { memberUid:'', inviteToken:'', memberEmail:'' }); toast('取り消しました'); break;
       case 'newinvite': {
         const t = [...crypto.getRandomValues(new Uint8Array(32))].map(x => x.toString(16).padStart(2,'0')).join('');
@@ -1595,7 +1653,7 @@ document.addEventListener('click', async e => {
         await b.commit(); toast('招待リンクを作りました'); break;
       }
       case 'zoom':
-        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg" style="align-items:center"><img src="${el.src}" style="max-width:94vw;max-height:86vh;border-radius:18px" data-a="close"></div>`; break;
+        $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg" style="align-items:center;flex-direction:column;gap:14px"><img src="${el.src}" style="max-width:94vw;max-height:78vh;border-radius:18px" data-a="close">${el.dataset.del && canEdit() ? `<div>${delRecBtn(el.dataset.del, el.dataset.id, 'この写真を削除')}</div>` : ''}</div>`; break;
     }
   }catch(err){ console.error(err); toast(err.code === 'permission-denied' ? '権限がありません' : (err.code?.startsWith('auth/') ? authErr(err) : ((!err.code && err.message) || 'うまくいきませんでした'))); }
 });
