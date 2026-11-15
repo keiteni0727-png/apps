@@ -1381,3 +1381,23 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 }
 .pay .wrap{padding-block-end:24px}
 .u-app .sb .sb-fold:hover,.u-app .sb .sb-fold:focus{border-color:transparent;border-left-color:var(--u-line)}
+/* ===== 上の帯：エンタメ管理と同じ（☰・今の画面のアイコンと名前・表示の切り替え）。日付は帯の下の行 ===== */
+.kb .appbar{background:var(--u-surface)}
+.kb .hcur{display:flex!important;align-items:center;gap:7px;width:auto!important;height:auto!important;margin-right:auto;font-size:17px;font-weight:900;white-space:nowrap;min-width:0;color:var(--u-ink)}
+.kb .hcur .mic{width:26px;height:26px;color:var(--u-accent)}
+.kb .hcur .mic svg{width:24px;height:24px}
+.kb .hcur .hname{overflow:hidden;text-overflow:ellipsis}
+.kb button.hthm{flex:none;margin-left:auto;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
+.kb button.hthm svg{width:19px;height:19px}
+.kb .mbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-top:12px}
+.kb .mbar .mcur{margin-left:0!important}
+@media (max-width:899px){
+  .kb .mbar .mnav{flex:1;justify-content:space-between}
+  .kb .mbar .mnav select{flex:1}
+}
+@media (min-width:900px){.kb .appbar{background:var(--u-surface)}}
+/* 家計簿の支出カード：総額の行は常に出し、内訳などは「›」でたたむ */
+.kb .sum .sumtop{cursor:pointer;align-items:center;flex-wrap:nowrap}
+.kb .sum .sumtop>div:first-child{flex:1;min-width:0}
+.kb button.sumtog{flex:none;width:32px;height:32px;border:0;background:var(--u-chip);border-radius:999px;display:grid;place-items:center;padding:0;color:var(--u-sub)}
+.kb .sum.folded .sumbody{display:none}

@@ -830,11 +830,31 @@ function markTabs(t) {
   const key = t === "rules" ? "gear" : AN.includes(t) ? "an" : t;
   const ic = document.querySelector(`.sb .mic.${key}`);
   const hc = $("hcur");
-  if (hc && ic) hc.innerHTML = ic.innerHTML;
+  if (hc && ic) hc.innerHTML = `<span class="mic ${key}" aria-hidden="true">${ic.innerHTML}</span><span class="hname">${TAB_NAME[t] || ""}</span>`;
   document
     .querySelectorAll('[data-tab="an"]')
     .forEach(b => (AN.includes(t) ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
 }
+/* 上の帯：今いる画面の名前（エンタメ管理と同じく、アイコンと名前を出す） */
+const TAB_NAME = { list: "家計簿", home: "支払い", graph: "グラフ", balance: "残高と計画", ai: "AI分析", rules: "設定" };
+/* 上の帯の右：表示の切り替え（自動→ライト→ダーク→自動）。アイコンはエンタメ管理と同じ */
+const TH_IC = {
+  auto: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>`,
+  light: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`,
+  dark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`,
+};
+const TH_NAME = { auto: "自動（端末に合わせる）", light: "ライト", dark: "ダーク" };
+function renderThemeBtn() {
+  const b = $("hTheme");
+  if (!b) return;
+  const v = U.theme();
+  b.innerHTML = TH_IC[v];
+  b.setAttribute("aria-label", `表示：${TH_NAME[v]}（押すと切り替え）`);
+  b.title = `表示：${TH_NAME[v]}`;
+}
+/* 家計簿の一番上の支出カード：総額の行だけ出して、内訳・件数などはたたむ（最初はたたむ。この端末に保存） */
+const KSUMF = "okane.sumfold";
+const sumFolded = () => lsRaw(KSUMF) !== "0";
 /* 左メニューの「分析」の項目（グラフ・残高と計画・AI分析）をたたむ／開く。印はエンタメ管理と同じ「›」 */
 function setAnFold(f) {
   $("sbpan").classList.toggle("folded", f);
@@ -941,8 +961,10 @@ function renderSummary(mi, pi) {
   mi.forEach(i => (bm[i.method] = (bm[i.method] || 0) + i.amount));
   const meths = Object.entries(bm).sort((a, b) => b[1] - a[1]);
   const delta = psum ? `<span class="delta ${dcls(d)}">前月比 ${dstr(d, psum)}</span>` : "";
+  const sf = sumFolded();
+  $("summary").classList.toggle("folded", sf);
   $("summary").innerHTML =
-    `<div class="sumtop"><div><div class="eyebrow">${FIN.periodLabel(view.month)}の支出<span class="rng">${md(ps)}〜${md(pe)}</span></div><div class="total">${yen(sum)}</div></div>${delta}</div>` +
+    `<div class="sumtop"><div><div class="eyebrow">${FIN.periodLabel(view.month)}の支出<span class="rng">${md(ps)}〜${md(pe)}</span></div><div class="total">${yen(sum)}</div></div>${delta}<button type="button" class="sumtog" id="sumtog" aria-expanded="${!sf}" aria-label="${sf ? "支出の内訳を開く" : "支出の内訳をたたむ"}">${FOLD_IC}</button></div><div class="sumbody">` +
     (sum
       ? `<div class="stack" role="img" aria-label="分類の内訳">${top.map(([c, v]) => `<span title="${esc(c)} ${yen(v)}（${Math.round((v / sum) * 100)}%）" style="flex:${v};background:${bcol(c)}"></span>`).join("")}</div>
     <div class="legend">${top.map(([c, v]) => `<span><i style="background:${bcol(c)}"></i>${emo(c)} ${esc(c)} <b class="num">${Math.round((v / sum) * 100)}%</b></span>`).join("")}</div>`
@@ -950,7 +972,8 @@ function renderSummary(mi, pi) {
     `<div class="kpis"><div><span>件数</span><b>${mi.length}件</b></div><div><span>1日平均</span><b>${yen(Math.round(sum / days))}</b></div><div><span>前月</span><b>${yen(psum)}</b></div></div>` +
     (meths.length
       ? `<div class="meths">${meths.map(([k, v]) => `<span class="chip out" style="${hs(k)}">${emo(k)} ${esc(k)} <b class="num">${yen(v)}</b></span>`).join("")}</div>`
-      : "");
+      : "") +
+    `</div>`;
 }
 
 /* ---------- 明細一覧・編集フォーム・追加前の確認 ---------- */
@@ -2048,6 +2071,18 @@ function clickHeader(t, d) {
   } else if (t.id === "mcur") {
     view.month = thisPeriod();
     render();
+  } else if (t.id === "hTheme") {
+    const nx = { auto: "light", light: "dark", dark: "auto" }[U.theme()];
+    U.setTheme(nx);
+    renderThemeBtn();
+    toast(`表示：${TH_NAME[nx]}`);
+  } else if (t.id === "sumtog" || (t.closest && t.closest("#summary .sumtop") && !t.closest("a,input,select"))) {
+    t = $("sumtog");
+    const f = !sumFolded();
+    lsSet(KSUMF, f ? "1" : "0", true);
+    $("summary").classList.toggle("folded", f);
+    t.setAttribute("aria-expanded", String(!f));
+    t.setAttribute("aria-label", f ? "支出の内訳を開く" : "支出の内訳をたたむ");
   } else if (t.id === "anfold") {
     const f = !$("sbpan").classList.contains("folded");
     setAnFold(f);
@@ -2393,6 +2428,7 @@ rkUpdate();
 }
 setSidebar(lsRaw(KSBC) === "1");
 setAnFold(lsRaw(KANF) === "1");
+renderThemeBtn();
 setTab(view.tab);
 load();
 items.forEach(learn);

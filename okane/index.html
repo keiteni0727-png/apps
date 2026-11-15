@@ -32,11 +32,15 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
 </aside>
 <header class="appbar"><div class="wrap abin">
   <button type="button" class="hmenu" data-drawer="open" aria-label="メニューを開く" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-  <span class="hcur" id="hcur" aria-hidden="true"></span>
+  <span class="hcur" id="hcur"></span>
   <div class="brand"><svg class="u-mark sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7.5" y="6.5" width="17" height="19" rx="2.6" fill="#fff"/><rect x="7.5" y="6.5" width="3.2" height="19" rx="1.2" fill="var(--u-accent)" opacity=".22"/><path d="M13.6 10.6 17.6 15.6 21.6 10.6M17.6 15.6v6.4M14.6 17h6M14.6 19.8h6" fill="none" stroke="var(--u-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>おかね手帳<span id="saveSt" class="savest wait" role="status" aria-live="polite">接続中…</span></div>
-    <button type="button" class="mcur" id="mcur">当月</button>
-  <div class="mnav"><button class="ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="ib" id="mnext" aria-label="次の月度">›</button></div>
+  <button type="button" class="hthm" id="hTheme" aria-label="表示の切り替え"></button>
 </div></header>
+<!-- 日付（月度の切り替え）は上の帯の下に -->
+<div class="wrap mbar">
+  <button type="button" class="mcur" id="mcur">当月</button>
+  <div class="mnav"><button class="ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="ib" id="mnext" aria-label="次の月度">›</button></div>
+</div>
 
 <div class="wrap anseg-w"><nav class="anseg" aria-label="分析の画面"><button data-tab="graph">グラフ</button><button data-tab="balance">残高と計画</button><button data-tab="ai">AI分析</button></nav></div>
 <div class="wrap layout">
