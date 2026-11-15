@@ -1507,8 +1507,23 @@ const UPARTS = [
   { c:"#f5f2fa", d:"#d8cfe6", hr:[28,25], hy:44, br:[47,30], L:16, e:4.4, sn:[15,10.5],so:18,ear:1.05,sp:0, lt:"#ffffff", tk:.9 },
   { c:"#f0bd55", d:"#c48d2c", hr:[28,25], hy:44, br:[48,31], L:17, e:4.4, sn:[16,11], so:18, ear:1.05,sp:0, lt:"#fff1c4", tk:1.3 }
 ];
+/* 色を明るく（f>0）・暗く（f<0）する。立体の陰影づけに使う */
+function uShade(hex, f){
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(f > 0 ? v + (255 - v) * f : v * (1 + f)));
+  return "#" + c.map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("");
+}
+/* ぷっくり立体に見せるフィルター（左上から光、右下に影、ツヤ）。小物・きせかえに使う */
+const uPuffy = id => `<filter id="${id}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+  <feGaussianBlur in="SourceAlpha" stdDeviation="1.3" result="b"/>
+  <feDiffuseLighting in="b" surfaceScale="2.6" diffuseConstant="1.15" result="d"><feDistantLight azimuth="225" elevation="52"/></feDiffuseLighting>
+  <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1=".55" k2=".5" result="m"/>
+  <feSpecularLighting in="b" surfaceScale="2.6" specularConstant=".7" specularExponent="28" lighting-color="#fff" result="s"><feDistantLight azimuth="225" elevation="48"/></feSpecularLighting>
+  <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+  <feComposite in="m" in2="s2" operator="arithmetic" k2="1" k3=".5" result="o"/>
+  <feComposite in="o" in2="SourceAlpha" operator="in"/></filter>`;
 function uriSvg(stage, mood, wear){
   const st = Math.max(0, Math.min(UPARTS.length - 1, stage | 0)), P = UPARTS[st];
+  const K = "u" + (uriSvg.n = (uriSvg.n || 0) + 1); // 1枚ごとに別のID（同じ画面に何体いても混ざらない）
   const [hx, hy0] = [60, P.hy], [hrx, hry] = P.hr, [brx, bry] = P.br;
   const hy = hy0, ground = 112, by = ground - P.L + 3 - bry;
   const snout = "#f5b5ae", nose = "#c46f68", ink = "#4a3540", light = P.lt || "#f7e6cf";
@@ -1516,7 +1531,7 @@ function uriSvg(stage, mood, wear){
   // 目
   let eyes;
   const w = P.e * 1.15;
-  const nEye = x => `<ellipse cx="${x}" cy="${ey}" rx="${P.e*.85}" ry="${P.e}" fill="${ink}"/><circle cx="${x + P.e*.35}" cy="${ey - P.e*.4}" r="${P.e*.38}" fill="#fff"/>`;
+  const nEye = x => `<ellipse cx="${x}" cy="${ey}" rx="${P.e*.85}" ry="${P.e}" fill="url(#${K}e)"/><ellipse cx="${x}" cy="${ey + P.e*.55}" rx="${P.e*.5}" ry="${P.e*.28}" fill="#c9a8d8" opacity=".55"/><circle cx="${x + P.e*.3}" cy="${ey - P.e*.38}" r="${P.e*.4}" fill="#fff"/><circle cx="${x - P.e*.32}" cy="${ey + P.e*.2}" r="${P.e*.16}" fill="#fff" opacity=".9"/>`;
   if (mood === "dizzy") eyes = [hx - ex, hx + ex].map(x => `<path d="M${x} ${ey}m-${w} 0a${w} ${w} 0 1 1 ${w*2} 0a${w*.7} ${w*.7} 0 1 1 -${w*1.4} 0a${w*.35} ${w*.35} 0 1 1 ${w*.7} 0" stroke="${ink}" stroke-width="2" fill="none" stroke-linecap="round"/>`).join("");
   else if (mood === "surprise") eyes = [hx - ex, hx + ex].map(x => `<circle cx="${x}" cy="${ey}" r="${P.e*1.25}" fill="#fff" stroke="${ink}" stroke-width="2"/><circle cx="${x}" cy="${ey}" r="${P.e*.55}" fill="${ink}"/>`).join("");
   else if (mood === "wink") eyes = `<path d="M${hx-ex-w} ${ey+1}q${w} ${-w*1.2} ${w*2} 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>` + nEye(hx + ex);
@@ -1524,7 +1539,7 @@ function uriSvg(stage, mood, wear){
   else if (mood === "sleep") eyes = `<path d="M${hx-ex-w} ${ey}q${w} ${w*.9} ${w*2} 0M${hx+ex-w} ${ey}q${w} ${w*.9} ${w*2} 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
   else {
     const r = P.e, big = st <= 2;
-    eyes = [hx - ex, hx + ex].map(x => `<ellipse cx="${x}" cy="${ey}" rx="${r*.85}" ry="${r}" fill="${ink}"/><circle cx="${x + r*.35}" cy="${ey - r*.4}" r="${r*.38}" fill="#fff"/>${big ? `<circle cx="${x - r*.35}" cy="${ey + r*.45}" r="${r*.18}" fill="#fff"/>` : ""}`).join("");
+    eyes = [hx - ex, hx + ex].map(x => nEye(x) + (big ? `<circle cx="${x + r*.05}" cy="${ey - r*.62}" r="${r*.13}" fill="#fff" opacity=".8"/>` : "")).join("");
   }
   let brows = mood === "sad" ? `<path d="M${hx-ex-8} ${ey-10}l9 3M${hx+ex+8} ${ey-10}l-9 3" stroke="#7a5a48" stroke-width="2.4" stroke-linecap="round"/>` : "";
   const tear = mood === "sad" ? `<path d="M${hx-ex-3} ${ey+6}q-2 5 0 7q3 0 2-4z" fill="#9fd3ee"/>` : "";
@@ -1541,15 +1556,15 @@ function uriSvg(stage, mood, wear){
     : mood === "sleep" ? "" : `<path d="M${hx-6} ${my-1}q6 5 12 0" stroke="#8a4c4c" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
   const zzz = mood === "sleep" ? `<text x="${hx+hrx-2}" y="${top+6}" font-size="13" font-weight="700" fill="#9580d0">z</text><text x="${hx+hrx+7}" y="${top-4}" font-size="10" font-weight="700" fill="#b8a6e6">z</text>` : "";
   // 耳
-  const ear = (x, flip) => `<g transform="translate(${x} ${top + hry*.32}) scale(${flip ? -P.ear : P.ear} ${P.ear})"><path d="M-12 6q-6-22 8-26q10 6 14 24z" fill="${P.c}"/><path d="M-8 3q-3-14 5-17q6 4 8 15z" fill="${snout}"/></g>`;
+  const ear = (x, flip) => `<g transform="translate(${x} ${top + hry*.32}) scale(${flip ? -P.ear : P.ear} ${P.ear})"><path d="M-12 6q-6-22 8-26q10 6 14 24z" fill="url(#${K}r)"/><path d="M-8 3q-3-14 5-17q6 4 8 15z" fill="url(#${K}i)"/></g>`;
   // しましま（頭・体）
   const sp = P.sp > .05 ? `
-    <g clip-path="url(#uh${st})" fill="${light}" opacity="${P.sp}">
+    <g clip-path="url(#${K}hc)" fill="${light}" opacity="${P.sp * .6}" filter="url(#${K}f2)">
       <path d="M${hx-3} ${top-2}h6v${hry*.55}q-3 4-6 0z"/>
       <path d="M${hx-hrx*.55} ${top+4}q5-3 7-1q-5 12-3 ${hry*.7}q-5 2-7-2q-1-12 3-${hry*.7-6}z"/>
       <path d="M${hx+hrx*.55} ${top+4}q-5-3-7-1q5 12 3 ${hry*.7}q5 2 7-2q1-12-3-${hry*.7-6}z"/>
     </g>
-    <g clip-path="url(#ub${st})" fill="${light}" opacity="${P.sp}">
+    <g clip-path="url(#${K}bc)" fill="${light}" opacity="${P.sp * .6}" filter="url(#${K}f2)">
       ${[-.72, -.32, .32, .72].map(k => `<path d="M${hx + brx*k - 2.5} ${by - bry}q${-k*6} ${bry} 0 ${bry*2}h5q${-k*6} ${-bry} 0 ${-bry*2}z"/>`).join("")}
     </g>` : "";
   // 成長ごとの小物
@@ -1629,20 +1644,43 @@ function uriSvg(stage, mood, wear){
   if (WR.back) back = "";
   const wz = uriWearSvg(WR, { hx, hy, hrx, hry, top, ey, ex, e: P.e, by, brx, bry, sy, sn: P.sn });
   const legX = [hx - brx * .55, hx + brx * .55], legW = 8 + st * .9;
+  const C = P.c, D = P.d, pf = `filter="url(#${K}p)"`, soft = `filter="url(#${K}f)"`;
+  const W2 = g => g ? `<g ${pf}>${g}</g>` : "";
   return `<svg viewBox="0 0 120 120" class="urisvg" aria-hidden="true">
-    <defs><clipPath id="uh${st}"><ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}"/></clipPath><clipPath id="ub${st}"><ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}"/></clipPath></defs>
-    <ellipse cx="60" cy="${ground}" rx="${Math.max(24, brx * .85)}" ry="5" fill="rgba(176,128,160,.18)"/>
-    ${deco}${back}${wz.back}
-    ${legX.map(x => `<rect x="${x - legW/2}" y="${ground - P.L - 6}" width="${legW}" height="${P.L + 6}" rx="${legW/2}" fill="${P.d}"/><rect x="${x - legW/2}" y="${ground - 4}" width="${legW}" height="4" rx="2" fill="#5a3a26" opacity=".55"/>`).join("")}
-    <ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}" fill="${P.c}"/>
-    <ellipse cx="${hx}" cy="${by + bry*.35}" rx="${brx*.55}" ry="${bry*.55}" fill="${light}" opacity=".55"/>
+    <defs>
+      <clipPath id="${K}hc"><ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}"/></clipPath><clipPath id="${K}bc"><ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}"/></clipPath>
+      <radialGradient id="${K}h" cx=".36" cy=".28" r=".8"><stop offset="0" stop-color="${uShade(C, .5)}"/><stop offset=".45" stop-color="${uShade(C, .08)}"/><stop offset=".85" stop-color="${uShade(C, -.18)}"/><stop offset="1" stop-color="${uShade(C, -.3)}"/></radialGradient>
+      <radialGradient id="${K}b" cx=".38" cy=".22" r=".9"><stop offset="0" stop-color="${uShade(C, .42)}"/><stop offset=".5" stop-color="${C}"/><stop offset=".88" stop-color="${uShade(C, -.24)}"/><stop offset="1" stop-color="${uShade(C, -.34)}"/></radialGradient>
+      <linearGradient id="${K}r" x1="0" y1="0" x2=".6" y2="1"><stop offset="0" stop-color="${uShade(C, .3)}"/><stop offset="1" stop-color="${uShade(C, -.25)}"/></linearGradient>
+      <linearGradient id="${K}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbd0cb"/><stop offset="1" stop-color="#e3958f"/></linearGradient>
+      <linearGradient id="${K}l" x1="0" x2="1"><stop offset="0" stop-color="${uShade(D, -.12)}"/><stop offset=".32" stop-color="${uShade(D, .28)}"/><stop offset="1" stop-color="${uShade(D, -.32)}"/></linearGradient>
+      <radialGradient id="${K}s" cx=".4" cy=".3" r=".85"><stop offset="0" stop-color="#ffe0db"/><stop offset=".55" stop-color="${snout}"/><stop offset="1" stop-color="#e2918b"/></radialGradient>
+      <radialGradient id="${K}n" cx=".5" cy=".7" r=".7"><stop offset="0" stop-color="#9c4e4a"/><stop offset="1" stop-color="#c97a73"/></radialGradient>
+      <radialGradient id="${K}e" cx=".45" cy=".7" r=".75"><stop offset="0" stop-color="#6e5068"/><stop offset=".6" stop-color="#3a2833"/><stop offset="1" stop-color="#22161d"/></radialGradient>
+      <radialGradient id="${K}g"><stop offset="0" stop-color="rgba(120,80,110,.38)"/><stop offset=".6" stop-color="rgba(120,80,110,.16)"/><stop offset="1" stop-color="rgba(120,80,110,0)"/></radialGradient>
+      <filter id="${K}f" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter><filter id="${K}f2" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".55"/></filter>
+      ${uPuffy(K + "p")}
+    </defs>
+    <ellipse cx="60" cy="${ground}" rx="${Math.max(28, brx * 1.05)}" ry="7" fill="url(#${K}g)"/>
+    ${deco}${W2(back)}${W2(wz.back)}
+    ${legX.map(x => `<rect x="${x - legW/2}" y="${ground - P.L - 6}" width="${legW}" height="${P.L + 6}" rx="${legW/2}" fill="url(#${K}l)"/><rect x="${x - legW/2}" y="${ground - 4.5}" width="${legW}" height="4.5" rx="2.2" fill="${uShade(D, -.45)}" opacity=".8"/>`).join("")}
+    <ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}" fill="url(#${K}b)"/>
+    <g clip-path="url(#${K}bc)">
+      <ellipse cx="${hx}" cy="${by + bry*.42}" rx="${brx*.55}" ry="${bry*.5}" fill="${light}" opacity=".5" ${soft}/>
+      <ellipse cx="${hx - brx*.5}" cy="${by - bry*.5}" rx="${brx*.24}" ry="${bry*.16}" fill="#fff" opacity=".35" ${soft}/>
+      <ellipse cx="${hx}" cy="${hy + hry - 1}" rx="${hrx*.95}" ry="${hry*.32}" fill="#3a2230" opacity=".28" ${soft}/>
+    </g>
     ${ear(hx - hrx * .62, false)}${ear(hx + hrx * .62, true)}
-    <ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}" fill="${P.c}"/>
-    ${sp}${neck}${headTop}${acc}
-    <ellipse cx="${hx-hrx*.7}" cy="${sy-1}" rx="${chR}" ry="${chR*.65}" fill="${chC}" opacity="${chO}"/><ellipse cx="${hx+hrx*.7}" cy="${sy-1}" rx="${chR}" ry="${chR*.65}" fill="${chC}" opacity="${chO}"/>
-    ${brows}${eyes}${tear}${sweat}${wz.face}
-    <ellipse cx="${hx}" cy="${sy}" rx="${P.sn[0]}" ry="${P.sn[1]}" fill="${snout}"/><ellipse cx="${hx - P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="${nose}"/><ellipse cx="${hx + P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="${nose}"/>
-    ${tusks}${mouth}${wz.front}${wz.side}${zzz}
+    <ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}" fill="url(#${K}h)"/>
+    ${sp}
+    <g clip-path="url(#${K}hc)"><ellipse cx="${hx - hrx*.36}" cy="${top + hry*.36}" rx="${hrx*.34}" ry="${hry*.2}" fill="#fff" opacity=".42" ${soft}/><ellipse cx="${hx + hrx*.15}" cy="${hy + hry*1.02}" rx="${hrx*.9}" ry="${hry*.22}" fill="#3a2230" opacity=".14" ${soft}/></g>
+    ${W2(neck)}${W2(headTop)}${W2(acc)}
+    <ellipse cx="${hx-hrx*.68}" cy="${sy-1}" rx="${chR}" ry="${chR*.65}" fill="${chC}" opacity="${chO}" ${soft}/><ellipse cx="${hx+hrx*.68}" cy="${sy-1}" rx="${chR}" ry="${chR*.65}" fill="${chC}" opacity="${chO}" ${soft}/>
+    ${brows}${eyes}${tear}${sweat}${W2(wz.face)}
+    <ellipse cx="${hx + .8}" cy="${sy + 1.4}" rx="${P.sn[0]}" ry="${P.sn[1]}" fill="#6b3a3a" opacity=".16" ${soft}/>
+    <ellipse cx="${hx}" cy="${sy}" rx="${P.sn[0]}" ry="${P.sn[1]}" fill="url(#${K}s)"/><ellipse cx="${hx - P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="url(#${K}n)"/><ellipse cx="${hx + P.sn[0]*.36}" cy="${sy}" rx="${P.sn[0]*.18}" ry="${P.sn[1]*.42}" fill="url(#${K}n)"/>
+    <ellipse cx="${hx - P.sn[0]*.4}" cy="${sy - P.sn[1]*.55}" rx="${P.sn[0]*.32}" ry="${P.sn[1]*.2}" fill="#fff" opacity=".6"/>
+    ${W2(tusks)}${mouth}${W2(wz.front)}${W2(wz.side)}${zzz}
   </svg>`;
 }
 
