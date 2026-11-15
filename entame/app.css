@@ -1243,8 +1243,9 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 }
 /* ---- 詳細：カードの「編集」ボタン（中身を押しても編集しない） ---- */
 .idl dt,.idl dd{cursor:default}
-.ich .iedit{margin-left:auto;flex:none;border:1px solid var(--u-line);background:transparent;color:var(--u-sub);border-radius:999px;padding:3px 11px;font:inherit;font-size:12px;font-weight:700;line-height:1.5}
-.ich .iedit:hover{color:var(--u-ink);background:var(--u-chip)}
+/* 作品全体の「✎ 編集」と同じ見た目（.editbtn）。見出しの右端に置く */
+.ich .iedit{margin-left:auto;flex:none;color:var(--u-ink);font:inherit;font-size:12.5px;font-weight:700;height:30px;box-sizing:border-box;display:inline-flex;align-items:center;padding:0 12px;line-height:1}
+.editbtn:hover{background:var(--u-chip)}
 .ich .inow+.iedit{margin-left:auto}
 /* ---- 詳細：MUSICを種類ごとに区切る ---- */
 .imt{display:flex;align-items:baseline;gap:6px;margin:10px 0 2px;padding-top:8px;border-top:1px solid var(--u-line)}
@@ -1276,3 +1277,17 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .sgnext{justify-self:start;border:1px dashed color-mix(in srgb,var(--sgc) 55%,transparent);background:transparent;color:var(--sgc);border-radius:var(--u-rl);font:inherit;font-weight:700;font-size:12.5px;padding:6px 14px}
 .sgnext:hover{background:color-mix(in srgb,var(--sgc) 8%,transparent)}
 .sgfoldall{border:0;background:none;padding:2px 4px;font:inherit;font-size:11.5px;font-weight:700;color:var(--u-sub)}
+/* 前・次の矢印：丸の真ん中に */
+.dhead .dnav{padding:0;font-size:0}
+.dhead .dnav svg{display:block}
+/* アーティスト：ラベルを付けて曲名と見分けやすく */
+.ima .iar b,.sg-sum .sg-sa b{flex:none;font-size:10px;font-weight:700;color:var(--u-sub);border:1px solid var(--u-line);border-radius:4px;padding:0 5px;line-height:1.6;letter-spacing:.02em}
+.ima .iar{align-items:center;gap:6px}
+.ima .iarn{font-weight:600;color:var(--u-ink)}
+.sg-sum .sg-sa{display:inline-flex;align-items:center;gap:5px;color:var(--u-ink);font-weight:500}
+/* カードの場所でそのまま編集するとき */
+.ined.incard{box-shadow:none}
+.ich .iedit{border-radius:999px}
+.sg .sg-sum{position:relative;padding-right:20px}
+.sg-sum .sg-sv{position:absolute;right:2px;top:50%;margin:0;transform:translateY(-50%)}
+.sg.open .sg-sum .sg-sv{transform:translateY(-50%) rotate(180deg)}

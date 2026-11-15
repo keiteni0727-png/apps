@@ -67,7 +67,7 @@ function songRowsHtml() {
     const open = sgOpen.has(k) || !st.trim();
     const rt = [rangeTxt(x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
     return `<div class="sg${open ? " open" : ""}" data-sg="${k}">
-    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? esc(st) : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}<span class="sg-se">${esc(rt)}</span>${x.dl ? `<span class="sg-sd">♪DL</span>` : ""}<span class="sg-sv" aria-hidden="true">▾</span></button>
+    <button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? esc(st) : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa"><b>アーティスト</b>${esc(ar)}</span>` : ""}<span class="sg-se">${esc(rt)}</span>${x.dl ? `<span class="sg-sd">♪DL</span>` : ""}<span class="sg-sv" aria-hidden="true">▾</span></button>
     <div class="sg-body">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
@@ -381,13 +381,23 @@ function openInlineForm(target, el) {
   form.only = target;
   form.inline = true;
   document.querySelectorAll("#sheetIn .ined").forEach(x => x.remove());
-  anc.insertAdjacentHTML("afterend", `<div class="ined" id="formIn">${formHtml()}</div>`);
+  document.querySelectorAll("#sheetIn .icard[hidden]").forEach(x => (x.hidden = false));
+  /* カードの「編集」ボタンから開いたときは、そのカードの場所がそのまま編集画面になる（元の表示は隠す） */
+  const inCard = !!(el && el.closest && el.closest(".iedit") && anc.classList.contains("icard"));
+  anc.insertAdjacentHTML(inCard ? "beforebegin" : "afterend", `<div class="ined${inCard ? " incard" : ""}" id="formIn">${formHtml()}</div>`);
+  if (inCard) anc.hidden = true;
   readForm();
   form.init = JSON.stringify({ ...form, init: 0 });
   const box = $("#formIn");
   const sh = box.closest(".sheet");
   if (anc.classList.contains("dhead") && sh) sh.scrollTop = 0;
-  else if (typeof navScroll === "function") navScroll(box);
+  else if (inCard && sh) {
+    /* 編集画面の上端を、上に固定の見出しのすぐ下に合わせる（長い編集画面でも一番下へ飛ばない） */
+    const hd = sh.querySelector(".dhead");
+    const top = sh.getBoundingClientRect().top + (hd ? hd.getBoundingClientRect().height : 0) + 8;
+    const d = box.getBoundingClientRect().top - top;
+    sh.scrollTop += d;
+  } else if (typeof navScroll === "function") navScroll(box);
   else box.scrollIntoView({ block: "nearest" });
   const i = box.querySelector(".fgrid.only input:not([type=date]):not([type=checkbox]):not([type=file])");
   if (i && !TOUCH) i.focus({ preventScroll: true });
@@ -395,6 +405,7 @@ function openInlineForm(target, el) {
 function closeInlineForm() {
   form = null;
   document.querySelectorAll("#sheetIn .ined").forEach(x => x.remove());
+  document.querySelectorAll("#sheetIn .icard[hidden]").forEach(x => (x.hidden = false));
 }
 /* 変更があれば保存、なければ閉じるだけ */
 function commitInlineForm() {
