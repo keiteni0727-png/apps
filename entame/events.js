@@ -136,6 +136,9 @@ const NAV_ACTIONS = [
     "[data-bnav]",
     el => {
       const m = el.dataset.bnav;
+      /* 詳細・編集を開いていたら閉じてから移る */
+      if ($("#layer").innerHTML) close();
+      closeDD();
       leaveXser();
       if (m !== "o") sbOnly(m);
       if (state.mode === m && m !== "o") {
@@ -143,9 +146,6 @@ const NAV_ACTIONS = [
         return;
       }
       setMode(m);
-      state.type = [];
-      state.sub = "all";
-      if (m === "s") state.vod = "";
       go();
     },
   ],
@@ -189,8 +189,10 @@ function closeDropdownOnOutsideClick(e) {
   if (e.target.closest(".fsdrop,.fsbar,.svbar,.frow,.fbar,.fsh,.fsum,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
   if (state.mode === "yt" && yst.fp) {
     yst.fp = "";
+    yst.fSub = "";
     saveYtUI();
   } else if (state.mode !== "yt" && state.fOpen) {
+    state.fSub = "";
     state.fOpen = "";
     state.fSub = "";
     state.svMode = "";
@@ -249,6 +251,8 @@ const COMMON_ACTIONS = [
 ];
 /* スマホ：☰メニューの開閉。メニュー内で画面を選んだら閉じる */
 function setDrawer(on) {
+  /* スマホは下メニューになったので、左から出すメニューは開かない（端からのスワイプで裏で開かないように） */
+  if (on && matchMedia("(max-width:899px)").matches) on = false;
   document.body.classList.toggle("drawer", on);
   const b = document.querySelector(".hmenu");
   if (b) b.setAttribute("aria-expanded", on);
@@ -614,13 +618,15 @@ const KEY_ACTIONS = [
   [
     null,
     (t, e) => {
-      if (e.key !== "Escape" || state.fOpen !== "all" || $("#layer").innerHTML) return false;
+      const open = state.mode === "yt" ? yst.fp === "all" : state.fOpen === "all";
+      if (e.key !== "Escape" || !open || $("#layer").innerHTML) return false;
       e.preventDefault();
-      document.querySelector(state.fSub ? ".fsh-back" : ".fsh-x")?.click();
+      document.querySelector(document.querySelector(".fsh-sub") ? ".fsh-back" : ".fsh-x")?.click();
       return true;
     },
   ],
   ["#q", (t, e) => (e.key === "Escape" ? ($("[data-qtog='0']")?.click(), true) : false)],
+  ["#ytq", (t, e) => (e.key === "Escape" ? ($("[data-ytqtog='0']")?.click(), true) : false)],
   [".e1 input", enterEsc(() => $("#e1Save")?.click(), () => $("#e1Cancel")?.click())],
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
   [null, (t, e) => (e.key === "Escape" && yform && yform.inline ? ytCloseInline() || true : false)],

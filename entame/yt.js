@@ -36,7 +36,7 @@ const yst = Object.assign(
     missKey: "",
   },
   ls.get("adb.v3.yt") || {},
-  { q: "" },
+  { q: "", fSub: "", qOpen: false },
 );
 /* 端末に覚えた表示状態のうち、今は無い値は外す */
 yst.pri = [...new Set(arrOf(yst.pri))].filter(p => [UNSEEN, ...YT_STATUS].includes(p));
@@ -277,10 +277,26 @@ function renderYt() {
     <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${YT_GRPS.map(([v, l]) => `<button type="button" role="radio" data-ytgrp="${v}" aria-checked="${yst.grp === v}" aria-pressed="${yst.grp === v}">${yst.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
   const srt = [srt0[0], (yst.grp === "year" ? "年別・" : "ジャンル別・") + srt0[1]];
-  return `<div class="ftools"><input id="ytq" type="search" placeholder="動画タイトル・投稿者で検索" value="${esc(yst.q)}" aria-label="検索"></div>
-    ${seg}
-    <div class="fwrap">${ytRowHtml(srt[1])}${ytPopHtml({ genre: genreBody, sort: sBody })}</div>
-    <p class="count">${list.length}本${act.length ? `<button type="button" class="clear" data-ytreset="1">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
+  /* アニメ・ドラマと同じ形：絞り込み（シート）・並び順・検索、条件のラベル、件数 */
+  const conds = [...yst.pri.map(stLabel), ...(yst.genre !== "すべて" ? [yst.genre] : []), ...(yst.sub !== "すべて" ? [yst.sub] : []), ...(yst.missOnly ? [yst.missKey ? `未入力：${yst.missKey}` : "未入力あり"] : [])];
+  const searching = yst.qOpen || !!yst.q;
+  const grpOpts = yst.genre === SOLO ? M("soloGroups") : ytSubs();
+  const rows = [
+    ["st", "視聴ステータス", one ? stLabel(one) : "すべて", () => fOpt("data-ytstf", "", "すべて", !yst.pri.length, segBase.length) + pris.map(p => fOpt("data-ytstf", p, stLabel(p), one === p, segBase.filter(x => (ytSt(x) || UNSEEN) === p).length)).join("")],
+    ["genre", "ジャンル", yst.genre, () => fOpt("data-ytg", "すべて", "すべて", yst.genre === "すべて", ab.length) + [SOLO, COLLAB].map(g => fOpt("data-ytg", g, esc(g), yst.genre === g, ab.filter(x => ytCat(x) === g).length)).join("")],
+  ];
+  if (yst.genre !== "すべて") rows.push(["sub", "グループ", yst.sub, () => fOpt("data-ytsub", "すべて", "すべて", yst.sub === "すべて", ab.filter(x => ytCat(x) === yst.genre).length) + grpOpts.map(g => fOpt("data-ytsub", g, esc(g), yst.sub === g, ab.filter(x => ytCat(x) === yst.genre && ytGrp(x) === g).length)).join("")]);
+  const mCnt = {};
+  mBase.forEach(l => l.forEach(m => (mCnt[m.k] = (mCnt[m.k] || 0) + 1)));
+  const sheet =
+    yst.fp === "all"
+      ? fshShell({ id: "yt", a: YA, rows, sub: yst.fSub, nConds: conds.length, n: list.length, unit: "本", miss: { on: yst.missOnly, n: mN, keys: yst.missOnly ? fshMissKeys(mCnt, YT_MISS_KEYS, yst.missKey, "data-ytmkey") : "" } })
+      : fshClosed();
+  return `${searching ? fshSearch({ id: "ytq", ph: "動画タイトル・投稿者で検索", q: yst.q, a: "data-ytqtog" }) : ""}
+    <div class="fwrap">${searching ? "" : fshBar({ a: YA, n: conds.length, open: yst.fp === "all", srtOn: yst.sort !== "new" || yst.grp !== "genre", srtOpen: yst.fp === "sort", srtLab: srt[1] })}${ytPopHtml({ sort: sBody })}</div>
+    ${fshSum(conds, YA)}
+    ${fshCount(list.length, "本", yst.q)}
+    ${sheet}
     ${
       !list.length
         ? ""
@@ -313,6 +329,7 @@ function renderYt() {
     }
     ${list.length ? "" : `<p class="empty">条件に合う動画はありません。</p>`}`;
 }
+const YA = { sheet: 'data-ytsheet="1"', sort: 'data-ytpop="sort"', q: "data-ytqtog", reset: 'data-ytreset="1"', close: 'data-ytshclose="1"', sub: "data-ytfsub", miss: "data-ytmissw" };
 const YT_GRPS = [
   ["genre", "ジャンル別"],
   ["year", "年別"],
@@ -642,6 +659,15 @@ async function ytSubmit() {
   if (f.id) ytOpenDetail(id);
 }
 
+/* シートで選んだら、その項目を閉じて戻る（開いた直後の指の離れは無視） */
+function ytPicked(set) {
+  if (Date.now() - fSubOpenedAt < 300) return;
+  set();
+  yst.fSub = "";
+  saveYtUI();
+  render();
+  if (!TOUCH) document.querySelector(".fsh-row[aria-expanded]")?.focus();
+}
 /* YouTube の操作（YouTubeの画面を開いているときだけ） */
 const ytUI = fn => el => {
   fn(el);
@@ -691,16 +717,48 @@ const YT_ACTIONS = [
       yst.fp = "";
     }),
   ],
-  ["[data-ytreset]", ytUI(() => Object.assign(yst, { pri: [], genre: "すべて", sub: "すべて" }))],
+  ["[data-ytreset]", ytUI(() => Object.assign(yst, { pri: [], genre: "すべて", sub: "すべて", missOnly: false, missKey: "", fSub: "" }))],
+  /* 絞り込みシート（アニメ・ドラマと同じ動き） */
+  [
+    "[data-ytsheet]",
+    ytUI(() => {
+      yst.fp = yst.fp === "all" ? "" : "all";
+      yst.fSub = "";
+    }),
+  ],
+  ["[data-ytshclose]", ytUI(() => ((yst.fp = ""), (yst.fSub = "")))],
+  [
+    "[data-ytfsub]",
+    el => {
+      const was = yst.fSub;
+      yst.fSub = el.dataset.ytfsub && yst.fSub !== el.dataset.ytfsub ? el.dataset.ytfsub : "";
+      fSubOpenedAt = Date.now();
+      render();
+      fshFocusAfter(was);
+      document.querySelector(".fsh-sub .dd-row.on")?.scrollIntoView({ block: "nearest" });
+    },
+  ],
+  [
+    "[data-ytqtog]",
+    el => {
+      const on = el.dataset.ytqtog === "1";
+      yst.qOpen = on;
+      yst.fp = "";
+      yst.fSub = "";
+      if (!on) yst.q = "";
+      render();
+      if (on) fshFocusQ("#ytq");
+    },
+  ],
   [
     "[data-ytg]",
-    ytUI(el => {
+    el => ytPicked(() => {
       yst.genre = el.dataset.ytg;
       yst.sub = "すべて";
     }),
   ],
-  ["[data-ytsub]", ytUI(el => (yst.sub = el.dataset.ytsub))],
-  ["[data-ytstf]", ytUI(el => (yst.pri = !el.dataset.ytstf || (yst.pri.length === 1 && yst.pri[0] === el.dataset.ytstf) ? [] : [el.dataset.ytstf]))],
+  ["[data-ytsub]", el => ytPicked(() => (yst.sub = el.dataset.ytsub))],
+  ["[data-ytstf]", el => ytPicked(() => (yst.pri = !el.dataset.ytstf || (yst.pri.length === 1 && yst.pri[0] === el.dataset.ytstf) ? [] : [el.dataset.ytstf]))],
   [
     "[data-ytmissw]",
     ytUI(() => {

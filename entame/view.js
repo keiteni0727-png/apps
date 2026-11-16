@@ -634,8 +634,8 @@ function renderList() {
   const searching = state.qOpen || !!state.q;
   return `${searching ? fSearchHtml() : ""}
     <div class="fwrap">${searching ? "" : fBarHtml()}${fPopHtml(panel ? panel() : "")}</div>
-    ${fSumHtml(list.length)}
-    <p class="count"></p>
+    ${fSumHtml()}
+    ${fshCount(list.length, "件", state.q)}
     ${fSheetHtml()}
     ${list.length ? groupedHtml(list) : `<p class="empty">${state.q ? `「${esc(state.q)}」に一致する作品はありません。` : "条件に合う作品はありません。"}</p>`}`;
 }
@@ -687,7 +687,7 @@ function render() {
   renderThemeBtn();
   renderSidebar();
   renderBnav();
-  document.documentElement.classList.toggle("fshopen", state.fOpen === "all" && state.mode !== "yt");
+  document.documentElement.classList.toggle("fshopen", state.mode === "yt" ? yst.fp === "all" : state.fOpen === "all");
   if (!loaded) return;
   const y = lockY ?? scrollY;
   let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : state.mode === "o" ? renderOther() : renderList();
@@ -707,9 +707,14 @@ function render() {
   if (hd && hd.offsetHeight) document.documentElement.style.setProperty("--hdh", hd.offsetHeight + "px");
 }
 /* 画面の切り替え：左メニュー（番組表・アニメ…）を選ぶ。絞り込みとシリーズは外す */
+/* 絞り込みはメニューごとに別々に覚える（アニメの条件はアニメだけ。メニューを移っても引き継がない） */
+const FKEEP = ["sf", "era", "cour", "series", "type", "vod", "missOnly", "missKey", "sub"];
+const FEMPTY = { sf: [], era: [], cour: [], series: [], type: [], vod: "", missOnly: false, missKey: "", sub: "all" };
 function setMode(m) {
   if (state.mode === m) return;
-  if (state.mode === "s" || m === "s") state.vod = ""; // バラエティの配信サイト選びはほかのメニューに持ち越さない
+  if (!state.xser && !["w", "yt", "h", "o"].includes(state.mode)) state.fm[state.mode] = Object.fromEntries(FKEEP.map(k => [k, state[k]]));
+  const saved = state.fm[m] || {};
+  Object.assign(state, FEMPTY, Object.fromEntries(FKEEP.filter(k => k in saved).map(k => [k, saved[k]])));
   state.mode = m;
   state.sub = "all";
   state.wday = "";
@@ -721,7 +726,6 @@ function setMode(m) {
   if (m === "w" || m === "yt" || m === "h" || m === "o") return;
   if (m === "m" || m === "s") state.type = [];
   state.limit = 200;
-  state.series = [];
 }
 /* 画面を変えて先頭から表示 */
 const go = () => {

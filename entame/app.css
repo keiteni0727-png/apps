@@ -1575,7 +1575,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
   header #hAdd{margin-left:auto}
   .hseg:not(:empty)~#hAdd{margin-left:4px}
   .hback{display:grid;place-items:center;flex:none;width:32px;height:36px;margin:0 2px 0 -6px;border:0;background:none;color:var(--u-ink);padding:0;cursor:pointer}
-  .hbar:has(.hback) .hcur .mic{display:none}
+  .hbar:has(.hback) .hcur{gap:6px}
   body{padding-bottom:calc(var(--u-navb) + var(--tbh) + 24px);--u-toast-b:calc(var(--tbh) + 22px)}
   .u-app .totop{bottom:calc(var(--u-navb) + var(--tbh) + 12px)}
   /* 左から出すメニューは使わない */
@@ -1618,7 +1618,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 
 /* 絞り込みシート：スマホは下から、PCは右のパネル */
 .fsh-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.4)}
-.fsh{position:fixed;left:0;right:0;bottom:0;z-index:61;display:flex;flex-direction:column;max-height:86vh;background:var(--u-surface);color:var(--u-ink);border-radius:18px 18px 0 0;border-top:1px solid var(--u-line);box-shadow:0 -8px 30px rgba(0,0,0,.2);padding-bottom:env(safe-area-inset-bottom,0px);animation:ddup .2s ease-out;overflow:hidden}
+.fsh{position:fixed;left:0;right:0;bottom:0;z-index:61;display:flex;flex-direction:column;max-height:86vh;background:var(--u-surface);color:var(--u-ink);border-radius:18px 18px 0 0;border-top:1px solid var(--u-line);box-shadow:0 -8px 30px rgba(0,0,0,.2);padding-bottom:env(safe-area-inset-bottom,0px);overflow:hidden}
 .fsh-grab{width:38px;height:4px;border-radius:2px;background:var(--u-strong);margin:8px auto 0;flex:none}
 .fsh-h{display:flex;align-items:center;gap:10px;padding:10px 12px 8px 18px;flex:none}
 .fsh-h b{flex:1;font-size:17px}
@@ -1663,15 +1663,14 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .chips .cyb button:disabled{opacity:.3}
 @media (max-width:899px){
   html.fshopen,html.fshopen body,html.pkopen,html.pkopen body{overflow:hidden}
-  .fsh.subopen .fsh-sub{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;border-radius:18px 18px 0 0;animation:fshin .18s ease-out}
+  .fsh.subopen .fsh-sub{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;border-radius:18px 18px 0 0}
   .fsh.subopen .fsh-subb{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   .fsh.subopen .fsh-subh{padding-top:12px}
-  .fsh.subopen{min-height:min(60vh,520px)}
 }
 @keyframes fshin{from{transform:translateX(24px);opacity:.5}}
 @media (min-width:900px){
   .fsh-scrim{background:rgba(0,0,0,.12)}
-  .fsh{left:auto;top:var(--hdh,56px);width:360px;max-height:none;border-radius:0;border-top:0;border-left:1px solid var(--u-line);box-shadow:-8px 0 28px rgba(16,24,40,.12);animation:fshpc .18s ease-out}
+  .fsh{left:auto;top:var(--hdh,56px);width:360px;max-height:none;border-radius:0;border-top:0;border-left:1px solid var(--u-line);box-shadow:-8px 0 28px rgba(16,24,40,.12)}
   .fsh-grab{display:none}
   .fsh-h{padding-top:14px}
   .fsh-it.open .fsh-cv{transform:rotate(90deg)}
@@ -1697,3 +1696,32 @@ select#arcJump,select.sg-t{cursor:pointer}
 .setthm b{flex:none;font-size:13px}
 .setthm .hseg3{flex:1;max-width:320px}
 .dd-l .dd-dot{display:inline-block;margin-right:10px;vertical-align:0}
+
+/* --- 2026-11-17 手直し --- */
+/* シートの動きは開いたときだけ（選ぶたびの揺れをなくす）。スマホは高さを固定して、選択肢を開いても大きさが変わらない */
+.fsh.in{animation:ddup .2s ease-out}
+@media (max-width:899px){
+  .fsh{height:min(74vh,620px);max-height:none}
+  .fsh-sub.in{animation:fshin .16s ease-out}
+}
+@media (min-width:900px){.fsh.in{animation:fshpc .18s ease-out}}
+/* YouTube：★保存なしの3つ */
+.fbar.nosv{grid-template-columns:minmax(0,1fr) 42px 42px}
+@media (min-width:900px){.fbar.nosv{grid-template-columns:minmax(0,180px) 42px 42px}}
+/* 件数は「すべて開く・閉じる」と同じ行の左端 */
+.count{display:flex;align-items:center;gap:10px;margin:10px 0 6px}
+.count .cnt{font-family:var(--u-num);color:var(--u-sub);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.count .gbulk,.count .unsw + .gbulk{flex-basis:auto!important;margin:0 0 0 auto!important;justify-content:flex-end}
+/* 詳細・編集を開いている間は下メニューを隠す */
+body:has(#layer .sheet) .tbwrap{display:none}
+/* スマホの編集画面：上は帯の下から、下は押して閉じられる余白を残す */
+@media (max-width:899px){
+  .sheet.form{top:calc(var(--hdh,56px) + 10px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-height:calc(100% - var(--hdh,56px) - 84px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+  /* 並び順・保存フィルタも、絞り込みと同じく下から出るシート（下にスワイプで閉じる） */
+  .fpop-scrim{z-index:60;background:rgba(0,0,0,.4)}
+  .fsdrop.fpop{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:61;max-height:80vh;border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(0,0,0,.2);animation:ddup .2s ease-out}
+  .fsdrop.fpop::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--u-strong);margin:-4px auto 10px}
+  html:has(.fpop-scrim),html:has(.fpop-scrim) body{overflow:hidden}
+}
+.fsh-subb.chipsmode .fgroup:only-child>h5{display:none}
+.fsh-subb.chipsmode .fgroup:only-child{margin-top:8px}

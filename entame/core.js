@@ -112,13 +112,15 @@ const state = Object.assign(
     unOnly: false,
     missOnly: false,
     missKey: "",
+    fm: {},
   },
   ls.get(K_UI) || {},
-  { q: "", series: [], limit: 200, fOpen: "", fSub: "", qOpen: false, wday: "", xser: false },
+  { q: "", limit: 200, fOpen: "", fSub: "", qOpen: false, wday: "", xser: false },
 );
 /* 端末に覚えた表示状態のうち、今は無い値は外す */
 const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
-["sf", "era", "cour", "type"].forEach(k => (state[k] = arrOf(state[k])));
+["sf", "era", "cour", "type", "series"].forEach(k => (state[k] = arrOf(state[k])));
+if (!state.fm || typeof state.fm !== "object") state.fm = {};
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
 if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
@@ -145,6 +147,8 @@ const saveUI = () =>
     courY: state.courY,
     sort: state.sort,
     grp: state.grp,
+    series: state.series,
+    fm: state.fm,
   });
 /* ---------- 作品のデータ：放送形態・主題歌・並び ---------- */
 const TYPES = [
