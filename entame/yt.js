@@ -296,7 +296,7 @@ function renderYt() {
     <div class="fwrap">${searching ? "" : fshBar({ a: YA, n: conds.length, open: yst.fp === "all", srtOn: yst.sort !== "new" || yst.grp !== "genre", srtOpen: yst.fp === "sort", srtLab: srt[1] })}${ytPopHtml({ sort: sBody })}</div>
     ${fshSum(conds, YA)}
     ${fshCount(list.length, "本", yst.q)}
-    ${sheet}
+    <div id="fshBox">${sheet}</div>
     ${
       !list.length
         ? ""

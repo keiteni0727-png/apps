@@ -1725,3 +1725,12 @@ body:has(#layer .sheet) .tbwrap{display:none}
 }
 .fsh-subb.chipsmode .fgroup:only-child>h5{display:none}
 .fsh-subb.chipsmode .fgroup:only-child{margin-top:8px}
+/* スマホの一覧もPCと同じ形：視聴ステータスは右、2行目に配信サイト・シリーズ */
+@media (max-width:899px){
+  .row.lst .pmob{display:none!important}
+  .row.lst .pwide{display:flex!important;justify-content:flex-end;align-self:center;width:auto}
+  .row.lst .pwide .pill{font-size:11px;padding:2px 9px;line-height:1.5;white-space:nowrap}
+  .row.lst .slot{grid-template-columns:48px minmax(0,1fr) auto!important}
+  .row.lst .lab.s.pconly{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
+  .row.lst .meta{min-width:0}
+}

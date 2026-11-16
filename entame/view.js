@@ -636,13 +636,38 @@ function renderList() {
     <div class="fwrap">${searching ? "" : fBarHtml()}${fPopHtml(panel ? panel() : "")}</div>
     ${fSumHtml()}
     ${fshCount(list.length, "件", state.q)}
-    ${fSheetHtml()}
+    <div id="fshBox">${fSheetHtml()}</div>
     ${list.length ? groupedHtml(list) : `<p class="empty">${state.q ? `「${esc(state.q)}」に一致する作品はありません。` : "条件に合う作品はありません。"}</p>`}`;
 }
 let loaded = false;
 /* 検索欄は作り直さない（作り直すと入力中の文字・日本語変換・カーソルが壊れるため） */
 function setMain(html) {
   const main = $("#main");
+  /* 絞り込みシートを開いたまま選んだときは、シートの中だけ描き直す（後ろの一覧まで作り直すと画面が揺れるため。一覧は閉じたときに描き直す） */
+  const fb = main.querySelector("#fshBox");
+  if (fb && fb.firstElementChild && html.includes('<div id="fshBox"><div class="fsh-scrim"')) {
+    const t = document.createElement("template");
+    t.innerHTML = html;
+    const nb = t.content.querySelector("#fshBox");
+    if (nb) {
+      const sc = fb.querySelector(".fsh-body")?.scrollTop || 0;
+      fb.innerHTML = nb.innerHTML;
+      const b = fb.querySelector(".fsh-body");
+      if (b) b.scrollTop = sc;
+      /* 上の「絞り込み 数」のボタン・条件ラベル・件数だけ合わせる */
+      const ow = main.querySelector(".fwrap"),
+        nw = t.content.querySelector(".fwrap");
+      if (ow && nw) {
+        main.querySelector(".fsum")?.remove();
+        const ns = t.content.querySelector(".fsum");
+        ow.outerHTML = nw.outerHTML + (ns ? ns.outerHTML : "");
+      }
+      const oc = main.querySelector(".count .cnt"),
+        nc = t.content.querySelector(".count .cnt");
+      if (oc && nc) oc.innerHTML = nc.innerHTML;
+      return;
+    }
+  }
   const m = /^\s*<div class="ftools">[\s\S]*?<\/div>/.exec(html);
   const box = main.querySelector(":scope > .ftools");
   const res = main.querySelector(":scope > #results");
