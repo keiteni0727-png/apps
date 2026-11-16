@@ -486,13 +486,7 @@ function openForm(it, target, el) {
   form.songs.forEach(x => {
     if (x.a != null && x.b === x.a) x.one = 1;
   });
-  if (form.span)
-    form.songs.forEach(x => {
-      if (x.a == null && x.b == null) {
-        x.a = form.span[0];
-        x.b = form.span[1];
-      }
-    });
+  /* 使われた話が空の曲は空のまま開く（空＝全話。開いて保存しただけで範囲が入らないように） */
   /* 項目を指定したときは、作品の詳細の中でその項目だけ編集する */
   if (it && ONLY_A[target]) return openInlineForm(target, el);
   form.fromDetail = !!it && openId === it.id; // 詳細から開いたか（戻るときに前・次の並びを引き継ぐ）
@@ -743,10 +737,9 @@ const FORM_ACTIONS = [
         let nu;
         /* 前の曲が「1話だけ」なら、次の曲もその次の1話だけ（例：1話→2話→3話…） */
         if (last && last.one && last.a != null) nu = { a: last.a + 1, b: last.a + 1, one: 1 };
-        else {
-          const a0 = last && last.b != null && sp && last.b < sp[1] ? last.b + 1 : sp ? sp[0] : null;
-          nu = { a: a0, b: sp ? sp[1] : null };
-        }
+        /* 前の曲の範囲の続き（例：1〜6話の次は7〜最後）。それ以外は空（＝全話） */
+        else if (last && last.b != null && sp && last.b < sp[1]) nu = { a: last.b + 1, b: sp[1] };
+        else nu = { a: null, b: null };
         /* 同じ種類の最後の曲のすぐ後ろに入れる（種類ごとの並びを保つ） */
         const at = last ? form.songs.lastIndexOf(last) + 1 : form.songs.length;
         form.songs.splice(at, 0, { type: tp, s: "", st: "", ar: "", ...nu });

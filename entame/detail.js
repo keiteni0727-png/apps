@@ -368,13 +368,11 @@ const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="
 function renderDetail(it) {
   const cs = coursOf(it);
   const stv = mediaLabels(it);
-  const span = it.k === "a" ? epSpan(it) : null;
-  const sl = songsOf(it).map(x =>
-    span && (x.type === "OP" || x.type === "ED") && x.a == null && x.b == null && !exOf(x).length ? { ...x, a: span[0], b: span[1] } : x,
-  );
+  /* 使われた話を入れていない曲は、作品や曲の種類に関係なく「全話」と出す（話数からの自動の範囲は出さない） */
+  const sl = songsOf(it);
   /* 1曲1行：曲名／アーティスト・使われた話。同じ種類が複数ある作品だけ話数の列を出す */
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
-  /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲は全話で使われる曲として「全話」 */
+  /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲はすべて「全話」 */
   const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeList(x).length));
   /* 曲の行のデータ（種類の順・同じ種類の中は登録順）。rng＝使われた話 */
   /* 視聴中の作品は、最後に見た話（並びで一番後ろの視聴済みの話）で流れた曲を目立たせる。now＝塗るラベルの番号 */
@@ -384,7 +382,7 @@ function renderDetail(it) {
   const songRows = byType.flatMap(([tp, l]) =>
     l.map(([x, k]) => {
       const rl = rangeList(x);
-      const rng = showRng ? (rl.length ? rl : l.length === 1 ? ["全話"] : []) : [];
+      const rng = showRng ? (rl.length ? rl : ["全話"]) : [];
       const now = !hasNow || !rng.length ? -1 : rl.length ? rangeHit(x, nowN) : 0;
       return { k: tp, x, i: k, rng, now };
     }),
