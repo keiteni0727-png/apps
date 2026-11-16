@@ -1498,3 +1498,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .ep.unseen .epc{border:2px solid var(--u-accent);color:var(--u-acct)}
 .ep.unseen .eps-sub{color:var(--u-ink);font-weight:800}
 .ep .epun{display:inline-block;font-size:10.5px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:5px;background:var(--u-live2);color:var(--u-live);margin-right:6px;vertical-align:1px}
+/* 今見ている編の見出しに色（すべてたたんでいても、どこから見ればいいかわかるように） */
+.archd.cur{background:var(--u-accent2);box-shadow:inset 3px 0 0 var(--u-accent)}
+.archd.cur .arcnm{color:var(--u-acct)}
+.archd.cur .arcct{color:var(--u-acct);font-weight:700}

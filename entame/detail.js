@@ -246,7 +246,8 @@ function epListHtml(it, eps) {
           st = stat[g.k],
           done = st.n > 0 && st.w === st.n,
           key = arcKey(r);
-        const open = arcFold.has(key) ? arcFold.get(key) : !done || g.k === curK;
+        /* 開いた直後はすべての編をたたむ（見出しを押すと開く。開いた状態はこの作品を開いている間だけ覚える） */
+        const open = arcFold.has(key) ? arcFold.get(key) : false;
         return `<button type="button" class="archd${done ? " done" : ""}${g.k === curK ? " cur" : ""}" data-arc="${esc(key)}" id="arc-${g.k}" aria-expanded="${open}"><span class="arcar">${FOLD_IC}</span><span class="arcnm">${esc(r.name)}</span><span class="arcrg">${arcRange(r)}</span><span class="arcct">${done ? "✓ " : ""}${st.w}/${st.n}</span></button>${open ? g.l.map(([e, i]) => epRow(e, i)).join("") : ""}`;
       })
       .join("");
