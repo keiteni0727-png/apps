@@ -4,8 +4,9 @@
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
-const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", h: "視聴記録" };
-const MODE_KEYS = Object.keys(MODE_NAME);
+const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", h: "視聴記録", o: "その他" };
+/* o＝スマホの下メニュー「その他」（映画・バラエティ・YouTube・視聴記録のタイル）。左メニューには出さない */
+const MODE_KEYS = Object.keys(MODE_NAME).filter(k => k !== "o");
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 /* 表示の言い回し：保存データの値は「視聴済み」のまま、画面では「視聴済」と出す */
 const stLabel = s => String(s ?? "").replace(/視聴済み/g, "視聴済");
@@ -113,7 +114,7 @@ const state = Object.assign(
     missKey: "",
   },
   ls.get(K_UI) || {},
-  { q: "", series: [], limit: 200, fOpen: "", wday: "", xser: false },
+  { q: "", series: [], limit: 200, fOpen: "", fSub: "", qOpen: false, wday: "", xser: false },
 );
 /* 端末に覚えた表示状態のうち、今は無い値は外す */
 const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
@@ -121,7 +122,7 @@ const arrOf = v => (Array.isArray(v) ? v : v && v !== "すべて" ? [v] : []);
 state.sf = state.sf.filter(x => [...STATUSES, "未設定"].includes(x));
 if (!SORTS.some(([v]) => v === state.sort)) state.sort = "new";
 if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
-if (!MODE_KEYS.includes(state.mode)) state.mode = "w";
+if (!MODE_KEYS.includes(state.mode) && state.mode !== "o") state.mode = "w";
 if (!(SUBS[state.mode] || ["all"]).includes(state.sub)) state.sub = "all";
 if (typeof state.vod !== "string") state.vod = "";
 state.unOnly = !!state.unOnly;

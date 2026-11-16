@@ -131,6 +131,24 @@ const NAV_ACTIONS = [
       render();
     },
   ],
+  /* スマホの下メニュー・「その他」のタイル・上の「‹」 */
+  [
+    "[data-bnav]",
+    el => {
+      const m = el.dataset.bnav;
+      leaveXser();
+      if (m !== "o") sbOnly(m);
+      if (state.mode === m && m !== "o") {
+        scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      setMode(m);
+      state.type = [];
+      state.sub = "all";
+      if (m === "s") state.vod = "";
+      go();
+    },
+  ],
   /* 左メニューの名前：そのメニューの「すべて」 */
   [
     "[data-mode]",
@@ -168,12 +186,13 @@ const NAV_ACTIONS = [
 ];
 /* フィルタ・ソートの折りたたみは、外を押したら閉じる */
 function closeDropdownOnOutsideClick(e) {
-  if (e.target.closest(".fsdrop,.fsbar,.svbar,.frow,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
+  if (e.target.closest(".fsdrop,.fsbar,.svbar,.frow,.fbar,.fsh,.fsum,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
   if (state.mode === "yt" && yst.fp) {
     yst.fp = "";
     saveYtUI();
   } else if (state.mode !== "yt" && state.fOpen) {
     state.fOpen = "";
+    state.fSub = "";
     state.svMode = "";
     state.svName = null;
     saveUI();
@@ -226,7 +245,7 @@ const COMMON_ACTIONS = [
     },
   ],
   ["[data-close]", () => close()],
-  ["#sbAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
+  ["#sbAdd,#hAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
 ];
 /* スマホ：☰メニューの開閉。メニュー内で画面を選んだら閉じる */
 function setDrawer(on) {
@@ -264,7 +283,7 @@ uSwipe({
   blocked: () => !!($("#layer").innerHTML || state.fOpen || yst.fp),
   pager: {
     el: "#main",
-    block: "input,select,textarea,#ddPop,.fpop,.frow,.hseg,.vodbar,.svbar,.chips,#subPop,.u-toast",
+    block: "input,select,textarea,#ddPop,.fpop,.frow,.fbar,.fsh,.fsum,.bnav,.hseg,.vodbar,.svbar,.chips,#subPop,.u-toast",
     can: dir => {
       const i = segIdx();
       return i >= 0 && i + dir >= 0 && i + dir < segBtns().length;
@@ -288,6 +307,7 @@ const CLICK_HANDLERS = [
   onSettingsClick,
   e => runActions(NAV_ACTIONS, e),
   closeDropdownOnOutsideClick,
+  e => state.mode !== "yt" && runActions(SHEET_ACTIONS, e),
   onSubPopClick,
   e => state.mode === "yt" && runActions(YT_ACTIONS, e),
   e => state.mode === "h" && runActions(HIST_ACTIONS, e),
@@ -590,6 +610,17 @@ const KEY_ACTIONS = [
   ["#maddIn", enterClick("[data-madd]")],
   ["#spopIn", enterEsc(saveSub, closeSub)],
   [null, (t, e) => (e.key === "Escape" && subAsk ? closeSub() : false)],
+  /* 絞り込みシート：Escで選択肢 → シートの順に閉じる。検索欄はEscでキャンセル */
+  [
+    null,
+    (t, e) => {
+      if (e.key !== "Escape" || state.fOpen !== "all" || $("#layer").innerHTML) return false;
+      e.preventDefault();
+      document.querySelector(state.fSub ? ".fsh-back" : ".fsh-x")?.click();
+      return true;
+    },
+  ],
+  ["#q", (t, e) => (e.key === "Escape" ? ($("[data-qtog='0']")?.click(), true) : false)],
   [".e1 input", enterEsc(() => $("#e1Save")?.click(), () => $("#e1Cancel")?.click())],
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
   [null, (t, e) => (e.key === "Escape" && yform && yform.inline ? ytCloseInline() || true : false)],
@@ -945,6 +976,175 @@ document.addEventListener("input", e => {
   }
 });
 
+
+/* ================= プルダウンをそろえる（2026-11） =================
+   残っていた端末標準の選択（編の移動・曲の種類）も、編集画面と同じ「スマホは下から出る一覧／PCはすぐ下に小さく」にする。
+   使いにくくならない工夫：
+   ・今の値にチェックを付け、開いたときにその位置までスクロール
+   ・項目が10個を超えるときだけ上に「探す」欄（スマホでは自動でキーボードを出さない）
+   ・選んだらすぐ閉じる。外を押す・✕・Escでも閉じる
+   ・開いた直後の指の離れで下の項目を選ばないよう、0.3秒は選べない
+   ・PCは ↑↓ で項目を移動、Enterで決定（項目の行はボタンなのでTabでも移動できる）
+   ・スマホは開いている間、後ろの画面がスクロールしない */
+let pkSel = null,
+  pkAt = 0;
+function pkClose(refocus) {
+  const s = pkSel;
+  pkSel = null;
+  $("#pkPop")?.remove();
+  document.documentElement.classList.remove("pkopen");
+  if (s && refocus && !TOUCH) s.focus();
+}
+function pkRows(q) {
+  const nq = norm(q || "");
+  const opts = [...pkSel.options].filter(o => !nq || norm(o.textContent).includes(nq));
+  if (!opts.length) return `<p class="dd-hint">「${esc(q)}」は見つかりません</p>`;
+  return opts
+    .map(o => {
+      const on = o.value === pkSel.value;
+      return `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" data-pkv="${esc(o.value)}"><span class="dd-l">${esc(o.textContent.replace(/に変える$/, ""))}</span>${on ? DD_CHECK : ""}</button>`;
+    })
+    .join("");
+}
+function pkOpen(sel) {
+  pkClose();
+  pkSel = sel;
+  pkAt = Date.now();
+  const title = sel.getAttribute("aria-label") || "選ぶ";
+  const search = sel.options.length > 10;
+  const sheet = ddSheetMode();
+  const box = document.createElement("div");
+  box.id = "pkPop";
+  box.className = sheet ? "sheetmode" : "popmode";
+  box.innerHTML = `<div class="dd-scrim" data-pkclose="1"></div><div class="dd-box" role="dialog" aria-label="${esc(title)}">
+    ${sheet ? `<div class="dd-h"><b>${esc(title)}</b><span>選ぶと閉じます</span><button type="button" class="dd-x" data-pkclose="1" aria-label="閉じる">✕</button></div>` : ""}
+    ${search ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="pkq" type="search" autocomplete="off" placeholder="探す" aria-label="探す"></label>` : ""}
+    <div class="dd-list" role="listbox" id="pkList">${pkRows("")}</div></div>`;
+  document.body.appendChild(box);
+  if (sheet) document.documentElement.classList.add("pkopen");
+  else {
+    const r = sel.getBoundingClientRect(),
+      b = box.querySelector(".dd-box");
+    const w = Math.min(Math.max(r.width, 240), 420);
+    b.style.width = w + "px";
+    b.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
+    const below = innerHeight - r.bottom - 12,
+      above = r.top - 12;
+    if (below >= 240 || below >= above) {
+      b.style.top = r.bottom + 6 + "px";
+      b.style.maxHeight = Math.min(420, below) + "px";
+    } else {
+      b.style.bottom = innerHeight - r.top + 6 + "px";
+      b.style.maxHeight = Math.min(420, above) + "px";
+    }
+  }
+  const on = box.querySelector(".dd-row.on");
+  if (on) on.scrollIntoView({ block: "center" });
+  if (!TOUCH) (box.querySelector("#pkq") || on || box.querySelector(".dd-row"))?.focus();
+}
+function pkPick(v) {
+  const s = pkSel;
+  if (!s || Date.now() - pkAt < 300) return;
+  pkClose();
+  if (s.value !== v) {
+    s.value = v;
+    s.dispatchEvent(new Event("input", { bubbles: true }));
+    s.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  if (!TOUCH && s.isConnected) s.focus();
+}
+const PK_SEL = "#arcJump,.sg-t";
+/* 標準の選択を開かせずに、こちらの一覧を出す */
+document.addEventListener(
+  "mousedown",
+  e => {
+    const s = e.target.closest && e.target.closest(PK_SEL);
+    if (!s || e.button !== 0) return;
+    e.preventDefault();
+    s.focus();
+    pkOpen(s);
+  },
+  true,
+);
+/* スマホ：指を動かさずに離したときだけ開く（スクロールのつもりで触れたときは開かない） */
+let pkT0 = null;
+document.addEventListener(
+  "touchstart",
+  e => {
+    const s = e.target.closest && e.target.closest(PK_SEL);
+    pkT0 = s && e.touches.length === 1 ? { s, x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  },
+  { capture: true, passive: true },
+);
+document.addEventListener(
+  "touchend",
+  e => {
+    const s = e.target.closest && e.target.closest(PK_SEL);
+    if (!s) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    if (!pkT0 || pkT0.s !== s || Math.abs(t.clientX - pkT0.x) > 10 || Math.abs(t.clientY - pkT0.y) > 10) return;
+    pkOpen(s);
+  },
+  { capture: true, passive: false },
+);
+document.addEventListener(
+  "click",
+  e => {
+    if (!e.target.closest) return;
+    if (e.target.closest("#pkPop")) {
+      e.stopPropagation();
+      const r = e.target.closest("[data-pkv]");
+      if (r) pkPick(r.dataset.pkv);
+      else if (e.target.closest("[data-pkclose]")) pkClose(true);
+    }
+  },
+  true,
+);
+document.addEventListener("input", e => {
+  if (e.target.id === "pkq" && pkSel) $("#pkList").innerHTML = pkRows(e.target.value);
+});
+/* キーボード：選択欄で Enter・Space・↓ を押すと開く。一覧の中は ↑↓・Home・End で移動、Escで閉じる。
+   絞り込みシートの選択肢・編集画面のプルダウンも同じ動き */
+document.addEventListener(
+  "keydown",
+  e => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.matches && t.matches(PK_SEL) && ["Enter", " ", "ArrowDown", "ArrowUp"].includes(e.key) && !pkSel) {
+      e.preventDefault();
+      pkOpen(t);
+      return;
+    }
+    if (pkSel && e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      pkClose(true);
+      return;
+    }
+    if (pkSel && t.id === "pkq" && e.key === "Enter") {
+      e.preventDefault();
+      const r = $("#pkList [data-pkv]");
+      if (r) {
+        pkAt = 0;
+        pkPick(r.dataset.pkv);
+      }
+      return;
+    }
+    const box = t.closest("#pkPop .dd-box,#ddPop .dd-box,.fsh-sub");
+    if (!box || !["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+    const rows = [...box.querySelectorAll(".dd-row")];
+    if (!rows.length) return;
+    e.preventDefault();
+    const i = rows.indexOf(t.closest(".dd-row"));
+    const n = e.key === "Home" ? 0 : e.key === "End" ? rows.length - 1 : i < 0 ? 0 : Math.max(0, Math.min(rows.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)));
+    rows[n].focus();
+    rows[n].scrollIntoView({ block: "nearest" });
+  },
+  true,
+);
+addEventListener("resize", () => pkSel && !ddSheetMode() && pkClose());
+document.addEventListener("scroll", e => pkSel && !ddSheetMode() && !(e.target.closest && e.target.closest("#pkPop")) && pkClose(), true);
 /* ================= 起動 ================= */
 /* トップへ戻る: 画面1枚分以上スクロールしたら右下に出す */
 (() => {

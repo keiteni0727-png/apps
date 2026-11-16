@@ -71,10 +71,12 @@ function openDD(k, btn) {
   const sheet = ddSheetMode();
   box.className = sheet ? "sheetmode" : "popmode";
   box.innerHTML = `<div class="dd-scrim" data-ddclose="1"></div><div class="dd-box" role="dialog" aria-label="${DD_TITLE[k]}">
-    ${sheet ? `<div class="dd-h"><b>${DD_TITLE[k]}</b><span>選ぶと閉じます</span></div>` : ""}
+    ${sheet ? `<div class="dd-h"><b>${DD_TITLE[k]}</b><span>${k === "cour" ? "選ぶと追加・外す" : "選ぶと閉じます"}</span><button type="button" class="dd-x" data-ddclose="1" aria-label="閉じる">✕</button></div>` : ""}
     ${search ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ddq" type="search" autocomplete="off" placeholder="${DD_TITLE[k]}を探す${k === "ser" ? "・新しく作る" : ""}" aria-label="${DD_TITLE[k]}を探す"></label>` : ""}
     <div class="dd-list" role="listbox" id="ddList">${ddRows(k, "")}</div></div>`;
   document.body.appendChild(box);
+  ddAt = Date.now();
+  if (sheet) document.documentElement.classList.add("pkopen");
   if (!sheet) {
     const r = btn.getBoundingClientRect(),
       b = box.querySelector(".dd-box");
@@ -92,13 +94,15 @@ function openDD(k, btn) {
     }
   }
   const sel = box.querySelector(".dd-row.on");
-  if (sel) sel.scrollIntoView({ block: "nearest" });
+  if (sel) sel.scrollIntoView({ block: "center" });
   if (!TOUCH) (box.querySelector("#ddq") || sel || box.querySelector(".dd-row"))?.focus();
 }
+let ddAt = 0; // 開いた時刻（開いた直後の指の離れで下の項目を選ばないため）
 function closeDD(refocus) {
   const k = ddOpen;
   ddOpen = null;
   $("#ddPop")?.remove();
+  document.documentElement.classList.remove("pkopen");
   const b = k && document.querySelector(`[data-fdd="${k}"]`);
   if (b) {
     b.setAttribute("aria-expanded", "false");
@@ -131,6 +135,7 @@ function ddPick(v, none) {
 /* プルダウンの一覧の中のクリック（詳細の中の編集の「外を押した」にしないため、いちばん先に受ける） */
 function onDDClick(e) {
   if (!e.target.closest("#ddPop")) return false;
+  if (Date.now() - ddAt < 300 && !e.target.closest("[data-ddclose]")) return true;
   const p = e.target.closest("[data-ddpick]");
   if (p) ddPick(p.dataset.ddpick, false);
   else if (e.target.closest("[data-ddnone]")) ddPick("", true);

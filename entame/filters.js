@@ -86,7 +86,7 @@ function timePanelHtml() {
   const cy = courYears.includes(state.courY) ? state.courY : courYears[0];
   const yAll = SEASONS.every(se => state.cour.includes(cy + se));
   return `<div class="fgroup"><h5>放送クール</h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
-      <select id="courY" aria-label="クールの年">${courYears.map(y => `<option ${y === cy ? "selected" : ""}>${y}</option>`).join("")}</select>
+      <span class="cyb" role="group" aria-label="クールの年"><button type="button" data-couryb="1" aria-label="前の年" ${courYears.indexOf(cy) >= courYears.length - 1 ? "disabled" : ""}>‹</button><b>${cy}年</b><button type="button" data-couryb="-1" aria-label="次の年" ${courYears.indexOf(cy) <= 0 ? "disabled" : ""}>›</button></span>
       <button type="button" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button>
       ${SEASONS.map(se => {
         const key = `${cy}${se}`;
@@ -313,7 +313,9 @@ const FILTER_ACTIONS = [
     "[data-stf]",
     el => {
       const v = el.dataset.stf;
+      if (state.fSub === "st" && Date.now() - fSubOpenedAt < 300) return;
       state.sf = !v || (state.sf.length === 1 && state.sf[0] === v) ? [] : [v];
+      state.fSub = "";
       state.limit = 200;
       saveUI();
       render();
@@ -349,7 +351,9 @@ const FILTER_ACTIONS = [
   [
     "[data-unset]",
     () => {
-      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], vod: "", limit: 200 });
+      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], vod: "", missOnly: false, missKey: "", fSub: "", limit: 200 });
+      if (state.mode === "m") state.sub = "all";
+      saveUI();
       render();
     },
   ],
@@ -363,3 +367,215 @@ SORT_DONE.sv = (box, rows) => {
   if (nl.length === l.length && nl.some((x, k) => x !== l[k])) setSv(nl);
   render();
 };
+
+/* ===================== 絞り込みシート（2026-11 見直し） =====================
+   一覧の上は「絞り込み 数」「★保存」「並び順」「検索」の4つだけ。
+   絞り込みを押すと、スマホは下から出るシート、PCは右のパネル。項目を押すと選択肢が開く
+   （スマホはシートの上に重ねて出し、1つ選ぶと自動で戻る。PCは項目のすぐ下に開く） */
+const FSH_X = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const FSH_IC = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
+const FQ_IC = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+const FSH_CHEV = '<svg class="fsh-cv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+/* その条件だけ外したときの件数（選択肢の横の数字） */
+function fCountWithout(keys, fn) {
+  const keep = {};
+  keys.forEach(k => (keep[k] = state[k]));
+  keys.forEach(k => (state[k] = Array.isArray(state[k]) ? [] : typeof state[k] === "boolean" ? false : ""));
+  const l = filtered();
+  Object.assign(state, keep);
+  return fn ? l.filter(fn).length : l.length;
+}
+/* 今かかっている条件（ラベル用）。並びは 視聴 → シリーズ → 配信 → 種別 → 時期 → 未入力 */
+function fConds() {
+  const c = [];
+  state.sf.forEach(v => c.push(stLabel(v)));
+  state.series.forEach(v => c.push(v));
+  if (state.vod) c.push(state.vod);
+  if (state.mode === "m" && state.sub !== "all") c.push(state.sub === "a" ? "アニメ映画" : "実写映画");
+  state.type.forEach(v => c.push(MEDIA_LAB[v] || v));
+  state.cour.forEach(v => c.push(/^\d{4}/.test(v) ? `${v.slice(0, 4)}年${v.slice(4)}` : v));
+  state.era.forEach(v => c.push(v));
+  if (state.missOnly) c.push(state.missKey ? `未入力：${state.missKey}` : "未入力あり");
+  return c;
+}
+/* 一覧の上の1列：絞り込み・★保存・並び順・検索 */
+function fBarHtml() {
+  const n = fConds().length;
+  const [svLab, svOn] = fBtnLab("sv");
+  const [, srtOn] = fBtnLab("sort");
+  return `<div class="fbar">
+    <button type="button" class="fb fsh-b${n ? " on" : ""}" data-fsheet="1" aria-haspopup="dialog" aria-expanded="${state.fOpen === "all"}">${FSH_IC}<span class="v">絞り込み</span>${n ? `<b class="fsh-n">${n}</b>` : ""}</button>
+    <button type="button" class="fb fsv${svOn ? " on" : ""}" data-fpop="sv" aria-expanded="${state.fOpen === "sv"}"><span class="v">${esc(svLab)}</span></button>
+    <button type="button" class="fb srt${srtOn ? " on" : ""}" data-fpop="sort" aria-expanded="${state.fOpen === "sort"}" aria-label="並び順：${esc(SORTS.find(x => x[0] === state.sort)[1])}">${SORT_IC}</button>
+    <button type="button" class="fb fq" data-qtog="1" aria-label="検索">${FQ_IC}</button>
+  </div>`;
+}
+/* 検索欄（虫めがねを押したときだけ。キャンセルで閉じて検索も消す） */
+const fSearchHtml = () =>
+  `<div class="ftools"><input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"><button type="button" class="fq-x" data-qtog="0">キャンセル</button></div>`;
+/* 条件のラベル：2つまで出して、残りは「他○件」。押すと絞り込みシート */
+function fSumHtml(n) {
+  const c = fConds();
+  const show = c.slice(0, 2);
+  const rest = c.length - show.length;
+  return `<div class="fsum">${c.length ? `<div class="fsum-l">${show.map(t => `<button type="button" class="fchip" data-fsheet="1" title="${esc(t)}"><span>${esc(t)}</span></button>`).join("")}${rest ? `<button type="button" class="fmore" data-fsheet="1">他${rest}件</button>` : ""}</div><button type="button" class="clear" data-unset="all">解除</button>` : `<div class="fsum-l"></div>`}<span class="fsum-n">${state.q ? `「${esc(state.q)}」` : ""}${n}件</span></div>`;
+}
+/* シートの選択肢の行（1つ選ぶ・選んだら戻る） */
+const fOpt = (attr, v, lab, on, n) =>
+  `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" ${attr}="${esc(v)}"><span class="dd-l">${lab}${n != null ? `<small>${n}</small>` : ""}</span>${on ? DD_CHECK : ""}</button>`;
+function fSubBody(k) {
+  if (k === "st") {
+    const one = state.sf.length === 1 ? state.sf[0] : "";
+    return fOpt("data-stf", "", "すべて", !state.sf.length, fCountWithout(["sf"])) + STATUSES.map(v => fOpt("data-stf", v, stLabel(v), one === v, fCountWithout(["sf"], i => i.s === v))).join("");
+  }
+  if (k === "type") {
+    if (state.mode === "m")
+      return [["all", "すべて"], ["a", "アニメ映画"], ["d", "実写映画"]]
+        .map(([v, l]) => {
+          const keep = state.sub;
+          state.sub = v;
+          const n = fCountWithout([]);
+          state.sub = keep;
+          return fOpt("data-fmk", v, l, state.sub === v, n);
+        })
+        .join("");
+    const one = state.type.length === 1 ? state.type[0] : "";
+    return fOpt("data-ftype", "", "すべて", !state.type.length, fCountWithout(["type"])) + MEDIA.map(([md, l]) => [md, l, fCountWithout(["type"], i => mediaOf(i).media === md)]).filter(([md, , n]) => n || one === md).map(([md, l, n]) => fOpt("data-ftype", md, esc(l), one === md, n)).join("");
+  }
+  if (k === "vod") {
+    const used = new Set(items.filter(ofKind).flatMap(vodsOf));
+    const l = [...new Set([...VOD_TOP, ...M("vods"), ...used])].filter(v => used.has(v) || v === state.vod);
+    return fOpt("data-fvod", "", "すべて", !state.vod, fCountWithout(["vod"])) + l.map(v => fOpt("data-fvod", v, `<i class="dd-dot"${vcStyle(v)}></i>${esc(v)}`, state.vod === v, fCountWithout(["vod"], i => vodsOf(i).includes(v)))).join("");
+  }
+  if (k === "time") return timePanelHtml();
+  if (k === "series") return seriesPanelHtml();
+  return "";
+}
+function fSheetHtml() {
+  if (state.fOpen !== "all") return "";
+  const one = (l, all = "すべて") => (l.length ? l.join("・") : all);
+  const rows = [["st", "視聴ステータス", one(state.sf.map(stLabel))]];
+  if (state.mode === "a" || state.mode === "d") rows.push(["type", "種別", one(state.type.map(v => MEDIA_LAB[v] || v))]);
+  if (state.mode === "m") rows.push(["type", "種類", { a: "アニメ映画", d: "実写映画" }[state.sub] || "すべて"]);
+  rows.push(["vod", "配信", state.vod || "すべて"]);
+  rows.push(["time", "時期", one([...state.cour.map(v => (/^\d{4}/.test(v) ? `${v.slice(0, 4)}年${v.slice(4)}` : v)), ...state.era])]);
+  rows.push(["series", "シリーズ", one(state.series)]);
+  const multi = k => k === "time" || k === "series";
+  const body = rows
+    .map(([k, lab, val]) => {
+      const open = state.fSub === k;
+      const on = val !== "すべて";
+      return `<div class="fsh-it${open ? " open" : ""}"><button type="button" class="fsh-row" data-fsub="${k}" aria-expanded="${open}"><span class="fsh-k">${lab}</span><span class="fsh-v${on ? " on" : ""}">${esc(val)}</span>${FSH_CHEV}</button>${
+        open
+          ? `<div class="fsh-sub" role="group" aria-label="${lab}"><div class="fsh-subh"><button type="button" class="fsh-back" data-fsub="" aria-label="戻る"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><b>${lab}</b><span class="fsh-hint">${multi(k) ? "複数選べます" : "選ぶと閉じます"}</span>${multi(k) ? `<button type="button" class="u-btn sm pri" data-fsub="">完了</button>` : ""}</div><div class="fsh-subb${multi(k) ? " chipsmode" : " dd-list"}" role="${multi(k) ? "group" : "listbox"}">${fSubBody(k)}</div></div>`
+          : ""
+      }</div>`;
+    })
+    .join("");
+  /* 未入力あり：オンのときは項目ごとにさらに絞れる */
+  const mBase = (() => {
+    const keep = state.missOnly;
+    state.missOnly = false;
+    const l = filtered();
+    state.missOnly = keep;
+    return l;
+  })().map(missingOf);
+  const mN = mBase.filter(l => l.length).length;
+  let mkeys = "";
+  if (state.missOnly) {
+    const cnt = {};
+    mBase.forEach(l => l.forEach(x => (cnt[x.k] = (cnt[x.k] || 0) + 1)));
+    const ks = MISS_KEYS.filter(k => cnt[k] || state.missKey === k);
+    if (ks.length) mkeys = `<div class="mkeys fsh-mk" role="group" aria-label="未入力の項目で絞り込み"><button type="button" data-mkey="" aria-pressed="${!state.missKey}">すべて</button>${ks.map(k => `<button type="button" data-mkey="${esc(k)}" aria-pressed="${state.missKey === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`;
+  }
+  const n = filtered().length;
+  return `<div class="fsh-scrim" data-fshclose="1"></div><div class="fsh${state.fSub ? " subopen" : ""}" role="dialog" aria-label="絞り込み">
+    <div class="fsh-grab" aria-hidden="true"></div>
+    <div class="fsh-h"><b>絞り込み</b>${fConds().length ? `<button type="button" class="fsh-reset" data-unset="all">リセット</button>` : ""}<button type="button" class="fsh-x" data-fshclose="1" aria-label="閉じる">${FSH_X}</button></div>
+    <div class="fsh-body">${body}
+      <div class="fsh-it"><button type="button" class="fsh-row fsh-sw${state.missOnly ? " on" : ""}" data-missw role="switch" aria-checked="${state.missOnly}"><span class="fsh-k">未入力ありだけ</span><span class="fsh-v">${mN}件</span><span class="tr" aria-hidden="true"><i></i></span></button>${mkeys}</div>
+    </div>
+    <div class="fsh-f"><button type="button" class="fsh-go" data-fshclose="1">${n}件を表示</button></div>
+  </div>`;
+}
+/* シートの操作 */
+const SHEET_ACTIONS = [
+  [
+    "[data-fsheet]",
+    () => {
+      state.fOpen = state.fOpen === "all" ? "" : "all";
+      state.fSub = "";
+      state.svMode = "";
+      render();
+      if (state.fOpen && !TOUCH) document.querySelector(".fsh .fsh-row")?.focus();
+    },
+  ],
+  [
+    "[data-fshclose]",
+    () => {
+      state.fOpen = "";
+      state.fSub = "";
+      saveUI();
+      render();
+      if (!TOUCH) document.querySelector(".fsh-b")?.focus();
+    },
+  ],
+  /* 項目を開く・閉じる（data-fsub="" は戻る・完了） */
+  [
+    "[data-fsub]",
+    el => {
+      const k = el.dataset.fsub;
+      const was = state.fSub;
+      state.fSub = k && state.fSub !== k ? k : "";
+      fSubOpenedAt = Date.now();
+      render();
+      if (!TOUCH) {
+        const t = state.fSub ? document.querySelector(".fsh-sub .dd-row.on,.fsh-sub .dd-row,.fsh-sub #seriesQ,.fsh-sub button") : document.querySelector(`.fsh-row[data-fsub="${was}"]`);
+        t?.focus();
+      }
+      const on = document.querySelector(".fsh-sub .dd-row.on");
+      if (on) on.scrollIntoView({ block: "nearest" });
+    },
+  ],
+  ["[data-ftype]", el => fPicked(() => (state.type = el.dataset.ftype ? [el.dataset.ftype] : []))],
+  ["[data-fmk]", el => fPicked(() => (state.sub = el.dataset.fmk))],
+  ["[data-fvod]", el => fPicked(() => (state.vod = el.dataset.fvod))],
+  /* クールの年：登録のある年だけを順に（‹ 前の年・› 次の年） */
+  ["[data-couryb]", el => {
+    const ys = [...new Set(items.flatMap(i => coursOf(i)).filter(c => /^\d{4}/.test(c)).map(c => +c.slice(0, 4)))].sort((a, b) => b - a);
+    const i = Math.max(0, ys.indexOf(state.courY));
+    state.courY = ys[Math.min(ys.length - 1, Math.max(0, i + +el.dataset.couryb))] || state.courY;
+    saveUI();
+    render();
+  }],
+  [
+    "[data-qtog]",
+    el => {
+      const on = el.dataset.qtog === "1";
+      state.qOpen = on;
+      state.fOpen = "";
+      state.fSub = "";
+      if (!on) state.q = "";
+      state.limit = 200;
+      render();
+      if (on) {
+        const i = $("#q");
+        if (i) {
+          i.focus();
+          i.setSelectionRange(i.value.length, i.value.length);
+        }
+      }
+    },
+  ],
+];
+/* 開いた直後の指の離れで、下に出てきた選択肢を押してしまわないように少し待つ */
+let fSubOpenedAt = 0;
+function fPicked(set) {
+  if (Date.now() - fSubOpenedAt < 300) return;
+  set();
+  state.fSub = "";
+  state.limit = 200;
+  saveUI();
+  render();
+  if (!TOUCH) document.querySelector(".fsh-row[aria-expanded]")?.focus();
+}

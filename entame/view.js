@@ -12,7 +12,27 @@ const MODE_IC = {
   s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13M8.2 15.3a5.5 5.5 0 0 1 0-6.6M15.8 8.7a5.5 5.5 0 0 1 0 6.6"/><path d="M10.6 9.8v4.4l3.6-2.2z" fill="currentColor"/></svg>',
   h: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
   yt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
+  o: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>',
 };
+/* スマホの下メニュー：番組表・アニメ・ドラマ・その他（映画・バラエティ・YouTube・視聴記録は「その他」の中） */
+const OTHER_MODES = ["m", "s", "yt", "h"];
+function renderBnav() {
+  const nav = $("#bnav");
+  if (!nav) return;
+  const cur = OTHER_MODES.includes(state.mode) ? "o" : state.mode;
+  nav.innerHTML = ["w", "a", "d", "o"]
+    .map(m => `<button type="button" data-bnav="${m}"${cur === m ? ' aria-current="page"' : ""}>${MODE_IC[m].replace("<svg ", '<svg aria-hidden="true" ')}${MODE_NAME[m]}</button>`)
+    .join("");
+}
+/* 「その他」の画面：タイルで並べる */
+function renderOther() {
+  const n = m => (m === "yt" ? ytItems.length : m === "h" ? null : items.filter(i => inMode(m, i)).length);
+  const sub = { m: "作品", s: "作品", yt: "本" };
+  return `<div class="otiles">${OTHER_MODES.map(m => {
+    const c = n(m);
+    return `<button type="button" class="otile ${m}" data-bnav="${m}"><span class="mic ${m}" aria-hidden="true">${MODE_IC[m]}</span><b>${MODE_NAME[m]}</b><small>${c == null ? "見た話数の記録" : `${c}${sub[m]}`}</small></button>`;
+  }).join("")}</div>`;
+}
 /* PC：左の折りたためるメニュー */
 let sbCollapsed = !!ls.get("adb.v3.sbc");
 const sbFold = new Set(ls.get("adb.v3.sbf") || []); // 下の項目をたたんでいるメニュー
@@ -609,33 +629,15 @@ function renderList() {
   const list = filtered();
   const sortHtml = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
     <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${GROUPS.map(([v, l]) => `<button type="button" role="radio" data-grp="${v}" aria-checked="${state.grp === v}" aria-pressed="${state.grp === v}">${state.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
-  const anyF = ["series", "type", "era", "cour", "sf"].some(k => state[k].length) || state.vod;
-  /* 開いている絞り込みの中身だけ作る */
-  const panel = { vod: vodPanelHtml, time: timePanelHtml, series: seriesPanelHtml, sv: svPanelHtml, sort: () => sortHtml }[state.fOpen];
-  /* 未入力あり：オンのときは項目ごとの件数ボタンで、さらに1項目に絞れる */
-  const mBase = (() => {
-    const keep = state.missOnly;
-    state.missOnly = false;
-    const l = filtered();
-    state.missOnly = keep;
-    return l;
-  })().map(missingOf);
-  const mN = mBase.filter(l => l.length).length;
-  const msw = `<button type="button" class="unsw misw${state.missOnly ? " on" : ""}" data-missw role="switch" aria-checked="${state.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
-  let mkeys = "";
-  if (state.missOnly) {
-    const cnt = {};
-    mBase.forEach(l => l.forEach(x => (cnt[x.k] = (cnt[x.k] || 0) + 1)));
-    const ks = MISS_KEYS.filter(k => cnt[k] || state.missKey === k);
-    if (ks.length)
-      mkeys = `<div class="mkeys misw" role="group" aria-label="未入力の項目で絞り込み"><button type="button" data-mkey="" aria-pressed="${!state.missKey}">すべて</button>${ks.map(k => `<button type="button" data-mkey="${esc(k)}" aria-pressed="${state.missKey === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`;
-  }
-  return `<div class="ftools"><input id="q" type="search" placeholder="タイトル・主題歌・放送局で検索" value="${esc(state.q)}" aria-label="検索"></div>
-    ${stSegHtml()}
-    ${state.xser && state.series.length ? `<div class="xser"><span><b>シリーズ「${esc(state.series.join("・"))}」</b>をアニメ・ドラマ・映画・配信まとめて表示しています</span><button type="button" class="u-btn sm" data-xseroff="1">${esc(MODE_NAME[state.mode])}だけにする</button></div>` : ""}
-    <div class="fwrap">${fRowHtml(FKEYS)}${fPopHtml(panel ? panel() : "")}</div>
-    <p class="count">${list.length}件${anyF ? `<button type="button" class="clear" data-unset="all">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
-    ${list.length ? groupedHtml(list) : `<p class="empty">条件に合う作品はありません。</p>`}`;
+  /* ★保存・並び順は今までどおりボタンの下に出す。絞り込みはシート（fSheetHtml） */
+  const panel = { sv: svPanelHtml, sort: () => sortHtml }[state.fOpen];
+  const searching = state.qOpen || !!state.q;
+  return `${searching ? fSearchHtml() : ""}
+    <div class="fwrap">${searching ? "" : fBarHtml()}${fPopHtml(panel ? panel() : "")}</div>
+    ${fSumHtml(list.length)}
+    <p class="count"></p>
+    ${fSheetHtml()}
+    ${list.length ? groupedHtml(list) : `<p class="empty">${state.q ? `「${esc(state.q)}」に一致する作品はありません。` : "条件に合う作品はありません。"}</p>`}`;
 }
 let loaded = false;
 /* 検索欄は作り直さない（作り直すと入力中の文字・日本語変換・カーソルが壊れるため） */
@@ -680,12 +682,15 @@ function render() {
   const hc = $("#hcur");
   if (hc)
     hc.innerHTML =
+      (OTHER_MODES.includes(state.mode) ? `<button type="button" class="hback" data-bnav="o" aria-label="その他に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>` : "") +
       `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>${hSubLab() ? `<span class="hsub ${state.mode}">${esc(hSubLab())}</span>` : ""}`;
   renderThemeBtn();
   renderSidebar();
+  renderBnav();
+  document.documentElement.classList.toggle("fshopen", state.fOpen === "all" && state.mode !== "yt");
   if (!loaded) return;
   const y = lockY ?? scrollY;
-  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : renderList();
+  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : state.mode === "o" ? renderOther() : renderList();
   /* 「すべて開く／閉じる」は件数と同じ行の右端に置く */
   const gb = /<span class="gbulk">[\s\S]*?<\/span>/.exec(body);
   const ci = body.indexOf('<p class="count">');
@@ -709,7 +714,11 @@ function setMode(m) {
   state.sub = "all";
   state.wday = "";
   state.xser = false;
-  if (m === "w" || m === "yt" || m === "h") return;
+  state.fOpen = "";
+  state.fSub = "";
+  state.qOpen = false;
+  state.q = "";
+  if (m === "w" || m === "yt" || m === "h" || m === "o") return;
   if (m === "m" || m === "s") state.type = [];
   state.limit = 200;
   state.series = [];

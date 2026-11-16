@@ -1562,3 +1562,138 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .sgfix-b button.primary{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
 /* YouTube詳細：上段のジャンル（押すと編集）。作品の種別ラベルと同じ形 */
 .dhead .meta .dmt.lab{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent);font-weight:700}
+
+/* ===================== 2026-11 見直し：上の帯・下メニュー・絞り込みシート・プルダウン ===================== */
+/* 上の帯：スマホは☰と月マークをなくし、右に＋（追加）と⚙（設定）。PCは今までどおり */
+.hact{display:none;flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);place-items:center;padding:0;cursor:pointer}
+.hact svg{width:20px;height:20px}
+.hback{display:none}
+:root{--tbh:58px}
+@media (max-width:899px){
+  header .hmenu,header .hthm{display:none}
+  header .hact{display:grid}
+  header #hAdd{margin-left:auto}
+  .hseg:not(:empty)~#hAdd{margin-left:4px}
+  .hback{display:grid;place-items:center;flex:none;width:32px;height:36px;margin:0 2px 0 -6px;border:0;background:none;color:var(--u-ink);padding:0;cursor:pointer}
+  .hbar:has(.hback) .hcur .mic{display:none}
+  body{padding-bottom:calc(var(--u-navb) + var(--tbh) + 24px);--u-toast-b:calc(var(--tbh) + 22px)}
+  .u-app .totop{bottom:calc(var(--u-navb) + var(--tbh) + 12px)}
+  /* 左から出すメニューは使わない */
+  .u-app .sb,.dscrim{display:none!important}
+}
+/* 下メニューの色：今いるメニューの色に合わせる */
+.u-app .tabbar button{cursor:pointer}
+
+/* 「その他」：映画・バラエティ・YouTube・視聴記録のタイル */
+.otiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-block:16px}
+.otile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:96px;border:1px solid var(--u-line);border-radius:16px;background:var(--u-surface);color:var(--u-ink);font:inherit;cursor:pointer;padding:12px}
+.otile .mic{width:30px;height:30px}
+.otile .mic svg{width:26px;height:26px}
+.otile b{font-size:15px}
+.otile small{font-size:12px;color:var(--u-sub);font-family:var(--u-num)}
+.otile:active{transform:scale(.98)}
+@media (min-width:900px){.otiles{grid-template-columns:repeat(4,minmax(0,200px))}}
+
+/* 一覧の上の1列：絞り込み・★保存・並び順・検索 */
+.fbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) 42px 42px;gap:6px;margin-top:12px}
+@media (min-width:900px){.fbar{grid-template-columns:minmax(0,180px) minmax(0,auto) 42px 42px;justify-content:start}}
+.fbar .fb{padding:0 10px;cursor:pointer}
+.fbar .fsv{max-width:150px}
+.fbar .fq{padding:0}
+.fsh-b svg{flex:none}
+.fsh-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--u-surface);color:var(--u-ink);font-family:var(--u-num);font-size:11px;margin-left:2px}
+/* 検索欄（虫めがねを押したとき） */
+.ftools .fq-x{flex:none;border:0;background:none;color:var(--accent);font:inherit;font-size:14px;font-weight:700;padding:0 4px;cursor:pointer}
+.ftools input{font-size:16px}
+/* 条件のラベル（2つまで＋他○件）・解除・件数。高さは1行のまま */
+.fsum{display:flex;align-items:center;gap:8px;margin:10px 0 2px;min-height:28px;font-size:12px;color:var(--u-sub)}
+.fsum-l{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
+.fchip{min-width:0;max-width:46%;display:inline-flex;align-items:center;border:1px solid color-mix(in srgb,var(--u-acct) 55%,transparent);background:var(--u-accent2);color:var(--u-acct);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.fchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fmore{flex:none;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:3px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.fsum .clear{flex:none;border:0;background:transparent;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;padding:2px 0;cursor:pointer}
+.fsum-n{flex:none;font-family:var(--u-num);white-space:nowrap;max-width:50%;overflow:hidden;text-overflow:ellipsis}
+.count:empty{display:none}
+.count{margin-top:4px}
+
+/* 絞り込みシート：スマホは下から、PCは右のパネル */
+.fsh-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.4)}
+.fsh{position:fixed;left:0;right:0;bottom:0;z-index:61;display:flex;flex-direction:column;max-height:86vh;background:var(--u-surface);color:var(--u-ink);border-radius:18px 18px 0 0;border-top:1px solid var(--u-line);box-shadow:0 -8px 30px rgba(0,0,0,.2);padding-bottom:env(safe-area-inset-bottom,0px);animation:ddup .2s ease-out;overflow:hidden}
+.fsh-grab{width:38px;height:4px;border-radius:2px;background:var(--u-strong);margin:8px auto 0;flex:none}
+.fsh-h{display:flex;align-items:center;gap:10px;padding:10px 12px 8px 18px;flex:none}
+.fsh-h b{flex:1;font-size:17px}
+.fsh-reset{border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:700;padding:6px 4px;cursor:pointer}
+.fsh-x,.dd-x{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--u-soft);color:var(--u-sub);display:grid;place-items:center;padding:0;cursor:pointer;font-size:15px}
+.fsh-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 0 6px}
+.fsh-it{border-top:1px solid var(--u-soft)}
+.fsh-row{width:100%;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 14px 0 18px;border:0;background:none;color:var(--u-ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.fsh-row:hover,.fsh-row:focus-visible{background:var(--u-soft);outline:none}
+.fsh-k{flex:none;font-weight:700}
+.fsh-v{flex:1;min-width:0;text-align:right;color:var(--u-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.fsh-v.on{color:var(--u-acct);font-weight:700}
+.fsh-cv{flex:none;color:var(--u-sub);transition:transform .15s}
+.fsh-sw .tr{position:relative;flex:none;width:44px;height:26px;border-radius:13px;background:var(--u-strong);transition:background .15s}
+.fsh-sw .tr i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.fsh-sw.on .tr{background:var(--u-warn)}
+.fsh-sw.on .tr i{left:21px}
+.fsh-sw .fsh-v{font-family:var(--u-num)}
+.fsh-mk{padding:0 18px 12px}
+.fsh-f{flex:none;padding:10px 16px 12px;border-top:1px solid var(--u-line)}
+.fsh-go{width:100%;height:48px;border:0;border-radius:12px;background:var(--u-ink);color:var(--u-surface);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+/* 選択肢：スマホはシートの上に重ねる（選ぶと戻る）。PCは項目のすぐ下に開く */
+.fsh-sub{background:var(--u-surface)}
+.fsh-subh{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 6px;border-bottom:1px solid var(--u-soft)}
+.fsh-subh b{font-size:16px}
+.fsh-hint{flex:1;font-size:12px;color:var(--u-sub)}
+.fsh-back{width:38px;height:38px;border:0;background:none;color:var(--u-ink);display:grid;place-items:center;padding:0;border-radius:50%;cursor:pointer}
+.fsh-back:hover{background:var(--u-soft)}
+.fsh-subb.dd-list .dd-row:first-child{border-top:0}
+.fsh-subb.chipsmode{padding:4px 16px 14px}
+.fsh-subb.chipsmode .fgroup{margin-top:12px}
+.fsh-subb.chipsmode .fgroup h5 .hint{font-weight:400}
+.fsh-subb.chipsmode #seriesQ{width:100%;box-sizing:border-box;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:10px;padding:9px 11px;font:inherit;font-size:16px}
+.fsh-subb.chipsmode #serSug{display:block;margin-top:8px}
+.fsh-subb.chipsmode .sershd{display:block;margin:2px 0 6px}
+.fsh-subb.chipsmode .serbox{display:flex;flex-wrap:wrap;gap:6px}
+.fsh-subb.chipsmode .serbox button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.fsh-subb.chipsmode .serbox button small{font-family:var(--u-num);font-size:10.5px;opacity:.7;margin-left:4px}
+.cyb{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--u-line);border-radius:999px;padding:1px 3px;background:var(--u-surface)}
+.cyb b{font-family:var(--u-num);font-size:13px;padding:0 4px}
+.chips .cyb button{border:0;padding:3px 9px;font-size:15px;line-height:1;background:none}
+.chips .cyb button:disabled{opacity:.3}
+@media (max-width:899px){
+  html.fshopen,html.fshopen body,html.pkopen,html.pkopen body{overflow:hidden}
+  .fsh.subopen .fsh-sub{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;border-radius:18px 18px 0 0;animation:fshin .18s ease-out}
+  .fsh.subopen .fsh-subb{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+  .fsh.subopen .fsh-subh{padding-top:12px}
+  .fsh.subopen{min-height:min(60vh,520px)}
+}
+@keyframes fshin{from{transform:translateX(24px);opacity:.5}}
+@media (min-width:900px){
+  .fsh-scrim{background:rgba(0,0,0,.12)}
+  .fsh{left:auto;top:var(--hdh,56px);width:360px;max-height:none;border-radius:0;border-top:0;border-left:1px solid var(--u-line);box-shadow:-8px 0 28px rgba(16,24,40,.12);animation:fshpc .18s ease-out}
+  .fsh-grab{display:none}
+  .fsh-h{padding-top:14px}
+  .fsh-it.open .fsh-cv{transform:rotate(90deg)}
+  .fsh-sub{margin:0 12px 12px;border:1px solid var(--u-line);border-radius:12px;overflow:hidden}
+  .fsh-subh .fsh-back{display:none}
+  .fsh-subh{padding-left:14px}
+  .fsh-subb.dd-list{max-height:320px;overflow:auto}
+  .fsh-row{min-height:46px;font-size:14px}
+}
+@keyframes fshpc{from{transform:translateX(30px);opacity:.6}}
+/* プルダウン（端末標準だった選択も同じ見た目に） */
+#pkPop{position:fixed;inset:0;z-index:85}
+#pkPop .dd-scrim{position:absolute;inset:0;background:rgba(0,0,0,.18)}
+#pkPop.popmode .dd-scrim{background:transparent}
+#pkPop .dd-box{position:absolute;display:flex;flex-direction:column;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);overflow:hidden;animation:fdrop .14s ease-out}
+#pkPop.sheetmode .dd-box{left:0;right:0;bottom:0;max-height:min(78vh,620px);border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:ddup .2s ease-out}
+.sheetmode .dd-h{align-items:center;padding-right:12px}
+.sheetmode .dd-scrim{background:rgba(0,0,0,.35)!important}
+select#arcJump,select.sg-t{cursor:pointer}
+.dd-row{-webkit-tap-highlight-color:transparent}
+/* 設定：表示（自動・ライト・ダーク） */
+.setthm{display:flex;align-items:center;gap:12px;margin:4px 0 14px}
+.setthm b{flex:none;font-size:13px}
+.setthm .hseg3{flex:1;max-width:320px}
+.dd-l .dd-dot{display:inline-block;margin-right:10px;vertical-align:0}
