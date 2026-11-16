@@ -1316,7 +1316,7 @@ button.imt[aria-expanded="false"]+.imt,button.imt[aria-expanded="false"]+button.
   .u-app{zoom:1.12}
   header .wrap,.wrap{max-width:1250px}
   .sheet:not(.form){max-width:1040px}
-  .sheet.t-info:not(.form) .dp-info{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:0 14px;align-items:start}
+  .sheet.t-info:not(.form) .dp-info{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 14px;align-items:start}
   .sheet:not(.form) .dp-info>.icard{margin-bottom:10px}
   .sheet:not(.form) .dp-info>.ilinks,.sheet:not(.form) .dp-info>.links,.sheet:not(.form) .dp-info>.ined:not(.incard){grid-column:1/-1}
 }
@@ -1499,7 +1499,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fdd-ph{color:var(--u-sub);font-weight:500}
 .fdd-cv{flex:none;color:var(--u-sub);transition:transform .15s}
 .fdd[aria-expanded="true"] .fdd-cv{transform:rotate(180deg)}
-.fdd-c{font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--u-soft);color:var(--u-ink);line-height:1.4}
+.fdd-c{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--u-soft);color:var(--u-ink);line-height:1.4}
 .fdd-c.vc{border-radius:7px;background:var(--vc);color:var(--vt)}
 .fdd-more{font-size:12px;font-weight:500;color:var(--u-sub)}
 #ddPop{position:fixed;inset:0;z-index:80}
@@ -1532,3 +1532,14 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .frow3{display:grid;gap:10px;min-width:0}
 @media (min-width:700px){.frow3{grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px 16px}}
 .frow3>.field{min-width:0}
+/* 放送クール：ボタンを小さめにして1行に収める・ほかのクールはプルダウン */
+.cours{gap:5px}
+.field .cours .tag,.field .cours .sugbtn{padding:4px 10px;font-size:12.5px;white-space:nowrap}
+.sugbtn.fdd-mini{display:inline-flex;align-items:center;gap:2px}
+.sugbtn.fdd-mini[aria-expanded="true"]{border-color:var(--u-accent);color:var(--u-ink)}
+.sugbtn.fdd-mini[aria-expanded="true"] .fdd-cv{transform:rotate(180deg)}
+.sugbtn.fdd-mini .fdd-cv{width:14px;height:14px}
+.dd-year{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;flex:none}
+.dd-year b{font-family:var(--u-num);font-size:16px}
+.dd-yb{width:38px;height:34px;border:1px solid var(--u-line);border-radius:10px;background:var(--u-bg);color:var(--u-ink);font-size:18px;line-height:1;cursor:pointer}
+.dd-yb:hover{background:var(--u-soft)}

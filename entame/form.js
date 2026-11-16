@@ -4,7 +4,7 @@ let form = null;
    一覧は詳細・編集のシートの外（body直下の #ddPop）に出す：シートの中だとはみ出して切れるため。
    スマホは下から出る一覧、PCはボタンのすぐ下（下に場所がなければ上）に小さく出す */
 const DD_NOF = { st: "st", plat: "plat", vods: "vods" };
-const DD_TITLE = { media: "放送形態", st: "放送局", plat: "配信サイト", vods: "配信サイト", ser: "シリーズ" };
+const DD_TITLE = { cour: "ほかのクール", media: "放送形態", st: "放送局", plat: "配信サイト", vods: "配信サイト", ser: "シリーズ" };
 const DD_NONE = { st: "なし（放送局なし）", plat: "なし（配信なし）", vods: "なし（配信なし）", ser: "なし（シリーズなし）" };
 const DD_CHEV = `<svg class="fdd-cv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
 const DD_CHECK = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>`;
@@ -32,6 +32,11 @@ function ddRows(k, q) {
     `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddpick="${esc(v)}">${extra}<span class="dd-l">${lab}</span>${on ? DD_CHECK : ""}</button>`;
   const none = on => (nq ? "" : `<button type="button" class="dd-row none${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddnone="1"><span class="dd-l">${DD_NONE[k]}</span>${on ? DD_CHECK : ""}</button>`);
   if (k === "media") return ddMedia().map(([v, l]) => row(v, esc(l), form.media === v)).join("");
+  /* ほかのクール：上で年を切り替え、季節を選ぶと追加（付いているものを選ぶと外す） */
+  if (k === "cour") {
+    const y = form.cy;
+    return `<div class="dd-year"><button type="button" class="dd-yb" data-ddcy="-1" aria-label="前の年">‹</button><b>${y}年</b><button type="button" class="dd-yb" data-ddcy="1" aria-label="次の年">›</button></div>${SEASONS.map(x => row(x, `${y}年${x}`, form.cours.includes(`${y}${x}`))).join("")}`;
+  }
   if (k === "ser") {
     const grp = serGroup(form.k);
     const { map, cnt } = seriesMainMap();
@@ -60,7 +65,7 @@ function openDD(k, btn) {
   closeDD();
   ddOpen = k;
   btn.setAttribute("aria-expanded", "true");
-  const search = k !== "media";
+  const search = k !== "media" && k !== "cour";
   const box = document.createElement("div");
   box.id = "ddPop";
   const sheet = ddSheetMode();
@@ -106,7 +111,10 @@ function ddPick(v, none) {
   if (!k || !form) return closeDD();
   readForm();
   if (k === "media") form.media = v;
-  else if (k === "ser") form.series = none ? "" : v;
+  else if (k === "cour") {
+    const key = `${form.cy}${v}`;
+    form.cours = form.cours.includes(key) ? form.cours.filter(c => c !== key) : [...form.cours.filter(c => c !== ALLYEAR), key].sort();
+  } else if (k === "ser") form.series = none ? "" : v;
   else {
     const nk = DD_NOF[k];
     const l = (form.noF || []).filter(x => x !== nk);
@@ -126,6 +134,10 @@ function onDDClick(e) {
   const p = e.target.closest("[data-ddpick]");
   if (p) ddPick(p.dataset.ddpick, false);
   else if (e.target.closest("[data-ddnone]")) ddPick("", true);
+  else if (e.target.closest("[data-ddcy]")) {
+    form.cy = (+form.cy || new Date().getFullYear()) + +e.target.closest("[data-ddcy]").dataset.ddcy;
+    $("#ddList").innerHTML = ddRows("cour", "");
+  }
   else if (e.target.closest("[data-ddsernew]")) {
     const n = e.target.closest("[data-ddsernew]").dataset.ddsernew;
     if (n && !M("series").includes(n)) {
@@ -319,18 +331,17 @@ function formHtml() {
         ? ""
         : `<div class="field full"><span>放送クール</span>
         <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未設定</span>` : ""}
-          ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}（開始日から）</button>` : ""}
+          ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}</button>` : ""}
           ${(() => {
             /* 2クール目以降：選んだ最後のクールの次をワンタップで */
             const last = dyn.filter(c => /^\d{4}/.test(c)).sort().pop();
             if (!last || f.cours.includes(ALLYEAR)) return "";
             const si = SEASONS.indexOf(last.slice(4)),
               nx = si === 3 ? `${+last.slice(0, 4) + 1}${SEASONS[0]}` : `${last.slice(0, 4)}${SEASONS[si + 1]}`;
-            return f.cours.includes(nx) ? "" : `<button type="button" class="sugbtn" data-courkey="${nx}">＋ ${courLabel(nx)}（次のクール）</button>`;
+            return f.cours.includes(nx) ? "" : `<button type="button" class="sugbtn" data-courkey="${nx}">＋ ${courLabel(nx)}</button>`;
           })()}
           <button type="button" class="sugbtn${f.cours.includes(ALLYEAR) ? " on" : ""}" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
-          <button type="button" class="sugbtn ghost" data-courmore="1" aria-expanded="${!!f.courOpen}">ほかのクール ${FOLD_IC}</button></div>
-        ${f.courOpen || f.only ? `<div class="courpick"><select id="f-cy" aria-label="年">${years.map(k => `<option ${k === f.cy ? "selected" : ""}>${k}</option>`).join("")}</select><div class="segc" role="group" aria-label="季節を追加">${SEASONS.map(s => `<button type="button" data-couradd="${s}">${s}</button>`).join("")}</div></div>` : ""}${nofBox("cours")}</div>`,
+          <button type="button" class="sugbtn ghost fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
     n:
       f.id || f.media === "movie" || f.media === "sp"
         ? ""
@@ -826,16 +837,6 @@ const FORM_ACTIONS = [
       const on = form.cours.includes(ALLYEAR);
       form.cours = form.cours.filter(c => c !== ALLYEAR);
       if (!on) form.cours.unshift(ALLYEAR);
-    }),
-  ],
-  ["[data-courmore]", formEdit(() => (form.courOpen = !form.courOpen))],
-  [
-    "[data-couradd]",
-    formEdit(el => {
-      form.courOpen = true;
-      const key = `${form.cy}${el.dataset.couradd}`;
-      if (!form.cours.includes(key)) form.cours.push(key);
-      form.cours.sort();
     }),
   ],
   ["[data-courdel]", formEdit(el => (form.cours = form.cours.filter(c => c !== el.dataset.courdel)))],
