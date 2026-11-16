@@ -1702,7 +1702,7 @@ select#arcJump,select.sg-t{cursor:pointer}
 .fsh.in{animation:ddup .2s ease-out}
 @media (max-width:899px){
   .fsh{height:min(74vh,620px);max-height:none}
-  .fsh-sub.in{animation:fshin .16s ease-out}
+  .fsh-sub.in{animation:none}
 }
 @media (min-width:900px){.fsh.in{animation:fshpc .18s ease-out}}
 /* YouTube：★保存なしの3つ */
