@@ -234,6 +234,7 @@ const IC = {
   gym: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 9.5v5M21 9.5v5M6 12h12"/></svg>',
   body: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><path d="M4 18 9 12l4 3 7-8"/><path d="M15 7h5v5"/></svg>',
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
   gacha: '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><circle cx="12" cy="12" r="2.3"/></svg>',
 };
 
@@ -682,9 +683,9 @@ function render(){
   if(!S.user || !S.role) return;
   const isM = S.role === 'member';
   const tabs = isM ? [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body],['gacha','ガチャ',IC.gacha],['secret','ひみつ',IC.lock]]
-                   : [];
+                   : [['home','応援',IC.heart.replace('fill="#f48fb1"','fill="none" stroke-width="1.8" stroke-linejoin="round"')],['ogacha','ガチャ',IC.gacha],['chars','キャラ',IC.star]];
   const views = isM ? { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, gacha:viewGacha, secret:viewSecret, settings:viewSettings }
-                    : { home:viewOwnerHome, settings:viewSettings };
+                    : { home:viewOwnerHome, ogacha:viewOwnerGacha, chars:viewOwnerChars, settings:viewSettings };
   const fabTarget = isM ? ({ meals:'meal', gym:'gym', secret: S.key ? 'log' : null })[S.tab] : null;
   const y = window.scrollY;
   $app.innerHTML = `
@@ -694,7 +695,6 @@ function render(){
     </header>
     ${(views[S.tab] || views.home)()}
     ${fabTarget ? `<button class="fab" data-a="open" data-v="${fabTarget}" aria-label="記録する">＋</button>` : ''}
-    ${S.tab === 'settings' && !isM ? `<button class="btn sub block" data-a="tab" data-v="home">← メッセージに戻る</button>` : ''}
     ${tabs.length ? `<nav class="tabs"><div class="in">${tabs.map(([k,l,ic]) => `<button class="${S.tab===k?'on':''}" data-a="tab" data-v="${k}">${ic}<span>${l}</span></button>`).join('')}</div></nav>` : ''}`;
   window.scrollTo(0, y);
 }
@@ -850,53 +850,75 @@ function pastCheers(){
   return `<div class="card"><h2>${IC.heart.replace('<svg','<svg style="width:16px"')} これまでのメッセージ</h2><ul class="list">
     ${old.map(c => `<li><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div><div class="s">${FROM}より ・ ${cheerDate(c)}</div></div></li>`).join('')}</ul></div>`;
 }
+/* ===== オーナー画面（応援・ガチャ・キャラの3タブ） ===== */
+// シリーズのタブ（オーナー画面用）。all=true なら「ぜんぶ」タブもつける
+function ownerSerTabs(cur, act, all, count){
+  const list = seriesList(); if(list.length < 2 && !all) return '';
+  const tabs = list.length > 1 && all ? [MIX, ...list] : list;
+  if(tabs.length < 2) return '';
+  return `<div class="sertabs">${tabs.map(n => { const [tc] = serColor(n);
+    return `<button class="${n === cur ? 'on' : ''}" ${n === cur ? `style="background:${tc}"` : ''} data-a="${act}" data-v="${esc(n)}">${esc(n === MIX ? 'ぜんぶ' : n)}<small>${count(n)}</small></button>`; }).join('')}</div>`;
+}
+const pickSer = (v, all) => { const l = seriesList(); if(all && v === MIX && l.length > 1) return MIX; return l.includes(v) ? v : (all && l.length > 1 ? MIX : (l[0] || '')); };
+
 function viewOwnerHome(){
   const joined = S.cfg.memberUid || S.cfg.memberEmail;
-  let html = `<div class="card cheer">${IC.heart.replace('<svg','<svg class="deco"')}
-    <div class="hello">応援メッセージ</div>
-    <p>ここに書いたメッセージが、彼女のホーム画面のいちばん上に出ます。</p></div>`;
+  const n = S.moreCheers ? S.cheers.length : 5;
+  let html = '';
   if(!joined) html += `<div class="card"><h2>はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
-  html += `<div class="card"><h2>メッセージを送る</h2><form data-form="cheer">
-      <textarea class="in" name="text" rows="4" maxlength="300" required placeholder="例：ジムおつかれさま！無理しすぎないでね"></textarea>
+  html += `<div class="card cheer">${IC.heart.replace('<svg','<svg class="deco"')}
+    <div class="hello">応援メッセージ</div>
+    <p style="margin:2px 0 10px">彼女のホーム画面のいちばん上に出ます。</p>
+    <form data-form="cheer">
+      <textarea class="in" name="text" rows="3" maxlength="300" required placeholder="例：ジムおつかれさま！無理しすぎないでね"></textarea>
       <label class="row" style="margin-top:8px;font-size:14px"><input type="checkbox" name="ticket"> 🎟️ ガチャチケットを1枚そえる</label>
       <button class="btn block" style="margin-top:10px">送る ♡</button></form></div>`;
-  html += ownerGachaCard();
-  html += ownerCharCard();
-  html += `<div class="card"><h2>送ったメッセージ<span class="sub">最新のものが表示されます</span></h2>
-    ${S.cheers.length ? `<ul class="list">${S.cheers.map((c,i) => `<li class="editable" data-a="cheeropen" data-id="${c.id}"><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
-      <div class="s">${cheerDate(c)}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div></li>`).join('')}</ul>` : '<p class="empty">まだ送っていません</p>'}
-    <p class="muted">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
+  html += `<div class="card"><h2>送ったメッセージ<span class="sub">${S.cheers.length}件</span></h2>
+    ${S.cheers.length ? `<ul class="list">${S.cheers.slice(0, n).map((c,i) => `<li class="editable" data-a="cheeropen" data-id="${c.id}"><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
+      <div class="s">${cheerDate(c)}${c.ticket ? ' ・ 🎟️' : ''}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div></li>`).join('')}</ul>
+      ${S.cheers.length > 5 ? `<button class="btn ghost block sm" data-a="omore" data-v="moreCheers" style="margin-top:8px">${S.moreCheers ? 'とじる' : `もっと見る（あと${S.cheers.length - 5}件）`}</button>` : ''}` : '<p class="empty">まだ送っていません</p>'}
+    <p class="muted" style="margin-bottom:0">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
   return html;
 }
-function ownerGachaCard(){
+function viewOwnerGacha(){
   if(!S.gameReady) return `<div class="card"><h2>🎰 彼女のガチャ</h2><p class="muted" style="margin:0">読み込み中…（ずっとこのままなら、Firebaseのルールを確認してね）</p></div>`;
-  const g = G(), chars = allChars();
+  const g = G(), chars = allChars(), list = seriesList();
   const owned = chars.filter(c => g.coll[c.id] > 0).length;
+  const compN = list.filter(n => { const cs = serChars(n); return cs.length && cs.every(c => g.coll[c.id] > 0); }).length;
   const when = ms => { const d = new Date(ms); return `${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`; };
   const KIND = { new:['NEW','var(--pink-d)'], dup:['ダブり','var(--muted)'], swap:['かけら交換','#a77a12'] };
-  return `<div class="card"><h2>🎰 彼女のガチャ<span class="sub"><span class="tix">🎟️ ${g.tickets}</span></span></h2>
-    <p class="muted" style="margin:0 0 10px">これまで ${g.pulls || 0}回 ・ かけら ${g.shards}/${SHARD_NEED}</p>
-    <div style="font-weight:700;color:var(--pink-d);margin-bottom:6px">📖 ずかん ${owned} / ${chars.length}</div>
-    ${chars.length ? zukanBySeries(g, seriesList(), true) : '<p class="empty">まだキャラを登録していません</p>'}
-    <div style="font-weight:700;color:var(--pink-d);margin:14px 0 2px">🕒 ガチャ履歴</div>
-    ${(g.history || []).length ? `<ul class="list">${g.history.slice(0, 50).map(h => { const c = chars.find(x => x.id === h.id), [kl, kc] = KIND[h.kind] || KIND.new;
+  const ser = pickSer(S.oser, true), names = ser === MIX ? list : [ser];
+  const cnt = n => { const cs = n === MIX ? chars : serChars(n); return `${cs.filter(c => g.coll[c.id] > 0).length}/${cs.length}`; };
+  const hist = g.history || [], hn = S.moreHist ? 50 : 10;
+  const stat = (v, l) => `<div style="flex:1;text-align:center"><div style="font-size:20px;font-weight:700;color:var(--pink-d)">${v}</div><div class="muted" style="font-size:11px">${l}</div></div>`;
+  return `<div class="card"><h2>🎰 彼女のガチャ</h2>
+      <div class="row" style="gap:4px">${stat('🎟️ ' + g.tickets, 'チケット')}${stat(g.pulls || 0, '回まわした')}${stat(`${g.shards}/${SHARD_NEED}`, 'かけら')}${stat(`${compN}/${list.length}`, 'コンプ')}</div></div>
+    <div class="card"><h2>📖 ずかん<span class="sub">${owned} / ${chars.length}</span></h2>
+      ${chars.length ? ownerSerTabs(ser, 'oser', true, cnt) + zukanBySeries(g, names, true) : '<p class="empty">まだキャラを登録していません</p>'}</div>
+    <div class="card"><h2>🕒 ガチャ履歴<span class="sub">${hist.length}回</span></h2>
+    ${hist.length ? `<ul class="list">${hist.slice(0, hn).map(h => { const c = chars.find(x => x.id === h.id), [kl, kc] = KIND[h.kind] || KIND.new;
       return `<li>${c ? `<img class="thumb" src="${c.img}" alt="">` : '<div class="thumb"></div>'}<div class="main"><div class="t">${esc(c ? c.name : h.name)} <span class="rar ${h.rarity}">${h.rarity}</span></div>
-        <div class="s">${esc(c ? serOf(c) : (h.ser || DEF_SERIES))} ・ ${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>${g.history.length > 50 ? `<p class="muted" style="margin:6px 0 0">最新50回を表示中（ぜんぶで${g.history.length}回の記録があります）</p>` : ''}`
+        <div class="s">${esc(c ? serOf(c) : (h.ser || DEF_SERIES))} ・ ${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>
+      ${hist.length > 10 ? `<button class="btn ghost block sm" data-a="omore" data-v="moreHist" style="margin-top:8px">${S.moreHist ? 'とじる' : `もっと見る（最新${Math.min(50, hist.length)}回まで）`}</button>` : ''}
+      ${S.moreHist && hist.length > 50 ? `<p class="muted" style="margin:6px 0 0">最新50回を表示中（ぜんぶで${hist.length}回の記録があります）</p>` : ''}`
       : '<p class="empty">まだ履歴がありません（これから引いた分が出ます）</p>'}</div>`;
 }
-function ownerCharCard(){
-  const list = [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
-  return `<div class="card"><h2>🎁 ガチャのキャラを登録<span class="sub">${list.length}体</span></h2>
-    <p class="muted" style="margin-top:0">ここで登録したキャラが、彼女のガチャから出てくるようになります。</p>
+function viewOwnerChars(){
+  const ser = pickSer(S.cser, false), list = seriesList();
+  const cs = serChars(ser);
+  return `<div class="card"><h2>🎁 キャラを登録<span class="sub">ぜんぶで${S.gchars.length}体</span></h2>
     <div class="f2"><label class="btn filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop></label>
       <button class="btn sub" data-a="pasteimg">📋 貼り付け</button></div>
-    <p class="muted" style="margin:6px 0 0">サイトの画像を長押しして「コピー」したら、「貼り付け」を押してね。</p>
-    <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
-    <p class="muted" style="margin:6px 0 0">「シリーズ」に同じ名前を入れたキャラが、同じガチャ（例：ちいかわガチャ）にまとまります。</p>
-    ${seriesList().map(n => { const cs = list.filter(c => serOf(c) === n);
-      return `<div class="serhd" style="margin-top:14px"><span class="dot" style="background:${serColor(n)[0]}"></span>${esc(n)} <small>${cs.length}体</small></div>
-      <ul class="list">${cs.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
-      <button class="btn ghost sm" data-a="editchar" data-id="${c.docId}">編集</button></li>`).join('')}</ul>`; }).join('')}</div>`;
+    <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">？ 使い方</summary>
+      <p class="muted" style="margin:6px 0 0">サイトの画像を長押しして「コピー」したら、「貼り付け」を押してね。</p>
+      <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
+      <p class="muted" style="margin:6px 0 0">「シリーズ」に同じ名前を入れたキャラが、同じガチャ（例：ちいかわガチャ）にまとまります。</p>
+    </details></div>
+    ${list.length ? `<div class="card"><h2>📋 登録したキャラ<span class="sub">タップで編集</span></h2>
+      ${ownerSerTabs(ser, 'cser', false, n => serChars(n).length + '体')}
+      ${list.length < 2 ? `<div class="serhd"><span class="dot" style="background:${serColor(ser)[0]}"></span>${esc(ser)} <small>${cs.length}体</small></div>` : ''}
+      <div class="zukan">${cs.map(c => `<div class="zk ${c.rarity}" data-a="editchar" data-id="${c.docId}" style="cursor:pointer"><div class="pic">${charPic(c)}</div>
+        <div class="nm">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`).join('')}</div></div>` : ''}`;
 }
 const cleanSer = x => { const t = String(x || '').trim().slice(0, 20); return t === DEF_SERIES ? '' : t; };
 // シリーズを保存できないとき（Firebaseのルールが古いまま）は、わかる言葉で知らせる
@@ -1524,6 +1546,7 @@ async function handleForm(kind, f){
       const ser = cleanSer(v.series), old = CROP.editId ? S.gchars.find(x => x.docId === CROP.editId) : null;
       if(ser !== String(old?.series || '').trim()) data.series = ser;
       if(ser) S.lastSer = ser;
+      S.cser = ser || DEF_SERIES;
       await serSave(() => CROP.editId ? setDoc(doc(db,'gachaChars',CROP.editId), data, { merge:true })
         : addDoc(collection(db,'gachaChars'), { ...data, ts: serverTimestamp() }));
       URL.revokeObjectURL(CROP.url); CROP = null;
@@ -1689,6 +1712,9 @@ document.addEventListener('click', async e => {
       case 'gifts': await claimGifts(); break;
       case 'pull': await pullGacha(); break;
       case 'gser': S.gser = v; render(); break;
+      case 'oser': S.oser = v; render(); break;
+      case 'cser': S.cser = v; render(); break;
+      case 'omore': S[v] = !S[v]; render(); break;
       case 'editchar': {
         const c = S.gchars.find(x => x.docId === el.dataset.id); if(!c) break;
         $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>キャラを編集<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
