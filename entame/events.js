@@ -356,7 +356,6 @@ const CHANGE_ACTIONS = [
       toast("名前を変更しました");
     },
   ],
-  ['input.inl[type="date"]', t => commitInline(t)],
   /* 各話リストの貼り付け：日付も更新・ない話も追加 */
   [
     "#spDate",
@@ -591,9 +590,9 @@ const KEY_ACTIONS = [
   ["#maddIn", enterClick("[data-madd]")],
   ["#spopIn", enterEsc(saveSub, closeSub)],
   [null, (t, e) => (e.key === "Escape" && subAsk ? closeSub() : false)],
-  [".inl", enterEsc(t => commitInline(t), t => commitInline(t, true))],
   [".e1 input", enterEsc(() => $("#e1Save")?.click(), () => $("#e1Cancel")?.click())],
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
+  [null, (t, e) => (e.key === "Escape" && yform && yform.inline ? ytCloseInline() || true : false)],
   [null, (t, e) => (e.key === "Escape" ? close() : false)],
   ["#f-serq", enterClick("#fSerSug [data-fser]")],
   ["#f-sernew", enterClick("[data-fsercreate]")],
@@ -745,9 +744,6 @@ document.addEventListener("keydown", e => {
   if (box.classList.contains("e1") && atEdge(t, left)) navGo(e, l[i + (left ? -1 : 1)]);
 });
 
-document.addEventListener("focusout", e => {
-  if (e.target.classList && e.target.classList.contains("inl")) commitInline(e.target);
-});
 /* 日付の入力：20180825・2018/8/25・2018.8.25・2018年8月25日・8/25（今年）を打ち込むと 2018-08-25 に直す。
    8けたの数字は打ち終わった時点で、それ以外は入力欄を離れたときに変換。正しくない日付は元に戻す */
 function normDate(v) {

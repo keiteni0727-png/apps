@@ -33,6 +33,7 @@ const yst = Object.assign(
     fp: "",
     grp: "genre",
     missOnly: false,
+    missKey: "",
   },
   ls.get("adb.v3.yt") || {},
   { q: "" },
@@ -51,6 +52,7 @@ const saveYtUI = () =>
     fp: yst.fp,
     grp: yst.grp,
     missOnly: yst.missOnly,
+    missKey: yst.missKey,
   });
 /* 再生リスト＝データベースの yt の各ドキュメント */
 function ytRebuild() {
@@ -118,6 +120,9 @@ const fmtShortDay = t => {
 };
 /* 未入力の項目（作品の未入力アラートと同じ形）。「なし」にできる項目は noF に入れる */
 const YT_NOF_LAB = { dur: "再生時間", pl: "再生リスト", sm: "まとめ動画" };
+/* 「未入力あり」をオンにしたときの項目ボタンの並び（作品の MISS_KEYS と同じ考え方） */
+const YT_MISS_KEYS = ["投稿者", "ジャンル", "初回投稿日", "再生時間", "パート数", "再生リスト", "まとめ動画"];
+if (!YT_MISS_KEYS.includes(yst.missKey)) yst.missKey = "";
 function ytMissingOf(x) {
   const nf = x.noF || [],
     out = [];
@@ -151,7 +156,7 @@ function ytRow(x) {
   const pw = +x.pw || 0,
     n = +x.n || 0;
   return `<div class="row yrow lst ls-${esc(ytSt(x) || UNSEEN)}${/視聴済み/.test(x.s) ? " done" : ""}"><button class="slot" type="button" data-yt="${x.id}">
-    <span class="time">${x.up ? `${+x.up.slice(5, 7)}/${+x.up.slice(8, 10)}<small>${x.up.slice(0, 4)}</small>` : ""}${yst.author === "すべて" && x.a ? `<span class="kind yauth">${esc(x.a)}</span>` : ""}</span>
+    <span class="time">${x.up ? `${+x.up.slice(5, 7)}/${+x.up.slice(8, 10)}<small>${x.up.slice(0, 4)}</small>` : ""}</span>
     <span class="ttl"><strong>${esc(x.t)}</strong><span class="meta"><span class="pmob">${ytPill(ytSt(x))}</span>${ytGenreLab(x)}${n ? `<span class="lab">全${n}本</span>` : ""}${x.dur ? `<span class="lab">${esc(x.dur)}</span>` : ""}${ytMissBadge(x)}</span>
       ${pw && n ? `<span class="next"><span class="ybar"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></span><span>${pw}/${n}本</span></span>` : ""}</span>
     <span class="pwide">${ytPill(ytSt(x))}</span></button>
@@ -205,12 +210,12 @@ function ytRowHtml(sortLab) {
     `<button type="button" class="fb${on ? " on" : ""}" data-ytpop="${k}" aria-expanded="${yst.fp === k}"><span class="v">${esc(lab)}</span><span class="chev" aria-hidden="true">▾</span></button>`;
   const gLab = yst.genre === "すべて" ? "ジャンル" : yst.genre + (yst.sub !== "すべて" ? "・" + yst.sub : "");
   const sOn = yst.sort !== "new" || yst.grp !== "genre";
-  return `<div class="frow yt">${b("genre", gLab, yst.genre !== "すべて")}<button type="button" class="fb srt${sOn ? " on" : ""}" data-ytpop="sort" aria-expanded="${yst.fp === "sort"}" aria-label="分け方・並び順：${esc(sortLab)}">${SORT_IC}</button></div>`;
+  return `<div class="frow yt">${b("genre", gLab, yst.genre !== "すべて")}<button type="button" class="fb srt${sOn ? " on" : ""}" data-ytpop="sort" aria-expanded="${yst.fp === "sort"}" aria-label="並び順：${esc(sortLab)}">${SORT_IC}</button></div>`;
 }
 function ytPopHtml(panels) {
   const k = yst.fp;
   if (!panels[k]) return "";
-  const T = { genre: "ジャンル", sort: "分け方・並び順" };
+  const T = { genre: "ジャンル", sort: "並び順・分け方" };
   return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-ytpop="${k}">完了</button></div>${panels[k]}</div>`;
 }
 function renderYt() {
@@ -219,11 +224,25 @@ function renderYt() {
   const qOk = x => !qs.length || (h => qs.every(q => h.includes(q)))(norm(x.t + " " + x.a + " " + x.g + " " + ytCat(x)));
   const priOk = x => !yst.pri.length || yst.pri.includes(ytSt(x) || UNSEEN);
   const pre = ytItems.filter(x => (yst.author === "すべて" || x.a === yst.author) && ytGenreOk(x) && qOk(x));
-  /* 未入力あり */
-  const mN = pre.filter(x => priOk(x) && ytMissingOf(x).length).length;
-  const segBase = pre.filter(x => !yst.missOnly || ytMissingOf(x).length > 0);
+  /* 未入力あり：オンのときは項目ごとの件数ボタンで、さらに1項目に絞れる（作品と同じ） */
+  const mBase = pre.filter(priOk).map(ytMissingOf);
+  const mN = mBase.filter(l => l.length).length;
+  const missOk = x => {
+    if (!yst.missOnly) return true;
+    const l = ytMissingOf(x);
+    return yst.missKey ? l.some(m => m.k === yst.missKey) : l.length > 0;
+  };
+  const segBase = pre.filter(missOk);
   let list = segBase.filter(priOk);
   const msw = `<button type="button" class="unsw misw${yst.missOnly ? " on" : ""}" data-ytmissw role="switch" aria-checked="${yst.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
+  let mkeys = "";
+  if (yst.missOnly) {
+    const cnt = {};
+    mBase.forEach(l => l.forEach(m => (cnt[m.k] = (cnt[m.k] || 0) + 1)));
+    const ks = YT_MISS_KEYS.filter(k => cnt[k] || yst.missKey === k);
+    if (ks.length)
+      mkeys = `<div class="mkeys misw" role="group" aria-label="未入力の項目で絞り込み"><button type="button" data-ytmkey="" aria-pressed="${!yst.missKey}">すべて</button>${ks.map(k => `<button type="button" data-ytmkey="${esc(k)}" aria-pressed="${yst.missKey === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`;
+  }
   const ab = ytItems.filter(x => yst.author === "すべて" || x.a === yst.author);
   const by = new Map();
   list.forEach(x => {
@@ -254,13 +273,15 @@ function renderYt() {
           `<div class="chips" role="group" aria-label="グループ">${chipBtn("data-ytsub", "すべて", yst.sub === "すべて", "すべて")}${(yst.genre === SOLO ? M("soloGroups") : ytSubs()).map(g => chipBtn("data-ytsub", g, yst.sub === g, g, ab.filter(x => ytCat(x) === yst.genre && ytGrp(x) === g).length)).join("")}</div>`,
         )
       : "");
-  const sBody = `<div class="sorth">分け方</div><div class="chips sortlist" role="radiogroup" aria-label="分け方">${YT_GRPS.map(([v, l]) => `<button type="button" role="radio" data-ytgrp="${v}" aria-checked="${yst.grp === v}" aria-pressed="${yst.grp === v}">${yst.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div><div class="sorth">並び順</div><div class="chips sortlist" role="radiogroup" aria-label="並び順">${YT_SORTS.map(([v, l]) => `<button type="button" role="radio" data-ytsort="${v}" aria-checked="${yst.sort === v}" aria-pressed="${yst.sort === v}">${yst.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div>`;
+  /* 並び順・分け方：作品と同じ順番・見た目（並び順が上、分け方が下） */
+  const sBody = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${YT_SORTS.map(([v, l]) => `<button type="button" role="radio" data-ytsort="${v}" aria-checked="${yst.sort === v}" aria-pressed="${yst.sort === v}">${yst.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
+    <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${YT_GRPS.map(([v, l]) => `<button type="button" role="radio" data-ytgrp="${v}" aria-checked="${yst.grp === v}" aria-pressed="${yst.grp === v}">${yst.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
-  const srt = [srt0[0], (yst.grp === "year" ? "年ごと・" : "ジャンルごと・") + srt0[1]];
+  const srt = [srt0[0], (yst.grp === "year" ? "年別・" : "ジャンル別・") + srt0[1]];
   return `<div class="ftools"><input id="ytq" type="search" placeholder="動画タイトル・投稿者で検索" value="${esc(yst.q)}" aria-label="検索"></div>
     ${seg}
     <div class="fwrap">${ytRowHtml(srt[1])}${ytPopHtml({ genre: genreBody, sort: sBody })}</div>
-    <p class="count">${list.length}本${act.length ? `<button type="button" class="clear" data-ytreset="1">条件をすべて解除</button>` : ""}${msw}</p>
+    <p class="count">${list.length}本${act.length ? `<button type="button" class="clear" data-ytreset="1">条件をすべて解除</button>` : ""}${msw}</p>${mkeys}
     ${
       !list.length
         ? ""
@@ -294,66 +315,23 @@ function renderYt() {
     ${list.length ? "" : `<p class="empty">条件に合う動画はありません。</p>`}`;
 }
 const YT_GRPS = [
-  ["genre", "ジャンルごと"],
-  ["year", "年ごと"],
+  ["genre", "ジャンル別"],
+  ["year", "年別"],
 ];
+/* 新しい順・古い順は初回投稿日で並べる */
 const YT_SORTS = [
-  ["new", "初回投稿日が新しい順"],
-  ["old", "初回投稿日が古い順"],
+  ["new", "新しい順"],
+  ["old", "古い順"],
   ["added", "追加した順"],
   ["title", "タイトル順"],
 ];
 const chipBtn = (attr, val, on, label, n, cls) =>
   `<button type="button" ${attr}="${esc(val)}" aria-pressed="${on}" class="${on && cls ? "pri " + cls : ""}${attr === "data-vod" && VOD_COLOR[val] ? " vc" : ""}"${attr === "data-vod" ? vcStyle(val) : ""}>${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
 
-function startInline(el) {
-  if (el.querySelector("input.inl")) return;
-  const key = el.dataset.inl,
-    type = el.dataset.inltype || "text",
-    val = el.dataset.inlv || "";
-  el.classList.add("editing");
-  el.innerHTML = `<input class="inl${key === "up" ? " dto" : ""}" data-inlkey="${key}" type="${type}"${key === "up" ? ' inputmode="numeric"' : ""} value="${esc(val)}" ${type === "text" ? 'autocomplete="off"' : ""} aria-label="編集"><span class="inlhint">${type === "date" ? "日付を選ぶと保存" : "Enterで保存・Escで取消"}</span>`;
-  const i = el.querySelector("input");
-  i.dataset.orig = val;
-  if (!TOUCH) i.focus();
-  if (type === "text") {
-    try {
-      i.setSelectionRange(i.value.length, i.value.length);
-    } catch (_) {}
-  }
-}
-let inlBusy = false;
-function commitInline(i, cancel) {
-  if (inlBusy || !i.isConnected) return;
-  inlBusy = true;
-  const key = i.dataset.inlkey;
-  let v = i.value.trim();
-  const orig = i.dataset.orig || "";
-  const done = () => {
-    inlBusy = false;
-  };
-  if (cancel || v === orig || (key === "t" && !v)) {
-    ytRefresh();
-    done();
-    return;
-  }
-  if (key === "n") v = Math.max(0, parseInt(v, 10) || 0);
-  if (key === "up") {
-    const p = parseDay(v);
-    if (p === null) {
-      toast("日付を読み取れませんでした（例：2024/03/08）");
-      ytRefresh();
-      done();
-      return;
-    }
-    v = p;
-  }
-  if (key === "dur") v = parseDur(v);
-  if (ytOpen) ytSave(ytOpen, { [key]: v }, "保存しました");
-  done();
-}
-/* ---------- 詳細：作品の詳細と同じ形（上にジャンル・ステータスのラベルと編集・閉じる、タイトルとコピー、
-   情報はカード（YOUTUBE）に「項目名　内容」で1行ずつ、進み具合もカード、リンクは下にボタンを並べる） ---------- */
+/* ---------- 詳細：作品の詳細と同じ形
+   上：投稿者・ジャンル・視聴ステータスのラベル／前・次・編集・閉じる、タイトルとコピー
+   YOUTUBEカード：「項目名　内容」を1行ずつ（再生リスト・まとめ動画も行の中）。中身を押しても編集しない。
+   編集はカードの見出しの右の「✎ 編集」から、そのカードの場所でまとめて編集（作品の ON AIR と同じ） ---------- */
 let ytOpen = null;
 let ytStMenu = false; // 視聴ステータスの選択肢を開いているか
 const YT_ST = [
@@ -366,46 +344,38 @@ function ytDetailHtml(x) {
   const pw = +x.pw || 0,
     n = +x.n || 0;
   const un = t => `<span class="unset">${t}</span>`;
+  const nn = t => `<span class="nosong">${t}</span>`;
   const nf = k => (x.noF || []).includes(k);
-  const J = (k, v, t) => `<dt data-jump="${t}">${k}</dt><dd data-jump="${t}">${v || un("未設定")}</dd>`;
-  const I = (k, v, key, ty, raw) => `<dt>${k}</dt><dd data-inl="${key}" data-inltype="${ty}" data-inlv="${esc(raw ?? "")}">${v || un("未設定")}<span class="pen" aria-hidden="true">✎</span></dd>`;
+  const row = (k, v) => `<dt>${k}</dt><dd>${v}</dd>`;
   const st = x.s || "";
   const stCls = "s-" + (st || UNSEEN);
   const stBtn = `<span class="stw"><button type="button" class="pill dst ${stCls}" id="ytStOpen" aria-haspopup="true" aria-expanded="${ytStMenu}">${esc(stLabel(st || UNSEEN))}<span class="stv" aria-hidden="true">▾</span></button>${ytStMenu ? `<span class="stmenu" role="menu">${YT_ST.map(([v, l]) => `<button type="button" role="menuitemradio" data-yts="${v}" aria-checked="${st === v}" class="s-${l}">${stLabel(l)}</button>`).join("")}</span>` : ""}</span>`;
+  const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
   const rows = [
-    J("投稿者", esc(x.a), "yfAuthor"),
-    J("ジャンル", ytGenreLab(x), "yfGenre"),
-    I("初回投稿日", x.up ? `<span class="inum">${esc(fmtD(x.up))}</span>` : "", "up", "text", fmtD(x.up)),
-    I("再生時間", x.dur ? `<span class="inum">${esc(x.dur)}</span>` : nf("dur") ? un("なし") : "", "dur", "text", x.dur),
-    I("パート数", n || x._at ? `${n ? `<span class="inum">全${n}本</span>` : ""}${x._at ? `<span class="lastmod">最終変更 ${fmtShortDay(x._at)}</span>` : ""}` : "", "n", "number", n || ""),
+    row("初回投稿日", x.up ? `<span class="inum">${esc(fmtD(x.up))}</span>` : un("未設定")),
+    row("再生時間", x.dur ? `<span class="inum">${esc(x.dur)}</span>` : nf("dur") ? nn("なし") : un("未設定")),
+    row("パート数", n ? `<span class="inum">全${n}本</span>` : un("未設定")),
+    row("再生リスト", x.pl ? `<a class="ilnk" href="${esc(x.pl)}" target="_blank" rel="noopener" aria-label="${esc(x.t)}をYouTubeで見る">${IC_PLAY}YouTubeで見る</a>` : nf("pl") ? nn("なし") : un("未設定")),
+    row("まとめ動画", x.sm ? `<a class="ilnk" href="${esc(x.sm)}" target="_blank" rel="noopener">まとめ動画を開く${IC_EXT}</a>` : nf("sm") ? nn("なし") : un("未設定")),
   ];
-  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span></div><dl class="idl">${rows.join("")}</dl></div>`;
+  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span><button type="button" class="editbtn iedit" data-jump="ycard" aria-label="基本情報を編集">✎ 編集</button></div><dl class="idl">${rows.join("")}</dl></div>`;
   const prog = `<div class="icard iprog"><div class="ich"><span class="ilamp progl">PROGRESS</span><span class="inow">${n ? `${pw} / ${n}本 見た` : "パート数を入れると進み具合を記録できます"}</span></div>${
     n
       ? `<div class="prog"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></div>
       <div class="ystep"><button type="button" data-ytp="-1" aria-label="1本戻す" ${pw <= 0 ? "disabled" : ""}>−</button><span><b>${pw}</b>本目まで見た</span><button type="button" data-ytp="1" aria-label="1本進める" ${pw >= n ? "disabled" : ""}>＋</button><button type="button" class="u-btn sm ghost" data-ytp="all" ${pw >= n ? "disabled" : ""}>最後まで見た</button>${pw ? `<button type="button" class="u-btn sm ghost" data-ytp="reset">リセット</button>` : ""}</div>`
       : ""
   }</div>`;
-  const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
-  const links = `<div class="ilinks">${
-    x.pl
-      ? `<a class="ilk ivod" href="${esc(x.pl)}" target="_blank" rel="noopener">${IC_PLAY}<span class="ilt">再生リスト</span></a>`
-      : nf("pl")
-        ? ""
-        : `<button type="button" class="ilk off" data-jump="y-pl">再生リスト未設定</button>`
-  }${
-    x.sm
-      ? `<a class="ilk" href="${esc(x.sm)}" target="_blank" rel="noopener"><span class="ilt">まとめ動画</span>${IC_EXT}</a>`
-      : nf("sm")
-        ? ""
-        : `<button type="button" class="ilk off" data-jump="y-sm">まとめ動画未設定</button>`
-  }</div>`;
-  const nv = ytNeighbors(x.id);
-  const navB = (d, lab, ic) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] ? "" : "disabled"}>${ic}</button>`;
-  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">YouTube</span>${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", "‹")}${navB(1, "次の作品", "›")}<button type="button" class="editbtn" id="ytEdit">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  const nv = ytNeighbors(x.id),
+    busy = !!(yform && yform.inline);
+  const navB = (d, lab) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${CHEV(d)}</button>`;
+  /* 上段のラベル：投稿者（作品のジャンルの位置）→ ジャンル（作品の種別の位置。押すとジャンルを編集）→ 視聴ステータス */
+  const c = ytCat(x),
+    sb = ytGrp(x);
+  const gBtn = c ? `<button type="button" class="dmt lab s" data-jump="yfGenre" title="ジャンルを変える">${c}${sb ? `・${esc(sb)}` : ""}</button>` : "";
+  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="editbtn" id="ytEdit" aria-label="再生リストを編集">✎ 編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>${ytMissDetail(x)}</div>
-    <div class="ydbody">${info}${prog}${links}
+    <div class="ydbody">${info}${prog}
     <div class="links"><button type="button" class="delsm" id="ytDel">削除</button></div></div>`;
 }
 /* 前・次の作品：詳細を開いた画面に出ていた並び（作品の詳細と同じ） */
@@ -419,7 +389,7 @@ function ytNeighbors(id) {
   return i < 0 ? [null, null] : [ytNavIds[i - 1] || null, ytNavIds[i + 1] || null];
 }
 function ytDetailNav(d) {
-  if (!ytOpen || $("#ytIn input.inl")) return;
+  if (!ytOpen || (yform && yform.inline)) return;
   const id = ytNeighbors(ytOpen)[d < 0 ? 0 : 1];
   if (id) ytOpenDetail(id, d);
 }
@@ -432,6 +402,7 @@ function ytOpenDetail(id, dir) {
   ytMissKeep = false;
   openId = null;
   form = null;
+  yform = null;
   /* 前・次へ移るときはシートを作り直さず中身だけ入れかえ */
   const inn = dir && $("#layer .sheet #ytIn");
   if (inn) {
@@ -448,6 +419,8 @@ function ytRefresh() {
   const x = ytItems.find(y => y.id === ytOpen);
   const el = $("#ytIn");
   if (!x || !el) return;
+  /* 描き直すと詳細の中の編集画面も消えるので、編集中の状態も終わりにする */
+  if (yform && yform.inline) yform = null;
   const d = el.querySelector(".dmiss");
   if (d) ytMissKeep = d.open;
   el.innerHTML = ytDetailHtml(x);
@@ -466,87 +439,51 @@ async function ytSave(id, patch, msg) {
   }
 }
 
-/* ---------- 追加・編集 ---------- */
+/* ---------- 追加・編集 ----------
+   項目ごとの部品（P）を組み合わせて、全体の編集画面と「その項目だけ」の編集画面を作る（作品の編集画面と同じ作り） */
 let yform = null;
-const ONLY_Y = { yfAuthor: "投稿者", yfGenre: "ジャンル" };
+/* その項目だけ編集するときの見出しと部品。詳細の中で開く（ycard＝YOUTUBEカードの「✎ 編集」、ほかは未入力アラートの項目ボタン） */
+const ONLY_Y = {
+  ycard: ["基本情報", ["author", "genre", "up", "n", "dur", "pl", "sm"]],
+  yfAuthor: ["投稿者", ["author"]],
+  yfGenre: ["ジャンル", ["genre"]],
+  "y-up": ["初回投稿日", ["up"]],
+  "y-n": ["パート数", ["n"]],
+  "y-dur": ["再生時間", ["dur"]],
+  "y-pl": ["再生リスト", ["pl"]],
+  "y-sm": ["まとめ動画", ["sm"]],
+};
 function ytFormHtml() {
   const f = yform;
+  const authors = [...new Set([...ytAuthors(), f.a].filter(Boolean))];
+  const subChips = (lab, list, attr, cur) =>
+    `<div class="chips" style="margin-top:8px" role="group" aria-label="${lab}">${list.map(g => `<button type="button" ${attr}="${esc(g)}" aria-pressed="${cur === g}">${esc(g)}</button>`).join("")}</div>`;
+  const P = {
+    title: `<label class="field full"><span>動画タイトル</span><input id="y-t" autocomplete="off" placeholder="例：ゼルダの伝説 ティアーズ オブ ザ キングダム" value="${esc(f.t)}"></label>`,
+    author: `<div class="field full" id="yfAuthor"><span>投稿者</span><div class="chips">${authors.map(a => `<button type="button" data-yfa="${esc(a)}" aria-pressed="${f.a === a}">${esc(a)}</button>`).join("")}<input id="y-anew" class="chipin" autocomplete="off" placeholder="＋ ほかの投稿者" value="${esc(authors.includes(f.a) ? "" : f.a)}"></div></div>`,
+    genre: `<div class="field full" id="yfGenre"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${[SOLO, COLLAB].map(g => `<button type="button" data-yfg="${g}" aria-pressed="${ytCat(f) === g}">${g}</button>`).join("")}</div>${
+      ytCat(f) === COLLAB ? subChips("コラボのグループ", ytSubs(), "data-yfsub", ytSub(f)) : ytCat(f) === SOLO ? subChips("一人実況のグループ", M("soloGroups"), "data-yfsg", ytSolo(f)) : ""
+    }</div>`,
+    /* 視聴ステータス：作品と同じく「未視聴」も入れた4つから選ぶ */
+    status: `<div class="field full"><span>ステータス</span><div class="segc" role="group" aria-label="ステータス">${YT_ST.map(([v, l]) => `<button type="button" data-yfs="${v}" aria-pressed="${(f.s || "") === v}">${stLabel(l)}</button>`).join("")}</div></div>`,
+    up: `<label class="field"><span>初回投稿日 <span class="hint">YouTubeの日付を貼り付けできます</span></span><input id="y-up" class="dto" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>`,
+    n: `<label class="field"><span>パート数</span><input id="y-n" type="number" min="0" inputmode="numeric" placeholder="12" value="${f.n || ""}"></label>`,
+    dur: `<label class="field"><span>再生時間 <span class="hint">「630」で6時間30分</span></span><input id="y-dur" inputmode="numeric" autocomplete="off" placeholder="630" value="${esc(f.dur)}"><span class="hint" id="yDurMsg"></span></label>`,
+    pl: `<label class="field full"><span>再生リスト</span><input id="y-pl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/playlist?list=…" value="${esc(f.pl)}"></label>`,
+    sm: `<label class="field full"><span>まとめ動画</span><input id="y-sm" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…" value="${esc(f.sm)}"></label>`,
+  };
   if (f.only && ONLY_Y[f.only]) {
-    const authors = [...new Set([...ytAuthors(), f.a].filter(Boolean))];
-    const k = f.only;
-    const body =
-      k === "yfAuthor"
-        ? `<div class="field full"><div class="chips">${authors.map(a => `<button type="button" data-yfa="${esc(a)}" aria-pressed="${f.a === a}">${esc(a)}</button>`).join("")}<input id="y-anew" class="chipin" autocomplete="off" placeholder="＋ ほかの投稿者" value="${esc(authors.includes(f.a) ? "" : f.a)}"></div></div>`
-        : `<div class="field full"><div class="segc" role="group" aria-label="ジャンル">${[SOLO, COLLAB].map(g => `<button type="button" data-yfg="${g}" aria-pressed="${ytCat(f) === g}">${g}</button>`).join("")}</div>
-        ${
-          ytCat(f) === COLLAB
-            ? `<div class="chips" style="margin-top:8px" role="group" aria-label="コラボのグループ">${ytSubs()
-                .map(
-                  g =>
-                    `<button type="button" data-yfsub="${esc(g)}" aria-pressed="${ytSub(f) === g}">${esc(g)}</button>`,
-                )
-                .join("")}</div>`
-            : ""
-        }
-        ${
-          ytCat(f) === SOLO
-            ? `<div class="chips" style="margin-top:8px" role="group" aria-label="一人実況のグループ">${M("soloGroups")
-                .map(
-                  g =>
-                    `<button type="button" data-yfsg="${esc(g)}" aria-pressed="${ytSolo(f) === g}">${esc(g)}</button>`,
-                )
-                .join("")}</div>`
-            : ""
-        }</div>`;
-    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${ONLY_Y[k]}を編集</h3><button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
-      <form id="ytF" novalidate><div class="fgrid only">${body}</div>
+    const [lab, keys] = ONLY_Y[f.only];
+    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3><button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
+      <form id="ytF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
       <div class="ffoot"><button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
-  const authors = [...new Set([...ytAuthors(), f.a].filter(Boolean))];
   const sec = (t, b) => `<section class="fsec"><h4>${t}</h4><div class="fgrid">${b}</div></section>`;
   return `<div class="hdrow"><h3>再生リストを${f.id ? "編集" : "追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="ytF" novalidate>
-    ${sec(
-      "基本情報",
-      `
-      <label class="field full"><span>動画タイトル</span><input id="y-t" autocomplete="off" placeholder="例：ゼルダの伝説 ティアーズ オブ ザ キングダム" value="${esc(f.t)}"></label>
-      <div class="field full" id="yfAuthor"><span>投稿者</span><div class="chips">${authors.map(a => `<button type="button" data-yfa="${esc(a)}" aria-pressed="${f.a === a}">${esc(a)}</button>`).join("")}<input id="y-anew" class="chipin" autocomplete="off" placeholder="＋ ほかの投稿者" value="${esc(authors.includes(f.a) ? "" : f.a)}"></div></div>
-      <div class="field full" id="yfGenre"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${[SOLO, COLLAB].map(g => `<button type="button" data-yfg="${g}" aria-pressed="${ytCat(f) === g}">${g}</button>`).join("")}</div>
-        ${
-          ytCat(f) === COLLAB
-            ? `<div class="chips" style="margin-top:8px" role="group" aria-label="コラボのグループ">${ytSubs()
-                .map(
-                  g =>
-                    `<button type="button" data-yfsub="${esc(g)}" aria-pressed="${ytSub(f) === g}">${esc(g)}</button>`,
-                )
-                .join("")}</div>`
-            : ""
-        }
-        ${
-          ytCat(f) === SOLO
-            ? `<div class="chips" style="margin-top:8px" role="group" aria-label="一人実況のグループ">${M("soloGroups")
-                .map(
-                  g =>
-                    `<button type="button" data-yfsg="${esc(g)}" aria-pressed="${ytSolo(f) === g}">${esc(g)}</button>`,
-                )
-                .join("")}</div>`
-            : ""
-        }</div>
-      <div class="field full"><span>視聴ステータス <span class="hint">選ばなければ未視聴</span></span><div class="segc" role="group" aria-label="視聴ステータス">${YT_STATUS.map(st => `<button type="button" data-yfs="${st}" aria-pressed="${f.s === st}">${stLabel(st)}</button>`).join("")}</div></div>`,
-    )}
-    ${sec(
-      "動画の情報",
-      `
-      <label class="field"><span>初回投稿日 <span class="hint">YouTubeの日付を貼り付けできます</span></span><input id="y-up" class="dto" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>
-      <label class="field"><span>パート数</span><input id="y-n" type="number" min="0" inputmode="numeric" placeholder="12" value="${f.n || ""}"></label>
-      <label class="field"><span>再生時間 <span class="hint">「630」で6時間30分</span></span><input id="y-dur" inputmode="numeric" autocomplete="off" placeholder="630" value="${esc(f.dur)}"><span class="hint" id="yDurMsg"></span></label>`,
-    )}
-    ${sec(
-      "リンク",
-      `
-      <label class="field full"><span>再生リスト</span><input id="y-pl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/playlist?list=…" value="${esc(f.pl)}"></label>
-      <label class="field full"><span>まとめ動画</span><input id="y-sm" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…" value="${esc(f.sm)}"></label>`,
-    )}
+    ${sec("基本情報", P.title + P.author + P.genre + P.status)}
+    ${sec("動画の情報", P.up + P.n + P.dur)}
+    ${sec("リンク", P.pl + P.sm)}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -569,11 +506,18 @@ function ytReadForm() {
   const na = g("#y-anew").trim();
   if (na) yform.a = na;
 }
+/* 開いたときから変わったかを比べるための中身（見た目の状態は除く） */
+const ytFormSig = f => {
+  const { init, inline, only, ...c } = f;
+  return JSON.stringify({ ...c, n: String(c.n || "") });
+};
 function ytRedrawForm() {
-  const sh = $(".sheet.form");
-  const y = sh.scrollTop;
-  $("#ytFormIn").innerHTML = ytFormHtml();
-  sh.scrollTop = y;
+  const box = $("#ytFormIn");
+  if (!box) return;
+  const sh = box.closest(".sheet");
+  const y = sh ? sh.scrollTop : 0;
+  box.innerHTML = ytFormHtml();
+  if (sh) sh.scrollTop = y;
 }
 function ytOpenForm(x, target) {
   yform = x
@@ -602,20 +546,52 @@ function ytOpenForm(x, target) {
         pl: "",
         sm: "",
       };
+  /* 詳細から項目を指定したときは、詳細の中でその項目だけ編集する（作品の詳細と同じ） */
+  if (x && ONLY_Y[target] && ytOpen === x.id && $("#layer .sheet:not(.form) #ytIn")) return ytOpenInline(target);
   ytOpen = null;
   openId = null;
   form = null;
   $("#layer").innerHTML =
     `<div class="scrim" data-close></div><div class="sheet form" role="dialog" aria-modal="true" aria-label="YouTubeを${yform.id ? "編集" : "追加"}"><div class="wrap" id="ytFormIn">${ytFormHtml()}</div></div>`;
-  if (ONLY_Y[target]) {
-    yform.only = target;
-    $(".sheet.form").classList.add("mini");
-    $("#ytFormIn").innerHTML = ytFormHtml();
-  } else if (target && document.getElementById(target)) {
+  if (target && document.getElementById(target)) {
     const el = document.getElementById(target);
     el.scrollIntoView({ block: "center" });
     if (!TOUCH) el.focus({ preventScroll: true });
   } else if (!TOUCH) $("#y-t").focus({ preventScroll: true });
+}
+/* 詳細の中で編集：カードの「✎ 編集」はそのカードの場所がそのまま編集画面に、未入力アラートの項目は見出しのすぐ下に出す */
+function ytOpenInline(target) {
+  const inn = $("#ytIn");
+  yform.only = target;
+  yform.inline = true;
+  inn.querySelectorAll(".ined").forEach(x => x.remove());
+  inn.querySelectorAll(".icard[hidden]").forEach(x => (x.hidden = false));
+  const card = target === "ycard" && inn.querySelector(".icard.ibc");
+  const anc = card || inn.querySelector(".ydhead");
+  if (!anc) {
+    yform = null;
+    return;
+  }
+  anc.insertAdjacentHTML(card ? "beforebegin" : "afterend", `<div class="ined${card ? " incard" : ""}" id="ytFormIn">${ytFormHtml()}</div>`);
+  if (card) card.hidden = true;
+  yform.init = ytFormSig(yform);
+  /* 編集中は前・次の矢印を押せないように */
+  inn.querySelectorAll(".dnav").forEach(b => (b.disabled = true));
+  const box = $("#ytFormIn");
+  const sh = box.closest(".sheet");
+  if (!card && sh) sh.scrollTop = 0;
+  else if (sh) {
+    const hd = sh.querySelector(".dhead");
+    const top = sh.getBoundingClientRect().top + (hd ? hd.getBoundingClientRect().height : 0) + 8;
+    sh.scrollTop += box.getBoundingClientRect().top - top;
+  }
+  const i = box.querySelector(".fgrid.only input:not([type=checkbox])");
+  if (i && !TOUCH) i.focus({ preventScroll: true });
+}
+/* 詳細の中の編集をやめる（取り消し） */
+function ytCloseInline() {
+  yform = null;
+  ytRefresh();
 }
 async function ytSubmit() {
   {
@@ -630,7 +606,7 @@ async function ytSubmit() {
   const f = yform;
   const t = f.t.trim();
   if (!t) {
-    $("#y-t").focus();
+    $("#y-t")?.focus();
     toast("動画タイトルを入れてください");
     return;
   }
@@ -647,6 +623,13 @@ async function ytSubmit() {
     sm: String(f.sm || "").trim(),
   };
   const id = f.id || "y" + Date.now().toString(36);
+  /* 詳細の中の編集：変わっていなければ閉じるだけ、変わっていれば保存して詳細を描き直す */
+  if (f.inline) {
+    if (ytFormSig(f) === f.init) return ytCloseInline();
+    yform = null;
+    await ytSave(id, patch, "保存しました");
+    return;
+  }
   if (!f.id) patch.added = Date.now();
   yform = null;
   close();
@@ -660,7 +643,33 @@ const ytUI = fn => el => {
   saveYtUI();
   render();
 };
+/* 詳細の中で編集しているとき：✕・キャンセルで取り消し、外を押したら保存して閉じる（別の項目を押したらそのまま次を編集）。作品の詳細と同じ */
+function ytCommitInline() {
+  if (!yform || !yform.inline) return;
+  ytReadForm();
+  if (ytFormSig(yform) === yform.init) ytCloseInline();
+  else ytSubmit();
+}
+function ytInlineClick(e) {
+  if (!yform || !yform.inline) return false;
+  if (e.target.closest(".ined [data-back]")) {
+    ytCloseInline();
+    return true;
+  }
+  /* 描き直しで消えた場所へのクリックは「外を押した」ではない */
+  if (!e.target.isConnected) return true;
+  if (e.target.closest(".ined")) return false;
+  const jp = e.target.closest("#ytIn [data-jump]");
+  const tgt = jp && jp.dataset.jump;
+  ytCommitInline();
+  if (yform && yform.inline) return true; // 入力の誤りで保存できなかったときは編集を続ける
+  if (!tgt || e.target.closest("a,button:not([data-jump])")) return false; // ほかのボタン（閉じる・ステータスなど）はそのまま動かす
+  const it = ytItems.find(y => y.id === ytOpen);
+  if (it) ytOpenForm(it, tgt);
+  return true;
+}
 const YT_ACTIONS = [
+  [null, (el, x, e) => ytInlineClick(e)],
   /* 絞り込み・並び順 */
   ["[data-ytpop]", ytUI(el => (yst.fp = yst.fp === el.dataset.ytpop ? "" : el.dataset.ytpop))],
   [
@@ -687,7 +696,14 @@ const YT_ACTIONS = [
   ],
   ["[data-ytsub]", ytUI(el => (yst.sub = el.dataset.ytsub))],
   ["[data-ytstf]", ytUI(el => (yst.pri = !el.dataset.ytstf || (yst.pri.length === 1 && yst.pri[0] === el.dataset.ytstf) ? [] : [el.dataset.ytstf]))],
-  ["[data-ytmissw]", ytUI(() => (yst.missOnly = !yst.missOnly))],
+  [
+    "[data-ytmissw]",
+    ytUI(() => {
+      yst.missOnly = !yst.missOnly;
+      yst.missKey = "";
+    }),
+  ],
+  ["[data-ytmkey]", ytUI(el => (yst.missKey = yst.missKey === el.dataset.ytmkey ? "" : el.dataset.ytmkey))],
   ["[data-yt]", el => ytOpenDetail(el.dataset.yt)],
   [null, (el, x, e) => !!yform && runActions(YT_FORM_ACTIONS, e)],
   [
@@ -758,12 +774,6 @@ const YT_DETAIL_ACTIONS = [
   [
     "#ytCopy",
     (el, x) => U.copy(x.t).then(ok => toast(ok ? "タイトルをコピーしました" : "コピーできませんでした")),
-  ],
-  [
-    "[data-inl]",
-    (el, x, e) => {
-      if (!e.target.closest("input")) startInline(el);
-    },
   ],
   ["[data-jump]", (el, x) => ytOpenForm(x, el.dataset.jump)],
   [

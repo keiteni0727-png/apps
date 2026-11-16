@@ -1560,3 +1560,5 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .sgfix-b{display:flex;gap:8px;justify-content:flex-end;padding-top:12px}
 .sgfix-b button{height:40px;padding:0 16px;border:1px solid var(--u-line);border-radius:12px;background:var(--u-surface);color:var(--u-ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .sgfix-b button.primary{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+/* YouTube詳細：上段のジャンル（押すと編集）。作品の種別ラベルと同じ形 */
+.dhead .meta .dmt.lab{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent);font-weight:700}

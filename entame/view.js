@@ -33,7 +33,7 @@ function renderSidebar() {
      視聴ステータスは一覧の上の切り替えで選ぶ */
   const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
   const subOf = m => {
-    if (m === "yt") return ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, null]);
+    if (m === "yt") return ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, ytItems.filter(x => x.a === a).length]);
     if (m === "w" || m === "h") return [];
     const l = items.filter(i => inMode(m, i));
     if (m === "m")
