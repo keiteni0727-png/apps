@@ -1050,3 +1050,57 @@ function onDetailClick(e) {
   const it = openId && items.find(x => x.id === openId);
   return !!it && runActions(DETAIL_ACTIONS, e, it);
 }
+
+/* ---------- 一度だけの整理：自動で入った「1話〜最後の話」の範囲を空（＝全話）に戻す ----------
+   以前は編集画面を開くと範囲が空の曲に「1〜最後の話」が入り、保存するとそのまま残っていた。
+   範囲がちょうど「最初の話〜最後の話」の曲を一覧で見せて、確認してから戻す（この端末で一度だけ聞く） */
+const SGFIX_KEY = "entame.sgfix.v1";
+let sgFixAsked = false;
+function sgFixList() {
+  const out = [];
+  items.forEach(it => {
+    const sp = epSpan(it);
+    if (!sp || sp[1] <= sp[0]) return;
+    const hit = songsOf(it).filter(x => x.a === sp[0] && x.b === sp[1] && !exOf(x).length);
+    if (hit.length) out.push({ it, sp, hit });
+  });
+  return out;
+}
+function maybeAskSgFix() {
+  if (sgFixAsked || !loaded || !syncOk.titles || !syncOk.progress) return;
+  sgFixAsked = true;
+  try {
+    if (localStorage.getItem(SGFIX_KEY)) return;
+  } catch (e) {}
+  const list = sgFixList();
+  if (!list.length) return;
+  const n = list.reduce((a, g) => a + g.hit.length, 0);
+  const box = document.createElement("div");
+  box.id = "sgFix";
+  box.innerHTML = `<div class="sgfix-scrim"></div><div class="sgfix" role="dialog" aria-modal="true" aria-labelledby="sgFixT">
+    <h3 id="sgFixT">曲の「使われた話」を全話に戻しますか？</h3>
+    <p>前に自動で入った「1話〜最後の話」の範囲が残っている曲が${n}曲あります。戻すと「全話」と表示されます。</p>
+    <ul>${list.map(g => `<li><b>${esc(g.it.t)}</b>${g.hit.map(x => `<span><i class="${SG_CLS[x.type] || ""}">${esc(x.type)}</i>${esc(songTA(x).st || x.s || "")}<em>${g.sp[0]}〜${g.sp[1]}話 → 全話</em></span>`).join("")}</li>`).join("")}</ul>
+    <div class="sgfix-b"><button type="button" class="u-btn" data-sgfix="0">そのまま</button><button type="button" class="u-btn primary" data-sgfix="1">全話に戻す</button></div>
+  </div>`;
+  document.body.appendChild(box);
+  box.addEventListener("click", e => {
+    const b = e.target.closest("[data-sgfix]");
+    if (!b) return;
+    try {
+      localStorage.setItem(SGFIX_KEY, "1");
+    } catch (er) {}
+    box.remove();
+    if (b.dataset.sgfix !== "1") return;
+    list.forEach(g => {
+      const songs = songsOf(g.it).map(x => {
+        if (!g.hit.includes(x)) return x;
+        const y = { ...x, a: null, b: null };
+        delete y.one;
+        return y;
+      });
+      saveTitle(g.it.id, { songs });
+    });
+    toast(`${n}曲を「全話」に戻しました`);
+  });
+}

@@ -491,6 +491,7 @@ async function initStore() {
     rebuild();
     render();
     if (openId && !epEdit) refreshSheet();
+    setTimeout(maybeAskSgFix, 800);
   };
   const onErr = e =>
     banner(`<b>保存データを読み込めませんでした</b>${esc(e?.message || "")}　ページを開き直してください。`);
