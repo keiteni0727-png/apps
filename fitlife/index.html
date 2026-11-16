@@ -120,7 +120,17 @@ svg.chart{width:100%;height:auto;display:block}
 .mis .got{font-size:12px;color:var(--muted)}
 .tix{display:inline-flex;align-items:center;gap:4px;background:#fff3c9;color:#a77a12;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700}
 .gift{background:linear-gradient(135deg,#fff3c9,#fff9e8);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:10px}
-.gacha-top{text-align:center;background:linear-gradient(160deg,#ffd6e5,#fff4f8 55%,#fff)}
+.gacha-top{text-align:center;background:linear-gradient(160deg,var(--gc3,#ffd6e5),#fff4f8 55%,#fff)}
+.sertabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 0 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.sertabs::-webkit-scrollbar{display:none}
+.sertabs button{flex:none;border:2px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
+.sertabs button.on{color:#fff;border-color:transparent}
+.sertabs button small{font-weight:500;opacity:.85;margin-left:4px}
+.serhd{font-weight:700;font-size:14px;margin:14px 0 6px;display:flex;align-items:center;gap:6px}
+.serhd:first-child{margin-top:0}
+.serhd .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.serhd small{color:var(--muted);font-weight:500}
+.comp{display:inline-block;font-size:11px;font-weight:700;background:linear-gradient(90deg,#ffe58a,#ffb3cf);color:#8a4b00;border-radius:99px;padding:1px 8px}
 .machine{width:150px;height:auto;margin:4px auto 6px;display:block}
 .tixbig{font-size:30px;font-weight:700;color:var(--pink-d)}
 .zukan{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -231,6 +241,10 @@ const IC = {
 const RARITY_W = { N:70, R:25, SR:5 };
 const RARITY_ORDER = { SR:0, R:1, N:2 };
 const SHARD_NEED = 3;
+const COMP_BONUS = 3;          // シリーズをぜんぶ集めたときのごほうびチケット
+const DEF_SERIES = 'いろいろ'; // シリーズ未設定のキャラ
+const MIX = '__mix__';         // ミックスガチャ（全シリーズから出る）
+const SER_COLORS = [['#e46f98','#ffd6e5'],['#4f9be0','#d6ebff'],['#e0913b','#ffe6c7'],['#47ad6c','#d4f2dd'],['#8d6fe0','#e6deff'],['#d4575b','#ffd9da'],['#2fa7a0','#cdf1ee'],['#b08a1e','#fbefc4']];
 const MISSIONS = [
   { k:'meal', label:'食事を1つ記録する', ok:t => S.data.meals.some(m => m.date === t) },
   { k:'water', label:'お水を記録する', ok:t => S.data.water.some(x => x.date === t) },
@@ -264,7 +278,7 @@ const S = {
   user:null, role:null, cfg:{}, share:{}, profile:{}, cheers:[], invite:null,
   data:{ meals:[], gym:[], weights:[], water:[], sleep:[] }, denied:{},
   privMeta:undefined, key:null, priv:{ logs:[], photos:[] },
-  game:{}, gameReady:false, gchars:[],
+  game:{}, gameReady:false, gchars:[], gser:'',
   tab:'home',
 };
 let subs = [], colSubs = [], privSubs = [];
@@ -375,9 +389,30 @@ function startColListeners(){
 
 /* ===== ミッション・ガチャのしくみ ===== */
 const allChars = () => [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
+/* シリーズ（ちいかわ・進撃の巨人…）。登録が古い順に並べて、「いろいろ」は最後 */
+const serOf = c => String(c.series || '').trim() || DEF_SERIES;
+function seriesList(){
+  const out = [];
+  [...S.gchars].reverse().forEach(c => { const n = serOf(c); if(!out.includes(n)) out.push(n); });
+  return out.filter(n => n !== DEF_SERIES).concat(out.includes(DEF_SERIES) ? [DEF_SERIES] : []);
+}
+const serChars = n => allChars().filter(c => serOf(c) === n);
+const serColor = n => n === MIX ? ['#c06bc4','#f5dcf7'] : SER_COLORS[Math.max(0, seriesList().indexOf(n)) % SER_COLORS.length];
+const curSer = () => { const l = seriesList(); if(S.gser === MIX && l.length > 1) return MIX; return l.includes(S.gser) ? S.gser : (l[0] || ''); };
+const serLabel = n => n === MIX ? '🌈 ミックス' : n;
+const serDatalist = () => `<datalist id="serlist">${seriesList().filter(n => n !== DEF_SERIES).map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+const serField = (val = '') => `<label class="f">シリーズ</label><input class="in" name="series" list="serlist" maxlength="20" placeholder="例：ちいかわ" value="${esc(val)}">${serDatalist()}`;
+/* ずかんをシリーズごとに分けて表示 */
+function zukanBySeries(g, names, showName){
+  return names.map(n => { const cs = serChars(n), own = cs.filter(c => g.coll[c.id] > 0).length, [col] = serColor(n);
+    return `${names.length > 1 ? `<div class="serhd"><span class="dot" style="background:${col}"></span>${esc(n)} <small>${own} / ${cs.length}</small>${cs.length && own === cs.length ? ' <span class="comp">コンプリート！</span>' : ''}</div>` : ''}
+      <div class="zukan">${cs.map(c => { const k = g.coll[c.id] || 0;
+        return `<div class="zk ${c.rarity} ${k ? '' : 'no'}">${k > 1 ? `<span class="cnt">×${k}</span>` : ''}<div class="pic">${charPic(c)}</div>
+          <div class="nm">${k || showName ? esc(c.name) : '？？？'}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div>`; }).join('');
+}
 const charPic = c => `<img src="${c.img}" alt="">`;
-const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], ...S.game });
-const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.rarity, at:Date.now(), kind }, ...(g.history || [])].slice(0, 5000); };
+const G = () => ({ tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], comp:{}, ...S.game });
+const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.rarity, ser:serOf(c), at:Date.now(), kind }, ...(g.history || [])].slice(0, 5000); };
 // ガチャのデータは、毎回サーバーの最新データを読んでから書き換える（画面の古いデータで上書きしない）
 async function updateGame(fn){
   if(!S.gameReady) throw new Error('読み込み中だよ。少し待ってからもう一度押してね');
@@ -385,7 +420,7 @@ async function updateGame(fn){
   let out;
   const g = await runTransaction(db, async tx => {
     const snap = await tx.get(ref);
-    const g = { tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], ...(snap.exists() ? snap.data() : {}) };
+    const g = { tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], comp:{}, ...(snap.exists() ? snap.data() : {}) };
     out = fn(g);
     // 「どの日にどのミッションを受け取ったか」の印だけ2週間で整理（ずかん・履歴は消えない）
     const cut = daysAgo(14);
@@ -422,8 +457,8 @@ async function claimGifts(){
   });
   if(n) toast(`${FROM}からチケット＋${n} 🎟️`);
 }
-function rollChar(){
-  const chars = allChars();
+function rollChar(ser){
+  const chars = ser === MIX ? allChars() : serChars(ser);
   const tot = Object.values(RARITY_W).reduce((a,b) => a+b, 0);
   let r = Math.random() * tot, rar = 'N';
   for(const [k,w] of Object.entries(RARITY_W)){ if((r -= w) < 0){ rar = k; break; } }
@@ -434,38 +469,45 @@ function rollChar(){
 let PULLING = false;
 async function pullGacha(){
   if(PULLING) return;
-  if(!allChars().length){ toast('まだキャラがいないよ'); return; }
+  const ser = curSer();
+  if(!allChars().length || (ser !== MIX && !serChars(ser).length)){ toast('まだキャラがいないよ'); return; }
   if(G().tickets < 1){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
   PULLING = true;
   try{
     const r = await updateGame(g => {
       if(g.tickets < 1) return null;
-      const c = rollChar(), had = (g.coll[c.id] || 0) > 0;
+      const c = rollChar(ser), had = (g.coll[c.id] || 0) > 0;
       g.tickets--; g.pulls = (g.pulls || 0) + 1;
       g.coll = { ...g.coll, [c.id]: (g.coll[c.id] || 0) + 1 };
       let bonus = 0;
       if(had){ g.shards = (g.shards || 0) + 1; while(g.shards >= SHARD_NEED){ g.shards -= SHARD_NEED; g.tickets++; bonus++; } }
       addHist(g, c, had ? 'dup' : 'new');
-      return { c, had, bonus };
+      // シリーズをぜんぶ集めたら、1回だけごほうびチケット
+      const sn = serOf(c), members = serChars(sn); let comp = '';
+      if(members.length && members.every(x => (g.coll[x.id] || 0) > 0) && !(g.comp || {})[sn]){
+        g.comp = { ...(g.comp || {}), [sn]: Date.now() }; g.tickets += COMP_BONUS; comp = sn;
+      }
+      return { c, had, bonus, comp };
     });
     if(!r){ toast('チケットがないよ。ミッションでもらえるよ'); return; }
     $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet" style="text-align:center">${capsuleSVG()}<p class="muted">ガチャガチャ…</p></div></div>`;
-    setTimeout(() => showResult(r.c, r.had, r.bonus), 1300);
+    setTimeout(() => showResult(r.c, r.had, r.bonus, r.comp), 1300);
   }finally{ PULLING = false; }
 }
-function showResult(c, dup, bonus = 0){
+function showResult(c, dup, bonus = 0, comp = ''){
   $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><div class="reveal sparkle">
     <div class="rar ${c.rarity}" style="font-size:13px;padding:2px 12px">${c.rarity}</div>
     <div class="pic">${charPic(c)}</div>
     <div class="nm">${esc(c.name)}</div>
     ${dup ? `<span class="tag dup">もう持ってる → かけら＋1（${bonus ? SHARD_NEED : G().shards}/${SHARD_NEED}）</span>` : `<span class="tag">NEW！</span>`}
     ${bonus ? `<div class="gift" style="justify-content:center;margin-top:12px">💎 かけらが${SHARD_NEED}個たまった！ <b>チケット＋${bonus} 🎟️</b></div>` : ''}
+    ${comp ? `<div class="gift" style="justify-content:center;margin-top:12px">👑 「${esc(comp)}」コンプリート！ <b>チケット＋${COMP_BONUS} 🎟️</b></div>` : ''}
     </div>
     <div class="row" style="justify-content:center;margin-top:16px">
       ${G().tickets > 0 ? `<button class="btn" data-a="pull">もう1回（のこり${G().tickets}枚）</button>` : ''}
       <button class="btn sub" data-a="close">とじる</button></div></div></div>`;
 }
-const capsuleSVG = () => `<svg class="cap" viewBox="0 0 100 100"><path d="M10 50a40 40 0 0 1 80 0z" fill="#ff8fb3"/><path d="M10 50a40 40 0 0 0 80 0z" fill="#fff" stroke="#f6d6e1" stroke-width="2"/><rect x="8" y="46" width="84" height="8" rx="4" fill="#e46f98"/><circle cx="34" cy="30" r="6" fill="#fff" opacity=".6"/></svg>`;
+const capsuleSVG = () => `<svg class="cap" viewBox="0 0 100 100"><path d="M10 50a40 40 0 0 1 80 0z" fill="${serColor(curSer())[0]}"/><path d="M10 50a40 40 0 0 0 80 0z" fill="#fff" stroke="#f6d6e1" stroke-width="2"/><rect x="8" y="46" width="84" height="8" rx="4" fill="#e46f98"/><circle cx="34" cy="30" r="6" fill="#fff" opacity=".6"/></svg>`;
 
 /* ===== 暗号化（センシティブな記録用） ===== */
 const TE = new TextEncoder(), TD = new TextDecoder();
@@ -738,22 +780,28 @@ function viewGacha(){
   const g = G(), chars = allChars();
   if(!chars.length) return `<div class="card gacha-top"><p style="font-size:40px;margin:6px 0">🎁</p><p style="margin:0">ガチャのキャラを準備中だよ</p>
     <p class="muted">${FROM}がキャラを入れてくれるのを待っててね。チケットはためておけます（いま 🎟️ ${g.tickets}枚）</p></div>`;
-  const owned = chars.filter(c => g.coll[c.id] > 0).length;
-  return `<div class="card gacha-top">
-      <svg class="machine" viewBox="0 0 120 140"><rect x="22" y="78" width="76" height="56" rx="14" fill="#e46f98"/><circle cx="60" cy="50" r="42" fill="#fff" stroke="#f6d6e1" stroke-width="3"/>
+  const list = seriesList(), ser = curSer(), [c1, c3] = serColor(ser);
+  const tabs = list.length > 1 ? [...list, MIX] : list;
+  const pool = ser === MIX ? chars : serChars(ser);
+  const owned = pool.filter(c => g.coll[c.id] > 0).length;
+  return `<div class="sertabs">${tabs.map(n => { const [tc] = serColor(n), cs = n === MIX ? chars : serChars(n), own = cs.filter(c => g.coll[c.id] > 0).length;
+      return `<button class="${n === ser ? 'on' : ''}" ${n === ser ? `style="background:${tc}"` : ''} data-a="gser" data-v="${esc(n)}">${esc(serLabel(n))}<small>${own}/${cs.length}</small></button>`; }).join('')}</div>
+    <div class="card gacha-top" style="--gc3:${c3}">
+      <div style="font-weight:700;color:${c1};font-size:17px">${esc(ser === MIX ? '🌈 ミックスガチャ' : ser + 'ガチャ')}</div>
+      ${ser === MIX ? '<p class="muted" style="margin:2px 0 0;font-size:12px">ぜんぶのシリーズから出るよ</p>' : ''}
+      <svg class="machine" viewBox="0 0 120 140"><rect x="22" y="78" width="76" height="56" rx="14" fill="${c1}"/><circle cx="60" cy="50" r="42" fill="#fff" stroke="${c3}" stroke-width="3"/>
         <circle cx="42" cy="58" r="10" fill="#ff8fb3"/><circle cx="64" cy="66" r="10" fill="#ffd34d"/><circle cx="78" cy="48" r="10" fill="#9fd3ff"/><circle cx="50" cy="38" r="10" fill="#c9b8ff"/><circle cx="70" cy="30" r="9" fill="#8fd19e"/>
-        <circle cx="60" cy="104" r="12" fill="#fff"/><rect x="56" y="96" width="8" height="16" rx="4" fill="#e46f98"/><rect x="44" y="122" width="32" height="7" rx="3.5" fill="#b8507a"/></svg>
+        <circle cx="60" cy="104" r="12" fill="#fff"/><rect x="56" y="96" width="8" height="16" rx="4" fill="${c1}"/><rect x="44" y="122" width="32" height="7" rx="3.5" fill="rgba(0,0,0,.25)"/></svg>
       <div class="muted">もっているチケット</div><div class="tixbig">🎟️ ${g.tickets}<small style="font-size:14px"> 枚</small></div>
-      <button class="btn block" data-a="pull" style="margin-top:10px${g.tickets < 1 ? ';opacity:.5' : ''}" ${g.tickets < 1 ? 'disabled' : ''}>ガチャをまわす（1枚）</button>
+      <button class="btn block" data-a="pull" style="margin-top:10px;background:${c1}${g.tickets < 1 ? ';opacity:.5' : ''}" ${g.tickets < 1 ? 'disabled' : ''}>ガチャをまわす（1枚）</button>
       <p class="muted" style="margin:8px 0 0">出やすさ：N 70% ・ R 25% ・ SR 5%</p>
+      <p class="muted" style="margin:4px 0 0;font-size:12px">シリーズをぜんぶ集めるとチケット＋${COMP_BONUS}枚！</p>
       <p class="muted" style="margin:4px 0 0;font-size:12px">ガチャの結果とずかんは${FROM}にも見えるよ ♡</p></div>
     <div class="card"><h2>💎 かけら<span class="sub">${g.shards} / ${SHARD_NEED}</span></h2>
       <div class="bar"><i style="width:${Math.min(100, g.shards / SHARD_NEED * 100)}%"></i></div>
       <p class="muted" style="margin:6px 0 0">同じキャラが出るとかけらになるよ。${SHARD_NEED}個たまるとチケット1枚に変わります。</p></div>
-    <div class="card"><h2>📖 ずかん<span class="sub">${owned} / ${chars.length}</span></h2>
-      <div class="zukan">${chars.map(c => { const n = g.coll[c.id] || 0;
-        return `<div class="zk ${c.rarity} ${n ? '' : 'no'}">${n > 1 ? `<span class="cnt">×${n}</span>` : ''}<div class="pic">${charPic(c)}</div>
-          <div class="nm">${n ? esc(c.name) : '？？？'}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div></div>`;
+    <div class="card"><h2>📖 ${ser === MIX ? 'ずかん（ぜんぶ）' : esc(ser) + 'のずかん'}<span class="sub">${owned} / ${pool.length}</span></h2>
+      ${zukanBySeries(g, ser === MIX ? list : [ser], false)}</div>`;
 }
 const cheerDate = c => { const d = c.ts?.toDate ? c.ts.toDate() : new Date(); return `${d.getMonth()+1}/${d.getDate()}`; };
 /* 消す前の確認（開いている画面の上に重ねて出す）。「やめる」が上、「消す」が下 */
@@ -829,13 +877,11 @@ function ownerGachaCard(){
   return `<div class="card"><h2>🎰 彼女のガチャ<span class="sub"><span class="tix">🎟️ ${g.tickets}</span></span></h2>
     <p class="muted" style="margin:0 0 10px">これまで ${g.pulls || 0}回 ・ かけら ${g.shards}/${SHARD_NEED}</p>
     <div style="font-weight:700;color:var(--pink-d);margin-bottom:6px">📖 ずかん ${owned} / ${chars.length}</div>
-    ${chars.length ? `<div class="zukan">${chars.map(c => { const n = g.coll[c.id] || 0;
-      return `<div class="zk ${c.rarity} ${n ? '' : 'no'}">${n > 1 ? `<span class="cnt">×${n}</span>` : ''}<div class="pic">${charPic(c)}</div>
-        <div class="nm">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`; }).join('')}</div>` : '<p class="empty">まだキャラを登録していません</p>'}
+    ${chars.length ? zukanBySeries(g, seriesList(), true) : '<p class="empty">まだキャラを登録していません</p>'}
     <div style="font-weight:700;color:var(--pink-d);margin:14px 0 2px">🕒 ガチャ履歴</div>
     ${(g.history || []).length ? `<ul class="list">${g.history.slice(0, 50).map(h => { const c = chars.find(x => x.id === h.id), [kl, kc] = KIND[h.kind] || KIND.new;
       return `<li>${c ? `<img class="thumb" src="${c.img}" alt="">` : '<div class="thumb"></div>'}<div class="main"><div class="t">${esc(c ? c.name : h.name)} <span class="rar ${h.rarity}">${h.rarity}</span></div>
-        <div class="s">${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>${g.history.length > 50 ? `<p class="muted" style="margin:6px 0 0">最新50回を表示中（ぜんぶで${g.history.length}回の記録があります）</p>` : ''}`
+        <div class="s">${esc(c ? serOf(c) : (h.ser || DEF_SERIES))} ・ ${when(h.at)} ・ <b style="color:${kc}">${kl}</b>${c ? '' : '（削除したキャラ）'}</div></div></li>`; }).join('')}</ul>${g.history.length > 50 ? `<p class="muted" style="margin:6px 0 0">最新50回を表示中（ぜんぶで${g.history.length}回の記録があります）</p>` : ''}`
       : '<p class="empty">まだ履歴がありません（これから引いた分が出ます）</p>'}</div>`;
 }
 function ownerCharCard(){
@@ -846,8 +892,17 @@ function ownerCharCard(){
       <button class="btn sub" data-a="pasteimg">📋 貼り付け</button></div>
     <p class="muted" style="margin:6px 0 0">サイトの画像を長押しして「コピー」したら、「貼り付け」を押してね。</p>
     <p class="muted" style="margin:6px 0 0">何体も写っている画像なら、1体ずつ囲んで別々に登録できます。シール風に自動で加工されます。</p>
-    ${list.length ? `<ul class="list" style="margin-top:10px">${list.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
-      <button class="btn ghost sm" data-a="editchar" data-id="${c.docId}">編集</button></li>`).join('')}</ul>` : ''}</div>`;
+    <p class="muted" style="margin:6px 0 0">「シリーズ」に同じ名前を入れたキャラが、同じガチャ（例：ちいかわガチャ）にまとまります。</p>
+    ${seriesList().map(n => { const cs = list.filter(c => serOf(c) === n);
+      return `<div class="serhd" style="margin-top:14px"><span class="dot" style="background:${serColor(n)[0]}"></span>${esc(n)} <small>${cs.length}体</small></div>
+      <ul class="list">${cs.map(c => `<li><img class="thumb" src="${c.img}" alt=""><div class="main"><div class="t">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>
+      <button class="btn ghost sm" data-a="editchar" data-id="${c.docId}">編集</button></li>`).join('')}</ul>`; }).join('')}</div>`;
+}
+const cleanSer = x => { const t = String(x || '').trim().slice(0, 20); return t === DEF_SERIES ? '' : t; };
+// シリーズを保存できないとき（Firebaseのルールが古いまま）は、わかる言葉で知らせる
+async function serSave(fn){
+  try{ return await fn(); }
+  catch(e){ if(e?.code === 'permission-denied') throw new Error('保存できませんでした。Firebaseのルールを新しいものに更新してね'); throw e; }
 }
 /* ===== キャラ画像の切り抜き＋シール風加工 ===== */
 let CROP = null;
@@ -862,7 +917,8 @@ function openCrop(file, editId = ''){
       <div class="cropbox"><img src="${url}" alt=""><div class="sel"><div class="hd"></div></div></div>
       <form data-form="gchar"><div class="cropfoot"><canvas width="400" height="400"></canvas>
         <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：パンダ" value="${esc(ed?.name || '')}">
-        <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${ed?.rarity === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div></div>
+        <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${ed?.rarity === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
+        ${serField(ed ? String(ed.series || '') : (S.lastSer || ''))}</div></div>
         <button class="btn block" style="margin-top:10px">${ed ? '画像を差し替えて保存' : 'このキャラを登録'}</button></form></div></div>`;
     bindCrop(); drawSel(); drawPreview();
   };
@@ -1465,15 +1521,21 @@ async function handleForm(kind, f){
       if(!CROP) throw new Error('画像をえらんでね');
       const img = makeSticker().toDataURL('image/jpeg', 0.88);
       const data = { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img };
-      if(CROP.editId) await setDoc(doc(db,'gachaChars',CROP.editId), data, { merge:true });
-      else await addDoc(collection(db,'gachaChars'), { ...data, ts: serverTimestamp() });
+      const ser = cleanSer(v.series), old = CROP.editId ? S.gchars.find(x => x.docId === CROP.editId) : null;
+      if(ser !== String(old?.series || '').trim()) data.series = ser;
+      if(ser) S.lastSer = ser;
+      await serSave(() => CROP.editId ? setDoc(doc(db,'gachaChars',CROP.editId), data, { merge:true })
+        : addDoc(collection(db,'gachaChars'), { ...data, ts: serverTimestamp() }));
       URL.revokeObjectURL(CROP.url); CROP = null;
       break;
     }
     case 'editchar': {
       const name = v.name.trim();
       if(!name) throw new Error('名前を入れてね');
-      await setDoc(doc(db,'gachaChars',v.id), { name, rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N' }, { merge:true });
+      const data = { name, rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N' };
+      const ser = cleanSer(v.series), old = S.gchars.find(x => x.docId === v.id);
+      if(ser !== String(old?.series || '').trim()) data.series = ser;
+      await serSave(() => setDoc(doc(db,'gachaChars',v.id), data, { merge:true }));
       break;
     }
     case 'regmail': {
@@ -1626,13 +1688,15 @@ document.addEventListener('click', async e => {
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
       case 'pull': await pullGacha(); break;
+      case 'gser': S.gser = v; render(); break;
       case 'editchar': {
         const c = S.gchars.find(x => x.docId === el.dataset.id); if(!c) break;
         $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>キャラを編集<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
           <form data-form="editchar"><input type="hidden" name="id" value="${c.docId}">
           <div class="cropfoot" style="margin-top:0"><img src="${c.img}" alt="" style="width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)">
             <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" value="${esc(c.name)}">
-            <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${r === c.rarity ? 'selected' : ''}>${r}</option>`).join('')}</select></div></div>
+            <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${r === c.rarity ? 'selected' : ''}>${r}</option>`).join('')}</select>
+            ${serField(String(c.series || ''))}</div></div>
           <button class="btn block" style="margin-top:14px">保存</button></form>
           <p class="muted" style="margin:16px 0 6px">画像を変える</p>
           <div class="f2"><label class="btn sub filebtn">画像をえらぶ<input type="file" accept="image/*" data-crop data-edit="${c.docId}"></label>

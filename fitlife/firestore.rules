@@ -84,21 +84,23 @@ service cloud.firestore {
     match /gachaChars/{id} {
       allow read: if isOwner() || isMember();
       allow create: if isOwner()
-        && request.resource.data.keys().hasOnly(['name', 'rarity', 'img', 'ts'])
+        && request.resource.data.keys().hasOnly(['name', 'rarity', 'img', 'ts', 'series'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 20
         && request.resource.data.rarity in ['N', 'R', 'SR']
         && request.resource.data.img is string
-        && request.resource.data.img.size() <= 500000;
+        && request.resource.data.img.size() <= 500000
+        && (!('series' in request.resource.data) || (request.resource.data.series is string && request.resource.data.series.size() <= 20));
       allow update: if isOwner()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'rarity', 'img'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'rarity', 'img', 'series'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 20
         && request.resource.data.rarity in ['N', 'R', 'SR']
         && request.resource.data.img is string
-        && request.resource.data.img.size() <= 500000;
+        && request.resource.data.img.size() <= 500000
+        && (!('series' in request.resource.data) || (request.resource.data.series is string && request.resource.data.series.size() <= 20));
       allow delete: if isOwner();
     }
 
