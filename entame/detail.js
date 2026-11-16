@@ -394,6 +394,8 @@ function renderDetail(it) {
   const eps = episodes(it);
   const w = eps.filter(e => e.w).length;
   const nx = eps[nextIdx(eps)];
+  /* 映画で話数がないときは話数タブを出さず、番組情報の下に目立たない「＋ 話数を追加」だけ置く */
+  const noEp = mv && !eps.length && !epEdit;
   /* 視聴ステータスはラベル1つ。押すと4つの選択肢が開く */
   const stBtn = `<span class="stw"><button type="button" class="pill dst ${it.s ? "s-" + esc(it.s) : "s-none"}" id="stOpen" aria-haspopup="true" aria-expanded="${stMenu}">${esc(stLabel(it.s || "未設定"))}<span class="stv" aria-hidden="true">▾</span></button>${stMenu ? `<span class="stmenu" role="menu">${STATUSES.map(s => `<button type="button" role="menuitemradio" data-set="${s}" aria-checked="${it.s === s}" class="s-${s}">${stLabel(s)}</button>`).join("")}</span>` : ""}</span>`;
   const nv = navNeighbors(it.id),
@@ -402,9 +404,9 @@ function renderDetail(it) {
   return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${(l => (l ? `<button type="button" class="dmt mtag m-${l[1]}" data-jump="fMedia" title="放送形態を変える">${l[0]}</button>` : ""))(mediaLabOf(it))}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", CHEV(-1))}${navB(1, "次の作品", CHEV(1))}<button type="button" class="editbtn" id="editItem" aria-label="作品を編集">✎ 編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
     ${missDetail(it)}
-    <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
+    ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
+    <div class="links">${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
@@ -434,6 +436,12 @@ function refreshSheet() {
   /* 前・次へ移ったときの横スライドは1回だけ。描き直した中身にまたかからないよう外す（保存のたびに揺れて見えるため） */
   el.classList.remove("dsl-l", "dsl-r");
   el.innerHTML = renderDetail(it);
+  noTabInfo();
+}
+/* 話数タブがない詳細（話数のない映画）は、番組情報を表示する */
+function noTabInfo() {
+  const sh = $("#layer .sheet");
+  if (sh && !sh.querySelector(".dtabs") && sh.classList.contains("t-ep")) setDTab("info");
 }
 function refreshEditor() {
   const it = items.find(x => x.id === openId);
@@ -464,6 +472,7 @@ function openDetail(id, dir, keepNav) {
     void w.offsetWidth;
     w.classList.add(dir > 0 ? "dsl-r" : "dsl-l");
     setDTab(tab);
+    noTabInfo();
     return;
   }
   $("#layer").innerHTML =
@@ -885,6 +894,17 @@ const DETAIL_ACTIONS = [
       epOne = null;
       epEdit = { list: episodes(it).map(x => ({ ...x })) };
       refreshSheet();
+    },
+  ],
+  /* 話数のない映画：番組情報の下の「＋ 話数を追加」から話数の編集を開く */
+  [
+    "#epAddMv",
+    (el, it) => {
+      subPaste = null;
+      epOne = null;
+      epEdit = { list: [] };
+      refreshSheet();
+      setDTab("ep");
     },
   ],
   [null, (el, it, e) => !!epEdit && runActions(EPEDIT_ACTIONS, e, it)],

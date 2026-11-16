@@ -280,6 +280,9 @@ html,body{overscroll-behavior:none}
 /* 削除ボタン・YouTubeの詳細 */
 .delsm{margin-left:auto;border:0;background:transparent;color:var(--u-sub);font-size:12px;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
 .delsm.armed{color:var(--u-acct);font-weight:700}
+.epadd{margin-left:auto;border:0;background:transparent;color:var(--u-sub);font-size:12px;padding:6px 4px;cursor:pointer;opacity:.75}
+.epadd+.delsm{margin-left:10px}
+@media (hover:hover){.epadd:hover{opacity:1;color:var(--u-ink)}}
 #ytIn .links,#sheetIn .links{display:flex;justify-content:flex-end;margin-top:20px}
 /* 詳細の項目（押すと編集） */
 .editing{background:transparent!important}
