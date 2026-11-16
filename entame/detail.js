@@ -467,11 +467,8 @@ function openDetail(id, dir, keepNav) {
     setDTab(tab);
     return;
   }
-  /* PC：一覧の右側に開く（後ろの一覧はそのまま使える）。スマホ：下から出す */
-  const side = IS_PC();
-  $("#layer").innerHTML = side
-    ? `<div class="sheet side" role="region" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`
-    : `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
+  $("#layer").innerHTML =
+    `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
   setDTab("info");
   if (!TOUCH) $(".sheet .close").focus({ preventScroll: true });
 }
@@ -482,8 +479,7 @@ function setDTab(t) {
   sh.classList.toggle("t-info", t === "info");
   sh.classList.toggle("t-ep", t === "ep");
   sh.scrollTop = 0;
-  /* PCの右側の詳細（話数を右に並べるとき）も、次に見る話が見えるところまで送る */
-  if (t === "ep" || sh.classList.contains("side"))
+  if (t === "ep")
     requestAnimationFrame(() => {
       const n = sh.querySelector(".dp-ep .ep.next");
       if (n) {

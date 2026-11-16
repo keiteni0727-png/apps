@@ -1465,29 +1465,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .prog{height:6px;border-radius:3px;background:var(--u-soft);overflow:hidden}
 .prog i{display:block;height:100%;background:var(--u-accent)}
 .sheet.t-info .dtabs [data-dtab="info"],.sheet.t-ep .dtabs [data-dtab="ep"]{border-bottom-color:var(--u-accent)}
-/* PC：詳細は一覧の右側に開く（中央に重ねない） */
-@media (min-width:900px){
-  body.dside{--dpw:clamp(420px,calc(100vw - var(--sbw) - 460px),1120px)}
-  body.dside .u-app>:not(#layer):not(.sb):not(.dscrim):not(#toTop){margin-right:var(--dpw)}
-  .sheet.side,.sheet.side:not(.form){position:fixed;top:0;bottom:0;right:0;left:auto;width:var(--dpw);max-width:none;max-height:none;transform:none;border-radius:0;border:0;border-left:1px solid var(--u-line);box-shadow:none;animation:none;z-index:30;overflow-y:auto;padding:0 0 24px;background:var(--u-bg)}
-  .sheet.side .wrap{max-width:none;padding:16px 22px 0}
-  .sheet.side .dhead{position:sticky;top:0;z-index:2;background:var(--u-bg);margin:-16px -22px 0;padding:16px 22px 0}
-  .sheet.side h3{font-size:24px;font-weight:900}
-}
-/* 広いPC・モニター：左に番組情報、右に話数（タブは出さない） */
-@media (min-width:1300px){
-  .sheet.side #sheetIn{display:grid;grid-template-columns:minmax(280px,38%) minmax(0,1fr);gap:0 24px;align-items:start}
-  .sheet.side .dhead{grid-column:1/-1;padding-bottom:12px}
-  .sheet.side .dtabs{display:none}
-  .sheet.side .dpane,.sheet.side.t-info .dp-ep,.sheet.side.t-ep .dp-info{display:block}
-  .sheet.side .dp-ep>h4 .h4l{display:inline}
-}
-@media (min-width:1600px){
-  body.dside{--dpw:clamp(420px,calc(100vw / 1.12 - var(--sbw) - 500px),1000px)}
-  body.dside .u-app>:not(#layer):not(.sb):not(.dscrim):not(#toTop){margin-left:calc(var(--sbw) * .12 / 1.12 + 8px)}
-  .sheet.side #sheetIn{grid-template-columns:380px minmax(0,1fr)}
-}
-.sheet.side.t-info:not(.form) .dp-info,.sheet.side.t-ep:not(.form) .dp-info{display:block}
+
 /* 一覧：OP・EDの列をなくしたので、タイトルを広く */
 @media (min-width:900px){.row.lst:not(.yrow) .slot{grid-template-columns:62px minmax(0,1fr) auto}}
 .sheet:not(.form) .editbtn{white-space:nowrap}
@@ -1502,3 +1480,32 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .archd.cur{background:var(--u-accent2);box-shadow:inset 3px 0 0 var(--u-accent)}
 .archd.cur .arcnm{color:var(--u-acct)}
 .archd.cur .arcct{color:var(--u-acct);font-weight:700}
+/* PCの番組表：曜日ごとに箱で区切り、カードの高さをそろえる */
+.wcols{align-items:stretch;gap:8px}
+.wcol{background:var(--u-soft);border:1px solid var(--u-line);border-radius:16px;padding:8px;gap:8px}
+.wcol.today{border:2px solid var(--u-accent);padding:7px}
+.wcol-hd{height:38px;border-radius:10px;background:var(--u-surface)}
+.wcol-none{margin:auto 0;padding:20px 0}
+.wcard.v-col{display:flex;flex-direction:column;gap:6px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:12px;padding:10px;min-width:0;overflow:hidden}
+.wcard.v-col.live{border:2px solid var(--u-live);padding:9px;animation:none;box-shadow:none}
+.wcard.v-col.nx{border:2px solid var(--u-accent);padding:9px}
+.wcard.v-col .wc-main{display:flex;flex-direction:column;gap:6px;padding:0;border:0;background:none;text-align:left;font:inherit;color:var(--u-ink);min-width:0}
+.v-col .wc-row1{display:flex;align-items:center;gap:6px;min-width:0;height:22px}
+.v-col .wc-row1 .wc-time{font-family:var(--u-disp);font-size:20px;line-height:1;color:var(--u-ink);flex:none}
+.v-col .wc-row1 .wc-st{font-size:10.5px;font-weight:700;color:var(--u-sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.v-col .wc-row1 .wc-b{margin-left:auto;flex:none;font-size:11px;padding:1px 5px}
+.v-col .wc-row1 .wc-b.live,.v-col .wc-row1 .wc-b.nx{font-size:13px}
+.v-col .wc-tags{flex-wrap:nowrap;overflow:hidden;height:20px;gap:4px}
+.v-col .wc-tags>*{flex:none;font-size:10px}
+.v-col .wc-more{font-size:10.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
+.v-col .wc-ttl{font-size:13.5px;font-weight:700;line-height:1.35;height:calc(13.5px * 1.35 * 2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.v-col .wc-ep{font-size:11.5px;line-height:1.45;height:calc(11.5px * 1.45 * 2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--u-ink)}
+.v-col .wc-ep em{font-style:normal;font-weight:700;color:var(--u-sub);border:0;padding:0;margin:0;font-size:inherit}
+.v-col .wc-ep em.p-未視聴,.v-col .wc-ep em.p-放送中{color:var(--u-live)}
+.v-col .wc-ep em.p-次回{color:var(--u-acct)}
+.wcard.v-col .wc-tick{align-self:stretch;height:34px;padding:0 8px;border:0;border-radius:10px;background:var(--u-accent);color:var(--u-on);font:inherit;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.v-col .wc-okmsg{height:34px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--u-sub);border-top:1px dashed var(--u-line)}
+@media (min-width:1600px){.v-col .wc-ttl{font-size:14.5px;height:calc(14.5px * 1.35 * 2)}.v-col .wc-ep{font-size:12px;height:calc(12px * 1.45 * 2)}}
+.v-col .wc-okmsg{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wcard.v-col.un .wc-row1 .wc-st,.wcard.v-col.nx .wc-row1 .wc-st,.wcard.v-col.live .wc-row1 .wc-st{display:none}
+.v-col .wc-tags>.lab,.v-col .wc-tags>.fin{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

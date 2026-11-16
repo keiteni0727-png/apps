@@ -350,6 +350,21 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   const tick = back[0]
     ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(back[0].n)}を視聴済にする">${esc(back[0].n)}を見た</button>`
     : "";
+  /* PCの曜日の列：どのカードも同じ高さ（ラベルは1行・タイトルと話は2行まで、下端に視聴ボタンか状態） */
+  if (v === "col") {
+    const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
+    const more = sites.length - 1;
+    const okMsg = !eps.length ? "話数未登録" : w === eps.length ? "全話視聴済" : "放送済みは視聴済";
+    return `<div class="wcard v-col${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
+      <button type="button" class="wc-main" data-id="${i.id}">
+        <span class="wc-row1"><span class="wc-time">${time}</span>${st ? `<span class="wc-st">${esc(st)}</span>` : ""}${badge}</span>
+        <span class="wc-tags">${kindTag(i)}${fin ? FIN : ""}${sites[0] ? vlab(sites[0]) : ""}${more > 0 ? `<span class="wc-more">ほか${more}</span>` : ""}</span>
+        <span class="wc-ttl">${esc(i.t)}</span>
+        ${weekEpLine(i, e, onAir)}
+      </button>
+      ${tick || `<span class="wc-okmsg">${okMsg}</span>`}
+    </div>`;
+  }
   const pips =
     v === "hero" && eps.length && eps.length <= 26
       ? `<span class="wc-pips" aria-hidden="true">${eps.map(x => `<i class="${x.w ? "w" : x === e ? "c" : ""}"></i>`).join("")}</span>`
@@ -433,7 +448,7 @@ function renderWeek() {
       const sub = isT ? "今日" : d.getTime() === t0.getTime() + 86400e3 ? "明日" : `${d.getDate()}`;
       const dot = x.list.some(i => nextInfo(i).back.length);
       cols.push(
-        `<section class="wcol${isT ? " today" : ""}" aria-label="${DOW[(d.getDay() + 6) % 7]}曜日"><div class="wcol-hd"><small>${sub}</small><b>${DOW[(d.getDay() + 6) % 7]}</b>${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}</div>${x.list.map(i => card(x, i, false, "row")).join("") || `<p class="wcol-none">なし</p>`}</section>`,
+        `<section class="wcol${isT ? " today" : ""}" aria-label="${DOW[(d.getDay() + 6) % 7]}曜日"><div class="wcol-hd"><small>${sub}</small><b>${DOW[(d.getDay() + 6) % 7]}</b>${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}</div>${x.list.map(i => card(x, i, false, "col")).join("") || `<p class="wcol-none">なし</p>`}</section>`,
       );
     }
     h += `<div class="wcols">${cols.join("")}</div>`;
