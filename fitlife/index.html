@@ -118,6 +118,7 @@ svg.chart{width:100%;height:auto;display:block}
 .mis.done .ck{background:var(--ok);border-color:var(--ok)}
 .mis .main{flex:1}
 .mis .got{font-size:12px;color:var(--muted)}
+.mis.gymb{margin-top:10px;padding:10px 12px;border:0;border-radius:14px;background:linear-gradient(135deg,#e3f0ff,#f3f8ff)}
 .tix{display:inline-flex;align-items:center;gap:4px;background:#fff3c9;color:#a77a12;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700}
 .gift{background:linear-gradient(135deg,#fff3c9,#fff9e8);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:10px}
 .gacha-top{text-align:center;background:linear-gradient(160deg,var(--gc3,#ffd6e5),#fff4f8 55%,#fff)}
@@ -257,6 +258,9 @@ const MISSIONS = [
   { k:'water', label:'お水を記録する', ok:t => S.data.water.some(x => x.date === t) },
   { k:'body', label:'体重か睡眠を記録する', ok:t => S.data.weights.some(x => x.date === t) || S.data.sleep.some(x => x.date === t) },
 ];
+
+const GYM_BONUS = 2; // ジムに行った日のボーナス（デイリーミッションとは別枠・1日1回）
+const gymToday = t => S.data.gym.some(x => x.date === t);
 
 const CHEERS = [
   '今日も自分の体をいたわってあげてね。',
@@ -453,12 +457,14 @@ const claimedToday = () => G().claimed[today()] || [];
 const pendingGifts = () => { const done = new Set(G().cheerDone); return S.cheers.filter(c => c.ticket && !done.has(c.id)); };
 async function claim(k){
   const t = today();
-  if(k !== 'rest'){ const m = MISSIONS.find(x => x.k === k); if(!m || !m.ok(t)) throw new Error('まだクリアしていないよ'); }
+  if(k === 'gym'){ if(!gymToday(t)) throw new Error('今日のジムをまだ記録していないよ'); }
+  else if(k !== 'rest'){ const m = MISSIONS.find(x => x.k === k); if(!m || !m.ok(t)) throw new Error('まだクリアしていないよ'); }
   const msg = await updateGame(g => {
     const got = [...(g.claimed[t] || [])];
     if(got.includes(k)) return '';
     got.push(k); let add = 1, msg = 'チケット＋1 🎟️';
-    if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
+    if(k === 'gym'){ add = GYM_BONUS; msg = `ジムおつかれさま！チケット＋${GYM_BONUS} 🎟️`; }
+    else if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
     g.claimed = { ...g.claimed, [t]: got }; g.tickets = (g.tickets || 0) + add;
     return msg;
   });
@@ -786,6 +792,9 @@ function missionCard(){
         <div class="main"><div>${m.label}</div><div class="got">チケット1枚</div></div>
         ${has ? '<span class="got">受け取り済み</span>' : ok ? `<button class="btn sm" data-a="claim" data-v="${m.k}">受け取る</button>` : ''}</div>`; }).join('')}
     <p class="muted" style="margin:8px 0 0">${allDone ? '🎉 ぜんぶクリア！ボーナス＋1枚もらったよ' : '3つぜんぶクリアで、ボーナス＋1枚'}</p>
+    <div class="mis gymb ${gymToday(t) ? 'done' : ''}"><div class="ck">${gymToday(t) ? '✓' : ''}</div>
+      <div class="main"><div>🏋️ ジムボーナス</div><div class="got">ジムを記録するとチケット${GYM_BONUS}枚</div></div>
+      ${got.includes('gym') ? '<span class="got">受け取り済み</span>' : gymToday(t) ? `<button class="btn sm" data-a="claim" data-v="gym">受け取る</button>` : ''}</div>
     ${got.includes('rest') ? '' : `<button class="btn ghost sm" data-a="claim" data-v="rest" style="margin-top:8px">😴 今日はおやすみ（チケット1枚）</button>`}
     ${gifts.length ? `<div class="gift"><span style="font-size:22px">💌</span><div style="flex:1">${FROM}からチケットが${gifts.length}枚届いてるよ</div><button class="btn sm" data-a="gifts">受け取る</button></div>` : ''}
     ${g.tickets > 0 ? `<button class="btn block" data-a="tab" data-v="gacha" style="margin-top:12px">ガチャをまわしにいく ♡</button>` : ''}
