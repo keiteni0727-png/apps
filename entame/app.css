@@ -586,11 +586,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @media (min-width:0px){
   .dmiss{display:block;margin:10px 0 0;border-radius:var(--u-r);background:var(--u-warn2);color:var(--u-warn);font-size:12.5px}
   .dmiss.hot{background:var(--u-danger2);color:var(--u-danger)}
-  .dmiss summary{display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;list-style:none;font-weight:700}
-  .dmiss summary::-webkit-details-marker{display:none}
-  .dmiss summary .mn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;opacity:.9}
-  .dmiss summary .ar{font-size:11px;transition:transform .15s}
-  .dmiss[open] summary .mn{display:none}
+  .dmiss .dmh{padding:7px 12px 6px;font-weight:700}
   .dmiss .mbtns{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px}
   .dmiss .mbtns button{border:1px solid currentColor;background:var(--u-surface);color:inherit;border-radius:999px;padding:3px 11px;font:inherit;font-size:12px;font-weight:700}
   .dmiss .mbtns button:not(.st):hover{background:var(--u-soft)}
@@ -1532,3 +1528,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .dd-l em{font-style:normal;font-size:11px;color:var(--u-sub);margin-left:6px;padding:1px 6px;border:1px solid var(--u-line);border-radius:6px;font-weight:500}
 .dd-dot{width:10px;height:10px;border-radius:50%;background:var(--vc,var(--u-line));flex:none}
 .dd-hint{margin:0;padding:12px 16px;font-size:12.5px;color:var(--u-sub);border-top:1px solid var(--u-soft)}
+/* 編集画面：放送形態・放送局・配信サイトの行（PCは横並び、項目の数で等分） */
+.frow3{display:grid;gap:10px;min-width:0}
+@media (min-width:700px){.frow3{grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px 16px}}
+.frow3>.field{min-width:0}

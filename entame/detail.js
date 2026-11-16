@@ -425,7 +425,8 @@ function missDetail(it) {
         : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
   const btn = x =>
     `<span class="mi">${main(x)}${x.ns ? `<button type="button" class="nb" data-nosong="all" title="OP・ED・主題歌を「なし」にする">なし</button>` : x.n ? `<button type="button" class="nb" data-nof="${x.n}" title="${esc(x.k)}を「なし」にする">なし</button>` : ""}</span>`;
-  return `<details class="dmiss${hot ? " hot" : ""}"${dmissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(x => x.k).join("・"))}</span><span class="ar">${FOLD_IC}</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+  /* たたまずに、足りない項目のボタンを最初から全部出す */
+  return `<div class="dmiss${hot ? " hot" : ""}" role="group" aria-label="未入力 ${l.length}項目"><div class="dmh">⚠ 未入力 ${l.length}項目</div><div class="mbtns">${l.map(btn).join("")}</div></div>`;
 }
 function refreshSheet() {
   if (form && form.inline) return;
