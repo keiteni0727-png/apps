@@ -1,10 +1,10 @@
 /* 色・書体・角丸・土台・左メニューは u-base.css（アプリ共通）。ここはアクセント色と、このアプリだけの色 */
-:root{--u-accent:#d4342a;--u-accent2:#fbe9e7;--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--stream:#0f8a8a;--reality:#d2457a;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090;--sg-op:#2f6fd1;--sg-ed:#7a4fd0;--sg-th:#1f8a6d;--sg-in:#c46a12}
+:root{--anime:#d4342a;--drama:#2457d6;--movie:#7b4bd1;--stream:#0f8a8a;--reality:#d2457a;--yt:#e5221a;--sp:#d2457a;--su:#14896a;--au:#c8611a;--wi:#2f6fc9;--accent:#2f5bd6;--st-want:#1f8a52;--st-now:#c77a00;--st-done:#8a3b52;--st-drop:#7a8090;--sg-op:#2f6fd1;--sg-ed:#7a4fd0;--sg-th:#1f8a6d;--sg-in:#c46a12}
 /* ダークモード */
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8;color-scheme:dark}
+  :root:not([data-theme="light"]){--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8;color-scheme:dark}
 }
-:root[data-theme="dark"]{--u-accent:#ff5a4e;--u-accent2:#3a1d1b;--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8;color-scheme:dark}
+:root[data-theme="dark"]{--anime:#ff6a5c;--drama:#6f97ff;--movie:#b18cff;--stream:#3fcfcf;--reality:#ff86b0;--yt:#ff4d45;--sp:#ff86b0;--su:#3fcf9f;--au:#ffa35c;--wi:#7fb0ff;--accent:#8fa8ff;--st-want:#4cc98a;--st-now:#f0a83a;--st-done:#e08aa3;--st-drop:#8e95a8;color-scheme:dark}
 body{background:var(--u-bg);color:var(--u-ink);font-size:15px;line-height:1.55;margin:0;font-family:var(--u-f);-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--u-surface)}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -40,7 +40,7 @@ main{padding-bottom:20px}
 .s-視聴済み{background:var(--st-done)}
 .s-見ない{background:var(--st-drop)}
 .tick{flex:none;border:0;border-left:1px solid var(--u-line);background:transparent;display:grid;place-items:center;gap:0;color:var(--u-sub);padding:6px 0;width:52px;font-size:9.5px}
-.tick:not(:disabled):hover span{background:var(--u-accent);color:#fff}
+.tick:not(:disabled):hover span{background:var(--u-accent);color:var(--u-on)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px}
 .chips button{border:1px solid var(--u-line);background:var(--u-surface);border-radius:999px;padding:4px 11px;font-size:12.5px}
 .chips button[aria-pressed="true"]{border-color:var(--u-ink);background:var(--u-ink);color:var(--u-surface)}
@@ -154,7 +154,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .time .kind{font-size:9.5px;padding:1px 4px}
 .lab{font-size:10.5px;line-height:1.5;padding:0 6px;border-radius:4px;border:1px solid var(--u-line);color:var(--u-sub);white-space:nowrap}
 .lab.v{border-color:transparent;background:var(--u-chip);color:var(--u-ink)}
-.tick span{display:grid;place-items:center;border-radius:50%;border:2px solid var(--u-accent);color:var(--u-accent);font-weight:700;width:26px;height:26px;font-size:13px}
+.tick span{display:grid;place-items:center;border-radius:50%;border:2px solid var(--u-accent);color:var(--u-acct);font-weight:700;width:26px;height:26px;font-size:13px}
 .sheet .meta{margin:0 0 4px}
 .hdrow{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .editbtn{border:1px solid var(--u-line);background:transparent;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700}
@@ -243,7 +243,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sp-r:first-child{border-top:0}
 .sp-r small{display:block;color:var(--u-sub);font-size:11px;text-decoration:line-through}
 .sp-st{font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
-.sp-r.miss .sp-st{color:var(--u-accent)}
+.sp-r.miss .sp-st{color:var(--u-acct)}
 .spaste .ffoot{position:static;margin-top:12px;padding-bottom:0}
 .dconfirm{margin-top:10px;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
 #sheetIn,#ytIn{padding-bottom:14px}
@@ -279,7 +279,7 @@ html,body{overscroll-behavior:none}
 .gbulk button{border:0;background:transparent;color:var(--accent);font-size:12.5px;font-weight:700;padding:2px 0}
 /* 削除ボタン・YouTubeの詳細 */
 .delsm{margin-left:auto;border:0;background:transparent;color:var(--u-sub);font-size:12px;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
-.delsm.armed{color:var(--u-accent);font-weight:700}
+.delsm.armed{color:var(--u-acct);font-weight:700}
 #ytIn .links,#sheetIn .links{display:flex;justify-content:flex-end;margin-top:20px}
 /* 詳細の項目（押すと編集） */
 .editing{background:transparent!important}
@@ -322,7 +322,7 @@ input.inl{width:100%;border:1.5px solid var(--u-ink);background:var(--u-surface)
   .u-app .sb-sec{font-size:11px;font-weight:700;color:var(--u-sub);letter-spacing:.08em;padding:8px 8px 4px}
   .u-app .sb-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:11px 10px;border-radius:10px;font-size:15.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
   .u-app .sb-it i{width:22px;text-align:center;font-style:normal;flex:none;font-size:17px}
-  .u-app .sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-accent)}
+  .u-app .sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-acct)}
   .u-app .sb-sub{display:flex;flex-direction:column;gap:2px;margin:0 0 6px 20px;padding-left:12px;border-left:2px solid var(--u-line)}
   .u-app .sb-sub .sb-it{font-size:14px;padding:8px 10px}
   .u-app .sb-sub .sb-it[aria-current="page"]{background:var(--u-chip);color:var(--u-ink)}
@@ -638,7 +638,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .pci-v{min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:700}
   .pci-v small{font-weight:500;color:var(--u-sub);margin-left:4px;font-size:12.5px}
   .pci-r em{font-style:normal;font-size:10.5px;color:var(--u-sub);flex:none}
-    .lab.cc{background:var(--u-accent2);color:var(--u-accent);border-color:transparent;font-weight:700}
+    .lab.cc{background:var(--u-accent2);color:var(--u-acct);border-color:transparent;font-weight:700}
   .row.yrow .slot{grid-template-columns:62px minmax(0,1fr) 84px}
   .row.yrow .pwide{align-self:center}
   .ttl strong{font-size:16px}
@@ -762,8 +762,8 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wt-un.on .wt-go{color:var(--st-now)}
 .wc-badge{position:absolute;top:-1px;right:14px;font-family:var(--u-num);font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:0 0 6px 6px;color:#fff;z-index:1}
 .wc-badge.nx{background:var(--accent)}
-.wc-badge.live{background:var(--u-accent)}
-.wcard.live{border:2px solid var(--u-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--u-accent) 14%,transparent)}
+.wc-badge.live{background:var(--u-live);color:#fff}
+.wcard.live{border:2px solid var(--u-live);box-shadow:0 0 0 4px color-mix(in srgb,var(--u-live) 14%,transparent)}
 .wcard.nx .wc-vods,.wcard.live .wc-vods{margin-top:16px}
 @media (prefers-reduced-motion:no-preference){.wc-badge.live{animation:onair 1.6s ease-in-out infinite}@keyframes onair{50%{opacity:.55}}}
 .wday{margin-top:22px}
@@ -821,7 +821,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .u-app .sb .sbp{flex:none;background:var(--u-chip);border-radius:12px;margin:0 0 6px;overflow:hidden}
 .u-app .sb .sbp .sb-row{gap:0}
 .u-app .sb .sbp .sb-row>.sb-it{border-radius:0;background:none;padding-left:8px}
-.u-app .sb .sbp .sb-row>.sb-it.on{color:var(--u-accent)}
+.u-app .sb .sbp .sb-row>.sb-it.on{color:var(--u-acct)}
 .u-app .sb .sbp .sb-fold{width:38px;height:auto;align-self:stretch;border-radius:0;border-left:1px solid var(--u-line)}
 .u-app .sb .sbp .sb-sub{margin:0;padding:0 0 6px;border-left:0}
 .u-app .sb .sbp .sb-sub .sb-it{border-radius:0;padding-left:24px;background:none;border-left:3px solid transparent}
@@ -866,7 +866,7 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 }
 .mic{display:inline-grid;place-items:center;width:22px;height:22px;line-height:0}
 .mic svg{width:20px;height:20px}
-.mic.w{color:var(--u-accent)}.mic.a{color:var(--anime)}.mic.d{color:var(--drama)}.mic.m{color:var(--movie)}.mic.s{color:var(--stream)}.mic.yt{color:var(--yt)}
+.mic.w{color:var(--u-acct)}.mic.a{color:var(--anime)}.mic.d{color:var(--drama)}.mic.m{color:var(--movie)}.mic.s{color:var(--stream)}.mic.yt{color:var(--yt)}
 .hcur .mic{width:26px;height:26px}
 .hcur .mic svg{width:24px;height:24px}
 /* ===== スマホ：上の帯に ☰・切り替え・設定。追加は ☰ のメニューの中 ===== */
@@ -1008,7 +1008,7 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .dhead .meta .dmt{margin:0;border:0;border-left:3px solid currentColor;font-size:12px;padding:4px 8px 4px 7px;line-height:1.35;border-radius:5px;vertical-align:0;cursor:pointer}
 .ich{display:flex;align-items:center;margin-bottom:8px}
 .ilamp{font-family:var(--u-num);font-size:11px;font-weight:800;letter-spacing:.12em;line-height:1;padding:4px 7px 4px 8px;border-radius:4px;color:#fff}
-.ilamp.onair{background:var(--u-accent)}
+.ilamp.onair{background:var(--u-live);color:#fff}
 .ilamp.music{background:var(--u-ink);color:var(--u-surface)}
 .idl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;align-items:center}
 .idl dt{font-size:12px;font-weight:700;color:var(--u-sub);white-space:nowrap;cursor:pointer}
@@ -1148,7 +1148,7 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .bkin{cursor:pointer}
 .bkconf{border:1px solid var(--u-line);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--u-bg);font-size:13px}
 .bkconf p{margin:0 0 4px}
-.bkconf .armed{background:var(--u-accent);border-color:var(--u-accent);color:#fff}
+.bkconf .armed{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
 .bkdata .bkhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .bkdata .bkhd .bkrow{margin:0 0 0 auto}
 .setsheet .mlist{min-height:180px}
@@ -1349,3 +1349,145 @@ button.imt[aria-expanded="false"]+.imt,button.imt[aria-expanded="false"]+button.
 .u-app .sb-logo{width:26px;height:26px;flex:none;display:block}
 body.sbc .u-app .sb .sb-logo{display:none}
 @media (max-width:899px){.u-app .sb-logo{width:24px;height:24px}}
+
+/* ===================== 2026-11 新デザイン（AB案）：番組表 ===================== */
+.wt-clock time{font-family:var(--u-disp);font-weight:400;letter-spacing:0;color:var(--u-acct)}
+.wtop.has-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(260px,1fr);gap:16px;align-items:stretch}
+.wtop-side{display:flex;gap:12px;align-items:stretch;min-width:0;flex:1}
+.wtop.has-hero .wtop-side{flex-direction:column;background:var(--u-surface);border:1px solid var(--u-line);border-radius:20px;padding:16px 18px}
+.wtop.has-hero .wt-un{width:100%;border:0;background:var(--u-live2);padding:10px 14px}
+.wt-un.on{border-color:var(--u-live);background:var(--u-live2)}
+.wt-l{color:var(--u-live)}
+.wtabs button[aria-selected="true"]{background:var(--u-accent);color:var(--u-on);box-shadow:none}
+.wtabs .wdot{background:var(--u-live)}
+.wtabs button[aria-selected="true"] .wdot{background:var(--u-on)}
+/* カード（行）：左に時刻の列、右に中身 */
+.wcard{display:flex;flex-direction:row;gap:12px;background:none;border:0;border-radius:0;overflow:visible;position:relative}
+.wcard.v-row,.wcard.v-row.nx,.wcard.v-row.live{border:0;box-shadow:none;animation:none}
+.wcard .wc-ep em{border:0;padding:0;margin:0;font-size:inherit;vertical-align:baseline}
+.wcard .wc-tick,.wcard.un .wc-tick{flex:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;background:var(--u-accent);color:var(--u-on)}
+.wcard .wc-tick:hover{background:var(--u-accent)}
+.wcard .wc-rail{width:52px;flex:none;display:flex;flex-direction:column;align-items:center}
+.wcard .wc-rail::after{content:"";flex:1;width:2px;background:var(--u-line);margin-top:6px;border-radius:1px}
+.wcard .wc-time{font-family:var(--u-disp);font-size:24px;font-weight:400;line-height:1;letter-spacing:0;color:var(--u-ink)}
+.wcard:not(.nx):not(.live) .wc-time{color:var(--u-sub)}
+.wcard .wc-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding-bottom:16px}
+.wcard .wc-main{display:flex;flex-direction:column;gap:6px;padding:0;border:0;background:none;text-align:left;font:inherit;color:var(--u-ink);min-width:0}
+.wc-tags{display:flex;flex-wrap:wrap;gap:4px 5px;align-items:center;min-width:0}
+.wc-tags .wc-st{font-size:12px;font-weight:700;color:var(--u-sub)}
+.wc-htime{display:none}
+.wc-b{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap;line-height:1.35}
+.wc-b.live{background:var(--u-live2);color:var(--u-live);font-family:var(--u-disp);font-size:14px;letter-spacing:.06em;font-weight:400;padding:1px 7px}
+.wc-b.live i{width:7px;height:7px;border-radius:50%;background:var(--u-live)}
+.wc-b.nx{background:var(--u-accent2);color:var(--u-acct);font-family:var(--u-disp);font-size:14px;letter-spacing:.06em;font-weight:400;padding:1px 7px}
+.wc-b.un{background:var(--u-live2);color:var(--u-live)}
+.wcard .wc-ttl{font-size:17px;font-weight:700;line-height:1.35}
+.wcard .wc-ep{font-size:13.5px;color:var(--u-ink);line-height:1.45}
+.wcard .wc-ep em{font-style:normal;font-weight:700;color:var(--u-sub)}
+.wcard .wc-ep em.p-未視聴{color:var(--u-live)}
+.wcard .wc-ep em.p-次回{color:var(--u-acct)}
+.wcard .wc-ep em.p-放送中{color:var(--u-live)}
+.wcard .wc-prog{display:flex;align-items:center;gap:10px}
+.wcard .wc-bar{flex:1;max-width:180px;min-width:60px;height:5px;border-radius:3px;background:var(--u-soft);overflow:hidden}
+.wcard .wc-bar i{display:block;height:100%;background:var(--u-accent)}
+.wcard .wc-cnt{font-size:12px;font-weight:600;color:var(--u-sub);font-family:inherit}
+.wc-tick{align-self:flex-start;height:38px;padding:0 16px;border:0;border-radius:999px;background:var(--u-accent);color:var(--u-on);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.wc-tick:hover{filter:brightness(1.05)}
+.wsub{font-size:13px;font-weight:700;color:var(--u-sub);letter-spacing:.06em;margin:16px 0 10px}
+.wline{display:flex;flex-direction:column}
+.wline .wcard:last-child .wc-rail::after{display:none}
+/* 大きい1枚（放送中・次の放送） */
+.wcard.v-hero{flex-direction:column;gap:0;background:var(--u-surface);border:1px solid var(--u-line);border-radius:20px;padding:16px 18px;box-shadow:none}
+.wcard.v-hero.live{border:1px solid var(--u-line);box-shadow:none;animation:none}
+.wcard.v-hero .wc-rail{display:none}
+.wcard.v-hero .wc-body{padding:0;gap:10px}
+.wcard.v-hero .wc-htime{display:inline;font-size:12px;font-weight:700;color:var(--u-sub);margin-right:2px}
+.wcard.v-hero .wc-ttl{font-size:23px;font-weight:900;line-height:1.3}
+.wcard.v-hero .wc-bar{display:none}
+.wc-pips{display:flex;gap:4px}
+.wc-pips i{flex:1;height:5px;border-radius:3px;background:var(--u-soft)}
+.wc-pips i.w{background:var(--u-accent)}
+.wc-pips i.c{background:var(--u-live)}
+.wcard.v-hero .wc-foot{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.wcard.v-hero:not(.live) .wc-pips i.c{background:var(--u-acct)}
+/* PC：1週間を曜日ごとの列で */
+.wcols{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;align-items:start;margin-top:20px}
+.wcol{display:flex;flex-direction:column;gap:8px;min-width:0}
+.wcol-hd{position:relative;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:14px;font-weight:900;color:var(--u-ink)}
+.wcol-hd small{font-size:11px;font-weight:700;color:var(--u-sub)}
+.wcol.today .wcol-hd{background:var(--u-accent);color:var(--u-on)}
+.wcol.today .wcol-hd small{color:var(--u-on)}
+.wcol-hd .wdot{position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--u-live)}
+.wcol.today .wcol-hd .wdot{background:var(--u-on)}
+.wcol-none{margin:4px 0;text-align:center;font-size:12px;color:var(--u-sub)}
+.wcol .wcard{flex-direction:column;gap:6px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:14px;padding:10px}
+.wcol .wcard.live{border-color:var(--u-live);animation:none;box-shadow:none}
+.wcol .wcard.nx{border-color:var(--u-accent)}
+.wcol .wcard .wc-rail{width:auto;flex-direction:row;align-items:center}
+.wcol .wcard .wc-rail::after{display:none}
+.wcol .wcard .wc-time{font-size:19px}
+.wcol .wcard .wc-body{padding:0;gap:7px}
+.wcol .wcard .wc-ttl{font-size:13.5px}
+.wcol .wcard .wc-ep{font-size:11.5px}
+.wcol .wcard .wc-tags{gap:3px}
+.wcol .wcard .wc-tags .lab,.wcol .wcard .wc-tags .kind{font-size:10px}
+.wcol .wcard .wc-tags .wc-st{font-size:10.5px}
+.wcol .wcard .wc-prog{display:none}
+.wcol .wcard .wc-tick{align-self:stretch;height:34px;font-size:12px;padding:0 8px;border-radius:10px}
+.wgrid.wun{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.wgrid.wun .wcard{background:var(--u-surface);border:1px solid var(--u-line);border-radius:16px;padding:12px 14px 0}
+@media (min-width:1800px){.wcols{gap:14px}.wcol .wcard{padding:12px}.wcol .wcard .wc-ttl{font-size:15px}.wcol .wcard .wc-ep{font-size:12.5px}.wcol .wcard .wc-time{font-size:21px}}
+@media (max-width:899px){
+  .wcard.v-hero{margin-bottom:4px}
+  .wcard.v-hero .wc-ttl{font-size:22px}
+}
+
+/* ===================== 2026-11 新デザイン：詳細・話数 ===================== */
+/* 話数：1話1行。番号の丸（見た話は塗る）・サブタイトル・放送日と見た日 */
+.epw,.epw.seen,.epw.next{background:transparent}
+.epw.next{background:var(--u-accent2)}
+.ep,.sheet:not(.form) .ep{display:flex;align-items:center;gap:12px;grid-template-columns:none;padding:9px 6px 9px 12px;min-height:58px;font-size:14px;color:var(--u-ink)}
+.ep.seen,.epw>.ep.seen{background:transparent}
+.ep .epc{width:32px;height:32px;flex:none;border-radius:50%;border:1.5px solid var(--u-line);display:grid;place-items:center;font-family:var(--u-disp);font-size:17px;line-height:1;color:var(--u-sub);padding-top:2px}
+.ep.seen .epc,.ep[aria-checked="true"] .epc{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.ep.next .epc{border:2px solid var(--u-accent);color:var(--u-acct)}
+.ep .epm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ep .eps-sub,.ep[aria-checked="true"] .eps-sub{font-size:14px;font-weight:700;color:var(--u-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep .epd,.sheet:not(.form) .ep .epd{font-family:inherit;font-size:11.5px;color:var(--u-sub);text-align:left;white-space:normal}
+.ep.future{opacity:.6}
+.ep.future .epd{color:var(--u-sub)}
+.ep .epgo{flex:none;height:34px;padding:0 14px;border-radius:999px;background:var(--u-accent);color:var(--u-on);font-size:13px;font-weight:700;display:grid;place-items:center}
+.eps{background:var(--u-surface);border:1px solid var(--u-line);border-radius:16px;overflow:hidden}
+.archd{background:var(--u-soft);align-items:center;min-height:44px}
+.archd .arcnm{font-weight:900}
+.archd.cur .arcnm{color:var(--u-ink)}
+.archd.done .arcct{color:var(--u-acct);font-weight:700}
+.prog{height:6px;border-radius:3px;background:var(--u-soft);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--u-accent)}
+.sheet.t-info .dtabs [data-dtab="info"],.sheet.t-ep .dtabs [data-dtab="ep"]{border-bottom-color:var(--u-accent)}
+/* PC：詳細は一覧の右側に開く（中央に重ねない） */
+@media (min-width:900px){
+  body.dside{--dpw:clamp(420px,calc(100vw - var(--sbw) - 460px),1120px)}
+  body.dside .u-app>:not(#layer):not(.sb):not(.dscrim):not(#toTop){margin-right:var(--dpw)}
+  .sheet.side,.sheet.side:not(.form){position:fixed;top:0;bottom:0;right:0;left:auto;width:var(--dpw);max-width:none;max-height:none;transform:none;border-radius:0;border:0;border-left:1px solid var(--u-line);box-shadow:none;animation:none;z-index:30;overflow-y:auto;padding:0 0 24px;background:var(--u-bg)}
+  .sheet.side .wrap{max-width:none;padding:16px 22px 0}
+  .sheet.side .dhead{position:sticky;top:0;z-index:2;background:var(--u-bg);margin:-16px -22px 0;padding:16px 22px 0}
+  .sheet.side h3{font-size:24px;font-weight:900}
+}
+/* 広いPC・モニター：左に番組情報、右に話数（タブは出さない） */
+@media (min-width:1300px){
+  .sheet.side #sheetIn{display:grid;grid-template-columns:minmax(280px,38%) minmax(0,1fr);gap:0 24px;align-items:start}
+  .sheet.side .dhead{grid-column:1/-1;padding-bottom:12px}
+  .sheet.side .dtabs{display:none}
+  .sheet.side .dpane,.sheet.side.t-info .dp-ep,.sheet.side.t-ep .dp-info{display:block}
+  .sheet.side .dp-ep>h4 .h4l{display:inline}
+}
+@media (min-width:1600px){
+  body.dside{--dpw:clamp(420px,calc(100vw / 1.12 - var(--sbw) - 500px),1000px)}
+  body.dside .u-app>:not(#layer):not(.sb):not(.dscrim):not(#toTop){margin-left:calc(var(--sbw) * .12 / 1.12 + 8px)}
+  .sheet.side #sheetIn{grid-template-columns:380px minmax(0,1fr)}
+}
+.sheet.side.t-info:not(.form) .dp-info,.sheet.side.t-ep:not(.form) .dp-info{display:block}
+/* 一覧：OP・EDの列をなくしたので、タイトルを広く */
+@media (min-width:900px){.row.lst:not(.yrow) .slot{grid-template-columns:62px minmax(0,1fr) auto}}
+.sheet:not(.form) .editbtn{white-space:nowrap}

@@ -132,14 +132,14 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb .hnav{display:none;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;margin-right:auto}
 .kb .hnav button{border:0;background:none;color:var(--u-sub);padding:6px 14px;border-radius:8px;font-size:14px}
 .kb .hnav button[aria-current="page"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
-.kb button.mcur{height:36px;padding:0 12px;border-color:var(--u-accent);color:var(--u-accent);font-size:14px;flex:none}
+.kb button.mcur{height:36px;padding:0 12px;border-color:var(--u-accent);color:var(--u-acct);font-size:14px;flex:none}
 .kb button.mcur:disabled{opacity:.35}
 .kb .mnav{display:flex;align-items:center;gap:2px;background:var(--u-chip);border:0;border-radius:var(--u-r);padding:3px}
 .kb .mnav select{border:0;background:none;width:auto;font-family:var(--u-num);font-weight:600;padding:4px 2px;text-align:center}
 .kb .ib{width:36px;height:36px;padding:0;border:0;border-radius:999px;background:none;color:var(--u-sub);display:grid;place-items:center;font-size:18px}
 .kb .ib svg{width:20px;height:20px}
 .kb .mnav .ib{width:30px;height:30px}
-.kb #gear[aria-pressed="true"]{color:var(--u-accent);background:var(--u-accent2)}
+.kb #gear[aria-pressed="true"]{color:var(--u-acct);background:var(--u-accent2)}
 
 /* ===== 下部メニュー：選んでいる項目はアイコンの後ろに淡い丸 ===== */
 
@@ -175,7 +175,7 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb .day:first-child{margin-top:0;border-top:0}
 .kb .day small{font-size:12px;font-weight:600;color:var(--u-sub)}
 .kb .day.sun small{color:var(--u-danger)}
-.kb .day.sat small{color:var(--u-accent)}
+.kb .day.sat small{color:var(--u-acct)}
 .kb .day span:last-child{font-size:13px;color:var(--u-sub);font-variant-numeric:tabular-nums}
 .kb .it{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--u-line);cursor:pointer}
 .kb .it:last-child{border-bottom:0}
@@ -233,7 +233,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .chart.daily .col span{border-radius:2px 2px 0 0}
 .kb .xlab{display:flex;gap:4px}
 .kb .xlab div{flex:1;text-align:center;font-size:10px;color:var(--u-sub);cursor:pointer;line-height:1.3;font-variant-numeric:tabular-nums}
-.kb .xlab div.on{color:var(--u-accent);font-weight:700}
+.kb .xlab div.on{color:var(--u-acct);font-weight:700}
 .kb .xlab .l{text-align:left}
 .kb .xlab .r{text-align:right}
 .kb .lg2{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--u-sub);margin-top:6px}
@@ -254,7 +254,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .wdr .track{margin:0;height:8px}
 .kb .wdr .wd{font-weight:700;color:var(--u-ink)}
 .kb .wdr .wd.sun{color:var(--u-danger)}
-.kb .wdr .wd.sat{color:var(--u-accent)}
+.kb .wdr .wd.sat{color:var(--u-acct)}
 
 /* ===== AI分析 ===== */
 .kb .aictl{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;margin:12px 0 4px}
@@ -262,7 +262,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .aiwait i{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--u-strong);border-top-color:var(--u-accent);animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .kb .aihero{background:var(--u-accent2);border-radius:var(--u-rl);padding:16px;margin:12px 0}
-.kb .aihero .k{font-size:12px;font-weight:700;color:var(--u-accent)}
+.kb .aihero .k{font-size:12px;font-weight:700;color:var(--u-acct)}
 .kb .aihero .v{font-family:var(--u-num);font-size:30px;font-weight:600;line-height:1.2;margin:2px 0 6px}
 .kb .aihero .unit{font-size:14px;font-family:var(--u-f);font-weight:700}
 .kb .aihero p{margin:0;line-height:1.7}
@@ -286,7 +286,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb #st-master .st-desc{margin:2px 0 10px}
 .kb .rule{border:1px solid var(--u-line);border-radius:14px;padding:12px;margin-bottom:8px}
 .kb .rule .top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.kb .kind{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--u-accent2);color:var(--u-accent)}
+.kb .kind{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--u-accent2);color:var(--u-acct)}
 .kb .kind.split{background:var(--u-danger2);color:var(--u-danger)}
 .kb .kind.name{background:var(--u-ok2);color:var(--u-ok)}
 .kb .rdesc{margin:6px 0 8px;font-size:14px;line-height:1.6}
@@ -450,7 +450,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .pay .mtag{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--u-chip);color:var(--u-ink);white-space:nowrap;font-family:var(--u-f)}
 .pay .mtag b{font-family:var(--u-num);font-weight:600}
 .pay .memo-tag{font-size:10px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--u-chip);color:var(--u-sub);white-space:nowrap}
-.pay .edited{font-size:11px;color:var(--u-accent);font-weight:400}
+.pay .edited{font-size:11px;color:var(--u-acct);font-weight:400}
 .pay .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;align-items:center}
 .pay .legend span{display:flex;align-items:center;gap:6px}
 .pay .dot{width:10px;height:3px;display:inline-block;border-radius:2px}
@@ -483,7 +483,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .pay .amtbox input{border:0;background:transparent;font-size:20px;font-weight:600;padding:8px}
 .pay .quick{display:flex;gap:6px;margin-top:6px}
 .pay .quick button{flex:1;padding:5px 0;font-size:12px}
-.pay .quick button[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-accent);border-color:var(--u-accent);font-weight:700}
+.pay .quick button[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-acct);border-color:var(--u-accent);font-weight:700}
 .pay .win{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin:0 16px 10px;padding:10px;background:var(--u-ok2);border-radius:var(--u-r);font-size:14px}
 .pay .win b{color:var(--u-ok);font-family:var(--u-num);font-size:17px}
 .pay .win.flat{margin:0}
@@ -536,7 +536,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .atag.late{background:var(--u-surface);color:var(--u-danger);border:1px solid var(--u-danger)}
 .pay .nextpay{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-rl);overflow:hidden}
 .pay .np-h{display:flex;align-items:baseline;gap:4px 10px;padding:12px 16px;flex-wrap:wrap}
-.pay .np-lbl{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--u-accent)}
+.pay .np-lbl{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--u-acct)}
 .pay .np-h b{font-size:17px}
 .pay .np-when{font-size:12px;font-weight:700;color:var(--u-sub)}
 .pay .nextpay.soon .np-when{color:var(--u-warn)}
@@ -603,7 +603,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .cf .kv .num{font-weight:600}
 .pay .cf .kv.total{font-weight:700;background:var(--u-bg)}
 .pay .kvbtn{width:100%;border:0;border-radius:0;background:transparent;text-align:left;font:inherit;color:inherit;cursor:pointer;align-items:center}
-.pay .kvbtn .edit{color:var(--u-accent);font-family:var(--u-f);margin-left:4px}
+.pay .kvbtn .edit{color:var(--u-acct);font-family:var(--u-f);margin-left:4px}
 .pay .kvbtn .pill,.pay .kvbtn .note{margin-left:6px;font-size:10px}
 
 /* ===== 残高と計画：集計・完済の見通し・AI ===== */
@@ -636,7 +636,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:6px}
 .pay .ai-tl li{display:flex;flex-direction:column;font-size:13px;line-height:1.6;position:relative}
 .pay .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
-.pay .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-accent)}
+.pay .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-acct)}
 .pay .ai-act{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding:10px 12px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r)}
 .pay .ai-n{width:22px;height:22px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:12px;font-weight:900;font-family:var(--u-num)}
 .pay .ai-act b{font-size:14px}
@@ -644,7 +644,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px}
 .pay .ai-watch{margin:0;padding-left:18px;font-size:13px;line-height:1.7}
 .pay .ai-watch li::marker{color:var(--u-warn)}
-.pay .ai-cheer{margin:0;font-size:13px;font-weight:700;color:var(--u-accent)}
+.pay .ai-cheer{margin:0;font-size:13px;font-weight:700;color:var(--u-acct)}
 .pay .ai-foot{font-size:11px}
 .pay .ai-wait{display:flex;gap:6px;padding:6px 0}
 .pay .ai-wait i{width:8px;height:8px;border-radius:50%;background:var(--u-accent);opacity:.3}
@@ -695,7 +695,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .timeline{display:flex;flex-direction:column}
 .pay .tl{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:10px;padding:8px 16px;border-top:1px solid var(--u-soft);align-items:center;font-size:13px}
 .pay .tl:first-child{border-top:0}
-.pay .tl .when{font-family:var(--u-num);color:var(--u-accent);font-weight:600}
+.pay .tl .when{font-family:var(--u-num);color:var(--u-acct);font-weight:600}
 .pay .tl .diff{font-family:var(--u-num);font-size:12px;color:var(--u-ok)}
 .pay .rd{display:flex;flex-direction:column;min-width:0;line-height:1.4}
 .pay .rd .note{font-size:11px}
@@ -957,10 +957,10 @@ body.sel .kb .totop{opacity:0;transform:translateY(10px);pointer-events:none}
 .kb .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:8px}
 .kb .ai-tl li{display:flex;flex-direction:column;font-size:13.5px;line-height:1.6;position:relative}
 .kb .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
-.kb .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-accent)}
+.kb .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-acct)}
 .kb .ai-n{width:30px;height:30px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:14px;font-weight:900;font-family:var(--u-num)}
 .kb .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px;margin-top:6px}
-.kb .ai-cheer{margin:14px 0 0;font-size:14px;font-weight:700;color:var(--u-accent)}
+.kb .ai-cheer{margin:14px 0 0;font-size:14px;font-weight:700;color:var(--u-acct)}
 .kb .aistale{color:var(--u-warn);font-weight:700}
 
 /* 残高と計画：AI分析への案内 */
@@ -1239,7 +1239,7 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .abin{gap:8px}
   .kb button.hmenu{display:grid;place-items:center;flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);padding:0}
   .kb .hmenu svg{width:20px;height:20px}
-  .kb .hcur{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;color:var(--u-accent);margin-right:auto}
+  .kb .hcur{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;color:var(--u-acct);margin-right:auto}
   .kb .hcur svg{width:24px;height:24px}
   .kb .totop{right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
   body.drawer{overflow:hidden}
@@ -1254,7 +1254,7 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb button.sb-x{display:grid;place-items:center;margin-left:auto;width:32px;height:32px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;color:var(--u-sub);font-size:15px;flex:none;padding:0}
   .u-app .sb-sec{font-size:11px;font-weight:700;color:var(--u-sub);letter-spacing:.08em;padding:8px 8px 4px}
   .kb .sb button.sb-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:11px 10px;border-radius:10px;font-size:15.5px;font-weight:700;color:var(--u-sub);white-space:nowrap;height:auto;box-shadow:none}
-  .kb .sb button.sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-accent)}
+  .kb .sb button.sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-acct)}
   .u-app .sb-sub{display:flex;flex-direction:column;gap:2px;margin:0 0 6px 20px;padding-left:12px;border-left:2px solid var(--u-line)}
   .kb .sb .sb-sub button.sb-it{font-size:14px;padding:8px 10px}
   .kb .sb .sb-sub button.sb-it[aria-current="page"]{background:var(--u-chip);color:var(--u-ink)}
@@ -1267,7 +1267,7 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   ・入力欄は白地＋はっきりした枠線。各欄の上に見出し
   ・確認エリアは青い枠で囲み、入力中だとわかるようにする */
 .kb #review:not(:empty){background:var(--u-surface);border:1.5px solid var(--u-accent);border-radius:var(--u-rl);padding:12px 14px 14px;margin-top:10px;box-shadow:0 4px 16px rgba(47,111,237,.10)}
-.kb #review .rvh b{font-size:15px;color:var(--u-accent)}
+.kb #review .rvh b{font-size:15px;color:var(--u-acct)}
 .kb .rv{background:var(--u-surface);gap:10px;padding:12px}
 .kb .rv label.fl{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--u-sub);min-width:0}
 .kb .rv .fl input,.kb .rv .fl select{background:var(--u-surface);border:1px solid var(--u-strong);min-height:44px;font-weight:500}
@@ -1342,7 +1342,7 @@ body.sbc .u-app .sb .sb-logo{width:26px;height:26px}
 .u-app .sb .sbp{flex:none;background:var(--u-chip);border-radius:12px;margin:0 0 6px;overflow:hidden}
 .u-app .sb .sb-row{display:flex;align-items:center;gap:0}
 .u-app .sb .sb-row>.sb-it{flex:1;min-width:0;border-radius:0;background:none;padding-left:8px}
-.u-app .sb .sbp .sb-row>.sb-it[aria-current="page"]{background:none;color:var(--u-accent)}
+.u-app .sb .sbp .sb-row>.sb-it[aria-current="page"]{background:none;color:var(--u-acct)}
 .u-app .sb .sb-fold{flex:none;width:38px;align-self:stretch;border:0;border-left:1px solid var(--u-line);background:none;color:var(--u-sub);border-radius:0;padding:0;display:grid;place-items:center}
 .u-app .sb .sb-fold:hover{background:var(--u-line)}
 .u-app .sb .sbp .sb-sub{margin:0;padding:0 0 6px;border-left:0;gap:0}
@@ -1384,7 +1384,7 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 /* ===== 上の帯：エンタメ管理と同じ（☰・今の画面のアイコンと名前・表示の切り替え）。日付は帯の下の行 ===== */
 .kb .appbar{background:var(--u-surface)}
 .kb .hcur{display:flex!important;align-items:center;gap:7px;width:auto!important;height:auto!important;margin-right:auto;font-size:17px;font-weight:900;white-space:nowrap;min-width:0;color:var(--u-ink)}
-.kb .hcur .mic{width:26px;height:26px;color:var(--u-accent)}
+.kb .hcur .mic{width:26px;height:26px;color:var(--u-acct)}
 .kb .hcur .mic svg{width:24px;height:24px}
 .kb .hcur .hname{overflow:hidden;text-overflow:ellipsis}
 .kb button.hthm{flex:none;margin-left:auto;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);display:grid;place-items:center;padding:0}

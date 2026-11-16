@@ -1,9 +1,9 @@
 /* ===================== 共通の土台（見た目）：おかね手帳・エンタメ管理で同じファイルを使う =====================
   ・色・書体・角丸。アクセント色（--u-accent / --u-accent2）だけ、アプリ側のCSSで上書きする
   ・アプリの外枠に class="u-app" を付けると、左メニューなどの共通部品が使える */
-:root{--u-bg:#f2f4f7;--u-surface:#ffffff;--u-ink:#161b26;--u-sub:#5f6877;--u-line:#dde1e8;--u-soft:#eceff3;--u-strong:#c6ccd6;--u-chip:#e9ecf1;--u-accent:#2f6fed;--u-accent2:#e9f0fe;--u-danger:#c8382e;--u-danger2:#fbe9e7;--u-ok:#1f8a52;--u-ok2:#e3f3ea;--u-warn:#a36800;--u-warn2:#f8eed5;--u-on:#ffffff;--u-scrim:rgba(12,16,24,.45);--u-shadow:0 10px 32px rgba(16,24,40,.18);--u-r:10px;--u-rl:14px;--u-f:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;--u-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--u-bg:#0f1218;--u-surface:#181c24;--u-ink:#e8ebf1;--u-sub:#9aa3b2;--u-line:#2b313d;--u-soft:#222833;--u-strong:#3a4150;--u-chip:#242a35;--u-accent:#6f9cff;--u-accent2:#1f2a42;--u-danger:#ff7a6e;--u-danger2:#3a201d;--u-ok:#4cc98a;--u-ok2:#17301f;--u-warn:#e8b44c;--u-warn2:#3a2f15;--u-on:#10131a;--u-scrim:rgba(4,6,10,.6);--u-shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}}
-:root[data-theme="dark"]{--u-bg:#0f1218;--u-surface:#181c24;--u-ink:#e8ebf1;--u-sub:#9aa3b2;--u-line:#2b313d;--u-soft:#222833;--u-strong:#3a4150;--u-chip:#242a35;--u-accent:#6f9cff;--u-accent2:#1f2a42;--u-danger:#ff7a6e;--u-danger2:#3a201d;--u-ok:#4cc98a;--u-ok2:#17301f;--u-warn:#e8b44c;--u-warn2:#3a2f15;--u-on:#10131a;--u-scrim:rgba(4,6,10,.6);--u-shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}
+:root{--u-bg:#f2f4f7;--u-surface:#ffffff;--u-ink:#161b26;--u-sub:#5f6877;--u-line:#dde1e8;--u-soft:#eceff3;--u-strong:#c6ccd6;--u-chip:#e9ecf1;--u-accent:#f5a524;--u-accent2:#fdf1dc;--u-acct:#995a00;--u-live:#d4342a;--u-live2:#fbe9e7;--u-danger:#c8382e;--u-danger2:#fbe9e7;--u-ok:#1f8a52;--u-ok2:#e3f3ea;--u-warn:#a36800;--u-warn2:#f8eed5;--u-on:#1a1205;--u-scrim:rgba(12,16,24,.45);--u-shadow:0 10px 32px rgba(16,24,40,.18);--u-r:10px;--u-rl:14px;--u-f:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;--u-disp:"Bebas Neue","IBM Plex Mono",ui-monospace,sans-serif;--u-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--u-bg:#0d0f14;--u-surface:#1a1d26;--u-ink:#f1f2f5;--u-sub:#9aa1b0;--u-line:#2c3140;--u-soft:#23273a;--u-strong:#3a4150;--u-chip:#242a35;--u-accent:#ffb547;--u-accent2:#3a3020;--u-acct:#ffc56b;--u-live:#ff6b5e;--u-live2:#3a201d;--u-danger:#ff7a6e;--u-danger2:#3a201d;--u-ok:#4cc98a;--u-ok2:#17301f;--u-warn:#e8b44c;--u-warn2:#3a2f15;--u-on:#1a1205;--u-scrim:rgba(4,6,10,.6);--u-shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{--u-bg:#0d0f14;--u-surface:#1a1d26;--u-ink:#f1f2f5;--u-sub:#9aa1b0;--u-line:#2c3140;--u-soft:#23273a;--u-strong:#3a4150;--u-chip:#242a35;--u-accent:#ffb547;--u-accent2:#3a3020;--u-acct:#ffc56b;--u-live:#ff6b5e;--u-live2:#3a201d;--u-danger:#ff7a6e;--u-danger2:#3a201d;--u-ok:#4cc98a;--u-ok2:#17301f;--u-warn:#e8b44c;--u-warn2:#3a2f15;--u-on:#1a1205;--u-scrim:rgba(4,6,10,.6);--u-shadow:0 10px 32px rgba(0,0,0,.5);color-scheme:dark}
 
 /* ===== 土台：ページ全体をスクロールさせる。端を越えて引っ張れないようにする ===== */
 *{box-sizing:border-box}
@@ -26,13 +26,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .u-app .sb-sec{font-size:11px;font-weight:700;color:var(--u-sub);letter-spacing:.08em;padding:8px 8px 4px}
   .u-app .sb-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:9px 10px;border-radius:10px;font-size:14.5px;font-weight:700;color:var(--u-sub);white-space:nowrap}
   .u-app .sb-it i{width:22px;text-align:center;font-style:normal;flex:none;font-size:16px}
-  .u-app .sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-accent)}
+  .u-app .sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-acct)}
   .u-app .sb-sub{display:flex;flex-direction:column;gap:2px;margin:2px 0 8px 20px;padding-left:12px;border-left:2px solid var(--u-line)}
   .u-app .sb-sub .sb-it{font-size:13.5px;padding:7px 10px}
   .u-app .sb-sub .sb-it[aria-current="page"]{background:var(--u-chip);color:var(--u-ink)}
   .u-app .sb-foot{margin-top:auto;border-top:1px solid var(--u-line);padding-top:10px;display:flex;flex-direction:column;gap:4px}
   .u-app .sb-st{padding:4px 10px}
-  .u-app #sbgear[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-accent)}
+  .u-app #sbgear[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-acct)}
   body.sbc .u-app .sb .lbl,body.sbc .u-app .sb-sub{display:none}
   body.sbc .u-app .sb-st{display:flex;justify-content:center;padding:4px 0}
   body.sbc .u-app .sb-st .savest{font-size:0;gap:0;margin:0}
@@ -65,10 +65,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .u-app .tabbar{flex:0 1 520px;min-width:0;display:flex;gap:2px;padding:4px}
   .u-app .tabbar button{flex:1;border:0;background:none;color:var(--u-sub);border-radius:18px;height:calc(var(--tbh,58px) - 8px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:700;padding:0}
   .u-app .tabbar svg{width:22px;height:22px;padding:3px 14px;box-sizing:content-box;border-radius:999px}
-  .u-app .tabbar button[aria-current="page"]{color:var(--u-accent)}
+  .u-app .tabbar button[aria-current="page"]{color:var(--u-acct)}
   .u-app .tabbar button[aria-current="page"] svg{background:var(--u-accent2)}
   .u-app .tbgear{flex:none;width:calc(var(--tbh,58px) + 2px);color:var(--u-sub);display:grid;place-items:center;padding:0}
-  .u-app .tbgear[aria-pressed="true"]{color:var(--u-accent)}
+  .u-app .tbgear[aria-pressed="true"]{color:var(--u-acct)}
   .u-app .tbgear svg{width:22px;height:22px}
 }
 

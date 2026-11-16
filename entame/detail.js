@@ -208,11 +208,20 @@ function epListHtml(it, eps) {
     const n = epNum(e.n);
     return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
   };
-  /* 1話の行：押すと視聴チェック、右端の ✎ でその話だけ編集 */
+  /* 1話の行：押すと視聴チェック（見た話は番号の丸を塗る）、右端の ✎ でその話だけ編集。2行目は放送日と見た日 */
+  const md = t => {
+    const d = new Date(t);
+    return `${d.getMonth() + 1}/${d.getDate()}`;
+  };
   const epRow = (e, i) => {
     if (epOne === i) return epOneHtml(it, e, i);
     const fut = !aired(e);
-    return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" data-ep="${i}"><span class="box">${e.w ? "✓" : ""}</span><span class="epn">${esc(e.n)}</span><span class="eps-sub">${A ? esc(e.sub || "") : ""}</span><span class="epd">${epWhen(e, it, true)}</span></button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
+    const num = epNum(e.n);
+    const circ = Number.isFinite(num) && num > 0 && num < 1000 ? String(num) : esc(e.n).slice(0, 3);
+    const ttl = A && e.sub ? esc(e.sub) : esc(e.n);
+    const when = epWhen(e, it, true);
+    const sub2 = [when ? `${when}${fut ? " 放送予定" : " 放送"}` : "", e.w && e.wt ? `${md(e.wt)} に視聴` : e.w ? "視聴済" : ""].filter(Boolean).join(" ・ ");
+    return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" aria-label="${esc(e.n)}${A && e.sub ? " " + esc(e.sub) : ""}" data-ep="${i}"><span class="epc" aria-hidden="true">${circ}</span><span class="epm"><span class="eps-sub">${ttl}</span>${sub2 ? `<span class="epd">${sub2}</span>` : ""}</span>${i === nx && !fut ? `<span class="epgo" aria-hidden="true">見た</span>` : ""}</button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
   };
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
   let rowsHtml,
@@ -457,8 +466,11 @@ function openDetail(id, dir, keepNav) {
     setDTab(tab);
     return;
   }
-  $("#layer").innerHTML =
-    `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
+  /* PC：一覧の右側に開く（後ろの一覧はそのまま使える）。スマホ：下から出す */
+  const side = IS_PC();
+  $("#layer").innerHTML = side
+    ? `<div class="sheet side" role="region" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`
+    : `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(it.t)}"><div class="wrap" id="sheetIn">${renderDetail(it)}</div></div>`;
   setDTab("info");
   if (!TOUCH) $(".sheet .close").focus({ preventScroll: true });
 }
@@ -469,7 +481,8 @@ function setDTab(t) {
   sh.classList.toggle("t-info", t === "info");
   sh.classList.toggle("t-ep", t === "ep");
   sh.scrollTop = 0;
-  if (t === "ep")
+  /* PCの右側の詳細（話数を右に並べるとき）も、次に見る話が見えるところまで送る */
+  if (t === "ep" || sh.classList.contains("side"))
     requestAnimationFrame(() => {
       const n = sh.querySelector(".dp-ep .ep.next");
       if (n) {

@@ -529,7 +529,12 @@ function lockScroll(on) {
     scrollTo(0, y);
   }
 }
-new MutationObserver(() => lockScroll(!!$("#layer").firstElementChild)).observe($("#layer"), { childList: true });
+new MutationObserver(() => {
+  /* PCで右側に開いた詳細（.sheet.side）は後ろの画面を固定しない */
+  const side = !!$("#layer > .sheet.side");
+  document.body.classList.toggle("dside", side);
+  lockScroll(!!$("#layer").firstElementChild && !side);
+}).observe($("#layer"), { childList: true });
 /* 作品の追加・編集画面：入力中の内容を読み取ってから変えて、描き直す */
 let sgExK = -1; // 飛び飛びの話を足した曲（足したあとその入力欄へ移るため）
 const formEdit = (fn, after) => el => {
