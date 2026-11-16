@@ -1491,3 +1491,10 @@ body.sbc .u-app .sb .sb-logo{display:none}
 /* 一覧：OP・EDの列をなくしたので、タイトルを広く */
 @media (min-width:900px){.row.lst:not(.yrow) .slot{grid-template-columns:62px minmax(0,1fr) auto}}
 .sheet:not(.form) .editbtn{white-space:nowrap}
+/* 話数：見た話はグレーで落ち着かせ、放送済みで見ていない話をはっきり */
+.epw.seen{background:var(--u-soft)}
+.ep.seen .eps-sub,.ep[aria-checked="true"] .eps-sub{color:var(--u-sub);font-weight:500}
+.ep.seen .epd{color:var(--u-sub);opacity:.85}
+.ep.unseen .epc{border:2px solid var(--u-accent);color:var(--u-acct)}
+.ep.unseen .eps-sub{color:var(--u-ink);font-weight:800}
+.ep .epun{display:inline-block;font-size:10.5px;font-weight:700;line-height:1.4;padding:0 6px;border-radius:5px;background:var(--u-live2);color:var(--u-live);margin-right:6px;vertical-align:1px}

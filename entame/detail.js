@@ -220,8 +220,8 @@ function epListHtml(it, eps) {
     const circ = Number.isFinite(num) && num > 0 && num < 1000 ? String(num) : esc(e.n).slice(0, 3);
     const ttl = A && e.sub ? esc(e.sub) : esc(e.n);
     const when = epWhen(e, it, true);
-    const sub2 = [when ? `${when}${fut ? " 放送予定" : " 放送"}` : "", e.w && e.wt ? `${md(e.wt)} に視聴` : e.w ? "視聴済" : ""].filter(Boolean).join(" ・ ");
-    return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" aria-label="${esc(e.n)}${A && e.sub ? " " + esc(e.sub) : ""}" data-ep="${i}"><span class="epc" aria-hidden="true">${circ}</span><span class="epm"><span class="eps-sub">${ttl}</span>${sub2 ? `<span class="epd">${sub2}</span>` : ""}</span>${i === nx && !fut ? `<span class="epgo" aria-hidden="true">見た</span>` : ""}</button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
+    const sub2 = [when ? `${when}${fut ? " 放送予定" : " 放送"}` : "", e.w && e.wt ? `${md(e.wt)} に視聴` : ""].filter(Boolean).join(" ・ ");
+    return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : !fut ? " unseen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" aria-label="${esc(e.n)}${A && e.sub ? " " + esc(e.sub) : ""}" data-ep="${i}"><span class="epc" aria-hidden="true">${circ}</span><span class="epm"><span class="eps-sub">${ttl}</span>${sub2 || (!e.w && !fut) ? `<span class="epd">${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${sub2}</span>` : ""}</span>${i === nx && !fut ? `<span class="epgo" aria-hidden="true">見た</span>` : ""}</button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
   };
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
   let rowsHtml,
@@ -406,7 +406,7 @@ function renderDetail(it) {
     <div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div></div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links"><button type="button" class="delsm" id="delItem">削除</button></div></div>
-    <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話 視聴済${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
+    <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
 /* 詳細のアラート：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */

@@ -679,7 +679,7 @@ function render() {
     const ce = body.indexOf("</p>", ci);
     body = body.slice(0, ce) + gb[0] + body.slice(ce);
   }
-  setMain(body + `<p class="note savenote" id="saveNote">${saveNoteHtml()}</p>`);
+  setMain(body);
   if (lockY === null) scrollTo(0, y);
   if (typeof markStuck === "function") markStuck();
   saveUI();
