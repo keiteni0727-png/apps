@@ -1448,7 +1448,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .epw.next{background:var(--u-accent2)}
 .ep,.sheet:not(.form) .ep{display:flex;align-items:center;gap:12px;grid-template-columns:none;padding:9px 6px 9px 12px;min-height:58px;font-size:14px;color:var(--u-ink)}
 .ep.seen,.epw>.ep.seen{background:transparent}
-.ep .epc{width:32px;height:32px;flex:none;border-radius:50%;border:1.5px solid var(--u-line);display:grid;place-items:center;font-family:var(--u-disp);font-size:17px;line-height:1;color:var(--u-sub);padding-top:2px}
+.ep .epc{box-sizing:border-box;width:32px;height:32px;flex:none;border-radius:50%;border:1.5px solid var(--u-line);display:flex;align-items:center;justify-content:center;padding:0;font-family:var(--u-f);font-size:14px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;text-align:center;color:var(--u-sub)}
 .ep.seen .epc,.ep[aria-checked="true"] .epc{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
 .ep.next .epc{border:2px solid var(--u-accent);color:var(--u-acct)}
 .ep .epm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
