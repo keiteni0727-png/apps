@@ -143,14 +143,13 @@ function ytMissBadge(x) {
   /* PCは項目名まで、スマホは件数だけ */
   return `<span class="miss" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span><span class="mc">${names.length}</span></span>`;
 }
-/* 詳細のアラート（作品の詳細と同じ）：ふだんは1行に畳み、開くと項目ボタン */
-let ytMissKeep = false;
+/* 詳細のアラート（作品の詳細と同じ）：たたまずに、足りない項目のボタンを最初から全部出す。ボタンを押すとその項目だけ詳細の中で編集 */
 function ytMissDetail(x) {
   const l = ytMissingOf(x);
   if (!l.length) return "";
   const btn = m =>
     `<span class="mi"><button type="button" data-jump="${m.j}">✎ ${esc(m.k)}</button>${m.n ? `<button type="button" class="nb" data-ynof="${m.n}" title="${esc(m.k)}を「なし」にする">なし</button>` : ""}</span>`;
-  return `<details class="dmiss"${ytMissKeep ? " open" : ""}><summary><span>⚠ 未入力 ${l.length}項目</span><span class="mn">${esc(l.map(m => m.k).join("・"))}</span><span class="ar">${FOLD_IC}</span></summary><div class="mbtns">${l.map(btn).join("")}</div></details>`;
+  return `<div class="dmiss" role="group" aria-label="未入力 ${l.length}項目"><div class="dmh">⚠ 未入力 ${l.length}項目</div><div class="mbtns">${l.map(btn).join("")}</div></div>`;
 }
 function ytRow(x) {
   const pw = +x.pw || 0,
@@ -399,7 +398,6 @@ function ytOpenDetail(id, dir) {
   if (!dir) ytNavIds = ytScreenIds();
   ytOpen = id;
   ytStMenu = false;
-  ytMissKeep = false;
   openId = null;
   form = null;
   yform = null;
@@ -421,8 +419,6 @@ function ytRefresh() {
   if (!x || !el) return;
   /* 描き直すと詳細の中の編集画面も消えるので、編集中の状態も終わりにする */
   if (yform && yform.inline) yform = null;
-  const d = el.querySelector(".dmiss");
-  if (d) ytMissKeep = d.open;
   el.innerHTML = ytDetailHtml(x);
 }
 async function ytSave(id, patch, msg) {
@@ -470,7 +466,8 @@ function ytFormHtml() {
     n: `<label class="field"><span>パート数</span><input id="y-n" type="number" min="0" inputmode="numeric" placeholder="12" value="${f.n || ""}"></label>`,
     dur: `<label class="field"><span>再生時間 <span class="hint">「630」で6時間30分</span></span><input id="y-dur" inputmode="numeric" autocomplete="off" placeholder="630" value="${esc(f.dur)}"><span class="hint" id="yDurMsg"></span></label>`,
     pl: `<label class="field full"><span>再生リスト</span><input id="y-pl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/playlist?list=…" value="${esc(f.pl)}"></label>`,
-    sm: `<label class="field full"><span>まとめ動画</span><input id="y-sm" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…" value="${esc(f.sm)}"></label>`,
+    /* まとめ動画は「なし」にできる（作品の公式サイト・配信URLと同じチェック。入れて保存するとURLは消える） */
+    sm: `<div class="field full"><label class="field" for="y-sm"><span>まとめ動画</span></label><input id="y-sm" type="url" inputmode="url" autocomplete="off" placeholder="https://youtu.be/…" value="${esc(f.sm)}"><label class="yr nofl" title="まとめ動画なし"><input type="checkbox" class="ynof" value="sm" ${(f.noF || []).includes("sm") ? "checked" : ""} aria-label="まとめ動画なし"><span>なし</span></label></div>`,
   };
   if (f.only && ONLY_Y[f.only]) {
     const [lab, keys] = ONLY_Y[f.only];
@@ -505,6 +502,10 @@ function ytReadForm() {
   if (o("#y-sm") !== undefined) yform.sm = o("#y-sm");
   const na = g("#y-anew").trim();
   if (na) yform.a = na;
+  document.querySelectorAll("#ytF .ynof").forEach(c => {
+    const l = (yform.noF || []).filter(k => k !== c.value);
+    yform.noF = c.checked ? [...l, c.value] : l;
+  });
 }
 /* 開いたときから変わったかを比べるための中身（見た目の状態は除く） */
 const ytFormSig = f => {
@@ -533,6 +534,7 @@ function ytOpenForm(x, target) {
         dur: x.dur || "",
         pl: x.pl || "",
         sm: x.sm || "",
+        noF: [...(x.noF || [])],
       }
     : {
         id: null,
@@ -545,6 +547,7 @@ function ytOpenForm(x, target) {
         dur: "",
         pl: "",
         sm: "",
+        noF: [],
       };
   /* 詳細から項目を指定したときは、詳細の中でその項目だけ編集する（作品の詳細と同じ） */
   if (x && ONLY_Y[target] && ytOpen === x.id && $("#layer .sheet:not(.form) #ytIn")) return ytOpenInline(target);
@@ -621,7 +624,9 @@ async function ytSubmit() {
     dur: f.dur.trim(),
     pl: f.pl.trim(),
     sm: String(f.sm || "").trim(),
+    noF: [...new Set(f.noF || [])],
   };
+  if (patch.noF.includes("sm")) patch.sm = "";
   const id = f.id || "y" + Date.now().toString(36);
   /* 詳細の中の編集：変わっていなければ閉じるだけ、変わっていれば保存して詳細を描き直す */
   if (f.inline) {
@@ -749,7 +754,6 @@ const YT_DETAIL_ACTIONS = [
     "[data-ynof]",
     (el, x) => {
       const k = el.dataset.ynof;
-      ytMissKeep = true;
       ytSave(x.id, { noF: [...new Set([...(x.noF || []), k])] }, `${YT_NOF_LAB[k]}を「なし」にしました`);
     },
   ],
