@@ -82,17 +82,44 @@ function masterListHtml() {
         : `<p class="hint">まだありません</p>`
     }</div>`;
 }
+/* 設定は「表示・選択肢の管理・データ・アカウント」の一覧。項目を押すとその中身の画面へ（setPage） */
+let setPage = "";
+const SET_IC = {
+  theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  series: '<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',
+  stations: '<path d="M4 10a8 8 0 0 1 16 0M7.5 11a4.5 4.5 0 0 1 9 0"/><circle cx="12" cy="12" r="1.5"/><path d="M12 13.5V21"/>',
+  vods: '<rect x="3" y="5" width="18" height="13" rx="2"/><path d="m10 9 5 2.5-5 2.5z"/>',
+  authors: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  soloGroups: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  groups: '<circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 14.5a5 5 0 0 1 6.5 4.5"/>',
+  bk: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  save: '<path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/><path d="m9.5 13.5 2 2 3.5-4"/>',
+  out: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
+};
+const setIc = k => `<svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SET_IC[k]}</svg>`;
+const SET_TITLE = { bk: "バックアップ", trash: "ゴミ箱", ...Object.fromEntries(MKEYS) };
 function settingsHtml() {
-  const ser = setKey === "series";
   const th = U.theme();
+  if (setPage) {
+    const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
+    if (setPage === "bk") return head + backupHtml();
+    if (setPage === "trash") return head + trashHtml();
+    const ser = setPage === "series";
+    return `${head}${ser ? seriesSettingsHtml() : masterListHtml()}
+    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>`;
+  }
+  const row = (k, lab, val, attr = `data-setpg="${k}"`) => `<button type="button" class="setrow" ${attr}>${setIc(k)}<span class="setl">${lab}</span><span class="setv">${val}</span><svg class="setcv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
+  const tl = trashList().length;
   return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
-    <div class="setthm"><b>表示</b><div class="hseg3" role="radiogroup" aria-label="表示">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" role="radio" data-setthm="${v}" aria-selected="${th === v}" aria-checked="${th === v}">${l}</button>`).join("")}</div></div>
-    <div class="mtabs" role="tablist">${MKEYS.map(([k, l]) => `<button type="button" role="tab" data-mkey="${k}" aria-selected="${k === setKey}">${l}</button>`).join("")}</div>
-    ${ser ? seriesSettingsHtml() : masterListHtml()}
-    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>
-    ${trashHtml()}
-    ${backupHtml()}
-    ${accountHtml()}`;
+    <div class="setsec">表示</div>
+    <div class="setgrp"><div class="setrow static">${setIc("theme")}<span class="setl">テーマ</span><div class="hseg3 setthm3" role="radiogroup" aria-label="テーマ">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" role="radio" data-setthm="${v}" aria-selected="${th === v}" aria-checked="${th === v}">${l}</button>`).join("")}</div></div></div>
+    <div class="setsec">選択肢の管理</div>
+    <div class="setgrp">${MKEYS.map(([k, l]) => row(k, l, M(k).length)).join("")}</div>
+    <div class="setsec">データ</div>
+    <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}</div>
+    <div class="setsec">アカウント</div>
+    <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv">${saveNoteHtml()}</span></div><button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
 }
 /* ---------- ゴミ箱：削除した作品（アニメ・ドラマなどとYouTube）。30日間は戻せる ---------- */
 let trashOpen = false,
@@ -215,9 +242,11 @@ SORT_DONE.master = (box, rows) => {
     setMasterList(setKey, nl);
   } else refreshSettings();
 };
-function openSettings() {
+function openSettings(page = "") {
+  setPage = page || "";
+  if (MKEYS.some(([k]) => k === setPage)) setKey = setPage;
   bkPending = null;
-  trashOpen = false;
+  trashOpen = setPage === "trash";
   trashArm = "";
   bkArm = false;
   openId = null;
@@ -328,6 +357,21 @@ function toast(m) {
 }
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
+  /* 設定の中の画面を移る（data-setpg="" は一覧に戻る） */
+  [
+    "[data-setpg]",
+    el => {
+      setPage = el.dataset.setpg;
+      if (MKEYS.some(([k]) => k === setPage)) setKey = setPage;
+      setQ = "";
+      setDel = null;
+      setRen = null;
+      trashOpen = setPage === "trash";
+      refreshSettings(false);
+      const sh = $("#setIn")?.closest(".sheet");
+      if (sh) sh.scrollTop = 0;
+    },
+  ],
   /* 表示：自動・ライト・ダーク（スマホは上の帯の月マークをなくしたので、ここで切り替える） */
   [
     "[data-setthm]",

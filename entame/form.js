@@ -409,7 +409,10 @@ function readForm() {
       const one = !!r.querySelector(".sg-one")?.checked;
       const a = r.querySelector(".sg-a").value,
         b = one ? a : r.querySelector(".sg-b").value;
+      const old = form.songs[+r.dataset.sg];
       return {
+        /* 主題歌メニューで付けた「DL済み」は、編集しても消さない */
+        ...(old && old.dl ? { dl: true } : {}),
         type: r.querySelector(".sg-t").value,
         st: r.querySelector(".sg-st").value,
         ar: r.querySelector(".sg-ar").value,

@@ -5,7 +5,7 @@
 
 /* PC：左メニューの開閉と設定の歯車 */
 const SHELL_ACTIONS = [
-  ["[data-gear]", () => openSettings()],
+  ["[data-gear]", el => openSettings(el.dataset.gear === "1" ? "" : el.dataset.gear)],
   /* 表示の切り替え：自動 → ライト → ダーク → 自動 */
   [
     "#hTheme",
@@ -187,7 +187,10 @@ const NAV_ACTIONS = [
 /* フィルタ・ソートの折りたたみは、外を押したら閉じる */
 function closeDropdownOnOutsideClick(e) {
   if (e.target.closest(".fsdrop,.fsbar,.svbar,.frow,.fbar,.fsh,.fsum,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
-  if (state.mode === "yt" && yst.fp) {
+  if ((state.mode === "sr" || state.mode === "mu") && lui.fp) {
+    lui.fp = "";
+    lui.fSub = "";
+  } else if (state.mode === "yt" && yst.fp) {
     yst.fp = "";
     yst.fSub = "";
     saveYtUI();
@@ -315,6 +318,7 @@ const CLICK_HANDLERS = [
   onSubPopClick,
   e => state.mode === "yt" && runActions(YT_ACTIONS, e),
   e => state.mode === "h" && runActions(HIST_ACTIONS, e),
+  e => (state.mode === "sr" || state.mode === "mu") && runActions(LIST_ACTIONS, e),
   e => runActions(ROW_ACTIONS, e),
   e => state.mode !== "yt" && runActions(SAVED_FILTER_ACTIONS, e),
   e => runActions(FILTER_ACTIONS, e),
@@ -618,7 +622,7 @@ const KEY_ACTIONS = [
   [
     null,
     (t, e) => {
-      const open = state.mode === "yt" ? yst.fp === "all" : state.fOpen === "all";
+      const open = state.mode === "yt" ? yst.fp === "all" : state.mode === "sr" || state.mode === "mu" ? lui.fp === "all" : state.fOpen === "all";
       if (e.key !== "Escape" || !open || $("#layer").innerHTML) return false;
       e.preventDefault();
       document.querySelector(document.querySelector(".fsh-sub") ? ".fsh-back" : ".fsh-x")?.click();
@@ -626,6 +630,7 @@ const KEY_ACTIONS = [
     },
   ],
   ["#q", (t, e) => (e.key === "Escape" ? ($("[data-qtog='0']")?.click(), true) : false)],
+  ["#lq", (t, e) => (e.key === "Escape" ? ($("[data-lqtog='0']")?.click(), true) : false)],
   ["#ytq", (t, e) => (e.key === "Escape" ? ($("[data-ytqtog='0']")?.click(), true) : false)],
   [".e1 input", enterEsc(() => $("#e1Save")?.click(), () => $("#e1Cancel")?.click())],
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],

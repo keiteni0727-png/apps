@@ -4,7 +4,7 @@
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
-const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", h: "視聴記録", o: "その他" };
+const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", sr: "シリーズ", mu: "主題歌", h: "視聴記録", o: "その他" };
 /* o＝スマホの下メニュー「その他」（映画・バラエティ・YouTube・視聴記録のタイル）。左メニューには出さない */
 const MODE_KEYS = Object.keys(MODE_NAME).filter(k => k !== "o");
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];

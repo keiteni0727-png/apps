@@ -12,10 +12,12 @@ const MODE_IC = {
   s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13M8.2 15.3a5.5 5.5 0 0 1 0-6.6M15.8 8.7a5.5 5.5 0 0 1 0 6.6"/><path d="M10.6 9.8v4.4l3.6-2.2z" fill="currentColor"/></svg>',
   h: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
   yt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
+  sr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/></svg>',
+  mu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
   o: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>',
 };
 /* スマホの下メニュー：番組表・アニメ・ドラマ・その他（映画・バラエティ・YouTube・視聴記録は「その他」の中） */
-const OTHER_MODES = ["m", "s", "yt", "h"];
+const OTHER_MODES = ["m", "s", "yt", "sr", "mu", "h"];
 function renderBnav() {
   const nav = $("#bnav");
   if (!nav) return;
@@ -26,8 +28,8 @@ function renderBnav() {
 }
 /* 「その他」の画面：タイルで並べる */
 function renderOther() {
-  const n = m => (m === "yt" ? ytItems.length : m === "h" ? null : items.filter(i => inMode(m, i)).length);
-  const sub = { m: "作品", s: "作品", yt: "本" };
+  const n = m => (m === "yt" ? ytItems.length : m === "h" ? null : m === "sr" ? new Set(items.map(i => i.series).filter(Boolean)).size : m === "mu" ? songRows().length : items.filter(i => inMode(m, i)).length);
+  const sub = { m: "作品", s: "作品", yt: "本", sr: "シリーズ", mu: "曲" };
   return `<div class="otiles">${OTHER_MODES.map(m => {
     const c = n(m);
     return `<button type="button" class="otile ${m}" data-bnav="${m}"><span class="mic ${m}" aria-hidden="true">${MODE_IC[m]}</span><b>${MODE_NAME[m]}</b><small>${c == null ? "見た話数の記録" : `${c}${sub[m]}`}</small></button>`;
@@ -54,7 +56,7 @@ function renderSidebar() {
   const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
   const subOf = m => {
     if (m === "yt") return [[`data-tb="すべて"`, "すべて", yst.author === "すべて", ytItems.length], ...ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, ytItems.filter(x => x.a === a).length])];
-    if (m === "w" || m === "h") return [];
+    if (m === "w" || m === "h" || m === "sr" || m === "mu") return [];
     const l = items.filter(i => inMode(m, i));
     if (m === "m")
       return [
@@ -712,10 +714,10 @@ function render() {
   renderThemeBtn();
   renderSidebar();
   renderBnav();
-  document.documentElement.classList.toggle("fshopen", state.mode === "yt" ? yst.fp === "all" : state.fOpen === "all");
+  document.documentElement.classList.toggle("fshopen", state.mode === "yt" ? yst.fp === "all" : state.mode === "sr" || state.mode === "mu" ? lui.fp === "all" : state.fOpen === "all");
   if (!loaded) return;
   const y = lockY ?? scrollY;
-  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : state.mode === "o" ? renderOther() : renderList();
+  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : state.mode === "o" ? renderOther() : state.mode === "sr" ? renderSeries() : state.mode === "mu" ? renderSongs() : renderList();
   /* 「すべて開く／閉じる」は件数と同じ行の右端に置く */
   const gb = /<span class="gbulk">[\s\S]*?<\/span>/.exec(body);
   const ci = body.indexOf('<p class="count">');
@@ -737,7 +739,8 @@ const FKEEP = ["sf", "era", "cour", "series", "type", "vod", "missOnly", "missKe
 const FEMPTY = { sf: [], era: [], cour: [], series: [], type: [], vod: "", missOnly: false, missKey: "", sub: "all" };
 function setMode(m) {
   if (state.mode === m) return;
-  if (!state.xser && !["w", "yt", "h", "o"].includes(state.mode)) state.fm[state.mode] = Object.fromEntries(FKEEP.map(k => [k, state[k]]));
+  Object.assign(lui, { q: "", qOpen: false, fp: "", fSub: "" });
+  if (!state.xser && !["w", "yt", "h", "o", "sr", "mu"].includes(state.mode)) state.fm[state.mode] = Object.fromEntries(FKEEP.map(k => [k, state[k]]));
   const saved = state.fm[m] || {};
   Object.assign(state, FEMPTY, Object.fromEntries(FKEEP.filter(k => k in saved).map(k => [k, saved[k]])));
   state.mode = m;
@@ -748,7 +751,7 @@ function setMode(m) {
   state.fSub = "";
   state.qOpen = false;
   state.q = "";
-  if (m === "w" || m === "yt" || m === "h" || m === "o") return;
+  if (["w", "yt", "h", "o", "sr", "mu"].includes(m)) return;
   if (m === "m" || m === "s") state.type = [];
   state.limit = 200;
 }
