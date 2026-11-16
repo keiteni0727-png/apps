@@ -130,6 +130,11 @@ svg.chart{width:100%;height:auto;display:block}
 .serhd:first-child{margin-top:0}
 .serhd .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .serhd small{color:var(--muted);font-weight:500}
+[hidden]{display:none!important}
+.serpick,.sernew{display:flex;gap:6px;align-items:center}
+.serpick select,.sernew input{flex:1;min-width:0}
+.serpick .btn,.sernew .btn{flex:none;white-space:nowrap}
+.sernew{margin-top:6px}
 .comp{display:inline-block;font-size:11px;font-weight:700;background:linear-gradient(90deg,#ffe58a,#ffb3cf);color:#8a4b00;border-radius:99px;padding:1px 8px}
 .machine{width:150px;height:auto;margin:4px auto 6px;display:block}
 .tixbig{font-size:30px;font-weight:700;color:var(--pink-d)}
@@ -163,7 +168,8 @@ svg.chart{width:100%;height:auto;display:block}
 .cropbox{position:relative;overflow:hidden;border-radius:14px;touch-action:none;user-select:none;-webkit-user-select:none;background:#f3eef0}
 .cropbox img{width:100%;display:block;pointer-events:none}
 .cropbox .sel{position:absolute;border:2.5px solid #fff;border-radius:10px;box-shadow:0 0 0 9999px rgba(91,59,71,.45);pointer-events:none}
-.cropbox .hd{position:absolute;right:-13px;bottom:-13px;width:26px;height:26px;border-radius:50%;background:var(--pink-d);border:3px solid #fff}
+.cropbox .hd{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--pink-d);border:3px solid #fff}
+.cropbox .hd.tl{left:-12px;top:-12px}.cropbox .hd.tr{right:-12px;top:-12px}.cropbox .hd.bl{left:-12px;bottom:-12px}.cropbox .hd.br{right:-12px;bottom:-12px}
 .cropfoot{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
 .cropfoot canvas{width:110px;height:110px;border-radius:14px;flex:none;box-shadow:var(--shadow)}
 .filebtn{position:relative;overflow:hidden;display:block;text-align:center}
@@ -401,8 +407,18 @@ const serChars = n => allChars().filter(c => serOf(c) === n);
 const serColor = n => n === MIX ? ['#c06bc4','#f5dcf7'] : SER_COLORS[Math.max(0, seriesList().indexOf(n)) % SER_COLORS.length];
 const curSer = () => { const l = seriesList(); if(S.gser === MIX && l.length > 1) return MIX; return l.includes(S.gser) ? S.gser : (l[0] || ''); };
 const serLabel = n => n === MIX ? '🌈 ミックス' : n;
-const serDatalist = () => `<datalist id="serlist">${seriesList().filter(n => n !== DEF_SERIES).map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
-const serField = (val = '') => `<label class="f">シリーズ</label><input class="in" name="series" list="serlist" maxlength="20" placeholder="例：ちいかわ" value="${esc(val)}">${serDatalist()}`;
+// シリーズ欄：登録済みから選ぶ。「＋ 新しいシリーズ」で名前を入れる欄が出る
+const serField = (val = '') => {
+  const v = String(val || '').trim(), names = seriesList().filter(n => n !== DEF_SERIES);
+  if(v && !names.includes(v)) names.push(v);
+  return `<label class="f">シリーズ</label>
+    <div class="serpick"><select class="in" name="series">${names.map(n => `<option value="${esc(n)}" ${n === v ? 'selected' : ''}>${esc(n)}</option>`).join('')}
+      <option value="" ${v ? '' : 'selected'}>${DEF_SERIES}（未設定）</option></select>
+      <button type="button" class="btn sub sm" data-a="newser">＋ 新しいシリーズ</button></div>
+    <div class="sernew" hidden><input class="in" name="newSeries" maxlength="20" placeholder="例：ちいかわ">
+      <button type="button" class="btn ghost sm" data-a="newsercancel">やめる</button></div>`;
+};
+const pickedSer = v => cleanSer(v.newSeries && v.newSeries.trim() ? v.newSeries : v.series);
 /* ずかんをシリーズごとに分けて表示 */
 function zukanBySeries(g, names, showName){
   return names.map(n => { const cs = serChars(n), own = cs.filter(c => g.coll[c.id] > 0).length, [col] = serColor(n);
@@ -920,6 +936,8 @@ function viewOwnerChars(){
       <div class="zukan">${cs.map(c => `<div class="zk ${c.rarity}" data-a="editchar" data-id="${c.docId}" style="cursor:pointer"><div class="pic">${charPic(c)}</div>
         <div class="nm">${esc(c.name)}</div><span class="rar ${c.rarity}">${c.rarity}</span></div>`).join('')}</div></div>` : ''}`;
 }
+// 新しく登録するときの初期シリーズ：キャラタブで開いているシリーズ → 前回選んだシリーズ
+const defSer = () => { const c = S.cser && seriesList().includes(S.cser) ? S.cser : (S.lastSer || ''); return c === DEF_SERIES ? '' : c; };
 const cleanSer = x => { const t = String(x || '').trim().slice(0, 20); return t === DEF_SERIES ? '' : t; };
 // シリーズを保存できないとき（Firebaseのルールが古いまま）は、わかる言葉で知らせる
 async function serSave(fn){
@@ -933,14 +951,14 @@ function openCrop(file, editId = ''){
   img.onload = () => {
     const W = img.naturalWidth, H = img.naturalHeight, size = Math.round(Math.min(W, H) * 0.8);
     const ed = editId ? S.gchars.find(x => x.docId === editId) : null;
-    CROP = { img, url, sx:(W-size)/2, sy:(H-size)/2, size, editId: ed ? editId : '' };
+    CROP = { img, url, sx:(W-size)/2, sy:(H-size)/2, w:size, h:size, editId: ed ? editId : '' };
     $sheet.innerHTML = `<div class="sheet-bg"><div class="sheet"><h3>キャラを切り抜く<button class="del" data-a="cropclose" aria-label="閉じる">×</button></h3>
-      <p class="muted" style="margin:0 0 8px">枠を動かして1体を囲んでね。右下の●で大きさを変えられます。</p>
-      <div class="cropbox"><img src="${url}" alt=""><div class="sel"><div class="hd"></div></div></div>
+      <p class="muted" style="margin:0 0 8px">枠を動かして1体を囲んでね。四すみの●を引っぱると、縦と横の大きさを変えられます。</p>
+      <div class="cropbox"><img src="${url}" alt=""><div class="sel"><div class="hd tl"></div><div class="hd tr"></div><div class="hd bl"></div><div class="hd br"></div></div></div>
       <form data-form="gchar"><div class="cropfoot"><canvas width="400" height="400"></canvas>
         <div style="flex:1"><label class="f" style="margin-top:0">名前</label><input class="in" name="name" required maxlength="20" placeholder="例：パンダ" value="${esc(ed?.name || '')}">
         <label class="f">レア度</label><select class="in" name="rarity">${['N','R','SR'].map(r => `<option ${ed?.rarity === r ? 'selected' : ''}>${r}</option>`).join('')}</select>
-        ${serField(ed ? String(ed.series || '') : (S.lastSer || ''))}</div></div>
+        ${serField(ed ? String(ed.series || '') : defSer())}</div></div>
         <button class="btn block" style="margin-top:10px">${ed ? '画像を差し替えて保存' : 'このキャラを登録'}</button></form></div></div>`;
     bindCrop(); drawSel(); drawPreview();
   };
@@ -948,32 +966,41 @@ function openCrop(file, editId = ''){
   img.src = url;
 }
 function clampCrop(){
-  const W = CROP.img.naturalWidth, H = CROP.img.naturalHeight;
-  CROP.size = Math.max(Math.min(W, H) * 0.08, Math.min(CROP.size, W, H));
-  CROP.sx = Math.max(0, Math.min(W - CROP.size, CROP.sx));
-  CROP.sy = Math.max(0, Math.min(H - CROP.size, CROP.sy));
+  const W = CROP.img.naturalWidth, H = CROP.img.naturalHeight, min = Math.min(W, H) * 0.06;
+  CROP.w = Math.max(min, Math.min(CROP.w, W)); CROP.h = Math.max(min, Math.min(CROP.h, H));
+  CROP.sx = Math.max(0, Math.min(W - CROP.w, CROP.sx));
+  CROP.sy = Math.max(0, Math.min(H - CROP.h, CROP.sy));
 }
 function drawSel(){
   const W = CROP.img.naturalWidth, H = CROP.img.naturalHeight, el = $sheet.querySelector('.sel');
   if(!el) return;
-  Object.assign(el.style, { left:CROP.sx/W*100+'%', top:CROP.sy/H*100+'%', width:CROP.size/W*100+'%', height:CROP.size/H*100+'%' });
+  Object.assign(el.style, { left:CROP.sx/W*100+'%', top:CROP.sy/H*100+'%', width:CROP.w/W*100+'%', height:CROP.h/H*100+'%' });
 }
 function bindCrop(){
   const box = $sheet.querySelector('.cropbox');
   box.addEventListener('pointerdown', e => {
     e.preventDefault();
     const r = box.getBoundingClientRect(), k = CROP.img.naturalWidth / r.width;
+    const W = CROP.img.naturalWidth, H = CROP.img.naturalHeight, min = Math.min(W, H) * 0.06;
     const pt = ev => [(ev.clientX - r.left) * k, (ev.clientY - r.top) * k];
-    const [x, y] = pt(e), { sx, sy, size } = CROP;
-    let mode = Math.hypot(x - (sx+size), y - (sy+size)) < 30*k ? 'resize'
-      : (x >= sx && x <= sx+size && y >= sy && y <= sy+size) ? 'move' : 'jump';
-    if(mode === 'jump'){ CROP.sx = x - size/2; CROP.sy = y - size/2; clampCrop(); drawSel(); mode = 'move'; }
-    const st = { x, y, sx:CROP.sx, sy:CROP.sy, size:CROP.size };
+    const [x, y] = pt(e), { sx, sy, w, h } = CROP;
+    // どの角をつかんだか（近い角を優先）
+    const corners = [['tl', sx, sy], ['tr', sx+w, sy], ['bl', sx, sy+h], ['br', sx+w, sy+h]]
+      .map(([n, cx, cy]) => [n, Math.hypot(x - cx, y - cy)]).sort((a, b) => a[1] - b[1]);
+    let mode = corners[0][1] < 32*k ? corners[0][0]
+      : (x >= sx && x <= sx+w && y >= sy && y <= sy+h) ? 'move' : 'jump';
+    if(mode === 'jump'){ CROP.sx = x - w/2; CROP.sy = y - h/2; clampCrop(); drawSel(); mode = 'move'; }
+    const st = { x, y, l:CROP.sx, t:CROP.sy, r:CROP.sx + CROP.w, b:CROP.sy + CROP.h };
     box.setPointerCapture(e.pointerId);
-    const mv = ev => { const [X, Y] = pt(ev);
-      if(mode === 'move'){ CROP.sx = st.sx + X - st.x; CROP.sy = st.sy + Y - st.y; }
-      else CROP.size = st.size + Math.max(X - st.x, Y - st.y);
-      clampCrop(); drawSel(); };
+    const mv = ev => { const [X, Y] = pt(ev), dx = X - st.x, dy = Y - st.y;
+      if(mode === 'move'){ CROP.sx = st.l + dx; CROP.sy = st.t + dy; clampCrop(); }
+      else {
+        let { l, t, r: rr, b } = st;
+        if(mode[1] === 'l') l = Math.max(0, Math.min(rr - min, l + dx)); else rr = Math.min(W, Math.max(l + min, rr + dx));
+        if(mode[0] === 't') t = Math.max(0, Math.min(b - min, t + dy)); else b = Math.min(H, Math.max(t + min, b + dy));
+        Object.assign(CROP, { sx:l, sy:t, w:rr - l, h:b - t });
+      }
+      drawSel(); };
     const up = () => { box.removeEventListener('pointermove', mv); box.removeEventListener('pointerup', up); box.removeEventListener('pointercancel', up); drawPreview(); };
     box.addEventListener('pointermove', mv); box.addEventListener('pointerup', up); box.addEventListener('pointercancel', up);
   });
@@ -989,7 +1016,9 @@ function makeSticker(cv = document.createElement('canvas')){
   g.beginPath(); g.arc(N/2, N/2, 172, 0, Math.PI*2); g.fillStyle = '#fff'; g.fill(); g.restore();
   g.save(); g.beginPath(); g.arc(N/2, N/2, 160, 0, Math.PI*2); g.clip();
   g.fillStyle = '#fff'; g.fill();
-  g.drawImage(CROP.img, CROP.sx, CROP.sy, CROP.size, CROP.size, N/2-160, N/2-160, 320, 320);
+  // 縦長・横長でも全体が入るように縮めて真ん中に置く（正方形なら今までと同じ）
+  const sc = 320 / Math.max(CROP.w, CROP.h), dw = CROP.w * sc, dh = CROP.h * sc;
+  g.drawImage(CROP.img, CROP.sx, CROP.sy, CROP.w, CROP.h, N/2 - dw/2, N/2 - dh/2, dw, dh);
   g.restore();
   return cv;
 }
@@ -1543,7 +1572,7 @@ async function handleForm(kind, f){
       if(!CROP) throw new Error('画像をえらんでね');
       const img = makeSticker().toDataURL('image/jpeg', 0.88);
       const data = { name:v.name.trim(), rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N', img };
-      const ser = cleanSer(v.series), old = CROP.editId ? S.gchars.find(x => x.docId === CROP.editId) : null;
+      const ser = pickedSer(v), old = CROP.editId ? S.gchars.find(x => x.docId === CROP.editId) : null;
       if(ser !== String(old?.series || '').trim()) data.series = ser;
       if(ser) S.lastSer = ser;
       S.cser = ser || DEF_SERIES;
@@ -1556,7 +1585,7 @@ async function handleForm(kind, f){
       const name = v.name.trim();
       if(!name) throw new Error('名前を入れてね');
       const data = { name, rarity:['N','R','SR'].includes(v.rarity) ? v.rarity : 'N' };
-      const ser = cleanSer(v.series), old = S.gchars.find(x => x.docId === v.id);
+      const ser = pickedSer(v), old = S.gchars.find(x => x.docId === v.id);
       if(ser !== String(old?.series || '').trim()) data.series = ser;
       await serSave(() => setDoc(doc(db,'gachaChars',v.id), data, { merge:true }));
       break;
@@ -1713,6 +1742,8 @@ document.addEventListener('click', async e => {
       case 'pull': await pullGacha(); break;
       case 'gser': S.gser = v; render(); break;
       case 'oser': S.oser = v; render(); break;
+      case 'newser': { const f = el.closest('form'), box = f.querySelector('.sernew'); box.hidden = false; f.querySelector('.serpick').hidden = true; box.querySelector('input').focus(); break; }
+      case 'newsercancel': { const f = el.closest('form'), box = f.querySelector('.sernew'); box.querySelector('input').value = ''; box.hidden = true; f.querySelector('.serpick').hidden = false; break; }
       case 'cser': S.cser = v; render(); break;
       case 'omore': S[v] = !S[v]; render(); break;
       case 'editchar': {
