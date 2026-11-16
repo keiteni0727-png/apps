@@ -264,7 +264,7 @@ uSwipe({
   blocked: () => !!($("#layer").innerHTML || state.fOpen || yst.fp),
   pager: {
     el: "#main",
-    block: "input,select,textarea,.fpop,.frow,.hseg,.vodbar,.svbar,.chips,#subPop,.u-toast",
+    block: "input,select,textarea,#ddPop,.fpop,.frow,.hseg,.vodbar,.svbar,.chips,#subPop,.u-toast",
     can: dir => {
       const i = segIdx();
       return i >= 0 && i + dir >= 0 && i + dir < segBtns().length;
@@ -282,6 +282,7 @@ matchMedia("(max-width:899px)").addEventListener("change", () => {
   if (state.missOnly || state.mode === "w") render();
 });
 const CLICK_HANDLERS = [
+  onDDClick,
   onDrawerClick,
   e => runActions(SHELL_ACTIONS, e),
   onSettingsClick,
@@ -446,6 +447,13 @@ const INPUT_ACTIONS = [
     },
   ],
   [
+    "#ddq",
+    t => {
+      const l = $("#ddList");
+      if (l && ddOpen) l.innerHTML = ddRows(ddOpen, t.value);
+    },
+  ],
+  [
     "#f-serq",
     t => {
       if (!form) return false;
@@ -568,6 +576,9 @@ const enterClick = sel => (t, e) => {
   document.querySelector(sel)?.click();
 };
 const KEY_ACTIONS = [
+  /* プルダウンを開いているとき：Escで閉じる・検索欄でEnterなら一番上の候補を選ぶ */
+  [null, (t, e) => (e.key === "Escape" && ddOpen ? (e.preventDefault(), closeDD(true), true) : false)],
+  ["#ddq", enterClick("#ddList [data-ddpick],#ddList [data-ddsernew]")],
   [
     "[data-svren]",
     (t, e) => {

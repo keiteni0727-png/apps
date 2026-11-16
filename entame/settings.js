@@ -302,6 +302,7 @@ function propagate(key, from, to) {
   return ch.length;
 }
 function close() {
+  closeDD();
   lockScroll(false);
   ytOpen = null;
   yform = null;
