@@ -1734,3 +1734,17 @@ body:has(#layer .sheet) .tbwrap{display:none}
   .row.lst .lab.s.pconly{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}
   .row.lst .meta{min-width:0}
 }
+/* 帯（スマホ）：左にアプリアイコンと「エンタメ管理」、真ん中に今の画面、右に＋（オレンジ）と⚙ */
+.hlogo{display:none}
+@media (max-width:899px){
+  header .hbar{position:relative}
+  .hlogo{display:flex;align-items:center;gap:7px;flex:none;min-width:0}
+  .hlogo svg{width:26px;height:26px;flex:none}
+  .hlogo b{font-size:14px;font-weight:700;white-space:nowrap}
+  header .hcur{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);gap:6px;pointer-events:none}
+  header .hcur .hname{position:static!important;width:auto!important;height:auto!important;overflow:visible!important;clip:auto!important;font-size:16px;font-weight:700}
+  header .hcur .mic{width:22px;height:22px}
+  header .hcur .mic svg{width:20px;height:20px}
+  header #hAdd{background:var(--u-accent);color:var(--u-on)}
+}
+@media (max-width:380px){.hlogo b{display:none}}

@@ -278,10 +278,12 @@ function renderYt() {
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
   const srt = [srt0[0], (yst.grp === "year" ? "年別・" : "ジャンル別・") + srt0[1]];
   /* アニメ・ドラマと同じ形：絞り込み（シート）・並び順・検索、条件のラベル、件数 */
-  const conds = [...yst.pri.map(stLabel), ...(yst.genre !== "すべて" ? [yst.genre] : []), ...(yst.sub !== "すべて" ? [yst.sub] : []), ...(yst.missOnly ? [yst.missKey ? `未入力：${yst.missKey}` : "未入力あり"] : [])];
+  const conds = [...(yst.author !== "すべて" ? [yst.author] : []), ...yst.pri.map(stLabel), ...(yst.genre !== "すべて" ? [yst.genre] : []), ...(yst.sub !== "すべて" ? [yst.sub] : []), ...(yst.missOnly ? [yst.missKey ? `未入力：${yst.missKey}` : "未入力あり"] : [])];
   const searching = yst.qOpen || !!yst.q;
   const grpOpts = yst.genre === SOLO ? M("soloGroups") : ytSubs();
+  const all = ytItems.filter(x => ytGenreOk(x) && qOk(x));
   const rows = [
+    ["au", "投稿者", yst.author, () => fOpt("data-ytau", "すべて", "すべて", yst.author === "すべて", all.length) + ytAuthors().map(a => fOpt("data-ytau", a, (EMO[a] ? EMO[a] + " " : "") + esc(a), yst.author === a, all.filter(x => x.a === a).length)).join("")],
     ["st", "視聴ステータス", one ? stLabel(one) : "すべて", () => fOpt("data-ytstf", "", "すべて", !yst.pri.length, segBase.length) + pris.map(p => fOpt("data-ytstf", p, stLabel(p), one === p, segBase.filter(x => (ytSt(x) || UNSEEN) === p).length)).join("")],
     ["genre", "ジャンル", yst.genre, () => fOpt("data-ytg", "すべて", "すべて", yst.genre === "すべて", ab.length) + [SOLO, COLLAB].map(g => fOpt("data-ytg", g, esc(g), yst.genre === g, ab.filter(x => ytCat(x) === g).length)).join("")],
   ];
@@ -717,7 +719,7 @@ const YT_ACTIONS = [
       yst.fp = "";
     }),
   ],
-  ["[data-ytreset]", ytUI(() => Object.assign(yst, { pri: [], genre: "すべて", sub: "すべて", missOnly: false, missKey: "", fSub: "" }))],
+  ["[data-ytreset]", ytUI(() => Object.assign(yst, { author: "すべて", pri: [], genre: "すべて", sub: "すべて", missOnly: false, missKey: "", fSub: "" }))],
   /* 絞り込みシート（アニメ・ドラマと同じ動き） */
   [
     "[data-ytsheet]",
@@ -758,6 +760,7 @@ const YT_ACTIONS = [
     }),
   ],
   ["[data-ytsub]", el => ytPicked(() => (yst.sub = el.dataset.ytsub))],
+  ["[data-ytau]", el => ytPicked(() => (yst.author = el.dataset.ytau))],
   ["[data-ytstf]", el => ytPicked(() => (yst.pri = !el.dataset.ytstf || (yst.pri.length === 1 && yst.pri[0] === el.dataset.ytstf) ? [] : [el.dataset.ytstf]))],
   [
     "[data-ytmissw]",

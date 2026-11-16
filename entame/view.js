@@ -53,7 +53,7 @@ function renderSidebar() {
      視聴ステータスは一覧の上の切り替えで選ぶ */
   const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
   const subOf = m => {
-    if (m === "yt") return ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, ytItems.filter(x => x.a === a).length]);
+    if (m === "yt") return [[`data-tb="すべて"`, "すべて", yst.author === "すべて", ytItems.length], ...ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, ytItems.filter(x => x.a === a).length])];
     if (m === "w" || m === "h") return [];
     const l = items.filter(i => inMode(m, i));
     if (m === "m")
@@ -703,12 +703,12 @@ function render() {
   const yt = state.mode === "yt";
   /* YouTubeは「すべて」をなくし、投稿者ごとのタブだけ。今の投稿者がいなければ先頭にする */
   const al = ytAuthors();
-  if (al.length && !al.includes(yst.author)) yst.author = al[0];
+  /* YouTubeは最初「すべて」。投稿者は絞り込みで選ぶ（消えた投稿者が選ばれたままなら「すべて」に戻す） */
+  if (yst.author !== "すべて" && !al.includes(yst.author)) yst.author = "すべて";
   const hc = $("#hcur");
   if (hc)
     hc.innerHTML =
-      (OTHER_MODES.includes(state.mode) ? `<button type="button" class="hback" data-bnav="o" aria-label="その他に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>` : "") +
-      `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>${hSubLab() ? `<span class="hsub ${state.mode}">${esc(hSubLab())}</span>` : ""}`;
+      `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>`;
   renderThemeBtn();
   renderSidebar();
   renderBnav();
