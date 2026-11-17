@@ -747,8 +747,7 @@ document.addEventListener("keydown", e => {
   if (!t || !navOk(t)) return;
   const up = e.key === "ArrowUp",
     down = e.key === "ArrowDown",
-    left = e.key === "ArrowLeft",
-    right = e.key === "ArrowRight";
+    left = e.key === "ArrowLeft";
   /* 表の形：話数の編集の行・編の行 */
   const row = t.closest("[data-er],[data-ar]");
   if (row) {

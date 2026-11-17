@@ -971,10 +971,6 @@
     <div class="acc-grid">${g
       .map(a => {
         const info = payoffInfo(a);
-        const lc = lateCount(a.id);
-        const rep = allItems()
-          .filter(i => i.accountId === a.id && i.status === "paid" && i.date >= MGMT_START)
-          .reduce((s, i) => s + (i.principal || 0), 0);
         const pd = a.payDay ? (a.payDay >= 31 ? "末日" : a.payDay + "日") : null;
         const meta = [
           pd || a.method ? `<span>${pd || "—"}${a.method ? `（${esc(a.method)}）` : ""}</span>` : "",

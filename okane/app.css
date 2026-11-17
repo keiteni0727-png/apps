@@ -17,7 +17,7 @@ body.sel{--u-toast-b:180px}
 .kb,.pay{display:contents}
 .kb{font:15px/1.5 var(--u-f)}
 .pay{font-family:var(--u-f);font-size:14px;line-height:1.6;color:var(--u-ink)}
-@media (max-width:899px){body{padding-bottom:calc(var(--u-navb) + var(--tbh) + 24px)}}
+@media (max-width:899px){body{}}
 /* 画面の切り替え：body の data-tab で出し分ける */
 body:not([data-tab="list"]) #v-list,body:not([data-tab="graph"]) #v-graph,body:not([data-tab="ai"]) #v-ai,
 body:not([data-tab="home"]) #v-home,body:not([data-tab="balance"]) #v-balance{display:none}
@@ -93,7 +93,7 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb .ckl{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--u-sub);font-weight:600;cursor:pointer;user-select:none}
 
 /* 入力フォーム（確認・編集・ルール） */
-.kb .rv{border:1px solid var(--u-line);border-radius:12px;padding:10px;margin:8px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kb .rv{border:1px solid var(--u-line);border-radius:12px;margin:8px 0;display:grid;grid-template-columns:1fr 1fr}
 .kb .rv .full{grid-column:1/-1}
 .kb .rv>*{min-width:0}
 .kb .rv.dup{border-color:var(--u-danger)}
@@ -118,12 +118,10 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 /* トップへ戻る */
 
 /* ===== ヘッダー：3アプリ共通の1行構成 ===== */
-.kb .appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--u-surface);border-bottom:1px solid var(--u-line)}
+.kb .appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;border-bottom:1px solid var(--u-line)}
 .kb .abin{height:var(--abh);display:flex;align-items:center;gap:10px}
 .kb .brand{display:flex;align-items:center;gap:8px;margin-right:auto;font-size:18px;font-weight:900;letter-spacing:.02em}
-.kb .hnav{display:none;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px;margin-right:auto}
-.kb .hnav button{border:0;background:none;color:var(--u-sub);padding:6px 14px;border-radius:8px;font-size:14px}
-.kb .hnav button[aria-current="page"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+
 .kb button.mcur{height:36px;padding:0 12px;border-color:var(--u-accent);color:var(--u-acct);font-size:14px;flex:none}
 .kb button.mcur:disabled{opacity:.35}
 .kb .mnav{display:flex;align-items:center;gap:2px;background:var(--u-chip);border:0;border-radius:var(--u-r);padding:3px}
@@ -139,7 +137,7 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb .layout{padding-block:14px 24px}
 
 /* ===== 明細：当月サマリ ===== */
-.kb .sum .sumtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.kb .sum .sumtop{display:flex;justify-content:space-between;gap:12px}
 .kb .eyebrow{font-size:12px;color:var(--u-sub);font-weight:600;letter-spacing:.04em}
 .kb .total{font-size:32px;line-height:1.15;margin-top:2px}
 .kb .delta{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
@@ -161,8 +159,7 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb #msg{margin-top:6px}
 .kb #msg:empty{display:none}
 .kb #lhead{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--abh));z-index:10;background:var(--u-surface);margin:-16px -16px 0;padding:12px 16px 8px;border-bottom:1px solid var(--u-line);border-radius:var(--u-rl) var(--u-rl) 0 0}
-.kb .filters{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.kb .filters #fq{grid-column:1/-1}
+
 .kb .day{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;font-weight:700;margin:14px -16px 2px;padding:6px 16px;background:var(--u-bg);border-block:1px solid var(--u-line)}
 .kb .day:first-child{margin-top:0;border-top:0}
 .kb .day small{font-size:12px;font-weight:600;color:var(--u-sub)}
@@ -315,18 +312,15 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .madd #madde{text-align:center;font-size:18px;padding:4px}
 .kb .mcf{background:var(--u-danger2);border-radius:var(--u-r);padding:10px 12px;margin-top:10px;font-size:13.5px}
 .kb .mcf .row{margin-top:8px}
-.kb .dcard{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:14px;margin-bottom:10px;display:grid;gap:6px;justify-items:start}
 
 /* ===== スマホ（幅899px以下） ===== */
 @media (max-width:899px){
-  
-  .kb .abin{gap:6px}
   /* 設定は画面の切り替えで開く（[hidden] を上書きするため !important） */
   body[data-tab="rules"] .kb .layout{display:none}
   body[data-tab="rules"] .kb #rulepanel{display:block!important;position:static;box-shadow:none;max-width:none;overflow:visible;margin:14px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
   body[data-tab="rules"] .kb #rbk{display:none}
   /* 選択バー・通知・トップへは下部メニューの上に浮かせる */
-  .kb #selbar:not([hidden]){left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));bottom:calc(var(--u-navb) + var(--tbh) + 8px);padding:10px 12px;border:1px solid var(--u-line);border-radius:18px}
+  .kb #selbar:not([hidden]){left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));padding:10px 12px;border:1px solid var(--u-line);border-radius:18px}
 }
 @media (max-width:599px){
   .kb .aictl{grid-template-columns:1fr auto}
@@ -340,7 +334,7 @@ body.sel .kb .layout{padding-bottom:190px}
 /* ===== PC（幅900px以上） ===== */
 @media (min-width:900px){
   .kb .brand{margin-right:12px}
-  .kb .hnav{display:flex}
+  
   .kb #v-list{max-width:780px;margin:0 auto}
   .kb #v-graph,.kb #v-ai{padding:22px 24px}
   .kb .gctl{grid-template-columns:200px 200px minmax(0,320px)}
@@ -398,7 +392,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .pay .bar-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .pay .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 .pay .cols-cycle{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
-.pay .cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+
 .pay .empty{padding:24px 16px;text-align:center;color:var(--u-sub);display:flex;flex-direction:column;gap:10px;align-items:center}
 .pay .status{font-size:12px;color:var(--u-sub);padding:8px 0 0}
 .pay .status.err{color:var(--u-danger)}
@@ -442,8 +436,7 @@ body.sel .kb .layout{padding-bottom:190px}
 /* 折りたたみ（開閉はこの端末に覚えておく） */
 .pay .fold-h{cursor:pointer;user-select:none;-webkit-user-select:none}
 .pay .fold-h h2{display:flex;align-items:center;gap:8px}
-.pay .fold-h h2::before{content:"";width:7px;height:7px;border-right:2px solid var(--u-sub);border-bottom:2px solid var(--u-sub);transform:rotate(45deg) translateY(-2px);transition:transform .15s;flex:none}
-.pay .folded>.fold-h h2::before{transform:rotate(-45deg)}
+.pay .fold-h h2::before{content:"";border-right:2px solid var(--u-sub);border-bottom:2px solid var(--u-sub);transition:transform .15s;flex:none}
 .pay .folded>:not(.fold-h){display:none!important} /* 中身の display 指定より優先して隠す */
 .pay .panel.folded>.panel-h{border-bottom:0}
 
@@ -472,11 +465,7 @@ body.sel .kb .layout{padding-bottom:190px}
 .pay .win.flat{margin:0}
 .pay .win.win-pp{margin:10px 0 0}
 
-/* 通知 */
-
-/* ===== ヘッダー：家計簿・エンタメ管理と同じ1行のバー ===== */
-
-body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav{display:none}
+/* 通知 *//* ===== ヘッダー：家計簿・エンタメ管理と同じ1行のバー ===== */
 /* 保存の状態 */
 
   
@@ -587,30 +576,19 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .ms{display:flex;justify-content:space-between;gap:8px;font-size:13px}
 .pay .ms .when{font-family:var(--u-num);color:var(--u-sub);white-space:nowrap}
 .pay .ai{border-top:1px solid var(--u-soft);background:linear-gradient(180deg,var(--u-accent2),transparent 140px)}
-.pay .ai-h{display:flex;align-items:center;gap:8px;padding:12px 16px 6px;flex-wrap:wrap}
-.pay .ai-h b{font-size:14px}
-.pay .ai-h button{margin-left:auto}
-.pay .ai-badge{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--u-on);background:var(--u-accent);padding:2px 6px;border-radius:4px}
-.pay .ai-body{padding:4px 16px 14px;display:flex;flex-direction:column;gap:12px}
-.pay .ai-hl{margin:0;font-size:16px;font-weight:900;line-height:1.5;text-wrap:pretty}
-.pay .ai-sum{margin:0;font-size:13.5px;line-height:1.8;text-wrap:pretty}
-.pay .ai-sec{display:flex;flex-direction:column;gap:6px}
+
 .pay .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:6px}
 .pay .ai-tl li{display:flex;flex-direction:column;font-size:13px;line-height:1.6;position:relative}
 .pay .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
 .pay .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-acct)}
-.pay .ai-act{display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding:10px 12px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r)}
+
 .pay .ai-n{width:22px;height:22px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:12px;font-weight:900;font-family:var(--u-num)}
-.pay .ai-act b{font-size:14px}
-.pay .ai-act p{margin:2px 0 4px;font-size:12.5px;line-height:1.7;color:var(--u-sub)}
+
 .pay .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px}
-.pay .ai-watch{margin:0;padding-left:18px;font-size:13px;line-height:1.7}
-.pay .ai-watch li::marker{color:var(--u-warn)}
+
 .pay .ai-cheer{margin:0;font-size:13px;font-weight:700;color:var(--u-acct)}
-.pay .ai-foot{font-size:11px}
-.pay .ai-wait{display:flex;gap:6px;padding:6px 0}
-.pay .ai-wait i{width:8px;height:8px;border-radius:50%;background:var(--u-accent);opacity:.3}
-@media (prefers-reduced-motion:no-preference){.pay .ai-wait i{animation:aiw 1.2s ease-in-out infinite}.pay .ai-wait i:nth-child(2){animation-delay:.2s}.pay .ai-wait i:nth-child(3){animation-delay:.4s}@keyframes aiw{40%{opacity:1;transform:translateY(-3px)}}}
+
+@media (prefers-reduced-motion:no-preference){@keyframes aiw{40%{opacity:1;transform:translateY(-3px)}}}
 
 /* ===== 残高と計画：口座 ===== */
 .pay .grp{display:flex;flex-direction:column;gap:8px}
@@ -680,7 +658,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .form .full{grid-column:1/-1}
 .pay .form .full,.pay .form .cb,.pay .form .note,.pay .form .sumline{align-self:start}
 .pay .field{display:flex;flex-direction:column;gap:4px;min-width:0}
-.pay .field label{font-size:11px;color:var(--u-sub);letter-spacing:.06em}
+.pay .field label{color:var(--u-sub);letter-spacing:.06em}
 .pay .sheet input:not([type=checkbox]):not([type=range]),.pay .sheet select{height:44px;box-sizing:border-box;line-height:1.2}
 .pay .cb{display:flex;align-items:center;gap:8px;font-size:13px}
 .pay .cb input{width:auto}
@@ -692,7 +670,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay #e-money{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .pay .sumline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 10px;background:var(--u-accent2);border-radius:var(--u-r);font-size:13px;flex-wrap:wrap}
 .pay .sumline b{font-size:17px}
-.pay .warnt{font-size:11px;color:var(--u-danger);font-family:var(--u-f);font-weight:400}
+
 /* 支払後の見込み・状態バー */
 .pay .after{background:var(--u-ok2);border-radius:var(--u-r);padding:10px 12px;display:flex;flex-direction:column;gap:2px;font-size:12.5px}
 .pay .after b{font-family:var(--u-num)}
@@ -749,7 +727,7 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 /* 設定 */
 
 /* ===== 中くらいの幅 ===== */
-@media (max-width:900px){.pay .cols,.pay .cols-cycle,.pay .cols-2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.pay .cols,.pay .cols-cycle{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:680px){
   .pay .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pay .stat:nth-child(3){border-left:0}
@@ -790,8 +768,8 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
   .pay .stat .v{font-size:16px}
   .pay .stat .label{font-size:10px}
   .pay .stat .s{font-size:10px}
-  .pay #cFilter{width:100%}
-  .pay #cFilter button{flex:1;padding:8px 4px}
+  
+  
   .pay .listbar .seg{flex:1}
   .pay .listbar .seg button{flex:1;padding:8px 4px}
   .pay .alert-h{padding:10px 12px;gap:10px}
@@ -814,8 +792,8 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
   .pay .ms .when{font-size:11px}
   .pay .ol-head{grid-template-columns:minmax(0,1fr);padding:12px 14px 8px}
   .pay .ol-next{padding:8px 14px 12px}
-  .pay .ai-h{padding:12px 14px 6px}
-  .pay .ai-body{padding:4px 14px 14px}
+  
+  
   .pay .grp-h h2{font-size:14px}
   .pay .acc-grid{grid-template-columns:minmax(0,1fr);gap:0;border:1px solid var(--u-line);overflow:hidden}
   .pay .acc{border:0;border-top:1px solid var(--u-soft)}
@@ -931,8 +909,6 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
 /* PC：左の折りたためるメニュー（エンタメ管理と同じ大きさ） */
 @media (min-width:900px){
   .kb .wrap,.pay .wrap{max-width:1100px}
-  /* 上の帯は月度の切り替えだけ（アプリ名と保存の状態は左メニュー） */
-  .kb .appbar{background:var(--u-bg)}
   .kb .brand{display:none}
   .kb .mcur{margin-left:auto}
   .kb #selbar:not([hidden]){left:var(--sbw)}
@@ -989,10 +965,9 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .totop{font-size:15px}
   .kb .totop span{font-size:17px}
   .kb .brand{font-size:20.5px}
-  .kb .hnav button{font-size:16px}
+  
   .kb button.mcur{font-size:16px}
   .kb .ib{font-size:20.5px}
-  .kb .tabbar button{font-size:12.5px}
   .kb .eyebrow{font-size:13.5px}
   .kb .delta{font-size:13.5px}
   .kb .legend{font-size:13.5px}
@@ -1092,19 +1067,19 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .pay .ol-kpi b{font-size:17px}
   .pay .ol-kpi small{font-size:12.5px}
   .pay .ms{font-size:15px}
-  .pay .ai-h b{font-size:16px}
-  .pay .ai-badge{font-size:11.5px}
-  .pay .ai-hl{font-size:18px}
-  .pay .ai-sum{font-size:15.5px}
+  
+  
+  
+  
   .pay .ai-tl li{font-size:15px}
   .pay .ai-tl b{font-size:13.5px}
   .pay .ai-n{font-size:13.5px}
-  .pay .ai-act b{font-size:16px}
-  .pay .ai-act p{font-size:14px}
+  
+  
   .pay .ai-eff{font-size:13.5px}
-  .pay .ai-watch{font-size:15px}
+  
   .pay .ai-cheer{font-size:15px}
-  .pay .ai-foot{font-size:12.5px}
+  
   .pay .acc .ac-n b{font-size:16px}
   .pay .acc .ac-b{font-size:17px}
   .pay .acc .ac-m{font-size:12.5px}
@@ -1118,13 +1093,12 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .pay .rd .note{font-size:12.5px}
   .pay .sheet h3{font-size:18px}
   .pay .xbtn{font-size:25px}
-  .pay .field label{font-size:12.5px}
   .pay .cb{font-size:15px}
   .pay .nobal{font-size:13.5px}
   .pay .nobal .note{font-size:12.5px}
   .pay .sumline{font-size:15px}
   .pay .sumline b{font-size:19.5px}
-  .pay .warnt{font-size:12.5px}
+  
   .pay .after{font-size:14px}
   .pay .after b.ok{font-size:17px}
   .pay .after .big2{font-size:20.5px}
@@ -1168,33 +1142,27 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .pay .after>.note{font-size:12.5px}
 }
 
-/* ===== スマホ：左上の☰から開くメニュー・エンタメ管理と同じ形 ===== */
-.kb .hmenu,.kb .hcur,.kb .sb-x,.kb .dscrim{display:none}
 .kb .mic{display:inline-grid;place-items:center;line-height:0}
 .kb .mic svg{width:20px;height:20px}
 .kb .sb-it i.mic{width:22px}
 @media (max-width:899px){
-  .kb .tbwrap{display:none}
-  body{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));--u-toast-b:86px}
+  body{--u-toast-b:86px}
   body.sel{--u-toast-b:200px}
-  .kb #selbar:not([hidden]){bottom:calc(env(safe-area-inset-bottom,0px) + 8px)}
-  .kb .brand{display:none}
-  .kb .abin{gap:8px}
-  .kb button.hmenu{display:grid;place-items:center;flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);padding:0}
-  .kb .hmenu svg{width:20px;height:20px}
+  
+  
   .kb .hcur{display:inline-grid;place-items:center;flex:none;width:26px;height:26px;color:var(--u-acct);margin-right:auto}
   .kb .hcur svg{width:24px;height:24px}
   .kb .totop{right:auto;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
   body.drawer{overflow:hidden}
-  .kb .dscrim{display:block;position:fixed;inset:0;z-index:59;background:var(--u-scrim);opacity:0;pointer-events:none;transition:opacity .25s ease}
-  body.drawer .kb .dscrim{opacity:1;pointer-events:auto}
-  .u-app .sb{display:flex;position:fixed;left:0;top:0;bottom:0;width:min(280px,82vw);background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;box-shadow:var(--u-shadow);visibility:hidden}
+  
+  
+  .u-app .sb{position:fixed;left:0;top:0;bottom:0;background:var(--u-surface);flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));gap:4px;z-index:60;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-105%);transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s linear .25s;box-shadow:var(--u-shadow);visibility:hidden}
   body.drawer .u-app .sb{transform:none;visibility:visible;transition:transform .25s cubic-bezier(.2,.8,.2,1),visibility 0s}
   .u-app .sb-top{display:flex;align-items:center;gap:8px;padding:2px 4px 12px;border-bottom:1px solid var(--u-line);margin-bottom:10px}
-  .u-app .sb-lamp{font-family:var(--u-num);font-size:10px;font-weight:600;letter-spacing:.1em;line-height:1;color:var(--u-on);background:var(--u-accent);padding:4px 6px 3px;border-radius:4px;white-space:nowrap;flex:none}
-  .u-app .sb-top b{font-size:17px;font-weight:900;white-space:nowrap}
-  .u-app .sb-tog{display:none}
-  .kb button.sb-x{display:grid;place-items:center;margin-left:auto;width:32px;height:32px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;color:var(--u-sub);font-size:15px;flex:none;padding:0}
+  
+  .u-app .sb-top b{font-weight:900;white-space:nowrap}
+  
+  
   .u-app .sb-sec{font-size:11px;font-weight:700;color:var(--u-sub);letter-spacing:.08em;padding:8px 8px 4px}
   .kb .sb button.sb-it{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:11px 10px;border-radius:10px;font-size:15.5px;font-weight:700;color:var(--u-sub);white-space:nowrap;height:auto;box-shadow:none}
   .kb .sb button.sb-it[aria-current="page"]{background:var(--u-accent2);color:var(--u-acct)}
@@ -1236,8 +1204,7 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .rv .yen input{font-size:20px}
   .pay .field label{font-size:13px}
   /* 一覧の検索・絞り込みは1行に */
-  .kb .filters{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr)}
-  .kb .filters #fq{grid-column:auto}
+  
   /* 明細の1行を詰める（メモと分類・支払い方法を横に並べる） */
   .kb #list .it{padding:7px 0}
   .kb #list .it.on{padding:7px 16px}
@@ -1298,7 +1265,6 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
   .u-app .sb .sbp{margin-bottom:4px}
   .u-app .sb .sbp .sb-row>.sb-it{height:40px;padding-top:0;padding-bottom:0}
   .u-app .sb .sbp .sb-sub .sb-it{height:30px;padding-top:0;padding-bottom:0;font-size:13px}
-  .u-app .sb .sb-foot .sb-it{height:36px;padding-top:0;padding-bottom:0}
 }
 /* スマホのメニュー：幅は画面の半分弱（エンタメ管理と同じ）。見出しは詰めて✕まで収める */
 @media (max-width:899px){
@@ -1319,7 +1285,6 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 }
 /* 下の余白：一番下までスクロールしたときの余分な空白を詰める（スマホは下のタブがないので、その分の余白はいらない） */
 @media (max-width:899px){
-  body{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
   .u-app .totop{bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
 }
 .pay .wrap{padding-block-end:24px}
@@ -1345,7 +1310,6 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 .kb button.sumtog{flex:none;width:32px;height:32px;border:0;background:var(--u-chip);border-radius:999px;display:grid;place-items:center;padding:0;color:var(--u-sub)}
 .kb .sum.folded .sumbody{display:none}
 /* 家計簿の絞り込み：検索欄をなくし、分類と支払い方法の2つだけ */
-.kb .filters{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
 /* 家計簿の1行：1行目＝分類と小さめのメモ、2行目＝支払い方法（2行でコンパクトに） */
 .kb #list .it{padding:8px 0;gap:10px}
 .kb #list .it.on{padding:8px 16px}
@@ -1364,8 +1328,6 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 .kb .mbar .mnav .ib{width:44px;height:36px;flex:none;font-size:18px}
 .kb .mbar .mnav select{flex:0 1 auto!important;width:auto;min-width:0;text-align:center;text-align-last:center}
 /* 家計簿の絞り込み（分類・支払い方法）：iPhoneでも文字が枠に収まるよう、⌄を自前で描いて右に余白を取る */
-.kb .filters select{-webkit-appearance:none;appearance:none;height:44px;box-sizing:border-box;line-height:1.2;padding:0 30px 0 10px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background-color:var(--u-bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;background-size:14px 14px}
-@media (min-width:900px){.kb .filters select{font-size:17px}}
 
 /* ===================== 2026-11-17 エンタメ管理と同じ形にそろえる ===================== */
 /* ---------- 上の帯（スマホ）：左にアイコンと「おかね手帳」、真ん中に今の画面、右に＋（オレンジ）と⚙ ---------- */
@@ -1384,8 +1346,7 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
   .kb button.hthm{display:none!important}
   .kb button.hact{display:grid}
   .kb button.hadd{margin-left:auto}
-  /* 左から出すメニューは使わない */
-  .u-app .sb,.kb .dscrim{display:none!important}
+  /* 左から出すメニューは使わない */.u-app .sb{display:none!important}
 }
 @media (max-width:380px){.kb .brand .bname{display:none}}
 
@@ -1403,9 +1364,8 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 /* ---------- 左メニュー（PC）：一番上に「＋ 追加」 ---------- */
 .u-app .sb .sb-add{display:none}
 @media (min-width:900px){
-  .u-app .sb .sb-add{display:flex;align-items:center;justify-content:center;gap:4px;flex:none;border:0;background:var(--u-accent);color:var(--u-on);border-radius:10px;padding:10px;font:inherit;font-weight:700;font-size:15px;margin:0 0 10px;white-space:nowrap;cursor:pointer;width:100%}
+  .u-app .sb .sb-add{display:flex;align-items:center;justify-content:center;gap:4px;flex:none;border:0;background:var(--u-accent);color:var(--u-on);border-radius:10px;font:inherit;font-weight:700;white-space:nowrap;cursor:pointer;width:100%}
   .u-app .sb .sb-add:hover{filter:brightness(1.04)}
-  body.sbc .u-app .sb .sb-add{height:38px;padding:0}
 }
 /* 明細の追加カード：追加中の行やメッセージがないときは出さない */
 .kb .addcard:has(#msg:empty):has(#review:empty){display:none}
@@ -1505,9 +1465,7 @@ input.calcon{border-color:var(--u-accent)!important;box-shadow:0 0 0 2px color-m
 .kb button.editbtn,.pay button.editbtn{border:1px solid var(--u-line)!important;background:var(--u-surface)!important;color:var(--u-ink)!important;border-radius:var(--u-r)!important;font:inherit;font-size:13px!important;font-weight:700!important;padding:0 12px!important;height:30px;min-height:0;line-height:1}
 .kb button.setedit{flex:none;height:30px;padding:0 12px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);font:inherit;font-size:13px;font-weight:700;display:inline-flex;align-items:center;cursor:pointer}
 .kb button.setedit.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
-.kb .seth{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 8px}
-.kb .seth .seg.sm{margin:0;flex:1}
-.kb .seth b{font-size:14px}
+
 .kb .rule .acts .delbtn{color:var(--u-danger)}
 /* マスタ：ふだんは見るだけ */
 .kb .mrow.view{grid-template-columns:40px minmax(0,1fr) auto;padding:6px 0}
@@ -1518,13 +1476,13 @@ input.calcon{border-color:var(--u-accent)!important;box-shadow:0 0 0 2px color-m
 .kb #mlist.editing .mn{border-style:dashed}
 /* 支払いの引落口座：「編集」のときだけ⠿と削除 */
 .kb #mMethods:not(.editing) .mgrip,.kb #mMethods:not(.editing) [data-rmm]{display:none}
-.kb #mMethods:not(.editing) .pmr{grid-template-columns:22px minmax(0,1fr);padding:8px 0}
+.kb #mMethods:not(.editing) .pmr{padding:8px 0}
 .kb #mMethods.editing [data-rmm]{color:var(--u-danger)}
 /* 設定：表示（自動・ライト・ダーク） */
 .kb .throw{display:flex;align-items:center;gap:12px;margin:10px 0 4px}
-.kb .throw .thl{flex:none;font-size:13px;font-weight:700;color:var(--u-sub)}
+
 .kb .throw .seg{flex:1;max-width:320px;margin:0}
-.kb .dcard .seth{width:100%;margin:0}
+
 /* PC：支払いの件数・合計は「絞り込み」のすぐ横に（一覧の列の外まで離さない） */
 @media (min-width:900px){.pay #cFbar .fcnt{margin-left:14px}.pay .listbar{margin-bottom:-4px}}
 

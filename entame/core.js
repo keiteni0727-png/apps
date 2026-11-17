@@ -388,9 +388,6 @@ async function doLogout() {
   if (s.logout) await s.logout();
   else location.reload();
 }
-/* 設定のいちばん下：ログアウト */
-const accountHtml = () =>
-  `<div class="bkbox"><div class="bkrow"><button type="button" class="u-btn sm svbtn" data-logout="1">ログアウト</button></div></div>`;
 /* 前の版の形で保存されているデータを、今の形に直して保存し直す（最初に読み込んだとき1回だけ。直すものがなければ何もしない）
    ・シリーズの並び：アニメ用（seriesA）・ドラマ用（seriesD）の2つ → 共通の1つ（series）に。作品がないドラマ用のシリーズはメインのジャンルをドラマに
    ・「毎週の放送ではない」作品（曜日なし・放送時間なしの印なし） → 「放送時間なし」に

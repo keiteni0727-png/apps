@@ -2462,10 +2462,6 @@ document.addEventListener("keydown", e => {
   }
 });
 
-window.addEventListener("online", () => {
-  if (live) retry();
-});
-
 /* ---------- トップへ戻る：1画面ぶん下に進んだら出す ---------- */
 (() => {
   const b = $("toTop");

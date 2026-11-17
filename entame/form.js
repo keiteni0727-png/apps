@@ -216,8 +216,6 @@ function songRowsHtml() {
   /* OP・ED・主題歌はジャンル・種別に関係なくいつも出す（挿入歌は追加したときだけ） */
   const types = SONG_TYPES.filter(t => SONG_MAIN.includes(t) || t === "挿入歌" || f.songs.some(x => x.type === t));
   const main = SONG_MAIN;
-  /* 「なし」は曲が1曲もないときだけ。OP・ED・主題歌まとめて1つ */
-  const none = !f.songs.length && (f.noSongs || []).length > 0;
   /* multi＝同じ種類に2曲以上（たたむ行と並び替えの⠿を出す） */
   const card = (x, k, multi) => {
     /* 1話だけ：「最後」の欄を隠して、最初の話だけ入れる */

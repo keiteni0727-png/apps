@@ -473,16 +473,6 @@ function renderWeek() {
   h += `<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div>${heroHere ? hero : ""}${rest.length ? `${heroHere ? `<div class="wsub">このあと・見のがし</div>` : ""}<div class="wline">${rest.map(i => card(cur, i, false, "row")).join("")}</div>` : ""}</section>`;
   return h;
 }
-/* 一覧の上の視聴ステータス切り替え（件数はステータス以外の絞り込みをかけた数） */
-function stSegHtml() {
-  const keep = state.sf;
-  state.sf = [];
-  const base = filtered();
-  state.sf = keep;
-  const one = keep.length === 1 ? keep[0] : keep.length ? "*" : "";
-  const b = (v, lab, n) => `<button type="button" role="radio" data-stf="${esc(v)}" aria-checked="${one === v}">${lab}<small>${n}</small></button>`;
-  return `<div class="stseg" role="radiogroup" aria-label="視聴ステータス">${b("", "すべて", base.length)}${STATUSES.map(v => b(v, stLabel(v), base.filter(i => i.s === v).length)).join("")}</div>`;
-}
 function filtered() {
   let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
   if (state.q) {
@@ -692,15 +682,6 @@ function setMain(html) {
     }
   }
   main.innerHTML = m ? m[0] + `<div id="results">${html.slice(m.index + m[0].length)}</div>` : html;
-}
-/* 画面上の名前の横に、左メニューで選んでいる下の項目（映画・アニメ映画など）をラベルで出す。「すべて」のときは出さない */
-function hSubLab() {
-  const m = state.mode;
-  if (m === "a" || m === "d") return state.type.length === 1 ? (MEDIA.find(([md]) => md === state.type[0]) || [])[1] || "" : "";
-  if (m === "m") return { a: "アニメ映画", d: "実写映画" }[state.sub] || "";
-  if (m === "s") return state.vod || "";
-  if (m === "yt") return yst.author || "";
-  return "";
 }
 /* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す。やめたら true */
 function leaveXser() {

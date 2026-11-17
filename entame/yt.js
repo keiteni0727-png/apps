@@ -112,12 +112,6 @@ function parseDur(t) {
   }
   return (h ? `${h}時間` : "") + (mi || !h ? `${mi}分` : "");
 }
-const fmtShortDay = t => {
-  if (!t) return "";
-  const d = new Date(t),
-    n = new Date();
-  return `${d.getFullYear() !== n.getFullYear() ? d.getFullYear() + "/" : ""}${d.getMonth() + 1}/${d.getDate()}`;
-};
 /* 未入力の項目（作品の未入力アラートと同じ形）。「なし」にできる項目は noF に入れる */
 const YT_NOF_LAB = { dur: "再生時間", pl: "再生リスト", sm: "まとめ動画" };
 /* 「未入力あり」をオンにしたときの項目ボタンの並び（作品の MISS_KEYS と同じ考え方） */
@@ -203,14 +197,6 @@ function ytGenreGroups(list) {
       .join("")
   );
 }
-/* YouTubeの絞り込み：アニメ・ドラマと同じ1列のボタン＋下に出る選択肢 */
-function ytRowHtml(sortLab) {
-  const b = (k, lab, on) =>
-    `<button type="button" class="fb${on ? " on" : ""}" data-ytpop="${k}" aria-expanded="${yst.fp === k}"><span class="v">${esc(lab)}</span><span class="chev" aria-hidden="true">▾</span></button>`;
-  const gLab = yst.genre === "すべて" ? "ジャンル" : yst.genre + (yst.sub !== "すべて" ? "・" + yst.sub : "");
-  const sOn = yst.sort !== "new" || yst.grp !== "genre";
-  return `<div class="frow yt">${b("genre", gLab, yst.genre !== "すべて")}<button type="button" class="fb srt${sOn ? " on" : ""}" data-ytpop="sort" aria-expanded="${yst.fp === "sort"}" aria-label="並び順：${esc(sortLab)}">${SORT_IC}</button></div>`;
-}
 function ytPopHtml(panels) {
   const k = yst.fp;
   if (!panels[k]) return "";
@@ -233,15 +219,6 @@ function renderYt() {
   };
   const segBase = pre.filter(missOk);
   let list = segBase.filter(priOk);
-  const msw = `<button type="button" class="unsw misw${yst.missOnly ? " on" : ""}" data-ytmissw role="switch" aria-checked="${yst.missOnly}">未入力あり<small>${mN}件</small><span class="tr" aria-hidden="true"><i></i></span></button>`;
-  let mkeys = "";
-  if (yst.missOnly) {
-    const cnt = {};
-    mBase.forEach(l => l.forEach(m => (cnt[m.k] = (cnt[m.k] || 0) + 1)));
-    const ks = YT_MISS_KEYS.filter(k => cnt[k] || yst.missKey === k);
-    if (ks.length)
-      mkeys = `<div class="mkeys misw" role="group" aria-label="未入力の項目で絞り込み"><button type="button" data-ytmkey="" aria-pressed="${!yst.missKey}">すべて</button>${ks.map(k => `<button type="button" data-ytmkey="${esc(k)}" aria-pressed="${yst.missKey === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`;
-  }
   const ab = ytItems.filter(x => yst.author === "すべて" || x.a === yst.author);
   const by = new Map();
   list.forEach(x => {
@@ -256,22 +233,8 @@ function renderYt() {
   yst.pri.forEach(p => act.push(["data-ytpri", p, "視聴：" + stLabel(p)]));
   if (yst.genre !== "すべて") act.push(["data-ytg", "すべて", yst.genre]);
   if (yst.sub !== "すべて") act.push(["data-ytsub", "すべて", yst.sub]);
-  const grp = (lab, body) => `<div class="fgroup"><h5>${lab}</h5>${body}</div>`;
   /* 一覧の上の視聴ステータス（アニメ・ドラマなどと同じ。1つだけ選ぶ。同じものをもう一度押すと「すべて」） */
   const one = yst.pri.length === 1 ? yst.pri[0] : yst.pri.length ? "*" : "";
-  const sb = (v, lab, n) => `<button type="button" role="radio" data-ytstf="${esc(v)}" aria-checked="${one === v}">${lab}<small>${n}</small></button>`;
-  const seg = `<div class="stseg" role="radiogroup" aria-label="視聴ステータス">${sb("", "すべて", segBase.length)}${pris.map(p => sb(p, stLabel(p), segBase.filter(x => (ytSt(x) || UNSEEN) === p).length)).join("")}</div>`;
-  const genreBody =
-    grp(
-      "ジャンル",
-      `<div class="chips" role="group" aria-label="ジャンル">${chipBtn("data-ytg", "すべて", yst.genre === "すべて", "すべて")}${[SOLO, COLLAB].map(g => chipBtn("data-ytg", g, yst.genre === g, g, ab.filter(x => ytCat(x) === g).length)).join("")}</div>`,
-    ) +
-    (yst.genre !== "すべて"
-      ? grp(
-          "グループ",
-          `<div class="chips" role="group" aria-label="グループ">${chipBtn("data-ytsub", "すべて", yst.sub === "すべて", "すべて")}${(yst.genre === SOLO ? M("soloGroups") : ytSubs()).map(g => chipBtn("data-ytsub", g, yst.sub === g, g, ab.filter(x => ytCat(x) === yst.genre && ytGrp(x) === g).length)).join("")}</div>`,
-        )
-      : "");
   /* 並び順・分け方：作品と同じ順番・見た目（並び順が上、分け方が下） */
   const sBody = sortSteps([
     { h: "グループ", attr: "data-ytgrp", cur: yst.grp, opts: YT_GRPS },
@@ -345,8 +308,6 @@ const YT_SORTS = [
   ["added", "追加した順"],
   ["title", "タイトル順"],
 ];
-const chipBtn = (attr, val, on, label, n, cls) =>
-  `<button type="button" ${attr}="${esc(val)}" aria-pressed="${on}" class="${on && cls ? "pri " + cls : ""}${attr === "data-vod" && VOD_COLOR[val] ? " vc" : ""}"${attr === "data-vod" ? vcStyle(val) : ""}>${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
 
 /* ---------- 詳細：作品の詳細と同じ形
    上：投稿者・ジャンル・視聴ステータスのラベル／前・次・編集・閉じる、タイトルとコピー

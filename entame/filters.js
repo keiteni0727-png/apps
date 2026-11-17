@@ -3,7 +3,6 @@
 
 /* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
 /* 絞り込みボタン（視聴ステータスは一覧の上の切り替え、種別は左のメニューで選ぶ） */
-const FKEYS = ["vod", "time", "series", "sv", "sort"];
 const FTITLE = { vod: "配信サイト", time: "時期", series: "シリーズ", sv: "保存したフィルタ", sort: "並び替え" };
 const SORT_IC =
   '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
@@ -18,30 +17,12 @@ function fBtnLab(k) {
   }
   return ["", state.sort !== "new" || state.grp !== "cour"];
 }
-function fRowHtml(keys) {
-  const btns = keys
-    .map(k => {
-      const [lab, on] = fBtnLab(k);
-      const open = state.fOpen === k;
-      if (k === "sort")
-        return `<button type="button" class="fb srt${on ? " on" : ""}" data-fpop="sort" aria-expanded="${open}" aria-label="並び順：${esc(SORTS.find(x => x[0] === state.sort)[1])}">${SORT_IC}</button>`;
-      return `<button type="button" class="fb${on ? " on" : ""}" data-fpop="${k}" aria-expanded="${open}"><span class="v">${esc(lab)}</span><span class="chev" aria-hidden="true">▾</span></button>`;
-    })
-    .join("");
-  return `<div class="frow${keys.length === 1 ? " one" : ""}" style="--fc:${Math.max(1, keys.filter(k => k !== "sort").length)}">${btns}</div>`;
-}
 function fPopHtml(body) {
   const k = state.fOpen;
   if (!body) return "";
   /* 保存フィルタの編集中は、上の「完了」で編集を終える（完了ボタンは1つだけ） */
   const done = k === "sv" && state.svMode === "edit" ? `<button type="button" class="u-btn sm pri" data-svcancel="1">完了</button>` : `<button type="button" class="u-btn sm" data-fpop="${k}">完了</button>`;
   return `<div class="fpop-scrim"></div><div class="fsdrop fpop k-${k}" role="dialog" aria-label="${FTITLE[k]}"><div class="fpop-h"><b>${FTITLE[k]}</b>${done}</div>${body}</div>`;
-}
-function vodPanelHtml() {
-  const used = new Set(items.filter(ofKind).flatMap(vodsOf));
-  const l = [...new Set([...VOD_TOP, ...M("vods"), ...used])].filter(v => used.has(v) || v === state.vod || VOD_TOP.includes(v));
-  const n = v => items.filter(i => ofKind(i) && vodsOf(i).includes(v)).length;
-  return `<div class="fgroup"><h5>配信</h5><div class="chips">${chipBtn("data-vod", "", !state.vod, "すべて")}${l.map(v => chipBtn("data-vod", v, state.vod === v, v, n(v))).join("")}</div></div>`;
 }
 function seriesCounts() {
   const cnt = {};

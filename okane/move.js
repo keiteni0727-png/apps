@@ -3,7 +3,6 @@
     claude.ai版 …「引っ越し用に書き出す」（全データをコピー。使えればファイルにも保存）
     単独版     …「データを取り込む」「ログアウト」 */
 (() => {
-  const esc = U.esc;
   /* コレクションを1回だけ読む */
   const once = (db, path) =>
     new Promise((res, rej) => {
