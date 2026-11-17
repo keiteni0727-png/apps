@@ -346,7 +346,7 @@ function formHtml() {
           <button type="button" class="sugbtn${f.cours.includes(ALLYEAR) ? " on" : ""}" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
           <button type="button" class="sugbtn ghost fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
     n:
-      f.id || f.media === "movie" || f.media === "sp"
+      f.id || noSched(f.media)
         ? ""
         : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"></label>`,
     songs: `<div class="field full">
@@ -643,11 +643,11 @@ async function submitForm() {
   }
   const id = "u" + Date.now().toString(36);
   patch.added = Date.now();
-  const n = Math.min(2000, +f.n || 0);
+  const n = noSched(f.media) ? 0 : Math.min(2000, +f.n || 0);
   close();
   await saveTitle(id, patch, "追加しました");
-  /* TV SPは1話（放送日）を自動で作る */
-  if (!n && f.media === "sp" && f.from) {
+  /* TV SPは1話（放送日）を自動で作る（番組表に出すため。1話だけなので詳細には話数タブを出さない） */
+  if (f.media === "sp" && f.from) {
     const it = items.find(x => x.id === id);
     await saveEps(it, [{ n: "SP", sub: "", t: dayTimeToT(f.from, "9:00"), nt: true, w: false }]);
   }

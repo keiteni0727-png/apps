@@ -617,7 +617,7 @@ const finIdx = it => {
   return l.length > 1 ? l.length - 1 : -1;
 };
 const FIN = '<span class="fin">最終回</span>';
-/* 話数リストが未登録（未視聴・視聴中の作品、映画以外） */
+/* 話数リストが未登録（未視聴・視聴中の作品、映画・OVA・TV SP以外） */
 /* ---------- 未入力チェック（PCだけで表示・絞り込み） ----------
    編集画面の項目のうち、その作品に関係あるものだけを見る。シリーズは「なければ空欄」なので対象外。
    k＝表示名、j＝押したときに開く編集項目（data-jump）、n＝「なし」にできる項目のキー（noF） */
@@ -631,9 +631,9 @@ function missingOf(i) {
   const out = [];
   const add = (k, j = "", n = "") => (!n || !nf.includes(n)) && out.push({ k, j, n });
   if (!i.s) add("ステータス");
-  if (md !== "movie" && md !== "sp" && !episodes(i).length) add("話数");
+  if (!ns && !episodes(i).length) add("話数");
   /* アニメ：登録済みの話のうち、1話でもサブタイトルが空なら（「なし」にはできない。サブタイトル欄はアニメだけ） */
-  if (i.k === "a" && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
+  if (i.k === "a" && !(ns && episodes(i).length < 2) && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");

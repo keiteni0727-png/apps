@@ -394,8 +394,8 @@ function renderDetail(it) {
   const eps = episodes(it);
   const w = eps.filter(e => e.w).length;
   const nx = eps[nextIdx(eps)];
-  /* 映画で話数がないときは話数タブを出さず、番組情報の下に目立たない「＋ 話数を追加」だけ置く */
-  const noEp = mv && !eps.length && !epEdit;
+  /* 映画・OVA・TV SPで話数が1話以下のときは話数タブを出さず、番組情報の下に目立たない「＋ 話数を追加」だけ置く */
+  const noEp = ns && eps.length < 2 && !epEdit;
   /* 視聴ステータスはラベル1つ。押すと4つの選択肢が開く */
   const stBtn = `<span class="stw"><button type="button" class="pill dst ${it.s ? "s-" + esc(it.s) : "s-none"}" id="stOpen" aria-haspopup="true" aria-expanded="${stMenu}">${esc(stLabel(it.s || "未設定"))}<span class="stv" aria-hidden="true">▾</span></button>${stMenu ? `<span class="stmenu" role="menu">${STATUSES.map(s => `<button type="button" role="menuitemradio" data-set="${s}" aria-checked="${it.s === s}" class="s-${s}">${stLabel(s)}</button>`).join("")}</span>` : ""}</span>`;
   const nv = navNeighbors(it.id),
@@ -440,7 +440,7 @@ function refreshSheet() {
   el.innerHTML = renderDetail(it);
   noTabInfo();
 }
-/* 話数タブがない詳細（話数のない映画）は、番組情報を表示する */
+/* 話数タブがない詳細（話数のない映画・OVA・TV SP）は、番組情報を表示する */
 function noTabInfo() {
   const sh = $("#layer .sheet");
   if (sh && !sh.querySelector(".dtabs") && sh.classList.contains("t-ep")) setDTab("info");
@@ -899,13 +899,13 @@ const DETAIL_ACTIONS = [
       refreshSheet();
     },
   ],
-  /* 話数のない映画：番組情報の下の「＋ 話数を追加」から話数の編集を開く */
+  /* 話数のない映画・OVA・TV SP：番組情報の下の「＋ 話数を追加」から話数の編集を開く */
   [
     "#epAddMv",
     (el, it) => {
       subPaste = null;
       epOne = null;
-      epEdit = { list: [] };
+      epEdit = { list: episodes(it).map(x => ({ ...x })) };
       refreshSheet();
       setDTab("ep");
     },
