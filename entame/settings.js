@@ -359,12 +359,9 @@ function toastUndo(m, undo) {
       undo();
       toast("元に戻しました");
     },
-    ms: 6000,
   });
 }
-function toast(m) {
-  U.toast(stLabel(m), { ms: 2000 });
-}
+const toast = m => U.toast(stLabel(m));
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
   [
@@ -396,7 +393,6 @@ const SETTINGS_ACTIONS = [
     "[data-setthm]",
     el => {
       U.setTheme(el.dataset.setthm);
-      renderThemeBtn();
       refreshSettings();
     },
   ],

@@ -15,8 +15,6 @@
   const DEFAULT_ACC_DAY = 27; // 口座の支払日の既定値
   const REGEN_MONTHS = 36; // 支払予定を作り直す期間（月）
   const SCHEDULE_MAX = 600; // 返済予定表を計算する最大の回数
-  const TOAST_MS = 5200, // 通知を出しておく時間
-    TOAST_UNDO_MS = 8000; // 「元に戻す」つきの通知を出しておく時間
   const KFOLD = "shiharai.fold"; // 折りたたみの開閉（この端末だけに保存）
   const FOLD_DEF = { outlook: false, once: true, int: true, road: true, "g-personal": true, "g-other": true }; // true＝最初は閉じておく
 
@@ -45,7 +43,6 @@
   FIN.paydayNum = () => S.cfg.payday || DEFAULT_PAYDAY;
   /* 画面の部品の状態 */
   const ui = {
-    lockY: null, // シートを開く前のスクロール位置
     narrow: innerWidth < 640, // グラフをスマホ向けに描いているか
     awT: null, // 返済計画の入力を待つタイマー
   };
@@ -770,7 +767,7 @@
   // undo: 変更前の状態（snapOf）を渡すと「元に戻す」ボタンを出す
   /* 通知は共通部品（U.toast）。undo に snapOf の結果を渡すと「元に戻す」で戻せる */
   function toast(html, undo) {
-    U.toast(html, { html: true, undo: undo ? () => restoreSnap(undo) : null, ms: undo ? TOAST_UNDO_MS : TOAST_MS });
+    U.toast(html, { html: true, undo: undo ? () => restoreSnap(undo) : null, });
   }
 
   /* ---------- 支払い：アラート・次の引き落とし・集計 ---------- */
@@ -1355,26 +1352,9 @@
     }
   }
   /* ---------- シート（下から出るポップアップ） ---------- */
-  /* シートを開いている間は後ろの画面を動かさない */
-  function lockScroll() {
-    if (ui.lockY != null) return;
-    ui.lockY = window.scrollY;
-    const b = document.body.style;
-    b.position = "fixed";
-    b.top = -ui.lockY + "px";
-    b.left = "0";
-    b.right = "0";
-    b.width = "100%";
-  }
-  function unlockScroll() {
-    if (ui.lockY == null) return;
-    const b = document.body.style;
-    b.position = b.top = b.left = b.right = b.width = "";
-    window.scrollTo(0, ui.lockY);
-    ui.lockY = null;
-  }
+  /* シートを開いている間は後ろの画面を動かさない（共通部品 U.lock） */
   function openSheet(html, onMount, wide) {
-    lockScroll();
+    U.lock(true);
     const host = $("sheetHost");
     host.innerHTML = `<div class="scrim" id="scrim"><div class="sheet ${wide ? "wide" : ""}" role="dialog" aria-modal="true">${html}</div></div>`;
     onMount && onMount();
@@ -1384,7 +1364,7 @@
   }
   function closeSheet() {
     $("sheetHost").innerHTML = "";
-    unlockScroll();
+    U.lock(false);
   }
 
   /* ===================== 操作 ===================== */

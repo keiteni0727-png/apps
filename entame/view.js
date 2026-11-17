@@ -92,21 +92,6 @@ function renderSidebar() {
     ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
     <div class="sb-foot"><button type="button" class="sb-it" data-gear="1" title="設定"><i aria-hidden="true">⚙️</i><span class="lbl">設定</span></button><div class="sb-st" id="sbSave">${saveNoteHtml()}</div></div>`;
 }
-/* 上の帯の右上：表示の切り替え（自動→ライト→ダーク→自動）。今の表示のアイコンを出す */
-const TH_IC = {
-  auto: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>`,
-  light: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`,
-  dark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`,
-};
-const TH_NAME = { auto: "自動（端末に合わせる）", light: "ライト", dark: "ダーク" };
-function renderThemeBtn() {
-  const b = $("#hTheme");
-  if (!b) return;
-  const v = U.theme();
-  b.innerHTML = TH_IC[v];
-  b.setAttribute("aria-label", `表示：${TH_NAME[v]}（押すと切り替え）`);
-  b.title = `表示：${TH_NAME[v]}`;
-}
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
 /* バラエティタブ：ジャンル「バラエティ」（k="r"、恋愛リアリティなど）だけ。配信オリジナルのアニメ・ドラマはそれぞれの側で放送形態「配信」として出る */
 /* 作品詳細のシリーズ名から開いたときは、アニメ・ドラマ・映画・配信をまたいでそのシリーズを全部出す（xser） */
@@ -736,12 +721,11 @@ function render() {
   if (hc)
     hc.innerHTML =
       `<span class="mic ${state.mode}" aria-hidden="true">${MODE_IC[state.mode]}</span><span class="hname">${MODE_NAME[state.mode]}</span>`;
-  renderThemeBtn();
   renderSidebar();
   renderBnav();
   document.documentElement.classList.toggle("fshopen", state.mode === "yt" ? yst.fp === "all" : state.mode === "sr" || state.mode === "mu" ? lui.fp === "all" : state.fOpen === "all");
   if (!loaded) return;
-  const y = lockY ?? scrollY;
+  const y = U.lockY ?? scrollY;
   let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : state.mode === "o" ? renderOther() : state.mode === "sr" ? renderSeries() : state.mode === "mu" ? renderSongs() : renderList();
   /* 「すべて開く／閉じる」は件数と同じ行の右端に置く */
   const gb = /<span class="gbulk">[\s\S]*?<\/span>/.exec(body);
@@ -752,7 +736,7 @@ function render() {
     body = body.slice(0, ce) + gb[0] + body.slice(ce);
   }
   setMain(body);
-  if (lockY === null) scrollTo(0, y);
+  if (U.lockY === null) scrollTo(0, y);
   placeFsh();
   if (typeof markStuck === "function") markStuck();
   saveUI();

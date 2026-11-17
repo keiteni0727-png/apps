@@ -17,6 +17,7 @@ const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null },
 /* ---------- 表示（ライト／ダーク）：auto＝端末に合わせる。アプリごと・端末ごとに覚える ----------
    開いた瞬間に白く光らないよう、各アプリの index.html の head でも同じ処理を先に行う */
 U.THEME_KEY = "u-theme:" + U.app.id;
+U.THEME_NAME = { auto: "自動（端末に合わせる）", light: "ライト", dark: "ダーク" };
 U.theme = () => {
   try {
     const v = localStorage.getItem(U.THEME_KEY);
@@ -41,11 +42,20 @@ U.setTheme = v => {
     else localStorage.setItem(U.THEME_KEY, v);
   } catch (_) {}
   U.applyTheme(v);
+  /* 表示の切り替えボタンや設定の印は、この知らせで描き直す */
+  document.dispatchEvent(new Event("u-theme"));
 };
 U.applyTheme();
 (() => {
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   U.esc = esc;
+  /* 検索用に文字をそろえる（大文字小文字・全角半角・カタカナ→ひらがな、記号や空白は無視） */
+  U.norm = t =>
+    String(t || "")
+      .toLowerCase()
+      .normalize("NFKC")
+      .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+      .replace(/[\s・、。!！?？〜~\-－]/g, "");
 
   /* ---------- 端末に覚える小さな設定（localStorage に JSON で）。使えない端末では何もしない ---------- */
   U.ls = {
@@ -449,7 +459,7 @@ U.applyTheme();
     U.toast(文, { html, undo, ms })
       html … true なら文をHTMLとして入れる（呼ぶ側で esc 済みのものだけ）
       undo … 関数を渡すと「元に戻す」ボタンを付ける
-      ms   … 出しておく時間（省略時は 2.5秒、undo つきは 8秒） */
+      ms   … 出しておく時間（省略時は文の長さに合わせて 2.5〜6秒、undo つきは 8秒） */
   let toastT = null;
   U.toastClose = () => {
     clearTimeout(toastT);
@@ -476,7 +486,8 @@ U.applyTheme();
       el.append(b);
     }
     document.body.appendChild(el);
-    toastT = setTimeout(U.toastClose, ms ?? (undo ? 8000 : 2500));
+    const len = (html ? sp.textContent : msg).length;
+    toastT = setTimeout(U.toastClose, ms ?? (undo ? 8000 : Math.min(6000, Math.max(2500, len * 90))));
   };
 
   let conn = null;

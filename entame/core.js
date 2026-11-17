@@ -270,13 +270,8 @@ const seriesOk = i => !state.series.length || state.series.includes(i.series);
 const sfOk = i => !state.sf.length || state.sf.some(s => (s === "未設定" ? !i.s : i.s === s));
 const eraOk = i => !state.era.length || eras.some(e => state.era.includes(e.key) && e.test(i));
 const toggle = (arr, v) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
-/* 検索用に文字をそろえる（大文字小文字・全角半角・カタカナ→ひらがな、記号や空白は無視） */
-const norm = t =>
-  String(t || "")
-    .toLowerCase()
-    .normalize("NFKC")
-    .replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
-    .replace(/[\s・、。!！?？〜~\-－]/g, "");
+/* 検索用に文字をそろえる（共通部品 U.norm） */
+const norm = U.norm;
 
 /* ---------- 保存（Firebase）。保存先への接続とログインは u-core.js（アプリ共通） ---------- */
 let db = null;

@@ -1,190 +1,20 @@
 /* ===================== おかね手帳の画面部品（エンタメ管理と同じ形にそろえたもの） =====================
-  ・UI.pick   … プルダウン（select）を開くと、標準の選択ではなく一覧を出す。スマホは下から、PCは欄のすぐ下
+  ・プルダウンの一覧・表示の切り替え・後ろの画面を止める処理は、エンタメ管理と共通の shared/u-ui.js
   ・UI.filter … 「絞り込み」ボタンと、ボタンのすぐ下に出る絞り込みパネル・条件のラベル
   ・UI.calc   … 金額欄の電卓キーボード。スマホは画面の下に、PCは欄のすぐ下に出る（PCはキーボードでも式を打てる）
   家計簿（kb.js）・支払い（pay.js）より先に読み込む */
 const UI = {};
 (() => {
   const esc = U.esc;
-  const TOUCH = matchMedia("(pointer:coarse)").matches;
-  const sheetMode = () => matchMedia("(max-width:699px)").matches;
-  const CHECK = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
-  const X_IC = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+  const { TOUCH, sheetMode } = U;
+  const CHECK = U.IC.check,
+    X_IC = U.IC.x;
   const CHEV = `<svg class="fsh-cv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>`;
   UI.CHECK = CHECK;
 
-  /* ===================== プルダウン：選択の一覧 ===================== */
-  let pkSel = null,
-    pkAt = 0;
-  const PK_SEL = "select:not([data-native])";
-  function pkTitle(sel) {
-    const a = sel.getAttribute("aria-label");
-    if (a) return a;
-    const l = (sel.id && document.querySelector(`label[for="${sel.id}"]`)) || sel.closest("label");
-    const t = l ? [...l.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join("").trim() : "";
-    return t || "選ぶ";
-  }
-  function pkClose(refocus) {
-    const s = pkSel;
-    pkSel = null;
-    document.getElementById("pkPop")?.remove();
-    document.documentElement.classList.remove("pkopen");
-    if (s && refocus && !TOUCH && s.isConnected) s.focus();
-  }
-  function pkRows(q) {
-    const nq = (q || "").trim().toLowerCase();
-    const opts = [...pkSel.options].filter(o => !o.hidden && (!nq || o.textContent.toLowerCase().includes(nq)));
-    if (!opts.length) return `<p class="dd-hint">「${esc(q)}」は見つかりません</p>`;
-    return opts
-      .map((o, i) => {
-        const on = pkSel.selectedIndex === o.index;
-        return `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" data-pki="${o.index}"${o.disabled ? " disabled" : ""}><span class="dd-l">${esc(o.textContent)}</span>${on ? CHECK : ""}</button>`;
-      })
-      .join("");
-  }
-  function pkOpen(sel) {
-    pkClose();
-    calcClose();
-    pkSel = sel;
-    pkAt = Date.now();
-    const title = pkTitle(sel);
-    const search = sel.options.length > 12;
-    const sheet = sheetMode();
-    const box = document.createElement("div");
-    box.id = "pkPop";
-    box.className = sheet ? "sheetmode" : "popmode";
-    box.innerHTML = `<div class="dd-scrim" data-pkclose="1"></div><div class="dd-box" role="dialog" aria-label="${esc(title)}">
-      ${sheet ? `<div class="dd-h"><b>${esc(title)}</b><span>選ぶと閉じます</span><button type="button" class="dd-x" data-pkclose="1" aria-label="閉じる">${X_IC}</button></div>` : ""}
-      ${search ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="pkq" type="search" autocomplete="off" placeholder="探す" aria-label="探す"></label>` : ""}
-      <div class="dd-list" role="listbox" id="pkList">${pkRows("")}</div></div>`;
-    document.body.appendChild(box);
-    if (sheet) document.documentElement.classList.add("pkopen");
-    else {
-      const r = sel.getBoundingClientRect(),
-        b = box.querySelector(".dd-box");
-      const w = Math.min(Math.max(r.width, 220), 420);
-      b.style.width = w + "px";
-      b.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
-      const below = innerHeight - r.bottom - 12,
-        above = r.top - 12;
-      if (below >= 240 || below >= above) {
-        b.style.top = r.bottom + 6 + "px";
-        b.style.maxHeight = Math.min(420, below) + "px";
-      } else {
-        b.style.bottom = innerHeight - r.top + 6 + "px";
-        b.style.maxHeight = Math.min(420, above) + "px";
-      }
-    }
-    const on = box.querySelector(".dd-row.on");
-    if (on) on.scrollIntoView({ block: "center" });
-    if (!TOUCH) (box.querySelector("#pkq") || on || box.querySelector(".dd-row"))?.focus();
-  }
-  function pkPick(i) {
-    const s = pkSel;
-    if (!s || Date.now() - pkAt < 300) return;
-    pkClose();
-    if (s.selectedIndex !== i) {
-      s.selectedIndex = i;
-      s.dispatchEvent(new Event("input", { bubbles: true }));
-      s.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-    if (!TOUCH && s.isConnected) s.focus();
-  }
-  /* 標準の選択を開かせずに、こちらの一覧を出す */
-  document.addEventListener(
-    "mousedown",
-    e => {
-      const s = e.target.closest && e.target.closest(PK_SEL);
-      if (!s || e.button !== 0 || s.disabled) return;
-      e.preventDefault();
-      s.focus();
-      pkOpen(s);
-    },
-    true,
-  );
-  /* スマホ：指を動かさずに離したときだけ開く（スクロールのつもりで触れたときは開かない） */
-  let pkT0 = null;
-  document.addEventListener(
-    "touchstart",
-    e => {
-      const s = e.target.closest && e.target.closest(PK_SEL);
-      pkT0 = s && e.touches.length === 1 ? { s, x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
-    },
-    { capture: true, passive: true },
-  );
-  document.addEventListener(
-    "touchend",
-    e => {
-      const s = e.target.closest && e.target.closest(PK_SEL);
-      if (!s || s.disabled) return;
-      e.preventDefault();
-      const t = e.changedTouches[0];
-      if (!pkT0 || pkT0.s !== s || Math.abs(t.clientX - pkT0.x) > 10 || Math.abs(t.clientY - pkT0.y) > 10) return;
-      pkOpen(s);
-    },
-    { capture: true, passive: false },
-  );
-  document.addEventListener(
-    "click",
-    e => {
-      /* PC：プルダウンを押したときのクリック（一覧が開いたあと、画面全体に届く）は捨てる */
-      if (pkSel && Date.now() - pkAt < 800 && !(e.target.closest && e.target.closest("#pkPop .dd-box"))) {
-        e.stopPropagation();
-        e.preventDefault();
-        return;
-      }
-      if (!e.target.closest || !e.target.closest("#pkPop")) return;
-      e.stopPropagation();
-      const r = e.target.closest("[data-pki]");
-      if (r) pkPick(+r.dataset.pki);
-      else if (e.target.closest("[data-pkclose]")) pkClose(true);
-    },
-    true,
-  );
-  document.addEventListener("input", e => {
-    if (e.target.id === "pkq" && pkSel) document.getElementById("pkList").innerHTML = pkRows(e.target.value);
-  });
-  /* キーボード：選択欄で Enter・Space・↓ を押すと開く。一覧の中は ↑↓・Home・End で移動、Escで閉じる */
-  document.addEventListener(
-    "keydown",
-    e => {
-      const t = e.target;
-      if (!t || !t.closest) return;
-      if (t.matches && t.matches(PK_SEL) && ["Enter", " ", "ArrowDown", "ArrowUp"].includes(e.key) && !pkSel) {
-        e.preventDefault();
-        e.stopPropagation();
-        pkOpen(t);
-        return;
-      }
-      if (pkSel && e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        pkClose(true);
-        return;
-      }
-      if (pkSel && t.id === "pkq" && e.key === "Enter") {
-        e.preventDefault();
-        const r = document.querySelector("#pkList [data-pki]");
-        if (r) {
-          pkAt = 0;
-          pkPick(+r.dataset.pki);
-        }
-        return;
-      }
-      const box = t.closest("#pkPop .dd-box,#fshHost .fsh-sub");
-      if (!box || !["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
-      const rows = [...box.querySelectorAll(".dd-row")];
-      if (!rows.length) return;
-      e.preventDefault();
-      const i = rows.indexOf(t.closest(".dd-row"));
-      const n = e.key === "Home" ? 0 : e.key === "End" ? rows.length - 1 : i < 0 ? 0 : Math.max(0, Math.min(rows.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)));
-      rows[n].focus();
-      rows[n].scrollIntoView({ block: "nearest" });
-    },
-    true,
-  );
-  addEventListener("resize", () => pkSel && !sheetMode() && pkClose());
-  document.addEventListener("scroll", e => pkSel && !sheetMode() && !(e.target.closest && e.target.closest("#pkPop")) && pkClose(), true);
+  /* プルダウンの一覧を開くときは電卓をしまう */
+  U.pick.onOpen = () => calcClose();
+  const pkClose = () => U.pick.close();
 
   /* ===================== 絞り込み：ボタン・条件のラベル・パネル =====================
      UI.filter.define(id, { cfg, pick, reset })

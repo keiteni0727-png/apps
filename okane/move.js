@@ -27,21 +27,6 @@
     const [a, b, c] = count(d);
     return `家計簿${a}か月分・口座${b}件・支払${c}か月分`;
   };
-  function copyText(text) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.style.cssText = "position:fixed;left:0;top:0;width:1px;height:1px;opacity:0";
-    document.body.appendChild(ta);
-    ta.select();
-    ta.setSelectionRange(0, text.length);
-    let ok = false;
-    try {
-      ok = document.execCommand("copy");
-    } catch (e) {}
-    ta.remove();
-    return ok;
-  }
   let cache = null; // 書き出す中身（コピーは押した直後にしかできないので、先に読んでおく）
   async function readAll(s) {
     const [accounts, months, config, kb] = await Promise.all([
@@ -66,13 +51,7 @@
       U.toast("データを準備中です。数秒してからもう一度押してください", { ms: 4000 });
       return;
     }
-    let copied = copyText(got.text);
-    if (!copied) {
-      try {
-        await navigator.clipboard.writeText(got.text);
-        copied = true;
-      } catch (e) {}
-    }
+    const copied = await U.copy(got.text);
     let saved = false;
     try {
       const dl = window.claude?.use ? await claude.use("downloads") : null;

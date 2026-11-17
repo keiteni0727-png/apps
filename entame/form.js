@@ -7,7 +7,7 @@ const DD_NOF = { st: "st", plat: "plat", vods: "vods" };
 const DD_TITLE = { cour: "ほかのクール", media: "放送形態", st: "放送局", plat: "配信サイト", vods: "配信サイト", ser: "シリーズ" };
 const DD_NONE = { st: "なし（放送局なし）", plat: "なし（配信なし）", vods: "なし（配信なし）", ser: "なし（シリーズなし）" };
 const DD_CHEV = `<svg class="fdd-cv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
-const DD_CHECK = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17l9-10"/></svg>`;
+const DD_CHECK = U.IC.check;
 let ddOpen = null; // 開いているプルダウン（media・st・plat・vods・ser）
 const ddArr = k => (k === "st" ? form.stations : k === "plat" ? form.plat : form.vods);
 const ddMedia = () => (form.k === "r" ? MEDIA.filter(([m]) => m === "tv" || m === "stream") : MEDIA);
@@ -60,7 +60,7 @@ function ddRows(k, q) {
   const dot = v => (k !== "st" ? `<i class="dd-dot"${vcStyle(v)}></i>` : "");
   return none(nof) + (opts.length ? opts.map(v => row(v, esc(v), !nof && a[0] === v && a.length === 1 ? true : !nof && a.includes(v), dot(v))).join("") : `<p class="dd-hint">「${esc(q)}」は見つかりません</p>`);
 }
-const ddSheetMode = () => matchMedia("(max-width:699px)").matches;
+const ddSheetMode = U.sheetMode;
 function openDD(k, btn) {
   closeDD();
   ddOpen = k;
@@ -233,7 +233,7 @@ function songRowsHtml() {
     <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw"${one ? " hidden" : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one ? `<span class="sg-all">全話</span>` : ""}
       <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label>
       <span class="sg-sp"></span>
-      <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}${t === x.type ? "" : "に変える"}</option>`).join("")}</select>
+      <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select>
       <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div>
     ${(x.ex || [])
       .map(
@@ -660,21 +660,9 @@ async function submitForm() {
     await saveEps(it, l);
   }
 }
-/* ポップアップ表示中は背景を固定する（iOSでも効くように body を fixed にして位置を保存） */
-const TOUCH = matchMedia("(hover:none) and (pointer:coarse)").matches;
-let lockY = null;
-function lockScroll(on) {
-  const b = document.body;
-  if (on && lockY === null) {
-    lockY = scrollY;
-    Object.assign(b.style, { position: "fixed", top: `-${lockY}px`, left: "0", right: "0", width: "100%" });
-  } else if (!on && lockY !== null) {
-    const y = lockY;
-    lockY = null;
-    Object.assign(b.style, { position: "", top: "", left: "", right: "", width: "" });
-    scrollTo(0, y);
-  }
-}
+/* ポップアップ表示中は背景を固定する（共通部品 U.lock） */
+const TOUCH = U.TOUCH;
+const lockScroll = U.lock;
 new MutationObserver(() => lockScroll(!!$("#layer").firstElementChild)).observe($("#layer"), { childList: true });
 /* 作品の追加・編集画面：入力中の内容を読み取ってから変えて、描き直す */
 let sgExK = -1; // 飛び飛びの話を足した曲（足したあとその入力欄へ移るため）

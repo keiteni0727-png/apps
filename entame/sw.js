@@ -15,6 +15,7 @@ const SHELL = [
   "events.js",
   "../shared/u-base.css",
   "../shared/u-core.js",
+  "../shared/u-ui.js",
   "../shared/u-swipe.js",
   "manifest.json",
   "icon-180.png",

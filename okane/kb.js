@@ -21,8 +21,6 @@ const AN = ["graph", "balance", "ai"]; // 分析にまとめた画面
 
 /* ---------- 決まった数字 ---------- */
 const TOMB_LIMIT = 40; // 月の文書の削除の印がこれを超えたら、丸ごと書き直す
-const TOAST_MS = 2500, // 通知を出しておく時間
-  TOAST_UNDO_MS = 8000; // 「元に戻す」つきの通知を出しておく時間
 const MEMO_CHIPS = 8, // 入力欄の上に並べる直近のメモの数
   MEMO_LIST = 60; // 入力候補（datalist）に入れるメモの数
 
@@ -787,21 +785,6 @@ function markTabs(t) {
 }
 /* 上の帯：今いる画面の名前（エンタメ管理と同じく、アイコンと名前を出す） */
 const TAB_NAME = { list: "家計簿", home: "支払い", graph: "グラフ", balance: "残高と計画", ai: "AI分析", rules: "設定" };
-/* 上の帯の右：表示の切り替え（自動→ライト→ダーク→自動）。アイコンはエンタメ管理と同じ */
-const TH_IC = {
-  auto: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>`,
-  light: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`,
-  dark: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>`,
-};
-const TH_NAME = { auto: "自動（端末に合わせる）", light: "ライト", dark: "ダーク" };
-function renderThemeBtn() {
-  const b = $("hTheme");
-  if (!b) return;
-  const v = U.theme();
-  b.innerHTML = TH_IC[v];
-  b.setAttribute("aria-label", `表示：${TH_NAME[v]}（押すと切り替え）`);
-  b.title = `表示：${TH_NAME[v]}`;
-}
 /* 家計簿の一番上の支出カード：総額の行だけ出して、内訳・件数などはたたむ（最初はたたむ。この端末に保存） */
 const KSUMF = "okane.sumfold";
 const sumFolded = () => lsRaw(KSUMF) !== "0";
@@ -910,7 +893,7 @@ function setR(t, err) {
 }
 /* 通知は共通部品（U.toast）。undo が true なら「元に戻す」で直前の状態に戻す */
 function toast(t, undo) {
-  U.toast(t, { undo: undo ? undoLast : null, ms: undo ? TOAST_UNDO_MS : TOAST_MS });
+  U.toast(t, { undo: undo ? undoLast : null });
 }
 
 /* ---------- 当月サマリ ---------- */
@@ -2083,6 +2066,7 @@ function doAdd() {
 function paintTheme() {
   markCurrent("[data-theme]", "theme", U.theme());
 }
+document.addEventListener("u-theme", paintTheme);
 document.addEventListener("click", e => {
   if (e.target.closest(".pay, #st-pay")) return; // 支払いの部品は pay.js が受け持つ
   if (clickListCheck(e)) return;
@@ -2121,8 +2105,6 @@ function clickHeader(t, d) {
     doAdd();
   } else if (d.theme) {
     U.setTheme(d.theme);
-    renderThemeBtn();
-    paintTheme();
   } else if (d.setedit === "rules" || d.setedit === "master" || d.setedit === "paym") {
     setting.edit[d.setedit] = !setting.edit[d.setedit];
     setting.merge = null;
@@ -2143,11 +2125,7 @@ function clickHeader(t, d) {
   } else if (t.id === "mcur") {
     setBarMonth(thisPeriod());
   } else if (t.id === "hTheme") {
-    const nx = { auto: "light", light: "dark", dark: "auto" }[U.theme()];
-    U.setTheme(nx);
-    renderThemeBtn();
-    paintTheme();
-    toast(`表示：${TH_NAME[nx]}`);
+    /* 表示の切り替えは共通部品（u-ui.js）が行う */
   } else if (t.id === "sumtog" || (t.closest && t.closest("#summary .sumtop") && !t.closest("a,input,select"))) {
     t = $("sumtog");
     const f = !sumFolded();
@@ -2543,7 +2521,6 @@ rkUpdate();
 }
 setSidebar(lsRaw(KSBC) === "1");
 setAnFold(lsRaw(KANF) === "1");
-renderThemeBtn();
 paintTheme();
 setTab(view.tab);
 load();

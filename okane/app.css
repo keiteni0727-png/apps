@@ -26,21 +26,13 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 /* ===================== 家計簿の部品 ===================== */
 /* ===== 3アプリ共通：色・書体・角丸。アクセント色だけアプリごとに変える ===== */
 
-
-
-
 /* 家計簿で使う短い名前（JavaScript の中の style でも使う） */
-
 
 /* ===== 土台 =====
   スマホ：画面は1つずつ＋下部メニュー。PC（幅900px以上）：ヘッダー内のメニューで切り替え
   ページ全体をスクロールさせる。端を越えて引っ張れないようにする */
 
-
-
-
 .kb .wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-
 
 /* 入力欄：文字は16px（iPhoneで入力時に拡大されないため） */
 .kb select,.kb input{font:inherit;color:var(--u-ink)}
@@ -367,19 +359,10 @@ body.sel .kb .layout{padding-bottom:190px}
 /* ===================== 支払管理の部品 ===================== */
 /* ===== 3アプリ共通：色・書体・角丸。アクセント色だけアプリごとに変える ===== */
 
-
-
-
 /* 支払管理で使う短い名前（JavaScript の中の style でも使う）と、口座の区分の色 */
-
-
-
 
 /* ===== 土台 =====
   ページ全体をスクロールさせる。端を越えて引っ張れないようにする */
-
-
-
 
 .pay .wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
 .pay section{display:flex;flex-direction:column;gap:18px;padding-top:18px}
@@ -493,33 +476,12 @@ body.sel .kb .layout{padding-bottom:190px}
 
 /* ===== ヘッダー：家計簿・エンタメ管理と同じ1行のバー ===== */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav{display:none}
 /* 保存の状態 */
-
 
   
 @media (prefers-reduced-motion:no-preference){@keyframes svp{50%{opacity:.25}}}
 /* 画面の切り替え（PCはヘッダーの中、スマホは画面下に浮いたバー） */
-
-
-
-
-
 
 /* ===== 支払い：アラート・次の引き落とし・集計期間 ===== */
 .pay .alert{border:2px solid var(--u-danger);background:var(--u-danger2);border-radius:var(--u-rl);display:flex;flex-direction:column}
@@ -786,24 +748,6 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
 .pay .step{display:flex;justify-content:space-between;align-items:center;font-size:13px}
 /* 設定 */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ===== 中くらいの幅 ===== */
 @media (max-width:900px){.pay .cols,.pay .cols-cycle,.pay .cols-2{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:680px){
@@ -817,7 +761,6 @@ body:not([data-view="home"]) .pay #hCur,body:not([data-view="home"]) .pay #hMnav
   .pay .scrim{align-items:center}
   .pay .sheet{padding:22px}
 }
-
 
 /* ===== スマホ（幅640px以下） ===== */
 @media (max-width:640px){
@@ -1492,7 +1435,7 @@ html.fshopen,html.fshopen body{overflow:hidden}
 .fsh-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.25)}
 .fsh{position:fixed;left:8px;right:8px;z-index:61;display:flex;flex-direction:column;max-height:70vh;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.3);overflow:hidden;font:15px/1.5 var(--u-f)}
 .fsh.in{animation:fdrop .14s ease-out}
-@keyframes fdrop{from{opacity:0;transform:translateY(-6px) scaleY(.97)}to{opacity:1;transform:none}}
+
 @media (min-width:900px){.fsh{right:auto;width:380px}.fsh-scrim{background:rgba(0,0,0,.12)}}
 .fsh-h{display:flex;align-items:center;gap:10px;padding:12px 12px 8px 18px;flex:none}
 .fsh-h b{flex:1;font-size:17px}
@@ -1518,31 +1461,7 @@ html.fshopen,html.fshopen body{overflow:hidden}
 @media (min-width:900px){.fsh-row{min-height:46px;font-size:14px}.fsh-subb.dd-list{max-height:320px}}
 
 /* ---------- プルダウン（端末標準の選択も同じ一覧の見た目に）。スマホは下から、PCは欄のすぐ下 ---------- */
-html.pkopen,html.pkopen body{overflow:hidden}
-#pkPop{position:fixed;inset:0;z-index:85;font:15px/1.5 var(--u-f);color:var(--u-ink)}
-#pkPop .dd-scrim{position:absolute;inset:0;background:rgba(0,0,0,.18)}
-#pkPop.popmode .dd-scrim{background:transparent}
-#pkPop.sheetmode .dd-scrim{background:rgba(0,0,0,.35)}
-#pkPop .dd-box{position:absolute;display:flex;flex-direction:column;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);overflow:hidden;animation:fdrop .14s ease-out}
-#pkPop.sheetmode .dd-box{left:0;right:0;bottom:0;max-height:min(78vh,620px);border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:ddup .2s ease-out}
-@keyframes ddup{from{transform:translateY(40px);opacity:.6}}
-.dd-h{display:flex;align-items:center;gap:8px;padding:14px 12px 8px 16px}
-.dd-h b{flex:1;font-size:17px}
-.dd-h span{font-size:12px;color:var(--u-sub)}
-.dd-q{display:flex;align-items:center;gap:8px;margin:10px 10px 8px;height:40px;padding:0 10px;border:1px solid var(--u-line);border-radius:10px;color:var(--u-sub);background:var(--u-bg);flex:none}
-.sheetmode .dd-q{margin-top:0}
-.dd-q input{flex:1;min-width:0;border:0;background:transparent;color:var(--u-ink);font:inherit;font-size:16px;outline:none;padding:0}
-.dd-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-.popmode .dd-box:not(:has(.dd-q)) .dd-list{padding-top:4px}
-.dd-row{width:100%;display:flex;align-items:center;gap:12px;min-height:46px;padding:0 16px;border:0;border-top:1px solid var(--u-soft);background:transparent;color:var(--u-ink);font:inherit;font-size:15px;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.popmode .dd-row{min-height:42px;font-size:14px}
-.dd-row:hover,.dd-row:focus-visible{background:var(--u-soft);outline:none}
-.dd-row.on{background:var(--u-accent2);font-weight:700}
-.dd-row.on>svg{color:var(--u-acct);flex:none}
-.dd-row:disabled{opacity:.4;cursor:default}
-.dd-l{flex:1;min-width:0;overflow-wrap:anywhere}
-.dd-l small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);margin-left:6px;font-weight:500}
-.dd-hint{margin:0;padding:12px 16px;font-size:12.5px;color:var(--u-sub);border-top:1px solid var(--u-soft)}
+
 .kb select,.pay select{cursor:pointer}
 
 /* ---------- 電卓キーボード ---------- */

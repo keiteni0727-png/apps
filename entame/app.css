@@ -714,7 +714,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fwrap{position:relative}
 .fpop-scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.18)}
 .fsdrop.fpop{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:51;margin:0;border:1px solid var(--u-line);border-radius:14px;max-height:62vh;overflow:auto;overscroll-behavior:contain;padding:12px 14px 14px;box-shadow:0 12px 32px rgba(16,24,40,.22);transform-origin:top center;animation:fdrop .16s ease-out}
-@keyframes fdrop{from{opacity:0;transform:translateY(-6px) scaleY(.97)}to{opacity:1;transform:none}}
+
 .fsdrop.fpop .fgroup:last-child{display:grid}
 .fsdrop.fpop .fgroup:nth-child(2):last-child{display:block}
 .fsdrop.fpop .fgroup:nth-child(2):last-child>h5{display:none}
@@ -1178,7 +1178,6 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
 .shc.z{color:transparent}
 .shint{margin:0;font-size:11.5px;color:var(--u-sub)}
 
-
 /* スマホの未入力：一覧の印は件数だけ、項目の絞り込みは折り返して全部見せる、詳細のボタンは少し大きく */
 .miss .mc{display:none}
 @media (max-width:899px){
@@ -1505,32 +1504,13 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fdd-c{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:var(--u-soft);color:var(--u-ink);line-height:1.4}
 .fdd-c.vc{border-radius:7px;background:var(--vc);color:var(--vt)}
 .fdd-more{font-size:12px;font-weight:500;color:var(--u-sub)}
-#ddPop{position:fixed;inset:0;z-index:80}
-#ddPop .dd-scrim{position:absolute;inset:0;background:rgba(0,0,0,.18)}
-#ddPop.popmode .dd-scrim{background:transparent}
-#ddPop .dd-box{position:absolute;display:flex;flex-direction:column;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);overflow:hidden;animation:fdrop .14s ease-out}
-#ddPop.sheetmode .dd-box{left:0;right:0;bottom:0;max-height:min(78vh,620px);border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:ddup .2s ease-out}
-@keyframes ddup{from{transform:translateY(40px);opacity:.6}}
-.dd-h{display:flex;align-items:baseline;gap:8px;padding:14px 16px 8px}
-.dd-h b{flex:1;font-size:17px}
-.dd-h span{font-size:12px;color:var(--u-sub)}
-.dd-q{display:flex;align-items:center;gap:8px;margin:10px 10px 8px;height:40px;padding:0 10px;border:1px solid var(--u-line);border-radius:10px;color:var(--u-sub);background:var(--u-bg);flex:none}
-.sheetmode .dd-q{margin-top:0}
-.dd-q input{flex:1;min-width:0;border:0;background:transparent;color:var(--u-ink);font:inherit;font-size:16px;outline:none;padding:0}
-.dd-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
-.popmode .dd-box:not(:has(.dd-q)) .dd-list{padding-top:4px}
-.dd-row{width:100%;display:flex;align-items:center;gap:12px;min-height:46px;padding:0 16px;border:0;border-top:1px solid var(--u-soft);background:transparent;color:var(--u-ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
-.popmode .dd-row{min-height:42px;font-size:14px}
-.dd-row:hover,.dd-row:focus-visible{background:var(--u-soft);outline:none}
-.dd-row.on{background:var(--u-accent2);font-weight:700}
-.dd-row.on>svg{color:var(--u-acct);flex:none}
+
 .dd-row.none{color:var(--u-sub)}
 .dd-row.add{color:var(--u-acct);font-weight:700}
-.dd-l{flex:1;min-width:0;overflow-wrap:anywhere}
-.dd-l small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);margin-left:6px;font-weight:500}
+
 .dd-l em{font-style:normal;font-size:11px;color:var(--u-sub);margin-left:6px;padding:1px 6px;border:1px solid var(--u-line);border-radius:6px;font-weight:500}
 .dd-dot{width:10px;height:10px;border-radius:50%;background:var(--vc,var(--u-line));flex:none}
-.dd-hint{margin:0;padding:12px 16px;font-size:12.5px;color:var(--u-sub);border-top:1px solid var(--u-soft)}
+
 /* 編集画面：放送形態・放送局・配信サイトの行（PCは横並び、項目の数で等分） */
 .frow3{display:grid;gap:10px;min-width:0}
 @media (min-width:700px){.frow3{grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:12px 16px}}
@@ -1682,15 +1662,9 @@ body.sbc .u-app .sb .sb-logo{display:none}
 }
 @keyframes fshpc{from{transform:translateX(30px);opacity:.6}}
 /* プルダウン（端末標準だった選択も同じ見た目に） */
-#pkPop{position:fixed;inset:0;z-index:85}
-#pkPop .dd-scrim{position:absolute;inset:0;background:rgba(0,0,0,.18)}
-#pkPop.popmode .dd-scrim{background:transparent}
-#pkPop .dd-box{position:absolute;display:flex;flex-direction:column;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);overflow:hidden;animation:fdrop .14s ease-out}
-#pkPop.sheetmode .dd-box{left:0;right:0;bottom:0;max-height:min(78vh,620px);border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:ddup .2s ease-out}
-.sheetmode .dd-h{align-items:center;padding-right:12px}
-.sheetmode .dd-scrim{background:rgba(0,0,0,.35)!important}
+
 select#arcJump,select.sg-t{cursor:pointer}
-.dd-row{-webkit-tap-highlight-color:transparent}
+
 /* 設定：表示（自動・ライト・ダーク） */
 .setthm{display:flex;align-items:center;gap:12px;margin:4px 0 14px}
 .setthm b{flex:none;font-size:13px}
