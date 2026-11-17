@@ -777,7 +777,7 @@ document.addEventListener("keydown", e => {
 
 /* 日付の入力：20180825・2018/8/25・2018.8.25・2018年8月25日・8/25（今年）を打ち込むと 2018-08-25 に直す。
    8けたの数字は打ち終わった時点で、それ以外は入力欄を離れたときに変換。正しくない日付は元に戻す */
-function normDate(v) {
+function normDate(v, ref) {
   v = zen(String(v || ""))
     .trim()
     .replace(/\s+/g, "");
@@ -794,9 +794,12 @@ function normDate(v) {
     [m, d] = ok(a) && !(a[1][0] === "0" && ok(b)) ? a : b; // 日が0始まり（2018105）なら10/5と読む
   }
   else if ((x = /^(\d{4})[\/.\-年](\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v))) [, y, m, d] = x;
-  else if ((x = /^(\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v))) {
-    y = new Date().getFullYear();
+  else if ((x = /^(\d{1,2})[\/.\-月](\d{1,2})日?$/.exec(v)) || (ref && (x = /^(\d{2})(\d{2})$/.exec(v)))) {
+    /* 年なし：ref（直前の話の日付）があればその年。直前の話より前の日付になるときは翌年。なければ今年 */
     [, m, d] = x;
+    const r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ref || "");
+    y = r ? +r[1] : new Date().getFullYear();
+    if (r && `${String(m).padStart(2, "0")}${String(d).padStart(2, "0")}` < r[2] + r[3]) y++;
   } else return null;
   const dt = new Date(+y, +m - 1, +d);
   if (dt.getFullYear() !== +y || dt.getMonth() !== +m - 1 || dt.getDate() !== +d) return null;
@@ -805,28 +808,21 @@ function normDate(v) {
 /* 日付は yyyy/MM/dd で表示する（保存は 2018-08-25 のまま。読むときは normDate を通す） */
 const dtShow = d => (d ? String(d).replace(/-/g, "/") : "");
 const isDt = el => !!(el && el.classList && (el.classList.contains("dtx") || el.classList.contains("dto")));
-const DT_POS = [0, 1, 2, 3, 5, 6, 8, 9]; // yyyy/MM/dd の数字の位置
 const DT_FULL = /^\d{4}\/\d{2}\/\d{2}$/;
 const dtFmt = s => s.slice(0, 4) + (s.length > 4 ? "/" + s.slice(4, 6) : "") + (s.length > 6 ? "/" + s.slice(6, 8) : "");
 const dtSend = el => {
   el.dataset.sent = el.value;
   el.dispatchEvent(new Event("change", { bubbles: true }));
 };
-/* 入力欄に入ったら、カーソルを一番左へ（入力済みのときは左から上書きしていける） */
+/* 入力欄に入ったとき：カーソルは押した位置のまま（ふつうの入力欄と同じ） */
 document.addEventListener("focusin", e => {
   const el = e.target;
   if (!isDt(el)) return;
   el.dataset.prev = el.value;
   el.dataset.sent = el.value;
-  setTimeout(() => {
-    if (document.activeElement === el && DT_FULL.test(el.value))
-      try {
-        el.setSelectionRange(0, 0);
-      } catch (_) {}
-  }, 30);
 });
-/* 上書き入力：数字を打つと、カーソルの位置の数字を置きかえて次へ（/ は飛ばす）。
-   空のときは打った順に yyyy/MM/dd の形で入る。最後の数字まで打つか、入力欄を離れたら確定 */
+/* 数字を打つ：空・末尾に足すときは打った順に yyyy/MM/dd の形で入る（/ は自動）。
+   途中にカーソルを置いて打つ・消すのはふつうの入力欄と同じ。最後の数字まで打つか、入力欄を離れたら確定 */
 document.addEventListener(
   "beforeinput",
   e => {
@@ -845,33 +841,18 @@ document.addEventListener(
     if (t === "insertText" || t === "insertReplacementText") {
       const ds = zen(e.data || "").replace(/\D/g, "");
       if (!ds || ds.length !== (e.data || "").length) return;
-      if (DT_FULL.test(v) && !(p === 0 && q === v.length)) {
-        e.preventDefault();
-        const d = v.replace(/\D/g, "").split("");
-        let k = DT_POS.findIndex(x => x >= p);
-        if (k < 0) return;
-        for (const c of ds) {
-          if (k > 7) break;
-          d[k++] = c;
-        }
-        set(dtFmt(d.join("")), k <= 7 ? DT_POS[k] : 10);
-        if (k > 7) dtSend(el);
-        return;
-      }
-      /* 空・途中まで（全部選んで打ち直すときも）：後ろに足していく */
-      const base = p === 0 && q === v.length ? "" : v;
+      const all = p === 0 && q === v.length;
+      /* 途中にカーソルがある・一部を選んでいるときは、ふつうに入力（離れたときに日付の形に直す） */
+      if (!all && (p !== q || p !== v.length)) return;
+      if (!all && DT_FULL.test(v)) return;
+      /* 空・末尾（全部選んで打ち直すときも）：後ろに足していく */
+      const base = all ? "" : v;
       if (!/^[\d/]*$/.test(base)) return;
       e.preventDefault();
       const s = (base.replace(/\D/g, "") + ds).slice(0, 8);
       set(dtFmt(s), dtFmt(s).length);
       if (s.length === 8) dtSend(el);
       return;
-    }
-    /* 入力済みのときの ← 削除：消さずに1つ左の数字へ戻る（全部選んでいるときはふつうに消す） */
-    if (t === "deleteContentBackward" && DT_FULL.test(v) && p === q) {
-      e.preventDefault();
-      const k = DT_POS.filter(x => x < p).length;
-      set(v, k > 0 ? DT_POS[k - 1] : 0);
     }
   },
   true,
@@ -904,7 +885,7 @@ document.addEventListener(
   e => {
     const el = e.target;
     if (!el.classList || !el.classList.contains("dtx")) return;
-    const n = normDate(el.value);
+    const n = normDate(el.value, el.dataset.ref);
     if (n === null) {
       e.stopImmediatePropagation();
       toast("日付は 2018/08/25 のように入力してください");

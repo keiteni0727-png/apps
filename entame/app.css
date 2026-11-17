@@ -1799,3 +1799,25 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 /* 絞り込みシート：未入力ありの項目ボタンを2列でそろえる */
 .fsh-mk.mkeys{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;padding:4px 18px 14px}
 .fsh-mk.mkeys button{display:flex;align-items:center;justify-content:center;white-space:nowrap;min-width:0}
+/* 話数一覧：行の高さ・余白を詰める。ドラマ（サブタイトルなし）は放送日と見た日を1行に */
+.ep,.sheet:not(.form) .ep{min-height:46px;padding:6px 4px 6px 10px;gap:10px}
+.ep .epc{width:28px;height:28px;font-size:13px}
+.ep .epgo{height:30px;padding:0 12px}
+.eps.nosub .ep .epm{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+.eps.nosub .ep .eps-sub{font-size:13.5px;font-variant-numeric:tabular-nums}
+/* 話数の編集：日付の枠は日付がちょうど入る幅に。ドラマは［話数］［日付］［✕］を1行に */
+.er{grid-template-columns:64px 1fr 108px 30px}
+.er .er-d,.e1 .e1-d{width:108px;justify-self:start}
+.eped.nosub .er{grid-template-columns:64px 108px 1fr 30px}
+.eped.nosub .er .del{grid-column:4}
+.e1{grid-template-columns:64px 1fr 108px}
+.e1.nosub{grid-template-columns:64px 108px}
+@media (max-width:520px){
+  .er{grid-template-columns:58px 108px 1fr 30px}
+  .er .er-s{grid-column:1/-1;grid-row:2}
+  .er .er-d{grid-column:2;grid-row:1}
+  .er .del{grid-column:4;grid-row:1;justify-self:end}
+  .eped.nosub .er{grid-template-columns:58px 108px 1fr 30px}
+  .e1{grid-template-columns:58px 108px}
+  .e1 .e1-s{grid-column:1/-1;grid-row:2}
+}
