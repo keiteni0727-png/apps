@@ -1757,14 +1757,14 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .eped.nosub .er{grid-template-columns:64px 108px 1fr 30px}
 .eped.nosub .er .del{grid-column:4}
 .e1{gap:6px;padding:8px 10px;grid-template-columns:64px 1fr 108px}
-.e1.nosub{grid-template-columns:64px 108px}
+.e1.nosub{grid-template-columns:64px 108px 1fr}
 @media (max-width:520px){
   .er{grid-template-columns:58px 108px 1fr 30px}
   .er .er-s{grid-column:1/-1;grid-row:2}
   .er .er-d{grid-column:2;grid-row:1}
   .er .del{grid-column:4;grid-row:1;justify-self:end}
   .eped.nosub .er{grid-template-columns:58px 108px 1fr 30px}
-  .e1{grid-template-columns:58px 108px}
+  .e1{grid-template-columns:58px 108px 1fr}
   .e1 .e1-s{grid-column:1/-1;grid-row:2}
 }
 .edtop .edsame{margin-left:auto}
