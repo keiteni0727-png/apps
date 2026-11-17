@@ -2099,6 +2099,8 @@ document.addEventListener("click", e => {
   if (e.target.closest(".pay, #st-pay")) return; // 支払いの部品は pay.js が受け持つ
   if (clickListCheck(e)) return;
   const t = e.target.closest("button,[data-edit],[data-day],[data-memo],[data-gm],[data-g],.pvr") || e.target;
+  /* 画面全体（body）へのクリックは無視する（body の data-tab を画面の切り替えと取り違えないように） */
+  if (t === document.body || t === document.documentElement) return;
   const d = t.dataset || {};
   [clickHeader, clickAdd, clickLedger, clickSelection, clickGraph, clickAI, clickRules, clickMaster].some(
     f => f(t, d),

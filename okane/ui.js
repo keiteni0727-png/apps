@@ -127,6 +127,12 @@ const UI = {};
   document.addEventListener(
     "click",
     e => {
+      /* PC：プルダウンを押したときのクリック（一覧が開いたあと、画面全体に届く）は捨てる */
+      if (pkSel && Date.now() - pkAt < 800 && !(e.target.closest && e.target.closest("#pkPop .dd-box"))) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
       if (!e.target.closest || !e.target.closest("#pkPop")) return;
       e.stopPropagation();
       const r = e.target.closest("[data-pki]");
