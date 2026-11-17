@@ -1423,3 +1423,187 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 /* 家計簿の絞り込み（分類・支払い方法）：iPhoneでも文字が枠に収まるよう、⌄を自前で描いて右に余白を取る */
 .kb .filters select{-webkit-appearance:none;appearance:none;height:44px;box-sizing:border-box;line-height:1.2;padding:0 30px 0 10px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background-color:var(--u-bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;background-size:14px 14px}
 @media (min-width:900px){.kb .filters select{font-size:17px}}
+
+/* ===================== 2026-11-17 エンタメ管理と同じ形にそろえる ===================== */
+/* ---------- 上の帯（スマホ）：左にアイコンと「おかね手帳」、真ん中に今の画面、右に＋（オレンジ）と⚙ ---------- */
+.kb button.hact{display:none;flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);place-items:center;padding:0;cursor:pointer}
+.kb button.hact svg{width:20px;height:20px}
+.kb button.hact[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-acct)}
+.kb button.hadd{background:var(--u-accent);color:var(--u-on)}
+.kb .brand .bname{font:inherit}
+@media (max-width:899px){
+  .kb .abin{position:relative;gap:8px}
+  .kb .brand{display:flex!important;align-items:center;gap:7px;margin-right:auto!important;font-size:14px;font-weight:700;letter-spacing:0;min-width:0}
+  .kb .brand .u-mark.sb-logo{display:block!important;width:26px;height:26px;flex:none}
+  .kb .hcur{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0!important;pointer-events:none;font-size:16px!important;font-weight:700!important;gap:6px!important}
+  .kb .hcur .mic{width:22px!important;height:22px!important}
+  .kb .hcur .mic svg{width:20px!important;height:20px!important}
+  .kb button.hthm{display:none!important}
+  .kb button.hact{display:grid}
+  .kb button.hadd{margin-left:auto}
+  /* 左から出すメニューは使わない */
+  .u-app .sb,.kb .dscrim{display:none!important}
+}
+@media (max-width:380px){.kb .brand .bname{display:none}}
+
+/* ---------- 下のメニュー（スマホ）：家計簿・支払い・分析 ---------- */
+@media (max-width:899px){
+  .kb .tbwrap{display:flex!important}
+  body{padding-bottom:calc(var(--u-navb) + var(--tbh) + 24px)!important}
+  .u-app .totop,.kb .totop{left:auto!important;right:max(16px,env(safe-area-inset-right,0px))!important;bottom:calc(var(--u-navb) + var(--tbh) + 12px)!important}
+  .kb #selbar:not([hidden]){bottom:calc(var(--u-navb) + var(--tbh) + 8px)!important}
+  body.sel{--u-toast-b:calc(var(--tbh) + 190px)}
+  /* シート・選択の一覧・電卓・選択中のバーを出しているときは隠す */
+  body:has(#sheetHost .scrim) .kb .tbwrap,html.pkopen .kb .tbwrap,html.calcopen .kb .tbwrap{display:none!important}
+}
+
+/* ---------- 左メニュー（PC）：一番上に「＋ 追加」 ---------- */
+.u-app .sb .sb-add{display:none}
+@media (min-width:900px){
+  .u-app .sb .sb-add{display:flex;align-items:center;justify-content:center;gap:4px;flex:none;border:0;background:var(--u-accent);color:var(--u-on);border-radius:10px;padding:10px;font:inherit;font-weight:700;font-size:15px;margin:0 0 10px;white-space:nowrap;cursor:pointer;width:100%}
+  .u-app .sb .sb-add:hover{filter:brightness(1.04)}
+  body.sbc .u-app .sb .sb-add{height:38px;padding:0}
+}
+/* 明細の追加カード：追加中の行やメッセージがないときは出さない */
+.kb .addcard:has(#msg:empty):has(#review:empty){display:none}
+
+/* ---------- 絞り込み：ボタン・件数・条件のラベル ---------- */
+.fline{display:flex;align-items:center;gap:10px;min-width:0}
+.fbar{display:flex;flex:none}
+.fbar .fb{height:36px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:10px;font:inherit;font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;padding:0 12px;cursor:pointer;line-height:1;box-shadow:none}
+.fbar .fb svg{flex:none}
+.fbar .fb.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
+.fbar .fb[aria-expanded="true"]{box-shadow:0 0 0 2px var(--u-accent)}
+.fsh-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--u-surface);color:var(--u-ink);font-family:var(--u-num);font-size:11px;margin-left:2px}
+.fcnt{margin-left:auto;display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--u-sub);white-space:nowrap;font-family:var(--u-num)}
+.fcnt b{font-size:15px;color:var(--u-ink);font-weight:600}
+.fsum{display:flex;align-items:center;gap:8px;margin:8px 0 0;min-height:28px;font-size:12px;color:var(--u-sub)}
+.fsum-l{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
+.fsum .fchip{min-width:0;max-width:46%;display:inline-flex;align-items:center;border:1px solid color-mix(in srgb,var(--u-acct) 55%,transparent);background:var(--u-accent2);color:var(--u-acct);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;line-height:1.5}
+.fsum .fchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsum .fmore{flex:none;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:3px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;line-height:1.5}
+.fsum .clear{flex:none;border:0;background:transparent;color:var(--u-acct);font:inherit;font-size:12.5px;font-weight:700;padding:2px 0;cursor:pointer}
+.pay .listbar{display:block}
+.pay #cFsum .fsum{margin:0 0 4px}
+@media (min-width:900px){.fbar .fb{font-size:14px;height:38px}.fcnt{font-size:13.5px}.fcnt b{font-size:16.5px}}
+
+/* ---------- 絞り込みパネル：ボタンのすぐ下に出す（スマホ・PC同じ形） ---------- */
+html.fshopen,html.fshopen body{overflow:hidden}
+.fsh-scrim{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.25)}
+.fsh{position:fixed;left:8px;right:8px;z-index:61;display:flex;flex-direction:column;max-height:70vh;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.3);overflow:hidden;font:15px/1.5 var(--u-f)}
+.fsh.in{animation:fdrop .14s ease-out}
+@keyframes fdrop{from{opacity:0;transform:translateY(-6px) scaleY(.97)}to{opacity:1;transform:none}}
+@media (min-width:900px){.fsh{right:auto;width:380px}.fsh-scrim{background:rgba(0,0,0,.12)}}
+.fsh-h{display:flex;align-items:center;gap:10px;padding:12px 12px 8px 18px;flex:none}
+.fsh-h b{flex:1;font-size:17px}
+.fsh-reset{border:0;background:none;color:var(--u-acct);font:inherit;font-size:13.5px;font-weight:700;padding:6px 4px;cursor:pointer}
+.fsh-x,.dd-x{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--u-soft);color:var(--u-sub);display:grid;place-items:center;padding:0;cursor:pointer}
+.fsh-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 0 6px}
+.fsh-it{border-top:1px solid var(--u-soft)}
+.fsh-row{width:100%;display:flex;align-items:center;gap:10px;min-height:50px;padding:0 14px 0 18px;border:0;background:none;color:var(--u-ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.fsh-row:hover,.fsh-row:focus-visible{background:var(--u-soft);outline:none}
+.fsh-k{flex:none;font-weight:700}
+.fsh-v{flex:1;min-width:0;text-align:right;color:var(--u-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.fsh-v.on{color:var(--u-acct);font-weight:700}
+.fsh-cv{flex:none;color:var(--u-sub);transition:transform .15s}
+.fsh-it.open .fsh-cv{transform:rotate(90deg)}
+.fsh-sub{margin:0 10px 10px;border:1px solid var(--u-line);border-radius:12px;overflow:hidden;background:var(--u-surface)}
+.fsh-subh{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 14px;border-bottom:1px solid var(--u-soft)}
+.fsh-subh b{font-size:15px}
+.fsh-hint{flex:1;font-size:12px;color:var(--u-sub)}
+.fsh-subb.dd-list{max-height:46vh;overflow:auto}
+.fsh-subb.dd-list .dd-row:first-child{border-top:0}
+.fsh-f{flex:none;padding:10px 16px 12px;border-top:1px solid var(--u-line)}
+.fsh-go{width:100%;height:46px;border:0;border-radius:12px;background:var(--u-ink);color:var(--u-surface);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
+@media (min-width:900px){.fsh-row{min-height:46px;font-size:14px}.fsh-subb.dd-list{max-height:320px}}
+
+/* ---------- プルダウン（端末標準の選択も同じ一覧の見た目に）。スマホは下から、PCは欄のすぐ下 ---------- */
+html.pkopen,html.pkopen body{overflow:hidden}
+#pkPop{position:fixed;inset:0;z-index:85;font:15px/1.5 var(--u-f);color:var(--u-ink)}
+#pkPop .dd-scrim{position:absolute;inset:0;background:rgba(0,0,0,.18)}
+#pkPop.popmode .dd-scrim{background:transparent}
+#pkPop.sheetmode .dd-scrim{background:rgba(0,0,0,.35)}
+#pkPop .dd-box{position:absolute;display:flex;flex-direction:column;background:var(--u-surface);color:var(--u-ink);border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);overflow:hidden;animation:fdrop .14s ease-out}
+#pkPop.sheetmode .dd-box{left:0;right:0;bottom:0;max-height:min(78vh,620px);border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));animation:ddup .2s ease-out}
+@keyframes ddup{from{transform:translateY(40px);opacity:.6}}
+.dd-h{display:flex;align-items:center;gap:8px;padding:14px 12px 8px 16px}
+.dd-h b{flex:1;font-size:17px}
+.dd-h span{font-size:12px;color:var(--u-sub)}
+.dd-q{display:flex;align-items:center;gap:8px;margin:10px 10px 8px;height:40px;padding:0 10px;border:1px solid var(--u-line);border-radius:10px;color:var(--u-sub);background:var(--u-bg);flex:none}
+.sheetmode .dd-q{margin-top:0}
+.dd-q input{flex:1;min-width:0;border:0;background:transparent;color:var(--u-ink);font:inherit;font-size:16px;outline:none;padding:0}
+.dd-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.popmode .dd-box:not(:has(.dd-q)) .dd-list{padding-top:4px}
+.dd-row{width:100%;display:flex;align-items:center;gap:12px;min-height:46px;padding:0 16px;border:0;border-top:1px solid var(--u-soft);background:transparent;color:var(--u-ink);font:inherit;font-size:15px;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.popmode .dd-row{min-height:42px;font-size:14px}
+.dd-row:hover,.dd-row:focus-visible{background:var(--u-soft);outline:none}
+.dd-row.on{background:var(--u-accent2);font-weight:700}
+.dd-row.on>svg{color:var(--u-acct);flex:none}
+.dd-row:disabled{opacity:.4;cursor:default}
+.dd-l{flex:1;min-width:0;overflow-wrap:anywhere}
+.dd-l small{font-family:var(--u-num);font-size:11px;color:var(--u-sub);margin-left:6px;font-weight:500}
+.dd-hint{margin:0;padding:12px 16px;font-size:12.5px;color:var(--u-sub);border-top:1px solid var(--u-soft)}
+.kb select,.pay select{cursor:pointer}
+
+/* ---------- 電卓キーボード ---------- */
+#calc{position:fixed;z-index:88;background:var(--u-surface);color:var(--u-ink);font:15px/1.4 var(--u-f);user-select:none;-webkit-user-select:none}
+#calc[hidden]{display:none}
+#calc.sheet-m{left:0;right:0;bottom:0;border-top:1px solid var(--u-line);border-radius:18px 18px 0 0;box-shadow:0 -8px 28px rgba(16,24,40,.2);padding:8px max(10px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+#calc.pop-m{width:264px;border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);padding:8px}
+#calc .c-h{display:flex;align-items:center;gap:6px;padding:2px 2px 6px}
+#calc .c-lab{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--u-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#calc .c-nav{width:38px;height:32px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;font:inherit;font-size:20px;line-height:1;color:var(--u-ink);padding:0;cursor:pointer}
+#calc .c-nav:disabled{opacity:.3}
+#calc .c-done{height:32px;padding:0 14px;border:0;border-radius:8px;background:var(--u-ink);color:var(--u-surface);font:inherit;font-weight:700;cursor:pointer}
+#calc .c-disp{background:var(--u-bg);border-radius:12px;padding:6px 12px;text-align:right;min-height:56px;display:flex;flex-direction:column;justify-content:center}
+#calc .c-expr{font-family:var(--u-num);font-size:24px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+#calc .c-res{font-family:var(--u-num);font-size:13px;font-weight:600;color:var(--u-acct);min-height:17px}
+#calc .c-res:empty{display:none}
+#calc .c-keys{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+#calc .cky{height:48px;border:0;border-radius:12px;background:var(--u-chip);color:var(--u-ink);font-family:var(--u-num);font-size:21px;font-weight:600;padding:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+#calc .cky:active{filter:brightness(.9);transform:scale(.97)}
+#calc .cky.fn{background:var(--u-soft);color:var(--u-sub);font-size:18px}
+#calc .cky.op,#calc .cky.eq{background:var(--u-accent2);color:var(--u-acct);font-size:24px}
+#calc .cky.go{background:var(--u-accent);color:var(--u-on);font-family:var(--u-f);font-size:16px;font-weight:700}
+#calc .c-hint{font-size:11px;color:var(--u-sub);margin-top:6px;text-align:center}
+#calc.sheet-m .c-hint{display:none}
+#calc.pop-m .c-h{display:none}
+#calc.pop-m .c-disp{min-height:48px}
+#calc.pop-m .c-expr{font-size:20px}
+#calc.pop-m .cky{height:38px;font-size:17px;border-radius:10px}
+#calc.pop-m .cky.go{font-size:14px}
+@media (min-width:1600px){#calc.pop-m{zoom:1.12}}
+input.calcon{border-color:var(--u-accent)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--u-accent) 35%,transparent)!important}
+@media (max-width:899px){
+  html.calcopen body{padding-bottom:calc(var(--calch,360px) + 24px)!important}
+  html.calcopen #sheetHost .scrim{padding-bottom:var(--calch,360px)!important;align-items:flex-end!important}
+  html.calcopen #sheetHost .sheet{border-radius:16px 16px 0 0}
+  html.calcopen .totop{display:none!important}
+}
+
+/* ---------- 編集ボタン：エンタメ管理と同じ角丸の普通のボタン「編集」 ---------- */
+.kb button.editbtn,.pay button.editbtn{border:1px solid var(--u-line)!important;background:var(--u-surface)!important;color:var(--u-ink)!important;border-radius:var(--u-r)!important;font:inherit;font-size:13px!important;font-weight:700!important;padding:0 12px!important;height:30px;min-height:0;line-height:1}
+.kb button.setedit{flex:none;height:30px;padding:0 12px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);font:inherit;font-size:13px;font-weight:700;display:inline-flex;align-items:center;cursor:pointer}
+.kb button.setedit.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
+.kb .seth{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 8px}
+.kb .seth .seg.sm{margin:0;flex:1}
+.kb .seth b{font-size:14px}
+.kb .rule .acts .delbtn{color:var(--u-danger)}
+/* マスタ：ふだんは見るだけ */
+.kb .mrow.view{grid-template-columns:40px minmax(0,1fr) auto;padding:6px 0}
+.kb .mrow.view .me{width:40px;height:36px;display:grid;place-items:center;font-size:19px;border-radius:12px;background:hsl(var(--h) var(--s,75%) 93%)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kb .mrow.view .me{background:hsl(var(--h) var(--s,35%) 22%)}}
+:root[data-theme="dark"] .kb .mrow.view .me{background:hsl(var(--h) var(--s,35%) 22%)}
+.kb .mrow.view .mn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kb #mlist.editing .mn{border-style:dashed}
+/* 支払いの引落口座：「編集」のときだけ⠿と削除 */
+.kb #mMethods:not(.editing) .mgrip,.kb #mMethods:not(.editing) [data-rmm]{display:none}
+.kb #mMethods:not(.editing) .pmr{grid-template-columns:22px minmax(0,1fr);padding:8px 0}
+.kb #mMethods.editing [data-rmm]{color:var(--u-danger)}
+/* 設定：表示（自動・ライト・ダーク） */
+.kb .throw{display:flex;align-items:center;gap:12px;margin:10px 0 4px}
+.kb .throw .thl{flex:none;font-size:13px;font-weight:700;color:var(--u-sub)}
+.kb .throw .seg{flex:1;max-width:320px;margin:0}
+.kb .dcard .seth{width:100%;margin:0}
+/* PC：支払いの件数・合計は「絞り込み」のすぐ横に（一覧の列の外まで離さない） */
+@media (min-width:900px){.pay #cFbar .fcnt{margin-left:14px}.pay .listbar{margin-bottom:-4px}}

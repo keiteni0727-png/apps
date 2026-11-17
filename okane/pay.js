@@ -894,13 +894,17 @@
     const st = periodStats(S.period);
     $("cPeriod").textContent = periodLabel(S.period) + (S.period === periodOf(today()) ? "（いまの期間）" : "");
     $("cRange").textContent = `${md(st.s)}(${wd(st.s)})〜${md(st.e)}(${wd(st.e)})`;
-    document.querySelectorAll("#cFilter button").forEach(b => b.setAttribute("aria-pressed", b.dataset.f === S.filter));
-    let its = [...st.its].sort(byDateAmt);
-    if (S.filter === "unpaid") its = its.filter(i => i.status === "planned");
-    if (S.filter === "late") its = its.filter(i => i.kind === "late" || i.status === "deferred");
+    let its = [...st.its].sort(byDateAmt).filter(FILTER_FN[S.filter] || Boolean);
+    S.shownN = its.length;
+    const fl = S.filter !== "all" ? [FILTER_LAB[S.filter]] : [];
+    $("cFbar").innerHTML = `<div class="fline">${UI.filter.btn("pay", fl.length)}<span class="fcnt">${its.length}件<b class="num">${yen(its.filter(i => i.status !== "deferred").reduce((s, i) => s + amtOf(i), 0))}</b></span></div>`;
+    $("cFsum").innerHTML = UI.filter.sum("pay", fl);
+    if (UI.filter.isOpen("pay")) UI.filter.refresh();
     if (!its.length)
       $("cList").innerHTML =
-        `<div class="empty">この期間の支払はまだありません<button data-add="1" class="primary">支払を追加</button></div>`;
+        S.filter !== "all"
+          ? `<div class="empty">条件に合う支払はありません</div>`
+          : `<div class="empty">この期間の支払はまだありません<button data-add="1" class="primary">支払を追加</button></div>`;
     else {
       let h = "",
         cur = null;
@@ -915,6 +919,35 @@
     }
     $("cFlow").innerHTML = flowHTML(st);
   }
+  /* 一覧の絞り込み：状態（未払・延滞分） */
+  const FILTER_FN = { unpaid: i => i.status === "planned", late: i => i.kind === "late" || i.status === "deferred" };
+  const FILTER_LAB = { unpaid: "未払", late: "延滞分" };
+  UI.filter.define("pay", {
+    cfg() {
+      const all = periodStats(S.period).its;
+      return {
+        rows: [
+          {
+            k: "st",
+            label: "状態",
+            cur: S.filter === "all" ? "" : S.filter,
+            all: all.length,
+            opts: Object.keys(FILTER_FN).map(v => ({ v, label: FILTER_LAB[v], n: all.filter(FILTER_FN[v]).length })),
+          },
+        ],
+        n: S.shownN ?? 0,
+        unit: "件",
+      };
+    },
+    pick(k, v) {
+      S.filter = v || "all";
+      render();
+    },
+    reset() {
+      S.filter = "all";
+      render();
+    },
+  });
   /* 日付の見出し：その日の合計と、まだ払っていない分の支払方法ごとの額 */
   function dayHeadHTML(its, cur) {
     const day = its.filter(x => x.date === cur && x.status !== "deferred");
@@ -1206,7 +1239,7 @@
     if (!a) return;
     if (!S.ad || S.ad.id !== id) S.ad = { id, tab: "future", from: ymOf(nextStart()), val: null, pp: 10000 };
     openSheet(
-      `<div class="ad-top"><h3>${esc(a.name)}</h3><div class="ad-btns"><button class="sm editbtn" data-editacc="${id}" aria-label="口座を編集">✎ 編集</button><button class="sm ghost" data-close="1">閉じる</button></div></div><div id="adBody"></div>`,
+      `<div class="ad-top"><h3>${esc(a.name)}</h3><div class="ad-btns"><button class="sm editbtn" data-editacc="${id}" aria-label="口座を編集">編集</button><button class="sm ghost" data-close="1">閉じる</button></div></div><div id="adBody"></div>`,
       () => renderAcc(),
       true,
     );
@@ -1352,6 +1385,7 @@
   /* ---------- 設定 ---------- */
   function renderMaster() {
     const ms = S.cfg.methods;
+    $("mMethods").classList.toggle("editing", !!ui.mEdit);
     $("mMethods").innerHTML = ms
       .map(
         (m, i) =>
@@ -1617,7 +1651,7 @@
     ].filter(r => r[1]);
     if (!rows.length)
       return `<div class="bank empty"><span>振込先が未登録です</span><button class="sm" data-editacc="${esc(it.accountId)}">振込先を登録</button></div>`;
-    return `<div class="bank"><div class="bank-h"><b>振込先</b><button class="ghost sm editbtn" data-editacc="${esc(it.accountId)}" aria-label="振込先の口座を編集">✎ 編集</button></div>${rows
+    return `<div class="bank"><div class="bank-h"><b>振込先</b><button class="sm editbtn" data-editacc="${esc(it.accountId)}" aria-label="振込先の口座を編集">編集</button></div>${rows
       .map(
         ([l, v, pre]) =>
           `<div class="bank-r"><span class="bl">${l}</span><span class="bv">${pre ? `<small>${esc(pre)}</small> ` : ""}<b>${esc(v)}</b></span><button class="ghost sm" data-copy="${esc(v)}">コピー</button></div>`,
@@ -2404,7 +2438,13 @@
     if (!t) return;
     const d = t.dataset;
     /* ヘッダー・通知・シート */
-    if (d.close) closeSheet();
+    if (d.setedit === "paym") {
+      ui.mEdit = !ui.mEdit;
+      t.textContent = ui.mEdit ? "完了" : "編集";
+      t.classList.toggle("on", ui.mEdit);
+      t.setAttribute("aria-pressed", String(ui.mEdit));
+      renderMaster();
+    } else if (d.close) closeSheet();
     else if (d.goto) {
       FIN.kb.setTab(d.goto);
       window.scrollTo(0, 0);
@@ -2525,6 +2565,8 @@
     render,
     show,
     renderSettings: renderMaster,
+    /* 右上の＋：支払い画面は支払、残高と計画は口座を追加 */
+    add: k => (k === "acc" ? editAccount(null) : editItem(null)),
     aiData: aiPayload, // AI分析に渡す返済のデータ
     aiHash,
     saveAI,

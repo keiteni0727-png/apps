@@ -198,6 +198,7 @@ const setting = {
   merge: null, // マスタの統合の確認 {kind, old, nn}
   preview: null, // 既存データへの適用の対象一覧 {rid, rows, off}
   editRule: null, // 編集中のルールのID
+  edit: { rules: false, master: false }, // 右上の「編集」を押しているか（行ごとの変更・削除・並び替えを出す）
 };
 let aiAbort = null; // AI分析を中止するための AbortController
 
@@ -968,7 +969,7 @@ function renderSummary(mi, pi) {
     (sum
       ? `<div class="stack" role="img" aria-label="分類の内訳">${top.map(([c, v]) => `<span title="${esc(c)} ${yen(v)}（${Math.round((v / sum) * 100)}%）" style="flex:${v};background:${bcol(c)}"></span>`).join("")}</div>
     <div class="legend">${top.map(([c, v]) => `<span><i style="background:${bcol(c)}"></i>${emo(c)} ${esc(c)} <b class="num">${Math.round((v / sum) * 100)}%</b></span>`).join("")}</div>`
-      : `<div class="mu mt10">この月度の明細はまだありません。${document.documentElement.classList.contains("noai") ? "「＋ 明細を追加」" : "「＋ 手入力」"}から追加してください。</div>`) +
+      : `<div class="mu mt10">この月度の明細はまだありません。${isWide() ? "左上の「＋ 追加」" : "右上の＋"}から追加してください。</div>`) +
     `<div class="kpis"><div><span>件数</span><b>${mi.length}件</b></div><div><span>1日平均</span><b>${yen(Math.round(sum / days))}</b></div><div><span>前月</span><b>${yen(psum)}</b></div></div>` +
     (meths.length
       ? `<div class="meths">${meths.map(([k, v]) => `<span class="chip out" style="${hs(k)}">${emo(k)} ${esc(k)} <b class="num">${yen(v)}</b></span>`).join("")}</div>`
@@ -985,13 +986,12 @@ function renderList(mi) {
       (!ledger.filter.m || i.method === ledger.filter.m) &&
       (!q || ((i.memo || "") + i.category + i.method + i.amount).toLowerCase().includes(q)),
   );
-  $("fc").innerHTML = iconOpts(CATS, ledger.filter.c, "分類");
-  $("fm").innerHTML = iconOpts(METHODS, ledger.filter.m, "支払い方法");
-  $("fsum").innerHTML =
-    ledger.filter.q || ledger.filter.c || ledger.filter.m
-      ? `<div class="row sp mt6"><span>絞り込み: ${fl.length}件 / 合計 <b class="num">${yen(sumOf(fl))}</b></span><button class="ghost" id="fclear">解除</button></div>`
-      : "";
+  ledger.mi = mi;
+  const conds = [ledger.filter.c, ledger.filter.m].filter(Boolean).map(v => `${emo(v)} ${v}`);
+  $("fbarK").innerHTML = `<div class="fline">${UI.filter.btn("kb", conds.length)}<span class="fcnt">${fl.length}件<b class="num">${yen(sumOf(fl))}</b></span></div>`;
+  $("fsum").innerHTML = UI.filter.sum("kb", conds);
   ledger.shown = fl;
+  if (UI.filter.isOpen("kb")) UI.filter.refresh();
   let html = "",
     last = "";
   fl.forEach(i => {
@@ -1007,6 +1007,34 @@ function renderList(mi) {
   });
   $("list").innerHTML = html || '<div class="mu empty">明細なし</div>';
 }
+UI.filter.define("kb", {
+  cfg() {
+    const mi = ledger.mi || [],
+      f = ledger.filter;
+    const base = k => mi.filter(i => (k === "c" || !f.c || i.category === f.c) && (k === "m" || !f.m || i.method === f.m));
+    const row = (k, label, list, fld) => {
+      const b = base(k);
+      return {
+        k,
+        label,
+        cur: f[k],
+        all: b.length,
+        opts: list
+          .map(v => ({ v, label: v, html: `${emo(v)} ${esc(v)}`, n: b.filter(i => i[fld] === v).length }))
+          .filter(o => o.n || o.v === f[k]),
+      };
+    };
+    return { rows: [row("c", "分類", CATS, "category"), row("m", "支払い方法", METHODS, "method")], n: ledger.shown.length, unit: "件" };
+  },
+  pick(k, v) {
+    ledger.filter[k] = v;
+    render();
+  },
+  reset() {
+    ledger.filter = { q: "", c: "", m: "" };
+    render();
+  },
+});
 function editForm(i) {
   return `<div class="rv" data-e="${i.id}">
   <label class="fl">日付<input type="date" data-ef="date" value="${esc(ledger.draft.date)}"></label>
@@ -1370,9 +1398,14 @@ function renderMaster() {
   markCurrent("[data-mk]", "mk", setting.kind);
   const L = MASTER[setting.kind];
   $("maddn").placeholder = setting.kind === "cats" ? "新しい分類の名前" : "新しい支払い方法の名前";
+  const ed = setting.edit.master;
+  paintSetEdit("master", ed);
+  $("mlist").classList.toggle("editing", ed);
   $("mlist").innerHTML = L.map((x, i) => {
     const u = mUse(setting.kind, x.n),
       used = u.c + u.r > 0;
+    if (!ed)
+      return `<div class="mrow view" data-mi="${i}"><span class="me" style="${hs(x.n)}" aria-hidden="true">${esc(x.e)}</span><span class="mn">${esc(x.n)}</span><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div>`;
     return `<div class="mrow${used ? " used" : ""}" data-sortrow data-mi="${i}">${GRIP("kbm")}<input type="text" class="me" data-me="${i}" value="${esc(x.e)}" maxlength="4" style="${hs(x.n)}" aria-label="${esc(x.n)}のアイコン"><input type="text" class="mn" data-mn="${i}" value="${esc(x.n)}" aria-label="名前"><button class="ghost mdel" data-mdel="${i}"${used ? ` title="使用中のため削除できません" aria-disabled="true"` : ""}>削除</button><div class="info"><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div></div>`;
   }).join("");
   $("mconf").innerHTML = setting.merge
@@ -1386,7 +1419,16 @@ function selOpts(el, arr, first) {
   el.innerHTML = iconOpts(arr, undefined, first);
   if ([...el.options].some(o => o.value === v)) el.value = v;
 }
+/* 右上の「編集」ボタン（押すと「完了」） */
+function paintSetEdit(k, on) {
+  document.querySelectorAll(`[data-setedit="${k}"]`).forEach(b => {
+    b.textContent = on ? "完了" : "編集";
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+}
 function renderRules() {
+  paintSetEdit("rules", setting.edit.rules);
   selOpts($("rcat"), CATS, "指定しない");
   selOpts($("rmet"), METHODS, "指定しない");
   selOpts($("scat"), CATS, "変更しない");
@@ -1404,7 +1446,7 @@ function renderRules() {
           const [kc, kl] = kindOf(r);
           return `<div class="rule"><div class="top"><span class="kind ${kc}">${kl}</span><label class="ckl"><input type="checkbox" class="ck" data-rauto="${r.id}"${r.auto !== false ? " checked" : ""}> 新規に自動適用</label></div>
     <div class="rdesc">${descRule(r)}</div>
-    <div class="acts"><button data-rprev="${r.id}">既存データに適用…</button><button class="ghost editbtn" data-redit="${r.id}" aria-label="ルールを編集">✎ 編集</button><button class="ghost" data-rdel="${r.id}">削除</button></div>
+    <div class="acts">${setting.edit.rules ? `<button class="editbtn" data-redit="${r.id}" aria-label="ルールを変更">変更</button><button class="ghost delbtn" data-rdel="${r.id}">削除</button>` : `<button data-rprev="${r.id}">既存データに適用…</button>`}</div>
     ${setting.preview && setting.preview.rid === r.id ? previewHTML() : ""}</div>`;
         })
         .join("")
@@ -1484,7 +1526,7 @@ async function analyze(files) {
   const max = lim.images.maxCount || lim.images.max || 8;
   const list = [...files].slice(0, max);
   setMsg("読み取り中…（" + list.length + "枚）");
-  $("shot").disabled = true;
+  if ($("shot")) $("shot").disabled = true;
   try {
     const prompt = `添付画像は家計の支出に関するスクリーンショット（カード明細、決済アプリの履歴、レシート、ネットバンキング等）です。支出を1件ずつ抜き出してください。
 今日の日付は${today()}です。年が書かれていない日付は直近の過去の日付として補ってください。
@@ -1537,7 +1579,7 @@ JSON配列のみで返答: [{"date":"YYYY-MM-DD","amount":1234,"category":"${MAS
   } catch (e) {
     setMsg("読み取りに失敗しました（" + ((e && e.code) || "error") + "）", 1);
   } finally {
-    $("shot").disabled = false;
+    if ($("shot")) $("shot").disabled = false;
     renderReview();
   }
 }
@@ -2013,23 +2055,28 @@ async function runAI() {
 
 /* ===================== イベント ===================== */
 /* ---------- クリック：画面ごとの処理に振り分ける。各処理は、受け持ったら true を返す ---------- */
-/* ---------- スマホ：☰メニューの開閉と右下の＋ ---------- */
-function setDrawer(on) {
-  document.body.classList.toggle("drawer", on);
-  const b = document.querySelector(".hmenu");
-  if (b) b.setAttribute("aria-expanded", on);
-}
-document.addEventListener("click", e => {
-  const dr = e.target.closest("[data-drawer]");
-  if (dr) {
-    setDrawer(dr.dataset.drawer === "open");
+/* ---------- 追加（右上の＋・左メニューの＋）：今の画面に合わせて、明細・支払・口座を追加 ---------- */
+function doAdd() {
+  if (view.tab === "home" || view.tab === "balance") {
+    if (FIN.pay.add) FIN.pay.add(view.tab === "home" ? "pay" : "acc");
     return;
   }
-  if (document.body.classList.contains("drawer") && e.target.closest(".sb [data-tab], .sb #sbgear")) setDrawer(false);
-});
-/* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉。開いているときは左へ引いて閉じ、画面の左端から右へ引くと開く */
-uSwipe({ sb: ".sb", scrim: ".dscrim", setDrawer, edge: 28 });
-matchMedia("(max-width:899px)").addEventListener("change", () => setDrawer(false));
+  if (view.tab !== "list") setTab("list");
+  ledger.pending.push(blank());
+  renderReview();
+  setMsg("");
+  /* 追加した行を見せて、金額欄にすぐ入力できるようにする（スマホは電卓が出る） */
+  const am = $("review").querySelectorAll('[data-f="amount"]');
+  const el = am[am.length - 1];
+  if (el) {
+    $("review").scrollIntoView({ block: "start", behavior: "auto" });
+    scrollBy(0, -((document.querySelector(".appbar")?.offsetHeight || 56) + 12));
+    el.focus({ preventScroll: true });
+  }
+}
+function paintTheme() {
+  markCurrent("[data-theme]", "theme", U.theme());
+}
 document.addEventListener("click", e => {
   if (e.target.closest(".pay, #st-pay")) return; // 支払いの部品は pay.js が受け持つ
   if (clickListCheck(e)) return;
@@ -2062,7 +2109,19 @@ function clickListCheck(e) {
 }
 /* ヘッダー・下部メニュー・設定の開閉・通知 */
 function clickHeader(t, d) {
-  if (d.tab) {
+  if (t.id === "hAdd" || t.id === "sbAdd") {
+    doAdd();
+  } else if (d.theme) {
+    U.setTheme(d.theme);
+    renderThemeBtn();
+    paintTheme();
+  } else if (d.setedit === "rules" || d.setedit === "master") {
+    setting.edit[d.setedit] = !setting.edit[d.setedit];
+    setting.merge = null;
+    view.armed = null;
+    if (d.setedit === "rules") renderRules();
+    else renderMaster();
+  } else if (d.tab) {
     setTab(d.tab);
     window.scrollTo(0, 0);
   } else if (t.id === "mprev" || t.id === "mnext") {
@@ -2075,6 +2134,7 @@ function clickHeader(t, d) {
     const nx = { auto: "light", light: "dark", dark: "auto" }[U.theme()];
     U.setTheme(nx);
     renderThemeBtn();
+    paintTheme();
     toast(`表示：${TH_NAME[nx]}`);
   } else if (t.id === "sumtog" || (t.closest && t.closest("#summary .sumtop") && !t.closest("a,input,select"))) {
     t = $("sumtog");
@@ -2108,16 +2168,7 @@ function clickHeader(t, d) {
 }
 /* 明細：スクショ・手入力の追加と、追加前の確認 */
 function clickAdd(t, d) {
-  if (t.id === "shot") {
-    $("file").click();
-  } else if (t.id === "manual") {
-    ledger.pending.push(blank());
-    renderReview();
-    setMsg("");
-    /* 追加した行の金額欄にすぐ入力できるようにする */
-    const am = $("review").querySelectorAll('[data-f="amount"]');
-    if (am.length) am[am.length - 1].focus();
-  } else if (d.rm) {
+  if (d.rm) {
     ledger.pending.splice(+d.rm, 1);
     renderReview();
   } else if (t.id === "clr") {
@@ -2131,11 +2182,7 @@ function clickAdd(t, d) {
 }
 /* 明細：絞り込みの解除・その場の編集・削除・メモ候補 */
 function clickLedger(t, d) {
-  if (t.id === "fclear") {
-    ledger.filter = { q: "", c: "", m: "" };
-    ledger.filter.q = "";
-    render();
-  } else if (d.del) {
+  if (d.del) {
     if (!arm(d.del, t, "もう一度押すと削除")) deleteItem(d.del);
   } else if (ledger.sel.size && d.day) {
     const ids = ledger.shown.filter(i => i.date === d.day),
@@ -2288,12 +2335,6 @@ document.addEventListener("change", e => {
     const fs = [...t.files];
     t.value = "";
     if (fs.length) analyze(fs);
-  } else if (t.id === "fc") {
-    ledger.filter.c = v;
-    render();
-  } else if (t.id === "fm") {
-    ledger.filter.m = v;
-    render();
   } else if (t.id === "qc") {
     quickSet("category", v);
   } else if (t.id === "qm") {
@@ -2429,6 +2470,7 @@ rkUpdate();
 setSidebar(lsRaw(KSBC) === "1");
 setAnFold(lsRaw(KANF) === "1");
 renderThemeBtn();
+paintTheme();
 setTab(view.tab);
 load();
 items.forEach(learn);
