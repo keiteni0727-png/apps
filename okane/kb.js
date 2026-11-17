@@ -20,7 +20,6 @@ const KANF = "okane.anfold"; // 左メニューの「分析」の項目をたた
 const AN = ["graph", "balance", "ai"]; // 分析にまとめた画面
 
 /* ---------- 決まった数字 ---------- */
-const RETRY_MS = 8000; // 送信に失敗したら、この時間のあとに再試行
 const TOMB_LIMIT = 40; // 月の文書の削除の印がこれを超えたら、丸ごと書き直す
 const TOAST_MS = 2500, // 通知を出しておく時間
   TOAST_UNDO_MS = 8000; // 「元に戻す」つきの通知を出しておく時間
@@ -336,7 +335,8 @@ function normRule(r) {
   ・月の文書は {v:2, items:{明細ID: 明細 | null}}。明細ごとに update で書くので、
     2台で同じ月の別の明細を同時に編集しても消し合わない（null は削除の印）。旧形式 {items:[...]} も読める
   ・端末内の保存（localStorage）は、開いた直後と接続できないときの表示用の控え */
-let readErr = false; // 明細の読み込みでエラーが出た
+/* 保存中・未保存・自動での保存し直し・読み込みのつなぎ直しは、共通の U.sync（u-core.js）が行う。
+   クラウドから届く内容には、自分がまだ送信中の変更も入っている（Firebase がそうしてくれる）ので、そのまま反映してよい */
 let col = null, // data/users/<id> のコレクション
   live = false; // 最初の読み込みが終わった
 let shown = {}, // shown[月] = {明細ID: 内容}：クラウドにある（または送信済みの）内容
@@ -344,68 +344,14 @@ let shown = {}, // shown[月] = {明細ID: 内容}：クラウドにある（ま
   tomb = {}, // その月の文書にある削除の印の数
   rShown = null, // クラウドにあるルール・マスタ（比べて、違うときだけ送る）
   mShown = null;
-const pend = {}, // 文書ごとの送信中の数
-  chains = {}, // 文書ごとの送信の順番待ち
-  failed = new Set(); // 送信に失敗した文書
-let retryT = null;
-const busyKey = k => (pend[k] || 0) > 0 || failed.has(k);
 function saveKnown() {
   lsSet(KNOWN, Object.keys(shown));
 }
-function setSync(t) {
-  const e = $("sync");
-  if (e) e.textContent = "同期: " + t;
-}
-function paintSync() {
-  if (!col) return;
-  const n = Object.values(pend).reduce((s, v) => s + v, 0);
-  setSync(n ? "保存中…" : failed.size ? "送信に失敗。自動で再試行します" : "同期済み（リアルタイム）");
-  FIN.pay.paintSave && FIN.pay.paintSave();
-}
-const syncState = () =>
-  !col ? "ok" : failed.size || readErr ? "err" : Object.values(pend).some(v => v > 0) ? "busy" : "ok";
-function write(key, fn) {
-  pend[key] = (pend[key] || 0) + 1;
-  paintSync();
-  chains[key] = (chains[key] || Promise.resolve())
-    .then(fn)
-    .then(
-      () => {
-        failed.delete(key);
-      },
-      () => {
-        failed.add(key);
-        clearTimeout(retryT);
-        retryT = setTimeout(retry, RETRY_MS);
-      },
-    )
-    .finally(() => {
-      pend[key]--;
-      paintSync();
-      if (!busyKey(key) && key.startsWith("m-")) refetch(key);
-    });
-  return chains[key];
-}
-async function refetch(key) {
-  // 送信中に届いた他端末の変更を取りこぼさないよう、送信後に読み直す
-  try {
-    const d = await col.doc(key).get();
-    if (busyKey(key)) return;
-    applyMonth(key.slice(2), d.exists ? d.data() : null, true);
-  } catch (e) {}
-}
-function retry() {
-  [...failed].forEach(k => {
-    failed.delete(k);
-    if (k === "rules") rShown = null;
-    else if (k === "master") mShown = null;
-    else {
-      delete shown[k.slice(2)];
-      fmt2[k.slice(2)] = false;
-    }
+const write = fn =>
+  fn().catch(e => {
+    if (!["unavailable", "deadline-exceeded", "aborted", "internal", "unknown", "cancelled"].includes(e?.code))
+      toast(`保存できませんでした（${e?.code || "error"}）。開き直してからもう一度お試しください`);
   });
-  queuePush();
-}
 function pushMonth(m) {
   const cur = mapOf(inM(m)),
     prev = shown[m],
@@ -419,7 +365,7 @@ function pushMonth(m) {
   if (!Object.keys(cur).length) {
     if (!prev) return;
     delete shown[m];
-    write(key, () => col.doc(key).delete());
+    write(() => col.doc(key).delete());
     return;
   }
   shown[m] = cur;
@@ -428,8 +374,8 @@ function pushMonth(m) {
     fmt2[m] = true;
     tomb[m] = 0;
     const all = Object.fromEntries(Object.entries(cur).map(([id, j]) => [id, JSON.parse(j)]));
-    write(key, () => col.doc(key).set({ v: 2, items: all }));
-  } else write(key, () => col.doc(key).update({ items: diff }));
+    write(() => col.doc(key).set({ v: 2, items: all }));
+  } else write(() => col.doc(key).update({ items: diff }));
 }
 function queuePush() {
   // 変更のたびに呼ぶ。クラウドと違うところだけ送る
@@ -440,13 +386,13 @@ function queuePush() {
   if (rj !== rShown) {
     rShown = rj;
     const d = JSON.parse(rj);
-    write("rules", () => col.doc("rules").set({ rules: d }));
+    write(() => col.doc("rules").set({ rules: d }));
   }
   const mjs = cj(MASTER);
   if (mjs !== mShown) {
     mShown = mjs;
     const d = JSON.parse(mjs);
-    write("master", () => col.doc("master").set({ master: d }));
+    write(() => col.doc("master").set({ master: d }));
   }
 }
 function applyMonth(m, x, doRender) {
@@ -477,15 +423,8 @@ async function initSync() {
     const { db: d, uid: id } = await U.store();
     if (!d || !id) throw 0;
     col = d.collection("data/users/" + id);
-    setSync("接続中…");
-    col.onSnapshot(onRemote, e => {
-      readErr = true;
-      setSync("読み込みエラー（" + ((e && e.code) || "error") + "）。開き直してください");
-      FIN.pay.paintSave && FIN.pay.paintSave();
-    });
-  } catch (e) {
-    setSync("利用できません（この端末のみ保存）");
-  }
+    col.onSnapshot(onRemote);
+  } catch (e) {}
 }
 function onRemote(snap) {
   let changed = false,
@@ -502,10 +441,9 @@ function onRemote(snap) {
   });
   const known = live ? [] : lsGet(KNOWN, []); // 前回までにクラウドにあった月
   new Set([...Object.keys(remote), ...Object.keys(shown), ...(live ? [] : known)]).forEach(m => {
-    if (busyKey("m-" + m)) return; // 送信中・送信失敗の月は自分の内容を優先（送信後に読み直す）
     if (applyMonth(m, remote[m] || null, false)) changed = true;
   });
-  if (rr && !busyKey("rules")) {
+  if (rr) {
     rShown = cj(rr);
     const nr = rr.map(normRule).filter(Boolean);
     if (cj(nr) !== cj(rules)) {
@@ -513,7 +451,7 @@ function onRemote(snap) {
       changed = true;
     }
   }
-  if (mr && !busyKey("master")) {
+  if (mr) {
     mShown = cj(mr);
     if (cj(mr) !== cj(MASTER)) {
       MASTER = normMaster(mr);
@@ -534,7 +472,6 @@ function onRemote(snap) {
     live = true;
     queuePush();
   }
-  paintSync();
 }
 
 /* ===================== ルールと集計（計算だけ。画面は変えない） ===================== */
@@ -2232,8 +2169,7 @@ function clickHeader(t, d) {
   } else if (t.id === "rclose" || t.id === "rbk" || t.id === "bclose") {
     closePanels();
   } else if (t.id === "syncnow") {
-    if (live) retry();
-    else setSync("接続中です…");
+    U.sync.retry();
   } else return false;
   return true;
 }
@@ -2581,7 +2517,6 @@ Object.assign(FIN.kb, {
   render,
   setTab,
   renderAI,
-  syncState,
   settingsOpen,
   /* その月度に現金で払った額（支払いの「残るお金」から引く） */
   cashIn: p => sumOf(items.filter(i => i.method === FIN.CASH && inPeriod(i.date, p))),

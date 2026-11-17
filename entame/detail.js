@@ -498,8 +498,9 @@ function setDTab(t) {
       }
     });
 }
+/* 保存できなかったとき：一時的なものは自動で保存し直す（U.sync）ので、知らせるだけ */
 function fail(e) {
-  toast("保存できませんでした。もう一度お試しください");
+  toast(e && e.code && !["permission-denied", "invalid-argument", "failed-precondition"].includes(e.code) ? "保存できませんでした。自動で保存し直します" : "保存できませんでした。もう一度お試しください");
   console.warn(e);
 }
 async function saveTitle(id, patch, msg) {
@@ -575,7 +576,7 @@ async function saveWatch(it, list, idxs, msg) {
   lastAt = at;
   epsChanged(it, msg);
   try {
-    await write(() => db.doc(`progress/${it.id}`).update({ w: patch, _at: at }));
+    await db.doc(`progress/${it.id}`).update({ w: patch, _at: at });
   } catch (e) {
     fail(e);
   }

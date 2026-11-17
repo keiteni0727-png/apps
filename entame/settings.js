@@ -229,7 +229,7 @@ async function backupRestore() {
   refreshSettings();
   toast(`${list.length}件を戻しています…`);
   try {
-    for (let i = 0; i < list.length; i += 400) await write(() => db.setMany(list.slice(i, i + 400)));
+    for (let i = 0; i < list.length; i += 400) await db.setMany(list.slice(i, i + 400));
     toast(`${list.length}件をバックアップから戻しました`);
   } catch (e) {
     fail(e);

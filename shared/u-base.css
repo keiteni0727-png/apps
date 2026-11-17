@@ -102,3 +102,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .dragging{position:relative;z-index:1;box-shadow:var(--u-shadow);border-radius:8px;background:var(--u-surface)}
 .fic{display:inline-block;flex:none;vertical-align:-1px;transition:transform .15s;color:var(--u-sub)}
 [aria-expanded="true"]>.fic{transform:rotate(90deg)}
+/* ===== 保存先との接続が切れたときの帯（U.sync）。開き直すボタンつき ===== */
+.u-syncerr{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));z-index:90;display:flex;align-items:center;gap:12px;width:max-content;max-width:calc(100% - 24px);background:var(--u-ink);color:var(--u-surface);border-radius:12px;padding:8px 8px 8px 16px;font:13px/1.5 var(--u-f);box-shadow:var(--u-shadow)}
+.u-syncerr button{border:0;background:var(--u-accent);color:var(--u-on,#fff);border-radius:8px;padding:6px 12px;font:700 12.5px/1.5 var(--u-f);white-space:nowrap;cursor:pointer}

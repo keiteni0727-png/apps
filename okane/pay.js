@@ -39,10 +39,6 @@
     db: null,
     dbFail: false,
     loaded: { a: false, m: false },
-    pending: {}, // 月ごとの保存中の数（保存中の月は、届いたクラウドの内容で上書きしない）
-    busy: 0, // 保存中の数
-    svErr: false,
-    svAt: null, // 最後に保存した時刻
   };
   /* 表示中の月度は家計簿とは別（FIN.payPeriod）。まだ決まっていなければ、いまの月度 */
   Object.defineProperty(S, "period", { get: () => FIN.payPeriod || FIN.currentPeriod(), set: v => (FIN.payPeriod = v) });
@@ -660,122 +656,72 @@
     for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
     return String(h);
   };
-  /* ===================== 保存 ===================== */
-  const chains = {};
-  /* 同じ文書への書き込みは順番に行う */
-  function queue(path, fn) {
-    chains[path] = (chains[path] || Promise.resolve()).then(fn, fn);
-    return chains[path];
-  }
+  /* ===================== 保存 =====================
+    保存中・未保存・自動での保存し直しは共通の U.sync（u-core.js）が見張る。表示も家計簿・エンタメ管理と同じ */
+  const SV_CLS = { ok: "ok", busy: "busy", wait: "wait", err: "err" };
   function paintSave() {
     const el = $("saveSt");
     if (!el) return;
-    let c, t;
-    if (!S.db) {
-      c = S.dbFail ? "err" : "wait";
-      t = S.dbFail ? "保存できません" : "接続中…";
-    } else if (S.busy > 0) {
-      c = "busy";
-      t = "保存中…";
-    } else if (S.svErr) {
-      c = "err";
-      t = "未保存あり";
-    } else if (!S.loaded.m) {
-      c = "wait";
-      t = "読み込み中…";
-    } else {
-      c = "ok";
-      t = "保存済み";
-    }
-    const k = FIN.kb.syncState ? FIN.kb.syncState() : "ok"; // 家計簿の明細の同期
-    if (k === "err" && c !== "err") [c, t] = ["err", "未保存あり"];
-    else if (k === "busy" && c === "ok") [c, t] = ["busy", "保存中…"];
-    el.className = "savest " + c;
-    el.textContent = t;
-    el.title = S.svAt && c === "ok" ? `最後の保存 ${pad(S.svAt.getHours())}:${pad(S.svAt.getMinutes())}` : "";
-    const sb = $("sbSave");
-    if (sb) {
-      sb.className = el.className;
-      sb.textContent = t;
-      sb.title = el.title;
-    }
+    const [k, t, why] = S.db ? U.sync.view(S.loaded.m) : S.dbFail ? ["err", "保存できません", ""] : ["wait", "接続中…", ""];
+    [el, $("sbSave")].forEach(e => {
+      if (!e) return;
+      e.className = "savest " + SV_CLS[k];
+      e.textContent = t;
+      e.title = why;
+    });
   }
+  U.sync.on(paintSave);
+  /* 書き込み1回分。失敗したら理由を出す（電波などの一時的なものは U.sync が自動で保存し直す） */
   async function guard(fn) {
     if (!S.db) {
       status("保存先に接続できていないため、変更は保存されません。", true);
-      paintSave();
       return false;
     }
-    S.busy = (S.busy || 0) + 1;
-    paintSave();
     try {
       await fn();
       status("");
-      S.svErr = false;
-      S.svAt = new Date();
       return true;
     } catch (e) {
-      S.svErr = true;
+      const c = e?.code;
       status(
-        e?.code === "invalid_argument"
-          ? "このページでは編集できません（閲覧のみ）。"
-          : e?.code === "quota_exceeded"
+        c === "permission-denied" || c === "invalid-argument"
+          ? `保存できませんでした（${c}）。開き直してからもう一度お試しください。`
+          : c === "resource-exhausted"
             ? "保存容量の上限に達しました。古いデータを削除してください。"
-            : "保存できませんでした。少し待ってからもう一度お試しください。",
+            : "保存できませんでした。自動で保存し直します。",
         true,
       );
       return false;
-    } finally {
-      S.busy--;
-      paintSave();
     }
   }
   /* 月の文書を書く（支払がなくなった月は文書ごと消す） */
   function writeMonth(ym, items) {
-    return guard(() =>
-      queue("months/" + ym, () =>
-        items.length ? S.db.doc("months/" + ym).set({ items }) : S.db.doc("months/" + ym).delete(),
-      ),
-    );
+    return guard(() => (items.length ? S.db.doc("months/" + ym).set({ items }) : S.db.doc("months/" + ym).delete()));
   }
   function saveMonth(ym) {
     S._base = null;
-    const items = S.months[ym]?.items || [];
-    S.pending[ym] = (S.pending[ym] || 0) + 1;
-    return writeMonth(ym, items).finally(() => {
-      S.pending[ym]--;
-    });
+    return writeMonth(ym, S.months[ym]?.items || []);
   }
-  /* 複数の月を順に保存する（多いときは進み具合を出す） */
+  /* 複数の月をまとめて保存する（順番待ちせずに一度に送る。電波が悪くても全部送信待ちに入る） */
   async function saveMonths(list) {
     S._base = null;
-    const payloads = list.map(ym => [ym, [...(S.months[ym]?.items || [])]]);
-    payloads.forEach(([ym]) => (S.pending[ym] = (S.pending[ym] || 0) + 1));
-    let ok = true,
-      k = 0;
-    for (const [ym, items] of payloads) {
-      if (payloads.length > 3) status(`支払予定を保存しています… ${++k}/${payloads.length}`);
-      ok = (await writeMonth(ym, items)) && ok;
-      S.pending[ym]--;
-    }
-    if (ok) status("");
-    return ok;
+    const r = await Promise.all(list.map(ym => writeMonth(ym, [...(S.months[ym]?.items || [])])));
+    return r.every(Boolean);
   }
   function saveAcc(id) {
     S._base = null;
-    const d = { ...S.accounts[id] };
-    return guard(() => queue("accounts/" + id, () => S.db.collection("accounts").doc(id).set(d)));
+    return guard(() => S.db.collection("accounts").doc(id).set({ ...S.accounts[id] }));
   }
   function deleteAcc(id) {
-    return guard(() => queue("accounts/" + id, () => S.db.collection("accounts").doc(id).delete()));
+    return guard(() => S.db.collection("accounts").doc(id).delete());
   }
   function saveCfg() {
-    return guard(() => queue("config/master", () => S.db.doc("config/master").set({ ...S.cfg })));
+    return guard(() => S.db.doc("config/master").set({ ...S.cfg }));
   }
   function saveAI(o) {
     S.ai = FIN.ai = o;
     if (S.view === "balance") renderAILink();
-    return S.db ? guard(() => queue("config/ai", () => S.db.doc("config/ai").set(o))) : Promise.resolve(false);
+    return S.db ? guard(() => S.db.doc("config/ai").set(o)) : Promise.resolve(false);
   }
   function saveFold() {
     try {
@@ -2616,7 +2562,6 @@
       s => {
         const o = {};
         s.docs.forEach(d => (o[d.id] = { items: [...(d.data().items || [])] }));
-        for (const k in S.pending) if (S.pending[k] > 0 && S.months[k]) o[k] = S.months[k]; // 保存中の月は自分の内容を優先
         S.months = o;
         S._base = null;
         const first = !S.loaded.m;

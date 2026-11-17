@@ -280,10 +280,9 @@ const norm = t =>
 
 /* ---------- 保存（Firebase）。保存先への接続とログインは u-core.js（アプリ共通） ---------- */
 let db = null;
-/* 保存状況：保存中の件数・最後に変更した時刻（各データに _at として記録し、どの端末でも同じ時刻を出す） */
-let saving = 0,
-  saveErr = false,
-  lastAt = 0;
+/* 保存状況：保存中・未保存・再接続などは共通の U.sync（u-core.js）が見張る。
+   ここで持つのは最後に変更した時刻だけ（各データに _at として記録し、どの端末でも同じ時刻を出す） */
+let lastAt = 0;
 function calcLastAt() {
   let m = 0;
   [over, prog, ytOver].forEach(o =>
@@ -302,77 +301,43 @@ const fmtAt = t => {
     ? `今日 ${hm}`
     : `${d.getFullYear() !== n.getFullYear() ? d.getFullYear() + "/" : ""}${d.getMonth() + 1}/${d.getDate()} ${hm}`;
 };
+const SV_CLS = { ok: "ok", busy: "ing", wait: "ing", err: "err" };
 function saveNoteHtml() {
-  const st = !isSynced() && db ? ["ing", "同期中…"] : saving ? ["ing", "保存中…"] : saveErr ? ["err", "保存できませんでした"] : ["ok", "保存済み"];
-  return `<span class="sv ${st[0]}"><i></i>${st[1]}</span>${lastAt ? `<span class="svat">最終変更 ${fmtAt(lastAt)}</span>` : ""}`;
+  const [k, t, why] = U.sync.view(!db || isSynced());
+  return `<span class="sv ${SV_CLS[k]}"${why ? ` title="${esc(why)}"` : ""}><i></i>${t}</span>${lastAt ? `<span class="svat">最終変更 ${fmtAt(lastAt)}</span>` : ""}`;
 }
 function updateSaveNote() {
-  const n = $("#saveNote");
-  if (n) n.innerHTML = saveNoteHtml();
-  const b = $("#sbSave");
-  if (b) b.innerHTML = saveNoteHtml();
-}
-/* 書き込み（保存・削除）を1回分：保存中の表示を出し、失敗したら「保存できませんでした」 */
-async function write(job) {
-  saving++;
-  saveErr = false;
-  updateSaveNote();
-  try {
-    await job();
-  } catch (e) {
-    saveErr = true;
-    throw e;
-  } finally {
-    saving = Math.max(0, saving - 1);
-    updateSaveNote();
-  }
+  const h = saveNoteHtml();
+  ["#saveNote", "#sbSave"].forEach(q => {
+    const n = $(q);
+    if (n) n.innerHTML = h;
+  });
 }
 function removeDoc(col, id) {
   lastAt = Date.now();
-  return write(() => db.doc(`${col}/${id}`).delete());
+  return db.doc(`${col}/${id}`).delete();
 }
 function saveDoc(col, id, data) {
   data._at = Date.now();
   lastAt = data._at;
-  return write(() => db.doc(`${col}/${id}`).set(data));
+  return db.doc(`${col}/${id}`).set(data);
 }
-/* 渡した項目だけ書きかえる（ほかの端末で変えた項目は消さない）。
-   変えた項目だけなので、最新のデータが届くのを待たずにすぐ書く（待つと、電波が悪いときや裏に回したときに書き込みが止まったままになり、ほかの端末に届かない） */
-async function mergeDoc(col, id, patch) {
+/* 渡した項目だけ書きかえる（ほかの端末で変えた項目は消さない） */
+function mergeDoc(col, id, patch) {
   const data = { ...patch, _at: Date.now() };
   lastAt = data._at;
-  return write(() => db.doc(`${col}/${id}`).set(data, { merge: true }));
+  return db.doc(`${col}/${id}`).set(data, { merge: true });
 }
-/* ---------- 同期：開いた直後や、しばらく裏にいたあとは、最新のデータが届くまで「同期中」 ---------- */
+/* ---------- 同期：最新のデータ（fromCache=false）が届くまで「同期中」。裏から戻ったときのつなぎ直しは U.sync が行う ---------- */
 var syncOk = { titles: false, progress: false };
-var syncHold = false; // 裏から戻った直後の待ち
-function isSynced() {
-  return syncOk.titles && syncOk.progress && !syncHold;
-}
-function syncChanged() {
-  updateSaveNote();
-}
+const isSynced = () => syncOk.titles && syncOk.progress;
 /* 話数の編集など、リストをまとめて保存するものは同期中は止める（視聴チェックは話ごとに保存するので止めない） */
 function syncBlock() {
   if (isSynced()) return false;
   toast("最新のデータを読み込み中です。少しだけ待ってからもう一度お試しください");
   return true;
 }
-let hiddenAt = 0;
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    hiddenAt = Date.now();
-    return;
-  }
-  /* 2分以上裏にいたら、最新が届くまで（届かなくても最大5秒）待つ */
-  if (!hiddenAt || Date.now() - hiddenAt < 120000) return;
-  syncHold = true;
-  syncChanged();
-  setTimeout(() => {
-    syncHold = false;
-    syncChanged();
-  }, 5000);
-});
+U.sync.on(updateSaveNote);
 /* ---------- マスタ（シリーズ・放送局・配信サイト・投稿者・グループ）：並び順と名前を保存 ---------- */
 let master = {};
 const MKEYS = [
@@ -439,7 +404,7 @@ let oldFixed = false;
 function fixOldData() {
   if (oldFixed) return;
   oldFixed = true;
-  const put = (path, data) => write(() => db.doc(path).set(data)).catch(fail);
+  const put = (path, data) => db.doc(path).set(data).catch(fail);
   if (Array.isArray(master.seriesA) || Array.isArray(master.seriesD)) {
     const { seriesA = [], seriesD = [], ...m } = master;
     if (!Array.isArray(m.series)) m.series = [...new Set([...seriesA, ...seriesD])];
@@ -498,8 +463,13 @@ async function initStore() {
     if (openId && !epEdit) refreshSheet();
     setTimeout(maybeAskSgFix, 800);
   };
-  const onErr = e =>
-    banner(`<b>保存データを読み込めませんでした</b>${esc(e?.message || "")}　ページを開き直してください。`);
+  /* 読み込みが止まったときは U.sync が自動でつなぎ直す。ここでは「同期中」に戻すだけ */
+  const onErr = k => () => {
+    if (k && syncOk[k]) {
+      syncOk[k] = false;
+      updateSaveNote();
+    }
+  };
   const docsOf = s => {
     const m = {};
     s.docs.forEach(d => (m[d.id] = d.data()));
@@ -510,8 +480,7 @@ async function initStore() {
     const ok = s.fromCache === false;
     if (syncOk[k] !== ok) {
       syncOk[k] = ok;
-      if (ok) syncHold = false;
-      syncChanged();
+      updateSaveNote();
     }
   };
   db.collection("titles").onSnapshot(
@@ -522,7 +491,7 @@ async function initStore() {
       got.titles = true;
       done();
     },
-    onErr,
+    onErr("titles"),
     { meta: true },
   );
   db.collection("progress").onSnapshot(
@@ -533,7 +502,7 @@ async function initStore() {
       done();
       if (s.fromCache === false) migrateProg();
     },
-    onErr,
+    onErr("progress"),
     { meta: true },
   );
   db.collection("master").onSnapshot(s => {
@@ -543,7 +512,7 @@ async function initStore() {
     if (got.titles) fixOldData();
     render();
     refreshSettings();
-  }, onErr);
+  }, onErr());
   db.collection("yt").onSnapshot(s => {
     ytOver = docsOf(s);
     if (s.fromCache === false) purgeTrash("yt");
@@ -551,7 +520,7 @@ async function initStore() {
     ytRebuild();
     render();
     if (ytOpen) ytRefresh();
-  }, onErr);
+  }, onErr());
 }
 /* ---------- 話数（放送日時は「分」で持つ。日本時間の深夜25時台は前日扱い） ---------- */
 const NOWMIN = () => Math.floor(Date.now() / 60000);
@@ -620,7 +589,7 @@ async function migrateProg() {
     });
   if (!list.length) return;
   try {
-    for (let i = 0; i < list.length; i += 400) await write(() => db.setMany(list.slice(i, i + 400)));
+    for (let i = 0; i < list.length; i += 400) await db.setMany(list.slice(i, i + 400));
   } catch (e) {
     fail(e);
   }
