@@ -14,6 +14,7 @@ const SHELL = [
   "lists.js",
   "events.js",
   "../shared/u-base.css",
+  "../shared/u-sync.js",
   "../shared/u-core.js",
   "../shared/u-ui.js",
   "../shared/u-swipe.js",

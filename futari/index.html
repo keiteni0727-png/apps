@@ -718,6 +718,7 @@ header.hd2 .iconbtn{align-self:center}
 <div id="layer"></div>
 <div id="fx"></div>
 
+<script src="../shared/u-sync.js"></script>
 <script type="module">
 /* =============== Firebaseの設定（Firebaseの画面からコピーしたものを入れる） =============== */
 const firebaseConfig = {
@@ -850,7 +851,8 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
 
 const { initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
 const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updatePassword, linkWithCredential, EmailAuthProvider } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
-const { getFirestore, doc, collection, getDoc, setDoc, updateDoc, addDoc, deleteDoc, getDocs, onSnapshot, serverTimestamp, arrayUnion, deleteField, writeBatch, increment } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+const FS = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+const { getFirestore, doc, collection, getDoc, getDocs, serverTimestamp, arrayUnion, deleteField, increment } = FS;
 
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
@@ -870,6 +872,8 @@ async function finishEmailLink(email, link){
   history.replaceState(null, "", appUrl());
 }
 const db = getFirestore(fbApp);
+/* 読み込み・書き込みは共通の見張り役（shared/u-sync.js）を通す：止まったら自動でつなぎ直し、保存に失敗したら自動で保存し直す */
+const { onSnapshot, setDoc, updateDoc, addDoc, deleteDoc, writeBatch } = USync.wrap(FS, db, { id: "futari", badge: true });
 
 /* ---------- 状態 ---------- */
 const S = {
@@ -1132,16 +1136,17 @@ function openRoom(roomId, fresh){
   S.roomId = roomId; S.room = null; S.places = [];
   let gotRoom = false, gotPlaces = false;
   S.subs.push(onSnapshot(doc(db, "rooms", roomId), snap => {
-    if (!snap.exists() || !(snap.data().members || []).includes(me())) return lostRoom();
+    // ルームがない・メンバーでない：サーバーで確かめたときだけ外れる（端末に残っていた古い内容では判断しない）
+    if (!snap.exists() || !(snap.data().members || []).includes(me())) return snap.metadata.fromCache ? undefined : lostRoom();
     S.room = snap.data(); gotRoom = true;
     if (gotPlaces) { render(); checkMatches(); }
     if (fresh) { fresh = false; setTimeout(openInvite, 300); }
-  }, e => e.code === "permission-denied" ? lostRoom() : renderFatal(e, "ルームの読みこみ")));
+  }, e => e.code === "permission-denied" ? lostRoom() : !S.room && renderFatal(e, "ルームの読みこみ"))); // 表示済みなら自動でつなぎ直すのを待つ
   S.subs.push(onSnapshot(collection(db, "rooms", roomId, "places"), snap => {
     S.places = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     gotPlaces = true;
     if (gotRoom) { render(); checkMatches(); }
-  }, e => setTimeout(() => { if (S.roomId === roomId) renderFatal(e, "候補の読みこみ"); }, 800)));
+  }, e => setTimeout(() => { if (S.roomId === roomId && !gotPlaces) renderFatal(e, "候補の読みこみ"); }, 800)));
   // デートの予定と相性テスト（ルールが未更新でも、ほかの機能は止めない）
   S.dates = []; S.quiz = {}; S.extraErr = null;
   const extraErr = e => { S.extraErr = e.code || e.message; if (gotRoom && gotPlaces) render(); };

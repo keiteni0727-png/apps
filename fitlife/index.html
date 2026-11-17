@@ -202,10 +202,14 @@ form[data-gtype=time] .gstr, form[data-gtype=time] .gstr-i, form[data-gtype=str]
 <div id="sheet"></div>
 <div id="toast" class="toast"></div>
 
+<script src="../shared/u-sync.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, collection, query, orderBy, limit, onSnapshot, serverTimestamp, writeBatch, Timestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import * as FS from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+const { getFirestore, doc, getDoc, getDocFromServer, collection, query, orderBy, limit, serverTimestamp, Timestamp } = FS;
+/* 読み込み・書き込みは共通の見張り役（shared/u-sync.js）を通す：止まったら自動でつなぎ直し、保存に失敗したら自動で保存し直す */
+let onSnapshot, setDoc, addDoc, deleteDoc, writeBatch, runTransaction;
 import { FOODS } from "./foods.js";
 import { EXERCISES, EX_CATS } from "./exercises.js";
 
@@ -317,6 +321,7 @@ if(!configured){
   const fbApp = initializeApp(firebaseConfig);
   auth = getAuth(fbApp);
   db = getFirestore(fbApp);
+  ({ onSnapshot, setDoc, addDoc, deleteDoc, writeBatch, runTransaction } = USync.wrap(FS, db, { id:'fitlife', badge:true }));
   // 招待リンク（#invite=...）で開かれたら、ログインが終わるまで覚えておく
   const m = (location.hash + location.search).match(/invite=([0-9a-f]{64})/);
   if(m) localStorage.setItem('fitlife_invite', m[1]);
@@ -339,6 +344,8 @@ async function onUser(user){
   const readCfg = async () => { const snap = await getDoc(doc(db,'config','app')); S.cfg = snap.exists() ? snap.data() : {}; };
   try{ await readCfg(); }
   catch(e){
+    // 通信エラーなど（権限がない以外）は「未参加」ではないので、もう一度ためしてもらう
+    if(e?.code !== 'permission-denied'){ renderRetry(e); return; }
     // まだ参加していない人：招待リンクがあれば参加する
     const token = localStorage.getItem('fitlife_invite');
     if(!token){ renderDenied(); return; }
@@ -356,8 +363,18 @@ async function onUser(user){
   const myMail = (user.email||'').toLowerCase();
   S.role = ((S.cfg.memberUid && S.cfg.memberUid === user.uid) || (S.cfg.memberEmail && user.emailVerified && S.cfg.memberEmail === myMail)) ? 'member' : 'owner';
   startListeners();
-  if(S.role === 'member') await loadPrivMeta();
+  if(S.role === 'member') loadPrivMeta();
   render();
+}
+/* 起動時に通信できなかったとき */
+function renderRetry(e){
+  $app.innerHTML = `<div class="center">
+    ${IC.heart.replace('<svg','<svg class="big-heart"')}
+    <h2 style="margin:0">読み込めませんでした</h2>
+    <p class="muted">電波のよいところで、もう一度ためしてね。<br><small>${esc(e?.code || e?.message || e)}</small></p>
+    <button class="btn" data-a="reload">もう一度ためす</button>
+    <button class="btn sub" data-a="logout">ログアウト</button>
+  </div>`;
 }
 
 function startListeners(){
@@ -390,12 +407,13 @@ function startColListeners(){
     S.denied[col] = false;
     const q = query(collection(db,col), orderBy('date','desc'), limit(400));
     colSubs.push(onSnapshot(q, s => {
+      S.denied[col] = false;
       S.data[col] = s.docs.map(d => ({ id:d.id, ...d.data() }))
         .sort((a,b) => a.date === b.date ? ((b.ts?.seconds||9e9) - (a.ts?.seconds||9e9)) : (a.date < b.date ? 1 : -1));
       render();
       LOADED.add(col);
       if(LOADED.has('weights')) ['meals','gym'].filter(c => LOADED.has(c)).forEach(c => backfillKcal(c).catch(err => console.error(err)));
-    }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
+    }, e => { if(e?.code === 'permission-denied'){ S.denied[col] = true; S.data[col] = []; render(); } }));
   }
   if(isM) colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
   colSubs.push(onSnapshot(doc(db,'game','main'), { includeMetadataChanges:true }, s => { if(s.metadata.fromCache && !S.gameReady) return; S.game = s.data()||{}; S.gameReady = true; render(); }, () => { S.gameReady = false; render(); }));
@@ -572,17 +590,22 @@ function idbOpen(){ return new Promise((res,rej) => { const r = indexedDB.open('
 async function idbSet(k,v){ const d = await idbOpen(); return new Promise((res,rej) => { const t = d.transaction('keys','readwrite'); const st = t.objectStore('keys'); v === undefined ? st.delete(k) : st.put(v,k); t.oncomplete = res; t.onerror = () => rej(t.error); }); }
 async function idbGet(k){ const d = await idbOpen(); return new Promise((res,rej) => { const r = d.transaction('keys').objectStore('keys').get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
 
-async function loadPrivMeta(){
-  try{
-    const s = await getDoc(doc(db,'privateMeta','key'));
+/* 合言葉の設定（privateMeta/key）を見張る。
+   読み込めないあいだは「読み込み中」のまま。読み込めなかったのに「はじめる」画面を出して設定し直すと、今までの記録が読めなくなるため */
+function loadPrivMeta(){
+  let tried = null;
+  colSubs.push(onSnapshot(doc(db,'privateMeta','key'), async s => {
+    if(s.metadata.fromCache) return;
     S.privMeta = s.exists() ? s.data() : null;
-    if(S.privMeta){
+    if(S.privMeta && !S.key && tried !== S.privMeta.verifier){
+      tried = S.privMeta.verifier;
       const saved = await idbGet('key_' + S.user.uid).catch(()=>null);
       if(saved){
         try{ const v = await decObj(S.privMeta.verifier, saved); if(v === 'fitlife-ok'){ S.key = saved; startPrivListeners(); } }catch(e){ await idbSet('key_' + S.user.uid, undefined).catch(()=>{}); }
       }
     }
-  }catch(e){ S.privMeta = null; }
+    render();
+  }));
 }
 function startPrivListeners(){
   unsub(privSubs);
@@ -596,6 +619,9 @@ function startPrivListeners(){
   }
 }
 async function setupPass(pass){
+  // 念のためサーバーで確認：すでに合言葉があるなら作り直さない（上書きすると今までの記録が読めなくなる）
+  const cur = await getDocFromServer(doc(db,'privateMeta','key'));
+  if(cur.exists()){ S.privMeta = cur.data(); render(); throw new Error('合言葉はすでに設定されています。いつもの合言葉を入れてね'); }
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveKey(pass, salt, ITER);
   const meta = { salt:b64(salt), iter:ITER, verifier: await encObj('fitlife-ok', key) };
@@ -1722,6 +1748,7 @@ document.addEventListener('click', async e => {
         break;
       }
       case 'logout': await signOut(auth); break;
+      case 'reload': location.reload(); break;
       case 'resend': LOGIN.sent = false; renderLogin(); break;
       case 'pwreset': {
         const f = el.closest('form'), email = f.email.value.trim().toLowerCase();

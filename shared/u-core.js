@@ -129,182 +129,10 @@ U.applyTheme();
       }
     };
   }
-  /* ---------- 保存と同期の見張り（どのアプリも同じ仕組み・同じ表示） ----------
-    U.sync.on(関数)      … 状態が変わるたびに呼ぶ（すぐ1回呼ぶ）。返り値で止める
-    U.sync.view(同期済み) … 表示用の [種類 ok/busy/wait/err, 文字, 説明]
-    U.sync.retry()       … 保存できなかったものの保存し直し・読み込みのつなぎ直しを今すぐ行う
-    書き込み（set・update・delete・setMany）と読み込み（onSnapshot）は、すべてここを通る
-    ・書き込みが失敗したら、自動で保存し直す（同じ文書をあとから丸ごと書いたときは、古い失敗は捨てる）
-    ・読み込みが止まったら、自動でつなぎ直す（開き直さなくても戻る）
-    ・裏から戻ったとき・電波が戻ったときは、通信をつなぎ直して最新を取りにいく
-    ・端末内の保存場所が壊れたとき（iPhoneで長く裏にいたあとなど）は、未保存がなければ自動で開き直す */
-  const SY = (U.sync = { pend: new Map(), fails: new Map(), lerr: new Map(), fatal: null, online: navigator.onLine !== false, at: 0 });
-  const subs = new Set();
-  let emitQ = false;
-  const emit = () => {
-    if (emitQ) return;
-    emitQ = true;
-    queueMicrotask(() => {
-      emitQ = false;
-      subs.forEach(f => {
-        try {
-          f(SY);
-        } catch (e) {
-          console.warn(e);
-        }
-      });
-    });
-  };
-  SY.on = f => {
-    subs.add(f);
-    f(SY);
-    return () => subs.delete(f);
-  };
-  const hm = t => `${new Date(t).getHours()}:${String(new Date(t).getMinutes()).padStart(2, "0")}`;
-  const failDocs = () => new Set([...SY.fails.values()].map(w => w.path)).size;
-  SY.view = (synced = true) => {
-    if (SY.fatal) return ["err", "接続エラー", "画面を開き直してください"];
-    if (SY.fails.size) {
-      const perm = [...SY.fails.values()].find(w => w.perm);
-      return ["err", `未保存 ${failDocs()}件`, perm ? `保存できませんでした（${perm.code || "error"}）` : "自動で保存し直しています"];
-    }
-    if (SY.lerr.size) return ["err", "再接続中…", "読み込みが止まったので、自動でつなぎ直しています"];
-    if (SY.pend.size) return SY.online ? ["busy", "保存中…", ""] : ["busy", "オフライン", "電波が戻ったら自動で保存します"];
-    if (!SY.online) return ["wait", "オフライン", ""];
-    if (!synced) return ["wait", "同期中…", "最新のデータを読み込んでいます"];
-    return ["ok", "保存済み", SY.at ? `最後の保存 ${hm(SY.at)}` : ""];
-  };
-  /* 失敗の見分け：一時的なもの（電波など）は自動で保存し直す。端末内の保存場所が壊れたものは開き直す */
-  const TEMP = new Set(["unavailable", "deadline-exceeded", "aborted", "internal", "unknown", "cancelled", "resource-exhausted"]);
-  const BROKEN = /IndexedDB|INTERNAL ASSERTION|required state|refresh the (browser|page)|persistence layer/i;
-  const isBroken = e => !!e && BROKEN.test(String(e.message || e));
-  const RETRY_S = [3, 10, 30, 60, 120];
-  const RK = "u-reload:" + U.app.id;
-  function onBroken(e) {
-    console.warn("保存場所のエラー", e);
-    SY.fatal = e;
-    emit();
-    let last = 0;
-    try {
-      last = +sessionStorage.getItem(RK) || 0;
-    } catch (_) {}
-    /* 未保存がなく、画面を見ているときだけ自動で開き直す（2分に1回まで） */
-    if (!document.hidden && !SY.fails.size && Date.now() - last > 120000) {
-      try {
-        sessionStorage.setItem(RK, String(Date.now()));
-      } catch (_) {}
-      location.reload();
-      return;
-    }
-    let el = document.getElementById("u-syncerr");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "u-syncerr";
-      el.className = "u-syncerr";
-      el.setAttribute("role", "alert");
-      el.innerHTML = `<span>保存先との接続が切れました。開き直すと直ります。</span><button type="button">開き直す</button>`;
-      el.querySelector("button").onclick = () => location.reload();
-      document.body.appendChild(el);
-    }
-  }
-  /* 書き込み1回分。full＝文書を丸ごと書く（set・delete）。丸ごと書いたら、それより前の同じ文書の失敗は不要 */
-  let wseq = 0;
-  const lastFull = {};
-  function attempt(w) {
-    const tok = {};
-    SY.pend.set(tok, Date.now());
-    emit();
-    return w.run().then(
-      r => {
-        SY.pend.delete(tok);
-        SY.at = Date.now();
-        clearTimeout(w.t);
-        SY.fails.delete(w.id);
-        if (w.full)
-          SY.fails.forEach((f, k) => {
-            if (f.path === w.path && k < w.id) {
-              clearTimeout(f.t);
-              SY.fails.delete(k);
-            }
-          });
-        emit();
-        return r;
-      },
-      e => {
-        SY.pend.delete(tok);
-        if (w.full && lastFull[w.path] !== w.id) SY.fails.delete(w.id); // あとから丸ごと書いたので不要
-        else {
-          w.code = (e && e.code) || "error";
-          w.perm = !TEMP.has(w.code);
-          SY.fails.set(w.id, w);
-          if (isBroken(e)) onBroken(e);
-          else if (!w.perm && w.tries < RETRY_S.length) w.t = setTimeout(() => retryOne(w), RETRY_S[w.tries++] * 1000);
-          console.warn("保存できませんでした", w.path, e);
-        }
-        emit();
-        throw e;
-      },
-    );
-  }
-  function retryOne(w) {
-    if (!SY.fails.has(w.id)) return;
-    clearTimeout(w.t);
-    attempt(w).catch(() => {});
-  }
-  function track(path, full, run) {
-    const w = { id: ++wseq, path, full, run, tries: 0 };
-    if (full) lastFull[path] = w.id;
-    return attempt(w);
-  }
-  /* 読み込み（onSnapshot）を見張る。止まったら少し待ってつなぎ直す */
-  const lsn = new Set();
-  function listen(make, cb, err) {
-    const L = { off: null, t: 0, n: 0, dead: false };
-    L.start = () => {
-      clearTimeout(L.t);
-      if (L.dead) return;
-      try {
-        L.off && L.off();
-      } catch (_) {}
-      L.off = make(
-        s => {
-          L.n = 0;
-          if (SY.lerr.delete(L)) emit();
-          cb(s);
-        },
-        e => {
-          L.off = null;
-          SY.lerr.set(L, e);
-          emit();
-          console.warn("読み込みが止まりました", e);
-          if (err) err(e);
-          if (isBroken(e)) onBroken(e);
-          L.t = setTimeout(L.start, [2, 5, 15, 30, 60][Math.min(L.n++, 4)] * 1000);
-        },
-      );
-    };
-    lsn.add(L);
-    L.start();
-    return () => {
-      L.dead = true;
-      clearTimeout(L.t);
-      lsn.delete(L);
-      if (SY.lerr.delete(L)) emit();
-      try {
-        L.off && L.off();
-      } catch (_) {}
-    };
-  }
-  /* 今すぐやり直す：止まった読み込みをつなぎ直し、保存できなかったものを保存し直す（all＝あきらめたものも） */
-  function redo(all) {
-    lsn.forEach(L => SY.lerr.has(L) && L.start());
-    SY.fails.forEach(w => (all || !w.perm) && ((w.tries = Math.min(w.tries, RETRY_S.length - 1)), retryOne(w)));
-  }
-  let kick = () => {};
-  SY.retry = () => {
-    kick(true);
-    redo(true);
-  };
+  /* ---------- 保存と同期の見張り：共通の shared/u-sync.js（4アプリ共通）。U.sync は USync と同じもの ---------- */
+  const SY = (U.sync = window.USync);
+  const { track, listen } = SY;
+  const wid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   async function fbStore() {
     const base = `https://www.gstatic.com/firebasejs/${U.FB_VER}/`;
@@ -340,39 +168,8 @@ U.applyTheme();
     });
     document.getElementById("u-login")?.remove();
 
-    /* 通信のつなぎ直し：一度切って、すぐつなぐ（iPhoneで裏から戻ったとき、切れた通信を待たずに済む） */
-    let kickAt = 0;
-    kick = async force => {
-      if (!force && Date.now() - kickAt < 15000) return;
-      kickAt = Date.now();
-      try {
-        await F.disableNetwork(fs);
-      } catch (_) {}
-      try {
-        await F.enableNetwork(fs);
-      } catch (_) {}
-    };
-    let hiddenAt = 0;
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) return void (hiddenAt = Date.now());
-      if (hiddenAt && Date.now() - hiddenAt > 20000) kick();
-      redo(false);
-    });
-    addEventListener("online", () => {
-      SY.online = true;
-      emit();
-      F.enableNetwork(fs).catch(() => {});
-      redo(false);
-    });
-    addEventListener("offline", () => {
-      SY.online = false;
-      emit();
-    });
-    /* 電波はあるのに保存が20秒以上終わらないときも、つなぎ直す */
-    setInterval(() => {
-      if (document.hidden || !SY.online || !SY.pend.size) return;
-      if (Date.now() - Math.min(...SY.pend.values()) > 20000) kick();
-    }, 10000);
+    /* 裏から戻ったとき・電波が戻ったときのつなぎ直しなどを取り付ける */
+    SY.attach(F, fs, { id: U.app.id });
 
     const root = U.app.root ? U.app.root(user.uid) : `users/${user.uid}`;
     const snap = d => ({ id: d.id, exists: d.exists(), data: () => d.data() });
@@ -407,7 +204,7 @@ U.applyTheme();
       doc,
       /* まとめ書き：[[パス, 中身], …] を1回の通信で書く（取り込み用。1回に500件まで） */
       setMany: list =>
-        track(`batch-${wseq + 1}`, false, () => {
+        track(`batch-${wid()}`, false, () => {
           const b = F.writeBatch(fs);
           list.forEach(([path, data]) => b.set(F.doc(fs, `${root}/${path}`), data));
           return b.commit();
