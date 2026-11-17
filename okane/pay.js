@@ -23,7 +23,6 @@
     accounts: {}, // 口座 {口座ID: 口座}（クラウドの accounts/）
     months: {}, // 支払 {"YYYY-MM": {items: [...]}}（クラウドの months/）
     cfg: { methods: ["口座引落", "振込", "カード"], income: 0, payday: DEFAULT_PAYDAY }, // 設定（config/master）
-    ai: null, // AIの分析結果（config/ai）
     sched: {}, // 口座ごとの返済予定表（描画のたびに計算し直す）
     _base: null, // 「もしも」の比べる元（データが変わったら捨てる）
     view: "none", // home / balance（家計簿の画面を開いているときは none）
@@ -31,9 +30,6 @@
     sim: { extra: 0, strat: "rate" }, // 「毎月あと少し返せたら」
     ad: null, // 開いている口座の画面 {id, tab, from, val, pp}
     fold: {}, // 折りたたみの開閉
-    aiBusy: false,
-    aiOff: false, // AIが使えない環境
-    aiErr: null,
     db: null,
     dbFail: false,
     loaded: { a: false, m: false },
@@ -130,16 +126,6 @@
   const amtOf = i => (i.status === "paid" ? (i.paidAmount ?? i.amount) : i.amount) || 0;
   const byDateAmt = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : amtOf(b) - amtOf(a));
   const incomeOf = p => S.cfg.incomeBy?.[p] ?? S.cfg.income ?? 0;
-  function lateCount(aid) {
-    const from = ds(new Date(new Date().getFullYear() - 1, new Date().getMonth(), new Date().getDate()));
-    return allItems().filter(
-      i =>
-        i.accountId === aid &&
-        i.date >= from &&
-        i.date <= today() &&
-        (i.status === "deferred" || (i.kind === "late" && !i.origin)),
-    ).length;
-  }
   const typeLabel = a =>
     a.repayType === "principal"
       ? `元金定額 ${yen(a.principalPay)}＋利息`
@@ -598,61 +584,6 @@
     return { m, a };
   }
 
-  /* ---------- AIに渡すデータ ---------- */
-  function aiPayload() {
-    const d = outlookData();
-    const st = periodStats(periodOf(today()));
-    const inc = incomeOf(st.p);
-    const fixed = accList()
-      .filter(a => a.active !== false && a.category !== "personal" && !isDebt(a) && (a.payment || a.extra))
-      .map(a => ({ name: a.name, monthly: a.payment || a.extra }));
-    return {
-      today: today(),
-      income_monthly_takehome: inc,
-      this_period: {
-        range: `${st.s}〜${st.e}`,
-        total_due: st.t,
-        paid: st.paid,
-        unpaid: st.unpaid,
-        late_items_amount: st.late,
-        moved_to_next_month: st.def,
-        cash_spending: cashOf(st.p),
-        left_after_payments: inc - st.t - cashOf(st.p),
-      },
-      total_balance: d.now,
-      monthly_repayment_total: d.curPay,
-      monthly_interest_total: d.curInt,
-      balance_in_12_months: d.y1,
-      balance_marks: d.marks.map(m => ({ months_from_now: m.k, month: m.ym, balance: m.bal })),
-      all_paid_off: d.last ? d.last.end : null,
-      accounts: d.rows.map(x => ({
-        name: x.a.name,
-        type: CAT[x.a.category]?.l,
-        balance: x.a.balance,
-        annual_rate_pct: x.a.rate,
-        repay: x.a.repayType === "principal" ? `元金定額${x.a.principalPay}円＋利息` : `元利定額${x.a.payment}円`,
-        extra_charges_monthly: x.a.extra || 0,
-        next_payment: x.pay,
-        next_interest: x.int,
-        payoff: x.end,
-        months_left: x.months,
-        interest_not_covered: x.stalled && !x.end,
-        late_count_past_year: lateCount(x.a.id),
-        limit: x.a.limit || null,
-      })),
-      other_fixed_payments: fixed,
-    };
-  }
-  const aiHash = o => {
-    const t = JSON.stringify({
-      ...o,
-      today: undefined,
-      this_period: { ...o.this_period, paid: undefined, unpaid: undefined },
-    });
-    let h = 0;
-    for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
-    return String(h);
-  };
   /* ===================== 保存 =====================
     保存中・未保存・自動での保存し直しは共通の U.sync（u-core.js）が見張る。表示も家計簿・エンタメ管理と同じ */
   const SV_CLS = { ok: "ok", busy: "busy", wait: "wait", err: "err" };
@@ -714,11 +645,6 @@
   }
   function saveCfg() {
     return guard(() => S.db.doc("config/master").set({ ...S.cfg }));
-  }
-  function saveAI(o) {
-    S.ai = FIN.ai = o;
-    if (S.view === "balance") renderAILink();
-    return S.db ? guard(() => S.db.doc("config/ai").set(o)) : Promise.resolve(false);
   }
   function saveFold() {
     try {
@@ -1002,12 +928,11 @@
     });
   }
 
-  /* ---------- 残高と計画：完済の見通し・AI ---------- */
+  /* ---------- 残高と計画：完済の見通し ---------- */
   function renderOutlook() {
     const d = outlookData();
     if (!d.rows.length) {
       $("olTop").innerHTML = `<div class="empty">返済中の口座はありません</div>`;
-      $("aiBox").innerHTML = "";
       return;
     }
     const stall = d.rows.filter(x => x.stalled && !x.end);
@@ -1023,13 +948,6 @@
           `<div class="ms"><span>${esc(x.a.name)}<span class="note">　残り ${man(x.a.balance)}</span></span><span class="when">${ymLabel(x.end)}・あと${x.months}ヶ月</span></div>`,
       )
       .join("")}</div>`;
-    renderAILink();
-  }
-  /* AI分析への案内（結果は「AI分析」の画面に出す） */
-  function renderAILink() {
-    const r = FIN.ai && (FIN.ai.data || FIN.ai.result);
-    $("aiBox").innerHTML =
-      `<div class="ai-link"><p>${r && r.headline ? esc(r.headline) : "生活費と返済をまとめて、AIが減らせそうな支出と完済を早める打ち手を提案します。"}</p><button class="sm primary" data-goto="ai">AI分析を見る</button></div>`;
   }
   /* ---------- 残高と計画：返済の計画 ---------- */
   function renderPlan() {
@@ -2208,7 +2126,7 @@
     await saveMonth(ym);
   }
 
-  /* ---------- 手取り・AI・折りたたみ ---------- */
+  /* ---------- 手取り・折りたたみ ---------- */
   function openIncome(p) {
     const cur = S.cfg.incomeBy?.[p];
     openSheet(
@@ -2501,9 +2419,6 @@
       S.period = v;
       render();
     },
-    aiData: aiPayload, // AI分析に渡す返済のデータ
-    aiHash,
-    saveAI,
     paintSave,
     months: () => Object.keys(S.months), // 月度の選択肢に入れる月
     ready: () => !!S.db && S.loaded.m,
@@ -2512,7 +2427,7 @@
   /* ===================== 起動 ===================== */
   S.fold = loadFold();
   paintSave();
-  /* クラウドに接続して、口座・支払・設定・AIの結果を読み込む（他の端末の変更もここで届く） */
+  /* クラウドに接続して、口座・支払・設定を読み込む（他の端末の変更もここで届く） */
   (async () => {
     const { db } = await U.store();
     if (!db) {
@@ -2530,7 +2445,6 @@
         S.accounts = o;
         S._base = null;
         render();
-        FIN.kb.renderAI && FIN.kb.renderAI();
       },
       () => status("口座データを読み込めませんでした。", true),
     );
@@ -2548,13 +2462,6 @@
       },
       () => status("支払データを読み込めませんでした。", true),
     );
-    db.doc("config/ai").onSnapshot(s => {
-      if (s.exists) {
-        S.ai = FIN.ai = s.data();
-        if (S.view === "balance") renderAILink();
-        FIN.kb.renderAI && FIN.kb.renderAI();
-      }
-    });
     db.doc("config/master").onSnapshot(s => {
       if (s.exists) {
         const c = s.data();

@@ -19,7 +19,7 @@ body.sel{--u-toast-b:180px}
 .pay{font-family:var(--u-f);font-size:14px;line-height:1.6;color:var(--u-ink)}
 @media (max-width:899px){body{}}
 /* 画面の切り替え：body の data-tab で出し分ける */
-body:not([data-tab="list"]) #v-list,body:not([data-tab="graph"]) #v-graph,body:not([data-tab="ai"]) #v-ai,
+body:not([data-tab="list"]) #v-list,body:not([data-tab="graph"]) #v-graph,
 body:not([data-tab="home"]) #v-home,body:not([data-tab="balance"]) #v-balance{display:none}
 body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 
@@ -96,7 +96,7 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb .rv{border:1px solid var(--u-line);border-radius:12px;margin:8px 0;display:grid;grid-template-columns:1fr 1fr}
 .kb .rv .full{grid-column:1/-1}
 .kb .rv>*{min-width:0}
-.kb .rv.dup{border-color:var(--u-danger)}
+
 .kb .rv label{display:block;font-size:12px;color:var(--u-sub)}
 .kb .warn{color:var(--u-danger);font-size:12px}
 /* 直近のメモ候補 */
@@ -246,17 +246,9 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .wdr .wd.sat{color:var(--u-acct)}
 
 /* ===== AI分析 ===== */
-.kb .aictl{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;margin:12px 0 4px}
-.kb .aiwait{display:flex;align-items:center;gap:10px;padding:18px 0;color:var(--u-sub)}
-.kb .aiwait i{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--u-strong);border-top-color:var(--u-accent);animation:spin .9s linear infinite}
+
 @keyframes spin{to{transform:rotate(360deg)}}
-.kb .aihero{background:var(--u-accent2);border-radius:var(--u-rl);padding:16px;margin:12px 0}
-.kb .aihero .k{font-size:12px;font-weight:700;color:var(--u-acct)}
-.kb .aihero .v{font-family:var(--u-num);font-size:30px;font-weight:600;line-height:1.2;margin:2px 0 6px}
-.kb .aihero .unit{font-size:14px;font-family:var(--u-f);font-weight:700}
-.kb .aihero p{margin:0;line-height:1.7}
-.kb .aih{font-size:15px;font-weight:800;margin:18px 0 8px}
-.kb .svgrid{display:grid;gap:10px}
+
 .kb .sv{border:1px solid var(--u-line);border-radius:var(--u-rl);padding:14px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
 .kb .sv .t{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
 .kb .sv .t b{font-size:15px}
@@ -264,10 +256,6 @@ body.sel .kb .layout{padding-bottom:190px}
 .kb .sv .save{font-family:var(--u-num);font-weight:600;font-size:14px;color:var(--u-ok);background:var(--u-ok2);border-radius:999px;padding:2px 10px;white-space:nowrap}
 .kb .sv p{margin:6px 0;font-size:13.5px;line-height:1.7;color:var(--u-ink)}
 .kb .sv ul{margin:6px 0 0;padding-left:1.2em;font-size:13.5px;line-height:1.7}
-.kb .conf{font-size:11px;font-weight:700;color:var(--u-sub);border:1px solid var(--u-line);border-radius:999px;padding:0 8px}
-.kb .ail{display:grid;gap:8px}
-.kb .ail div{background:var(--u-bg);border-radius:var(--u-r);padding:10px 12px;font-size:13.5px;line-height:1.7}
-.kb .ail b{display:block;font-size:14px}
 
 /* ===== 設定：分類ルール ===== */
 .kb .ptitle{font-size:17px}
@@ -322,10 +310,7 @@ body.sel .kb .layout{padding-bottom:190px}
   /* 選択バー・通知・トップへは下部メニューの上に浮かせる */
   .kb #selbar:not([hidden]){left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));padding:10px 12px;border:1px solid var(--u-line);border-radius:18px}
 }
-@media (max-width:599px){
-  .kb .aictl{grid-template-columns:1fr auto}
-  .kb .aictl #aigoal{grid-column:1/-1;grid-row:2}
-}
+
 @media (max-width:440px){
   .kb .brand .u-mark{display:none}
   .kb button.mcur{padding:0 9px}
@@ -336,19 +321,15 @@ body.sel .kb .layout{padding-bottom:190px}
   .kb .brand{margin-right:12px}
   
   .kb #v-list{max-width:780px;margin:0 auto}
-  .kb #v-graph,.kb #v-ai{padding:22px 24px}
+  .kb #v-graph{padding:22px 24px}
   .kb .gctl{grid-template-columns:200px 200px minmax(0,320px)}
   .kb .gctl #gsel{grid-column:auto}
   .kb .gbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:28px;align-items:start}
   .kb .gbody .chart{height:240px}
-  .kb .svgrid{grid-template-columns:1fr 1fr}
+  
 }
 
 /* 動きを減らす設定のとき */
-@media (prefers-reduced-motion:reduce){
-  
-  .kb .aiwait i{animation:none}
-}
 
 /* ===================== 支払管理の部品 ===================== */
 /* ===== 3アプリ共通：色・書体・角丸。アクセント色だけアプリごとに変える ===== */
@@ -575,18 +556,6 @@ body.sel .kb .layout{padding-bottom:190px}
 .pay .ol-next{padding:8px 16px 12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--u-soft)}
 .pay .ms{display:flex;justify-content:space-between;gap:8px;font-size:13px}
 .pay .ms .when{font-family:var(--u-num);color:var(--u-sub);white-space:nowrap}
-.pay .ai{border-top:1px solid var(--u-soft);background:linear-gradient(180deg,var(--u-accent2),transparent 140px)}
-
-.pay .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:6px}
-.pay .ai-tl li{display:flex;flex-direction:column;font-size:13px;line-height:1.6;position:relative}
-.pay .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
-.pay .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-acct)}
-
-.pay .ai-n{width:22px;height:22px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:12px;font-weight:900;font-family:var(--u-num)}
-
-.pay .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px}
-
-.pay .ai-cheer{margin:0;font-size:13px;font-weight:700;color:var(--u-acct)}
 
 @media (prefers-reduced-motion:no-preference){@keyframes aiw{40%{opacity:1;transform:translateY(-3px)}}}
 
@@ -875,18 +844,8 @@ body.sel .kb .totop{opacity:0;transform:translateY(10px);pointer-events:none}
 .kb #pmsg:empty{display:none}
 
 /* AI分析：生活費と返済をまとめた結果 */
-.kb .ai-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--u-accent);display:flex;flex-direction:column;gap:8px}
-.kb .ai-tl li{display:flex;flex-direction:column;font-size:13.5px;line-height:1.6;position:relative}
-.kb .ai-tl li::before{content:"";position:absolute;left:-20px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--u-surface);border:2px solid var(--u-accent)}
-.kb .ai-tl b{font-family:var(--u-num);font-size:12px;color:var(--u-acct)}
-.kb .ai-n{width:30px;height:30px;border-radius:50%;background:var(--u-accent);color:var(--u-on);display:grid;place-items:center;font-size:14px;font-weight:900;font-family:var(--u-num)}
-.kb .ai-eff{display:inline-block;font-size:12px;font-weight:700;color:var(--u-ok);background:var(--u-ok2);padding:2px 8px;border-radius:6px;margin-top:6px}
-.kb .ai-cheer{margin:14px 0 0;font-size:14px;font-weight:700;color:var(--u-acct)}
-.kb .aistale{color:var(--u-warn);font-weight:700}
 
 /* 残高と計画：AI分析への案内 */
-.pay .ai-link{display:flex;align-items:center;gap:10px;padding:12px 16px;border-top:1px solid var(--u-soft);flex-wrap:wrap}
-.pay .ai-link p{margin:0;flex:1;min-width:0;font-size:13px;font-weight:700;line-height:1.5}
 
 /* ヘッダー：月度の名前が少し長いので、狭い画面では文字を小さくして1行に収める */
 .kb .brand{white-space:nowrap;flex:none}
@@ -899,8 +858,8 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
 @media (max-width:899px){
   /* 下のメニュー（3つ）と、その横の設定ボタン。エンタメ管理と同じ形 */
   /* 分析の中の切り替え */
-  body[data-tab="graph"] .kb .anseg-w,body[data-tab="balance"] .kb .anseg-w,body[data-tab="ai"] .kb .anseg-w{display:block;padding-top:12px}
-  body[data-tab="graph"] .kb .layout,body[data-tab="ai"] .kb .layout{padding-top:12px}
+  body[data-tab="graph"] .kb .anseg-w,body[data-tab="balance"] .kb .anseg-w{display:block;padding-top:12px}
+  body[data-tab="graph"] .kb .layout{padding-top:12px}
   .kb .anseg{display:flex;gap:2px;background:var(--u-chip);border-radius:var(--u-r);padding:3px}
   .kb .anseg button{flex:1;border:0;background:none;color:var(--u-sub);padding:8px 4px;border-radius:8px;font-size:14px;font-weight:700;white-space:nowrap}
   .kb .anseg button[aria-current="page"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
@@ -994,16 +953,16 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .pnote{font-size:15px}
   .kb .pnote .dl{font-size:15px}
   .kb .wdr{font-size:14px}
-  .kb .aihero .k{font-size:13.5px}
-  .kb .aihero .unit{font-size:16px}
-  .kb .aih{font-size:17px}
+  
+  
+  
   .kb .sv .t b{font-size:17px}
   .kb .sv .save{font-size:16px}
   .kb .sv p{font-size:15.5px}
   .kb .sv ul{font-size:15.5px}
-  .kb .conf{font-size:12.5px}
-  .kb .ail div{font-size:15.5px}
-  .kb .ail b{font-size:16px}
+  
+  
+  
   .kb .ptitle{font-size:19.5px}
   .kb .kind{font-size:12.5px}
   .kb .rdesc{font-size:16px}
@@ -1071,14 +1030,14 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   
   
   
-  .pay .ai-tl li{font-size:15px}
-  .pay .ai-tl b{font-size:13.5px}
-  .pay .ai-n{font-size:13.5px}
   
   
-  .pay .ai-eff{font-size:13.5px}
   
-  .pay .ai-cheer{font-size:15px}
+  
+  
+  
+  
+  
   
   .pay .acc .ac-n b{font-size:16px}
   .pay .acc .ac-b{font-size:17px}
@@ -1119,12 +1078,12 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .tabbar button{font-size:12px}
   .kb .pmr .mi{font-size:12.5px}
   .kb .pmr .mv{font-size:17px}
-  .kb .ai-tl li{font-size:15.5px}
-  .kb .ai-tl b{font-size:13.5px}
-  .kb .ai-n{font-size:16px}
-  .kb .ai-eff{font-size:13.5px}
-  .kb .ai-cheer{font-size:16px}
-  .pay .ai-link p{font-size:15px}
+  
+  
+  
+  
+  
+  
   .kb input[type=month]{font-size:18px}
   .pay .pbox .prange b{font-size:17px}
   .pay .pbox .stat .v{font-size:27.5px}
@@ -1173,12 +1132,10 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .u-app .sb-st{font-size:11.5px;padding:4px 10px}
 }
 
-/* ===================== 見やすさの改善（2026-11） ===================== */
-/* ----- 家計簿：追加前の確認・明細の編集フォーム（スマホ・PC共通） -----
+/* ===================== 見やすさの改善（2026-11） ===================== *//* ----- 家計簿：追加前の確認・明細の編集フォーム（スマホ・PC共通） -----
   ・入力欄は白地＋はっきりした枠線。各欄の上に見出し
   ・確認エリアは青い枠で囲み、入力中だとわかるようにする */
-.kb #review:not(:empty){background:var(--u-surface);border:1.5px solid var(--u-accent);border-radius:var(--u-rl);padding:12px 14px 14px;margin-top:10px;box-shadow:0 4px 16px rgba(47,111,237,.10)}
-.kb #review .rvh b{font-size:15px;color:var(--u-acct)}
+
 .kb .rv{background:var(--u-surface);gap:10px;padding:12px}
 .kb .rv label.fl{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--u-sub);min-width:0}
 .kb .rv .fl input,.kb .rv .fl select{background:var(--u-surface);border:1px solid var(--u-strong);min-height:44px;font-weight:500}
@@ -1189,7 +1146,6 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
 .kb .rv .mcs{margin-bottom:0}
 .kb .yen input::-webkit-outer-spin-button,.kb .yen input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .kb .yen input{-moz-appearance:textfield;appearance:textfield}
-.kb #review #ok{margin-top:4px;min-height:48px;font-size:16px}
 
 /* ----- 支払い：追加・編集の画面の入力欄も同じ見た目に ----- */
 .pay .sheet input:not([type=checkbox]):not([type=range]):not([type=radio]),.pay .sheet select,.pay .sheet textarea{background:var(--u-surface);border-color:var(--u-strong)}
@@ -1221,7 +1177,7 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb #v-list>.card{grid-column:1;grid-row:1;margin:0}
   .kb .kbside{grid-column:2;grid-row:1;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--abh) + 14px);max-height:calc(100vh - var(--abh) - 28px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:12px}
   .kb .kbside>*{margin:0;flex-shrink:0}
-  .kb .kbside #review:not(:empty){box-shadow:none}
+  
   .kb .kbside .total{font-size:30px}
   .kb .kbside .kpis b{font-size:15px}
 
@@ -1368,7 +1324,9 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
   .u-app .sb .sb-add:hover{filter:brightness(1.04)}
 }
 /* 明細の追加カード：追加中の行やメッセージがないときは出さない */
-.kb .addcard:has(#msg:empty):has(#review:empty){display:none}
+.kb .addcard:has(#msg:empty){display:none}
+/* 追加のカードは枠なし（メッセージだけ出す） */
+html .kb .addcard{background:none;border:0;box-shadow:none;padding:0}
 
 /* ---------- 絞り込み：ボタン・件数・条件のラベル ---------- */
 .fline{display:flex;align-items:center;gap:10px;min-width:0}

@@ -10,13 +10,6 @@
 <meta name="apple-mobile-web-app-title" content="おかね手帳">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="robots" content="noindex,nofollow">
-<script>document.documentElement.classList.add("noai");try{["okane.an","kakeibo.tab"].forEach(function(k){if(localStorage.getItem(k)==="ai")localStorage.setItem(k,"graph")})}catch(e){}</script>
-<style>/* 単独版ではClaudeのAI機能（スクショ読み取り・AI分析）を使えないので隠す */html.noai [data-tab="ai"],html.noai #shot,html.noai #file+.mu,html.noai #aiBox,html.noai #v-ai{display:none!important}
-/* 単独版：追加ボタンだけになるので、枠をなくして横いっぱいのボタンにする */
-.noai-only{display:none}html.noai .ai-only{display:none}html.noai .noai-only{display:inline}
-html.noai .kb .addcard{background:none;border:0;box-shadow:none;padding:0}
-html.noai .kb .addcard #manual{width:100%;height:46px;background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on);font-size:15px;font-weight:700}
-html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:none}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <link rel="stylesheet" href="../shared/u-base.css">
@@ -28,7 +21,7 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
   <div class="sb-sec lbl">メニュー</div>
   <div class="sbp"><div class="sb-row"><button type="button" class="sb-it" data-tab="list" title="家計簿"><i aria-hidden="true" class="mic list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h11l3 3v15H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></i><span class="lbl">家計簿</span></button></div></div>
   <div class="sbp"><div class="sb-row"><button type="button" class="sb-it" data-tab="home" title="支払い"><i aria-hidden="true" class="mic home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg></i><span class="lbl">支払い</span></button></div></div>
-  <div class="sbp" id="sbpan"><div class="sb-row"><button type="button" class="sb-it" data-tab="an" title="分析"><i aria-hidden="true" class="mic an"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></svg></i><span class="lbl">分析</span></button><button type="button" class="sb-fold lbl" id="anfold" aria-expanded="true" aria-label="分析の項目をたたむ"><svg class="fic" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="sb-sub"><button type="button" class="sb-it" data-tab="graph">グラフ</button><button type="button" class="sb-it" data-tab="balance">残高と計画</button><button type="button" class="sb-it" data-tab="ai">AI分析</button></div></div>
+  <div class="sbp" id="sbpan"><div class="sb-row"><button type="button" class="sb-it" data-tab="an" title="分析"><i aria-hidden="true" class="mic an"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10"/></svg></i><span class="lbl">分析</span></button><button type="button" class="sb-fold lbl" id="anfold" aria-expanded="true" aria-label="分析の項目をたたむ"><svg class="fic" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="sb-sub"><button type="button" class="sb-it" data-tab="graph">グラフ</button><button type="button" class="sb-it" data-tab="balance">残高と計画</button></div></div>
   <div class="sb-foot"><button type="button" class="sb-it" id="sbgear" title="設定"><i aria-hidden="true" class="mic gear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span class="lbl">設定</span></button><div class="sb-st"><span id="sbSave" class="savest wait">接続中…</span></div></div>
 </aside>
 <header class="appbar"><div class="wrap abin">
@@ -44,14 +37,13 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
   <div class="mnav"><button class="ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="ib" id="mnext" aria-label="次の月度">›</button></div>
 </div>
 
-<div class="wrap anseg-w"><nav class="anseg" aria-label="分析の画面"><button data-tab="graph">グラフ</button><button data-tab="balance">残高と計画</button><button data-tab="ai">AI分析</button></nav></div>
+<div class="wrap anseg-w"><nav class="anseg" aria-label="分析の画面"><button data-tab="graph">グラフ</button><button data-tab="balance">残高と計画</button></nav></div>
 <div class="wrap layout">
   <section class="view" id="v-list">
     <div class="kbside">
     <div class="card sum" id="summary"></div>
     <div class="card addcard">
       <div id="msg" class="mu"></div>
-      <div id="review"></div>
     </div>
     </div>
     <div class="card">
@@ -68,12 +60,6 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
       <div class="gctl"><select id="gby" aria-label="集計の単位"><option value="category">分類別</option><option value="method">支払い方法別</option></select><select id="gper" aria-label="期間"><option value="cur">当月</option><option value="3" selected>直近3か月</option><option value="6">直近6か月</option><option value="12">直近12か月</option><option value="all">全期間</option></select><select id="gsel" aria-label="項目"></select></div>
       <div class="gbody"><div id="gavg"></div><div><div id="gtrend"></div><div id="gdet"></div><div id="gpace"></div><div id="gwd"></div></div></div>
     </section>
-  <section class="view card" id="v-ai">
-    <div class="sh"><b>AI分析</b><span class="mu" id="aimeta"></span></div>
-    <div class="mu">明細（生活費）と返済の状況をまとめて、Claudeが減らせそうな支出と、完済を早める打ち手を具体的な金額つきで提案します。表示中の月度までの期間を分析し、あなたのClaudeの利用枠を使います。結果はアカウントに保存され、ほかの端末でも見られます。</div>
-    <div class="aictl"><select id="aiper" aria-label="分析する期間"><option value="3">直近3か月度</option><option value="6" selected>直近6か月度</option><option value="12">直近12か月度</option></select><input type="text" id="aigoal" placeholder="目標（任意）例: 月2万円減らしたい"><button class="pri" id="airun">分析する</button></div>
-    <div id="aiout"></div>
-  </section>
 </div>
 </div>
 
@@ -110,7 +96,6 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
     <div class="panel outlook" data-foldbox="outlook">
       <div class="panel-h fold-h" data-fold="outlook" role="button" tabindex="0"><h2>完済の見通し</h2><span class="note">いまの返済条件のまま</span></div>
       <div id="olTop"></div>
-      <div class="ai" id="aiBox"></div>
     </div>
     <div class="grp-h"><h2>口座</h2></div>
     <div class="note acc-hint">口座を押すと、履歴・今後の予定・その口座の返済計画が見られます。</div>
@@ -223,17 +208,15 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
       <div class="setgrp setform"><div class="pgen"><input type="month" id="mGenMonth" aria-label="作成する月"><button class="pri" id="mGen">支払予定を作成</button></div></div></div>
     <div id="pmsg" class="mu"></div>
   </div>
-  <div id="st-move" hidden><div id="okMove"></div></div>
   </div>
 </div>
 </div>
-<script>window.U_APP={id:"okane",user:true,fb:{"apiKey": "AIzaSyCTyub7aHKuwtjqahlCxU5Tji4D0ydz570", "authDomain": "apps-78dd3.firebaseapp.com", "projectId": "apps-78dd3", "storageBucket": "apps-78dd3.firebasestorage.app", "messagingSenderId": "593145768210", "appId": "1:593145768210:web:1269b3e88b34d825746bcb"},root:u=>"users/"+u+"/apps/okane"}</script>
+<script>window.U_APP={id:"okane",fb:{"apiKey": "AIzaSyCTyub7aHKuwtjqahlCxU5Tji4D0ydz570", "authDomain": "apps-78dd3.firebaseapp.com", "projectId": "apps-78dd3", "storageBucket": "apps-78dd3.firebasestorage.app", "messagingSenderId": "593145768210", "appId": "1:593145768210:web:1269b3e88b34d825746bcb"},root:u=>"users/"+u+"/apps/okane"}</script>
 <script src="../shared/u-core.js?v=4"></script>
 <script src="../shared/u-ui.js"></script>
 <script src="ui.js"></script>
 <script src="fin.js"></script>
 <script src="pay.js"></script>
 <script src="kb.js"></script>
-<script src="move.js"></script>
 <script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(function(){});</script>
 </body></html>

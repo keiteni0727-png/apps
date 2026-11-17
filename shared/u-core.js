@@ -1,19 +1,18 @@
 /* ===================== 共通の土台（動作）：おかね手帳・エンタメ管理で同じファイルを使う =====================
   アプリごとの設定は、このファイルより前に window.U_APP で渡す
     id   … アプリの名前（"okane" / "entame"）
-    user … 利用者のIDを使うアプリは true（claude.ai で本人だけの保存場所 data/users/<id> を使うとき）
-    fb   … Firebase の設定（firebaseConfig）。claude.ai の外で動かすときだけ入れる。無ければ null
+    fb   … Firebase の設定（firebaseConfig）
     root … Firebase での保存場所。uid を受け取ってパスを返す関数（省略時は users/<uid>）
   U.esc(文字) … HTMLに入れる文字をエスケープ
   U.ls.get(キー) / U.ls.set(キー, 値) … 端末に覚える小さな設定（localStorage）
   U.copy(文字) … クリップボードにコピー（できたら true）
   U.toast(文, { html, undo, ms }) … 画面の下に短く通知
-  U.store() … 保存先につなぐ。何度呼んでも接続は1回だけ
+  U.store() … 保存先（Firebase）につなぐ。ログインしていなければログイン画面を出す。何度呼んでも接続は1回だけ
     返り値 { kind, db, uid, logout }
-      kind … "db"＝claude.ai の保存先 / "fb"＝Firebase / "none"＝つながらない（この端末だけ）
-      db   … doc(path) と collection(path) を持つ。どちらの保存先でも同じ書き方で使える
-      uid  … 利用者のID（取れないときは null） */
-const U = { app: Object.assign({ id: "app", user: false, fb: null, root: null }, window.U_APP || {}), FB_VER: "12.15.0" };
+      kind … "fb"＝Firebase / "none"＝つながらない
+      db   … doc(path) と collection(path) を持つ
+      uid  … 利用者のID（つながらないときは null） */
+const U = { app: Object.assign({ id: "app", fb: null, root: null }, window.U_APP || {}), FB_VER: "12.15.0" };
 /* ---------- 表示（ライト／ダーク）：auto＝端末に合わせる。アプリごと・端末ごとに覚える ----------
    開いた瞬間に白く光らないよう、各アプリの index.html の head でも同じ処理を先に行う */
 U.THEME_KEY = "u-theme:" + U.app.id;
@@ -96,18 +95,7 @@ U.applyTheme();
     }
   };
 
-  /* ---------- claude.ai の保存先 ---------- */
-  async function claudeStore() {
-    /* 利用者のIDは、使うアプリ（U_APP.user が true）だけ取りにいく */
-    const [user, db] = await Promise.all([U.app.user ? claude.use("user").catch(() => null) : null, claude.use("db")]);
-    let uid = null;
-    try {
-      uid = user ? await user.id() : null;
-    } catch (e) {}
-    return { kind: db ? "db" : "none", db: db || null, uid: uid || null, logout: null };
-  }
-
-  /* ---------- Firebase（自分のホスティングで動かすとき） ---------- */
+  /* ---------- Firebase ---------- */
   /* ログイン画面：Googleでログインのみ。ポップアップが使えないとき（ホーム画面から開いたとき等）は画面を切り替えてログイン */
   function loginForm(auth, mod, msg) {
     let host = document.getElementById("u-login");
@@ -495,7 +483,6 @@ U.applyTheme();
     conn ||
     (conn = (async () => {
       try {
-        if (window.claude?.use) return await claudeStore();
         if (U.app.fb) return await fbStore();
       } catch (e) {
         return { kind: "none", db: null, uid: null, logout: null, error: e };

@@ -17,7 +17,7 @@ const KTAB = "kakeibo.tab"; // 最後に開いた画面（文字列のまま保�
 const KAN = "okane.an"; // 分析の中で最後に開いた画面
 const KSBC = "okane.sbc"; // PC の左メニューを折りたたんでいるか
 const KANF = "okane.anfold"; // 左メニューの「分析」の項目をたたんでいるか
-const AN = ["graph", "balance", "ai"]; // 分析にまとめた画面
+const AN = ["graph", "balance"]; // 分析にまとめた画面
 
 /* ---------- 決まった数字 ---------- */
 const TOMB_LIMIT = 40; // 月の文書の削除の印がこれを超えたら、丸ごと書き直す
@@ -171,7 +171,7 @@ let restored = 0; // 起動時に予備から復元した件数
 
 /* 画面全体 */
 const view = {
-  tab: "list", // list / graph / ai / rules（スマホの設定画面）
+  tab: "list", // list / graph / rules（スマホの設定画面）
   prevTab: "list", // 設定を閉じたときに戻る画面
   armed: null, // 「2回押す」削除で、1回押されて待っているもの
 };
@@ -184,7 +184,6 @@ const ledger = {
   sel: new Set(), // チェックした明細のID
   editId: null, // その場で編集中の明細のID
   draft: null, // 編集中の内容
-  pending: [], // 追加前の確認に並んでいる明細
   dayAdd: null, // 日付の行の＋で開いた入力欄 {date, draft}
 };
 /* 日ごとの折りたたみ（この端末に覚える）。たたんでいる日付の一覧 */
@@ -197,14 +196,13 @@ function saveDayFold() {
 const graph = { by: "category", per: "3", sel: "", m: "" }; // 集計の単位・期間・絞り込んだ項目・選んだ月/日
 /* 設定 */
 const setting = {
-  tab: "home", // 設定の画面 home（一覧）/ rules / cats / mets / inc / paym / gen / move
+  tab: "home", // 設定の画面 home（一覧）/ rules / cats / mets / inc / paym / gen
   kind: "cats", // マスタの種類 cats / mets
   merge: null, // マスタの統合の確認 {kind, old, nn}
   preview: null, // 既存データへの適用の対象一覧 {rid, rows, off}
   editRule: null, // 編集中のルールのID
   edit: { rules: false, master: false, paym: false }, // 右上の「編集」を押しているか（行ごとの変更・削除を出す）
 };
-let aiAbort = null; // AI分析を中止するための AbortController
 
 /* ===================== 保存と同期 ===================== */
 /* ---------- 端末内の控え ---------- */
@@ -627,7 +625,7 @@ function graphData() {
   };
 }
 
-/* ---------- メモ候補・AI分析 ---------- */
+/* ---------- メモ候補 ---------- */
 function recentMemos(cat, n) {
   const seen = new Set(),
     out = [],
@@ -643,109 +641,6 @@ function recentMemos(cat, n) {
   if (cat) pass(i => i.category === cat);
   pass(() => true);
   return out;
-}
-function aiData(n) {
-  let ms = [];
-  for (let k = n - 1; k >= 0; k--) ms.push(shiftM(view.month, -k));
-  const has = new Set(items.map(i => FIN.periodOf(i.date)));
-  while (ms.length && !has.has(ms[0])) ms.shift();
-  if (!ms.length) return null;
-  const set = new Set(ms),
-    P = items.filter(i => set.has(FIN.periodOf(i.date))),
-    cur = thisPeriod(),
-    nm = ms.length;
-  const months = ms.map(m => {
-    const a = P.filter(i => inPeriod(i.date, m)),
-      bc = {},
-      bm = {};
-    a.forEach(i => {
-      bc[i.category] = (bc[i.category] || 0) + i.amount;
-      bm[i.method] = (bm[i.method] || 0) + i.amount;
-    });
-    const [ps, pe] = FIN.periodRange(m);
-    const o = {
-      month: FIN.periodLabel(m),
-      range: `${ps}〜${pe}`,
-      total: sumOf(a),
-      count: a.length,
-      byCategory: bc,
-      byMethod: bm,
-    };
-    if (m === cur) o.note = `月度の途中（${FIN.dayIndex(today(), m) + 1}/${FIN.periodDays(m)}日時点）`;
-    return o;
-  });
-  const cats = {};
-  P.forEach(i => {
-    const c = cats[i.category] || (cats[i.category] = { category: i.category, total: 0, count: 0, under1000yen: 0 });
-    c.total += i.amount;
-    c.count++;
-    if (i.amount < 1000) c.under1000yen++;
-  });
-  const memo = {};
-  P.forEach(i => {
-    const k = (i.memo || "(メモなし)") + "|" + i.category;
-    const o = memo[k] || (memo[k] = { memo: i.memo || "(メモなし)", category: i.category, count: 0, total: 0 });
-    o.count++;
-    o.total += i.amount;
-  });
-  const wd = {};
-  P.forEach(i => {
-    const w = "日月火水木金土"[dow(i.date)];
-    wd[w] = (wd[w] || 0) + i.amount;
-  });
-  return {
-    period: `${FIN.periodLabel(ms[0])}〜${FIN.periodLabel(ms[nm - 1])}（${nm}か月度）`,
-    monthCount: nm,
-    months,
-    categories: Object.values(cats)
-      .map(c => ({ ...c, monthlyAvg: Math.round(c.total / nm) }))
-      .sort((a, b) => b.total - a.total),
-    topShops: Object.values(memo)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 40),
-    byWeekday: wd,
-    rules: rules.filter(r => r.kind === "split").map(r => `${r.from}が${r.amt}円以上なら${r.amt}円を${r.to}に自動分割`),
-  };
-}
-/* AIに渡す指示。spend＝明細（生活費）の集計、debt＝支払い（返済）の集計。どちらかが無くてもよい */
-function aiPrompt(spend, debt, goal) {
-  return `あなたは日本の家計と債務整理に詳しいファイナンシャルプランナーです。以下は日本在住の一人の利用者のデータ（円）です。
-spending は家計簿に記録した日々の支出（生活費）の月度ごとの集計、debt はクレジットカード・消費者金融などの返済の状況です。
-月度は給料日から次の給料日の前日までの期間です。debt.this_period.left_after_payments は「手取り − 今月度の支払予定 − 今月度の現金の支出」です。
-このデータだけを根拠に、生活費で無理なく減らせる余地と、完済を早める打ち手を、具体的な金額つきでまとめてください。
-
-方針:
-- 日本語。本人に話しかける、落ち着いた前向きな口調。責めない、説教しない。ただし数字は正直に。
-- 数字はデータから計算できるものだけを使う。推測した数字には「約」「目安」と付ける。
-- 生活費の削減額は「月度あたりの現実的な見込み額」（円の整数）。生活の質を大きく下げる案や、全額ゼロにする案は避ける。根拠（月度平均・回数・店名など）を短く示す。
-- 返済の打ち手は効果の大きい順に。生活費で浮いた分をどの口座に回すと良いかも示す。手取りと今月度の残りのお金から無理のない額にする。
-- 利息が返済の大半を占める口座や、返済額が利息以下で残高が減らない口座があれば必ず触れる。
-- 途中の月度（noteがある月度）は、月度全体の金額として扱わない。
-- 法律・投資の助言や、新しい借入・おまとめローンの勧誘はしない。
-${goal ? `- 本人の目標・関心: 「${goal}」。これに沿って優先順位をつける。\n` : ""}
-出力はJSONのみ（データが無い側の項目は空の配列にする）:
-{"headline":"一文の結論（40字以内）","summary":"全体の状況と見通し（3〜4文）","savings":[{"title":"見出し","category":"関係する分類名","monthly_saving":3000,"confidence":"高|中|低","why":"根拠（データの数字を含める）","actions":["行動案1","行動案2"]}],"debt_actions":[{"title":"打ち手（20字以内）","detail":"やり方と理由（1〜2文）","effect":"効果の目安（例: 完済が約8ヶ月早く／利息 約6万円減）"}],"outlook":[{"when":"いつ（例: 2027年10月）","text":"その時点で起きること（1文）"}],"trends":[{"title":"支出の傾向の見出し","detail":"説明"}],"watch":["気をつける点（1文）"],"cheer":"最後のひとこと（1文）"}
-savingsは削減額の大きい順に3〜6件、debt_actionsは3〜4件、outlookは時系列で3〜5件、trendsは2〜4件、watchは1〜3件。
-
-データ:
-${JSON.stringify({ spending: spend, debt })}`;
-}
-/* 分析した時のデータと今のデータが違うかを見分ける印（日付や、月度の途中の日数だけの違いは無視する） */
-function aiKey(spend, debt) {
-  const sp = spend && { ...spend, months: spend.months.map(m => ({ ...m, note: undefined })) };
-  const dk = debt && FIN.pay.aiHash ? FIN.pay.aiHash(debt) : "";
-  const t = JSON.stringify(sp) + "|" + dk;
-  let h = 0;
-  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0;
-  return String(h);
-}
-/* いま分析に使うデータ（返済中の口座が無ければ debt は null） */
-function aiInput() {
-  const n = Number($("aiper").value) || 6;
-  const spend = aiData(n);
-  const d = FIN.pay.aiData && FIN.pay.ready && FIN.pay.ready() ? FIN.pay.aiData() : null;
-  const debt = d && d.accounts && d.accounts.length ? d : null;
-  return { spend, debt };
 }
 /* ===================== 描画 ===================== */
 /* ---------- 画面の切り替え ---------- */
@@ -784,11 +679,11 @@ function markTabs(t) {
     .forEach(b => (AN.includes(t) ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
 }
 /* 上の帯：今いる画面の名前（エンタメ管理と同じく、アイコンと名前を出す） */
-const TAB_NAME = { list: "家計簿", home: "支払い", graph: "グラフ", balance: "残高と計画", ai: "AI分析", rules: "設定" };
+const TAB_NAME = { list: "家計簿", home: "支払い", graph: "グラフ", balance: "残高と計画", rules: "設定" };
 /* 家計簿の一番上の支出カード：総額の行だけ出して、内訳・件数などはたたむ（最初はたたむ。この端末に保存） */
 const KSUMF = "okane.sumfold";
 const sumFolded = () => lsRaw(KSUMF) !== "0";
-/* 左メニューの「分析」の項目（グラフ・残高と計画・AI分析）をたたむ／開く。印はエンタメ管理と同じ「›」 */
+/* 左メニューの「分析」の項目（グラフ・残高と計画）をたたむ／開く。印はエンタメ管理と同じ「›」 */
 function setAnFold(f) {
   $("sbpan").classList.toggle("folded", f);
   const b = $("anfold");
@@ -860,7 +755,6 @@ function render(fromAll) {
   renderGraph();
   updateSel();
   fillMemos();
-  renderReview();
   if (!fromAll && (view.tab === "home" || view.tab === "balance") && FIN.pay.render) FIN.pay.render(); // 現金の支出が変わる
 }
 /* 月度の選択肢：明細・支払いのある月度から、いまの12か月度先まで（新しい順に最大120） */
@@ -994,27 +888,6 @@ function editForm(i) {
   <label class="fl">支払い方法<select data-ef="method">${opts(METHODS, ledger.draft.method)}</select></label>
   ${memoChips(ledger.draft.category, ledger.draft.memo)}<label class="fl full">メモ<input type="text" data-ef="memo" list="memos" value="${esc(ledger.draft.memo)}" placeholder="上の候補から選ぶか入力"></label>
   <div class="row sp full"><button class="ghost" data-del="${i.id}">削除</button><div class="row"><button class="ghost" data-ecancel="1">キャンセル</button><button class="pri" data-esave="1">保存</button></div></div></div>`;
-}
-function renderReview() {
-  if (!ledger.pending.length) {
-    $("review").innerHTML = "";
-    return;
-  }
-  $("review").innerHTML =
-    `<div class="row sp rvh"><b>内容を確認（${ledger.pending.length}件）</b><button class="ghost" id="clr">破棄</button></div>` +
-    ledger.pending
-      .map((p, k) => {
-        const dup = items.some(i => i.date === p.date && i.amount === p.amount && (i.memo || "") === (p.memo || ""));
-        return `<div class="rv${dup ? " dup" : ""}" data-k="${k}">
-  <label class="fl">日付<input type="date" data-f="date" value="${esc(p.date)}"></label>
-  <label class="fl">金額<span class="yen"><input type="number" data-f="amount" value="${p.amount || ""}" placeholder="0" inputmode="numeric"></span></label>
-  <label class="fl">分類<select data-f="category">${opts(CATS, p.category)}</select></label>
-  <label class="fl">支払い方法<select data-f="method">${opts(METHODS, p.method)}</select></label>
-  ${memoChips(p.category, p.memo)}<label class="fl full">メモ<input type="text" data-f="memo" list="memos" value="${esc(p.memo)}" placeholder="上の候補から選ぶか入力"></label>
-  <div class="row sp full"><span class="warn">${dup ? "同じ日付・金額の記録があります" : ""}</span><button class="ghost" data-rm="${k}">この行を外す</button></div></div>`;
-      })
-      .join("") +
-    `<button class="pri wide" id="ok">${ledger.pending.length}件を追加</button>`;
 }
 function fillMemos() {
   $("memos").innerHTML = recentMemos("", MEMO_LIST)
@@ -1260,70 +1133,6 @@ function weekdayHTML(g) {
   );
 }
 
-/* ---------- AI分析 ---------- */
-function renderAI() {
-  const r = FIN.ai,
-    out = $("aiout");
-  const d = r && (r.data || r.result); // result は支払管理だったころの形
-  if (!d) {
-    out.innerHTML =
-      '<div class="ail mt12"><div><b>まだ分析していません</b>期間を選んで「分析する」を押すと、1分ほどで結果が出ます。結果はアカウントに保存され、ほかの端末でもすぐ表示されます。</div></div>';
-    $("aimeta").textContent = "";
-    return;
-  }
-  const { spend, debt } = aiInput();
-  const stale = r.hash && r.hash !== aiKey(spend, debt);
-  const list = a => (Array.isArray(a) ? a : []).filter(x => x && (x.title || typeof x === "string"));
-  const sv = list(d.savings),
-    acts = list(d.debt_actions || d.actions),
-    tl = (Array.isArray(d.outlook) ? d.outlook : []).filter(x => x && x.when),
-    tot = sv.reduce((s, x) => s + Math.max(0, Math.round(Number(x.monthly_saving) || 0)), 0);
-  $("aimeta").innerHTML =
-    esc(
-      new Date(r.at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }),
-    ) +
-    " に分析" +
-    (stale ? '<span class="aistale">・データが変わっています</span>' : "");
-  const L = a =>
-    list(a)
-      .map(x =>
-        typeof x === "string" ? `<div>${esc(x)}</div>` : `<div><b>${esc(x.title)}</b>${esc(x.detail || "")}</div>`,
-      )
-      .join("");
-  const hero =
-    `<div class="aihero"><div class="k">${esc(r.period || "")} の分析${r.goal ? ` ・ 目標「${esc(r.goal)}」` : ""}</div>` +
-    (sv.length ? `<div class="v">月 ${yen(tot)} <span class="unit">ほど削減の余地</span></div>` : "") +
-    `<p><b>${esc(d.headline || "")}</b></p>${d.summary ? `<p class="mt6">${esc(d.summary)}</p>` : ""}</div>`;
-  const saving = sv.length
-    ? `<div class="aih">生活費で減らせそうな項目</div><div class="svgrid">${sv
-        .map(x => {
-          const c = String(x.category || "");
-          return `<div class="sv">${ico(CATS.includes(c) || METHODS.includes(c) ? c : "その他")}<div class="cell"><div class="t"><b>${esc(x.title)}</b><span class="save">月 −${yen(Math.max(0, Math.round(Number(x.monthly_saving) || 0)))}</span></div><div class="row meta">${c ? chip(c) : ""}${x.confidence ? `<span class="conf">確度 ${esc(x.confidence)}</span>` : ""}</div><p>${esc(x.why || "")}</p>${Array.isArray(x.actions) && x.actions.length ? `<ul>${x.actions.map(a => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}</div></div>`;
-        })
-        .join("")}</div>`
-    : "";
-  const debtActs = acts.length
-    ? `<div class="aih">完済を早める打ち手</div><div class="svgrid">${acts
-        .map(
-          (x, k) =>
-            `<div class="sv"><span class="ai-n">${k + 1}</span><div class="cell"><div class="t"><b>${esc(x.title)}</b></div><p>${esc(x.detail || "")}</p>${x.effect ? `<span class="ai-eff">${esc(x.effect)}</span>` : ""}</div></div>`,
-        )
-        .join("")}</div>`
-    : "";
-  const outlook = tl.length
-    ? `<div class="aih">このままいくと</div><ol class="ai-tl">${tl.map(x => `<li><b>${esc(x.when)}</b><span>${esc(x.text || "")}</span></li>`).join("")}</ol>`
-    : "";
-  out.innerHTML =
-    hero +
-    saving +
-    debtActs +
-    outlook +
-    (L(d.trends) ? `<div class="aih">支出の傾向</div><div class="ail">${L(d.trends)}</div>` : "") +
-    (L(d.watch) ? `<div class="aih">気をつけたいこと</div><div class="ail">${L(d.watch)}</div>` : "") +
-    (d.cheer ? `<p class="ai-cheer">${esc(d.cheer)}</p>` : "") +
-    `<div class="mu mt14">AIによる提案です。金額は記録された明細と返済条件からの見込みで、実際の効果を保証するものではありません。実際の請求額はカード会社の明細で確かめてください。</div>`;
-}
-
 /* ---------- 設定：項目の切り替え・マスタ ---------- */
 const SET_IC = {
   theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
@@ -1333,13 +1142,12 @@ const SET_IC = {
   inc: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/>',
   paym: '<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
   gen: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v4M10 15h4"/>',
-  move: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   save: '<path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/><path d="m9.5 13.5 2 2 3.5-4"/>',
   out: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
 };
 const setIc = k => `<svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SET_IC[k]}</svg>`;
 const SET_CV = `<svg class="setcv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>`;
-const SET_PG = { home: "設定", rules: "分類ルール", cats: "分類", mets: "支払い方法", inc: "収入と給料日", paym: "引落口座", gen: "支払予定の作成", move: "データの取り込み" };
+const SET_PG = { home: "設定", rules: "分類ルール", cats: "分類", mets: "支払い方法", inc: "収入と給料日", paym: "引落口座", gen: "支払予定の作成" };
 const SET_EDIT = { rules: "rules", cats: "master", mets: "master", paym: "paym" };
 const PAY_PG = ["inc", "paym", "gen"];
 /* 設定の一覧（表示・家計簿・支払い・データ・アカウント） */
@@ -1354,8 +1162,6 @@ function renderSetHome() {
     <div class="setgrp">${row("rules", "分類ルール", `${rules.length}件`)}${row("cats", "分類", CATS.length)}${row("mets", "支払い方法", METHODS.length)}</div>
     <div class="setsec">支払い</div>
     <div class="setgrp">${row("inc", "収入と給料日", `${cfg.income ? yen(cfg.income) + "・" : ""}${FIN.paydayNum()}日`)}${row("paym", "引落口座", (cfg.methods || []).length)}${row("gen", "支払予定の作成", "作り直す・作成")}</div>
-    <div class="setsec">データ</div>
-    <div class="setgrp">${row("move", "データの取り込み", "引っ越し用")}</div>
     <div class="setsec">アカウント</div>
     <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv"><span class="${sv ? sv.className : "savest"}">${sv ? esc(sv.textContent) : ""}</span></span></div><button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
 }
@@ -1373,7 +1179,6 @@ function renderSettings() {
   $("st-master").hidden = pg !== "cats" && pg !== "mets";
   $("st-pay").hidden = !PAY_PG.includes(pg);
   document.querySelectorAll("#st-pay [data-pg]").forEach(e => (e.hidden = e.dataset.pg !== pg));
-  $("st-move").hidden = pg !== "move";
   $("mMethods").classList.toggle("editing", setting.edit.paym);
   if (pg === "home") renderSetHome();
   if (pg === "cats" || pg === "mets") {
@@ -1488,123 +1293,10 @@ function arm(key, btn, label) {
   return true;
 }
 
-/* ---------- スクショから追加・手入力 ---------- */
-async function shrink(f) {
-  try {
-    const bmp = await createImageBitmap(f);
-    const s = Math.min(1, 1400 / bmp.width);
-    const W = Math.round(bmp.width * s),
-      H = Math.round(bmp.height * s),
-      SL = 2000,
-      out = [];
-    for (let y = 0; y < H; y += SL - 100) {
-      const h = Math.min(SL, H - y);
-      const c = document.createElement("canvas");
-      c.width = W;
-      c.height = h;
-      c.getContext("2d").drawImage(bmp, 0, y / s, bmp.width, h / s, 0, 0, W, h);
-      out.push(await new Promise(r => c.toBlob(b => r(b), "image/jpeg", 0.88)));
-      if (y + h >= H) break;
-    }
-    return out.slice(0, 4);
-  } catch (e) {
-    return [f];
-  }
-}
-async function analyze(files) {
-  const sample = await (window.claude ? claude.use("sample") : Promise.resolve(null)).catch(() => null);
-  if (!sample) {
-    setMsg("この環境ではスクショ読み取りを利用できません。手入力をお使いください。", 1);
-    return;
-  }
-  const lim = await sample.limits().catch(() => null);
-  if (!lim || !lim.images) {
-    setMsg("画像の読み取りが許可されていません。", 1);
-    return;
-  }
-  const max = lim.images.maxCount || lim.images.max || 8;
-  const list = [...files].slice(0, max);
-  setMsg("読み取り中…（" + list.length + "枚）");
-  if ($("shot")) $("shot").disabled = true;
-  try {
-    const prompt = `添付画像は家計の支出に関するスクリーンショット（カード明細、決済アプリの履歴、レシート、ネットバンキング等）です。支出を1件ずつ抜き出してください。
-今日の日付は${today()}です。年が書かれていない日付は直近の過去の日付として補ってください。
-分類は次から1つ選ぶ: ${MASTER.cats.map(x => x.n).join("、")}
-支出方法は次から1つ選ぶ: ${MASTER.mets.map(x => x.n).join("、")}
-返金・入金・チャージ・残高表示は除外。同じ取引が複数画像に重複していたら1件にまとめる。
-金額は円の整数。メモには店名・サービス名を短く入れる。
-JSON配列のみで返答: [{"date":"YYYY-MM-DD","amount":1234,"category":"${MASTER.cats[0] ? MASTER.cats[0].n : ""}","method":"${MASTER.mets[0] ? MASTER.mets[0].n : ""}","memo":"店名"}]`;
-    let all = [],
-      fails = [],
-      raw = [];
-    for (let n = 0; n < list.length; n++) {
-      setMsg("読み取り中… " + (n + 1) + "/" + list.length);
-      try {
-        const blobs = await shrink(list[n]);
-        const r = await sample.json(prompt, { images: blobs, modelTier: "default", cache: false });
-        const L = Array.isArray(r)
-          ? r
-          : r && typeof r === "object"
-            ? Object.values(r).find(Array.isArray) || (r.amount != null ? [r] : [])
-            : [];
-        raw.push(JSON.stringify(r).slice(0, 200));
-        all = all.concat(L);
-      } catch (e) {
-        fails.push((e && e.code) || "error");
-        if (e && (e.code === "not_granted" || e.code === "rate_limited")) break;
-      }
-    }
-    const arr = all
-      .map(r => ({
-        date: /^\d{4}-\d{2}-\d{2}$/.test(r.date) ? r.date : today(),
-        amount: Math.round(Number(String(r.amount).replace(/[^\d.-]/g, "")) || 0),
-        category: CATS.includes(r.category) ? r.category : orFirst(CATS, "日用品"),
-        method: METHODS.includes(r.method) ? r.method : orFirst(METHODS, "現金"),
-        memo: String(r.memo || "").slice(0, 60),
-      }))
-      .filter(r => r.amount > 0);
-    const fm = fails.length ? "（" + fails.length + "枚失敗: " + [...new Set(fails)].join(",") + "）" : "";
-    if (!arr.length) {
-      setMsg(
-        (fails.length ? "読み取りに失敗しました" : "支出が見つかりませんでした") +
-          fm +
-          (!fails.length && raw.length ? " 応答: " + raw[0] : ""),
-        1,
-      );
-    } else {
-      ledger.pending = ledger.pending.concat(arr);
-      setMsg(arr.length + "件を読み取りました。" + fm + "内容を確認して追加してください。", fails.length ? 1 : 0);
-    }
-  } catch (e) {
-    setMsg("読み取りに失敗しました（" + ((e && e.code) || "error") + "）", 1);
-  } finally {
-    if ($("shot")) $("shot").disabled = false;
-    renderReview();
-  }
-}
 /* 手入力の初期値：マスタの先頭の分類・支払い方法 */
 function blank() {
   return { date: today(), amount: 0, category: CATS[0], method: METHODS[0], memo: "" };
 }
-/* 名前がマスタにあればそれを、なければマスタの先頭を使う */
-const orFirst = (list, name) => (list.includes(name) ? name : list[0]);
-function addPending() {
-  const good = ledger.pending.filter(p => p.amount > 0 && p.date);
-  const nw = runRules(good.map(p => ({ ...p, id: uid() })));
-  items = items.concat(nw.out);
-  save();
-  if (good[0])
-    view.month = FIN.periodOf(
-      good
-        .map(p => p.date)
-        .sort()
-        .pop(),
-    );
-  ledger.pending = [];
-  setMsg(good.length + "件を追加しました" + (nw.changed ? "（ルールで" + nw.changed + "件を変更）" : "") + "。");
-  render();
-}
-
 /* ---------- 明細の編集・削除 ---------- */
 function saveEdit() {
   if (!ledger.draft || !(ledger.draft.amount > 0) || !ledger.draft.date) {
@@ -1907,9 +1599,6 @@ function mRenameApply(kind, old, nn) {
   if (kind === "mets" && ledger.filter.m === old) ledger.filter.m = nn;
   if (graph.sel === old) graph.sel = nn;
   if (ledger.draft && ledger.draft[f] === old) ledger.draft[f] = nn;
-  ledger.pending.forEach(p => {
-    if (p[f] === old) p[f] = nn;
-  });
   applyMaster();
   saveMasterLocal();
   saveRulesLocal();
@@ -1993,63 +1682,6 @@ function mAdd() {
   render();
 }
 
-/* ---------- AI分析 ---------- */
-async function runAI() {
-  const goal = $("aigoal").value.trim().slice(0, 200),
-    { spend, debt } = aiInput(),
-    out = $("aiout");
-  if (!spend && !debt) {
-    out.innerHTML =
-      '<div class="err mt12">分析できるデータがありません。先に明細か返済中の口座を登録してください。</div>';
-    return;
-  }
-  const sample = await (window.claude ? claude.use("sample") : Promise.resolve(null)).catch(() => null);
-  if (!sample) {
-    out.innerHTML =
-      '<div class="err mt12">この環境ではAI分析を利用できません。Claudeのアプリ内でこのページを開いてください。</div>';
-    return;
-  }
-  aiAbort = new AbortController();
-  const t0 = Date.now();
-  $("airun").disabled = true;
-  out.innerHTML = `<div class="aiwait"><i></i><span id="aisec">分析中…</span><button class="ghost" id="aistop">中止</button></div>`;
-  const tick = setInterval(() => {
-    const e = $("aisec");
-    if (e) e.textContent = "分析中… " + Math.round((Date.now() - t0) / 1000) + "秒（1分ほどかかります）";
-  }, 1000);
-  try {
-    const res = await sample.json(aiPrompt(spend, debt, goal), {
-      modelTier: "complex",
-      cache: false,
-      signal: aiAbort.signal,
-    });
-    if (!res || typeof res !== "object" || Array.isArray(res)) throw { code: "invalid_json" };
-    const period = spend ? spend.period : FIN.periodLabel(view.month);
-    const o = { at: new Date().toISOString(), period, goal, hash: aiKey(spend, debt), data: res };
-    if (FIN.pay.saveAI) FIN.pay.saveAI(o);
-    else FIN.ai = o;
-    renderAI();
-  } catch (e) {
-    const c = e && e.code;
-    const m =
-      c === "cancelled"
-        ? "分析を中止しました。"
-        : c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled"
-          ? "Claudeの利用が許可されなかったため、分析できませんでした。"
-          : c === "rate_limited"
-            ? "短時間に使いすぎたため、少し時間をおいてからもう一度押してください。"
-            : c === "invalid_json" || c === "empty_completion"
-              ? "結果をうまく読み取れませんでした。もう一度「分析する」を押してください。"
-              : "分析に失敗しました（" + (c || "error") + "）。もう一度お試しください。";
-    renderAI();
-    out.insertAdjacentHTML("afterbegin", `<div class="${c === "cancelled" ? "mu" : "err"} mt12">${m}</div>`);
-  } finally {
-    clearInterval(tick);
-    $("airun").disabled = false;
-    aiAbort = null;
-  }
-}
-
 /* ===================== イベント ===================== */
 /* ---------- クリック：画面ごとの処理に振り分ける。各処理は、受け持ったら true を返す ---------- */
 /* ---------- 追加（右上の＋・左メニューの＋）：今の画面に合わせて、明細・支払・口座を追加 ---------- */
@@ -2074,7 +1706,7 @@ document.addEventListener("click", e => {
   /* 画面全体（body）へのクリックは無視する（body の data-tab を画面の切り替えと取り違えないように） */
   if (t === document.body || t === document.documentElement) return;
   const d = t.dataset || {};
-  [clickHeader, clickAdd, clickLedger, clickSelection, clickGraph, clickAI, clickRules, clickMaster].some(
+  [clickHeader, clickLedger, clickSelection, clickGraph, clickRules, clickMaster].some(
     f => f(t, d),
   );
 });
@@ -2151,20 +1783,6 @@ function clickHeader(t, d) {
   } else return false;
   return true;
 }
-/* 明細：スクショ・手入力の追加と、追加前の確認 */
-function clickAdd(t, d) {
-  if (d.rm) {
-    ledger.pending.splice(+d.rm, 1);
-    renderReview();
-  } else if (t.id === "clr") {
-    ledger.pending = [];
-    setMsg("");
-    renderReview();
-  } else if (t.id === "ok") {
-    addPending();
-  } else return false;
-  return true;
-}
 /* 明細：絞り込みの解除・その場の編集・削除・メモ候補 */
 function openDayAdd(date) {
   const last = items.length ? [...items].sort((a, b) => (a.date < b.date ? 1 : -1))[0] : null;
@@ -2231,9 +1849,6 @@ function clickLedger(t, d) {
     } else if (row && row.dataset.e && ledger.draft) {
       ledger.draft.memo = d.memo;
       render();
-    } else if (row && row.dataset.k !== undefined && ledger.pending[+row.dataset.k]) {
-      ledger.pending[+row.dataset.k].memo = d.memo;
-      renderReview();
     }
   } else if (d.esave) {
     saveEdit();
@@ -2283,14 +1898,6 @@ function clickGraph(t, d) {
     graph.sel = d.g;
     graph.m = "";
     renderGraph();
-  } else return false;
-  return true;
-}
-function clickAI(t) {
-  if (t.id === "airun") {
-    runAI();
-  } else if (t.id === "aistop") {
-    if (aiAbort) aiAbort.abort();
   } else return false;
   return true;
 }
@@ -2372,10 +1979,6 @@ document.addEventListener("change", e => {
     v = t.value;
   if (t.id === "month") {
     setBarMonth(v);
-  } else if (t.id === "file") {
-    const fs = [...t.files];
-    t.value = "";
-    if (fs.length) analyze(fs);
   } else if (d.af === "category" && ledger.dayAdd) {
     ledger.dayAdd.draft.category = v;
     render();
@@ -2422,10 +2025,6 @@ document.addEventListener("input", e => {
   if (t.id === "fq") {
     ledger.filter.q = t.value;
     render();
-  } else if (d.f) {
-    /* 追加前の確認の行 */
-    const row = t.closest(".rv");
-    if (row) ledger.pending[+row.dataset.k][d.f] = val(d.f);
   } else if (d.ef && ledger.draft) {
     /* 明細の編集フォーム */
     ledger.draft[d.ef] = val(d.ef);
@@ -2490,7 +2089,6 @@ document.addEventListener("keydown", e => {
 Object.assign(FIN.kb, {
   render,
   setTab,
-  renderAI,
   settingsOpen,
   /* その月度に現金で払った額（支払いの「残るお金」から引く） */
   cashIn: p => sumOf(items.filter(i => i.method === FIN.CASH && inPeriod(i.date, p))),
@@ -2513,7 +2111,7 @@ rules = rules.map(normRule).filter(Boolean);
 rkUpdate();
 {
   const t = lsRaw(KTAB) || "list";
-  view.tab = t === "cats" ? "graph" : ["list", "graph", "home", "balance", "ai"].includes(t) ? t : "list"; // cats は以前の画面名
+  view.tab = t === "cats" ? "graph" : ["list", "graph", "home", "balance"].includes(t) ? t : "list"; // cats は以前の画面名
 }
 setSidebar(lsRaw(KSBC) === "1");
 setAnFold(lsRaw(KANF) === "1");
@@ -2523,5 +2121,4 @@ load();
 items.forEach(learn);
 render();
 if (restored) setMsg("バックアップから" + restored + "件を復元しました。");
-renderAI();
 initSync();
