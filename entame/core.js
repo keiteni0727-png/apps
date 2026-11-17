@@ -175,6 +175,23 @@ const mediaLabOf = i => {
   return MEDIA_LAB[md] ? [MEDIA_LAB[md], md] : null;
 };
 const ONE_LAB = { movie: "映画", ova: "OVA", sp: "TV SP" };
+/* 配信URLが空のときの代わり：配信サイトの検索ページをタイトルで開く（検索ページの形が分かっているサイトだけ） */
+const VOD_SEARCH = {
+  Netflix: q => `https://www.netflix.com/search?q=${q}`,
+  "U-NEXT": q => `https://video.unext.jp/freeword?query=${q}`,
+  "Prime Video": q => `https://www.amazon.co.jp/s?k=${q}&i=instant-video`,
+  "Disney＋": q => `https://www.disneyplus.com/search?q=${q}`,
+  hulu: q => `https://www.hulu.jp/search?q=${q}`,
+  ABEMA: q => `https://abema.tv/search?q=${q}`,
+};
+/* 検索に使うタイトル：（第2シリーズ）などの括弧書きは外す */
+function vodSearch(i) {
+  const m = mediaOf(i);
+  const v = (m.media === "stream" ? m.plat : m.vods).find(x => VOD_SEARCH[x]);
+  if (!v) return null;
+  const q = (i.t || "").replace(/[（(][^）)]*[）)]/g, "").trim() || i.t || "";
+  return { v, url: VOD_SEARCH[v](encodeURIComponent(q)) };
+}
 /* 主題歌: songs＝[{type,s,a,b,ex}] a〜b話で使われた曲。ex＝飛び飛びのときの追加の話 [{a,b}] */
 const songsOf = i => i.songs || [];
 const songText = i =>
@@ -645,7 +662,8 @@ function missingOf(i) {
   if (ta.some(x => x.st && !x.ar)) add("アーティスト", "sgList");
   if (ta.some(x => !x.st && x.ar)) add("曲名", "sgList");
   if (!(i.url || "").trim()) add("公式サイト", "f-url", "url");
-  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "vurl");
+  /* 配信サイトの検索で代わりに開ける作品は、未入力にしない */
+  if (!(i.vurl || "").trim() && !vodSearch(i)) add("配信URL", "f-vurl", "vurl");
   return out;
 }
 /* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
