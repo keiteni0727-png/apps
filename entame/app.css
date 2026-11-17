@@ -1796,3 +1796,6 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
   .fsh-it.open .fsh-cv{transform:rotate(90deg)}
 }
 @media (max-width:899px){.fsh-subh .fsh-back{display:none}.fsh-subh{padding-left:14px}}
+/* 絞り込みシート：未入力ありの項目ボタンを2列でそろえる */
+.fsh-mk.mkeys{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;padding:4px 18px 14px}
+.fsh-mk.mkeys button{display:flex;align-items:center;justify-content:center;white-space:nowrap;min-width:0}
