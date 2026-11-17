@@ -6,7 +6,10 @@
 - `okane/` … おかね手帳
 - `fitlife/` … FitLife（ふたり用の健康管理。別のFirebaseプロジェクトを使用）
 - `futari/` … ウリログ（恋人と共有するおでかけ候補。別のFirebaseプロジェクトを使用。ルールは firestore.rules）
-- `shared/` … アプリ共通の土台（見た目と保存の仕組み）
+  機能ごとにファイルを分けている：core.js（共通の道具・状態）→ auth / main / memories / uri / uri-fun / couple / quiz / sheets → events.js（ボタン）→ boot.js（Firebaseにつないで起動）。見た目は app.css
+- `shared/` … アプリ共通の土台
+  - `u-sync.js` … 保存と同期の見張り役（4アプリ共通）。読み込みが止まったら自動でつなぎ直し、保存に失敗したら自動で保存し直す
+  - `u-core.js` / `u-ui.js` / `u-base.css` / `u-swipe.js` … エンタメ管理・おかね手帳の土台（保存先・通知・プルダウンなどの部品・見た目）
 
 ## 公開と版の番号
 
