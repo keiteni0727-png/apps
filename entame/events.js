@@ -847,7 +847,8 @@ document.addEventListener(
       if (!all && DT_FULL.test(v)) return;
       /* 空・末尾（全部選んで打ち直すときも）：後ろに足していく */
       const base = all ? "" : v;
-      if (!/^[\d/]*$/.test(base)) return;
+      /* 「1/」のように自分で / を打っている途中は、ふつうに入力（離れたときに日付の形に直す） */
+      if (!/^[\d/]*$/.test(base) || base !== dtFmt(base.replace(/\D/g, ""))) return;
       e.preventDefault();
       const s = (base.replace(/\D/g, "") + ds).slice(0, 8);
       set(dtFmt(s), dtFmt(s).length);

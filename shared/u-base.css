@@ -81,6 +81,8 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 
 /* ===== 通知（U.toast）。下からの位置は、アプリ側で body に --u-toast-b を指定して変える ===== */
 .u-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--u-toast-b,20px) + env(safe-area-inset-bottom,0px));z-index:70;width:max-content;max-width:min(calc(100% - 32px),520px);background:var(--u-ink);color:var(--u-surface);border-radius:12px;padding:10px 16px;font:13px/1.5 var(--u-f);box-shadow:var(--u-shadow)}
+/* 通知が下のボタンに重なっても押せるように、通知は押せない（取り消しボタン付きの通知だけ押せる） */
+.u-toast:not(.undo){pointer-events:none}
 .u-toast b{font-family:var(--u-num)}
 .u-toast.undo{display:flex;align-items:center;gap:14px;padding:8px 8px 8px 16px}
 .u-toast.undo button{border:0;background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:5px 12px;font:700 12.5px/1.5 var(--u-f);white-space:nowrap;cursor:pointer}

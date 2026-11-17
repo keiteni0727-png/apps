@@ -369,8 +369,9 @@ html,body{overscroll-behavior:none}
 .dtw .dtx{flex:1;min-width:0}
 .dtcal{flex:none;width:42px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-sub);border-radius:var(--u-r);display:grid;place-items:center;padding:0}
 .dtcal svg{width:18px;height:18px}
-.dtpick{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
-@media (hover:none),(pointer:coarse){.dtpick{pointer-events:auto;z-index:1;font-size:16px;-webkit-appearance:none;appearance:none;border:0;padding:0;margin:0;cursor:pointer}}
+.dtpick,.dtw .dtpick{position:absolute;right:0;bottom:0;width:42px;height:100%;opacity:0;pointer-events:none}
+/* スマホ：透明のカレンダー入力はカレンダーのボタンの上だけ（欄を押したら文字入力） */
+@media (hover:none),(pointer:coarse){.dtpick,.dtw .dtpick{pointer-events:auto;z-index:1;font-size:16px;-webkit-appearance:none;appearance:none;border:0;padding:0;margin:0;cursor:pointer}}
 /* 日付欄：iPhoneでは日付欄が枠からはみ出すので、標準の見た目を外して幅に収める */
 input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;display:block;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left}
@@ -1719,7 +1720,9 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .ep,.sheet:not(.form) .ep{font-size:14px;color:var(--u-ink);display:flex;align-items:center;grid-template-columns:none;min-height:46px;padding:6px 4px 6px 10px;gap:10px}
 .ep .epc{flex:none;border-radius:50%;border:1.5px solid var(--u-line);display:flex;align-items:center;padding:0;font-family:var(--u-f);font-weight:700;line-height:1;text-align:center;color:var(--u-sub);box-sizing:border-box;justify-content:center;font-variant-numeric:tabular-nums;letter-spacing:-.02em;width:28px;height:28px;font-size:13px}
 .ep .epgo{flex:none;border-radius:999px;background:var(--u-accent);color:var(--u-on);font-size:13px;font-weight:700;display:grid;place-items:center;height:30px;padding:0 12px}
-.eps.nosub .ep .epm{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+.eps.nosub .ep .epm{flex-direction:row;flex-wrap:nowrap;align-items:center;column-gap:8px;min-width:0}
+.eps.nosub .ep .epm>*{white-space:nowrap}
+.eps.nosub .ep .epm>:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .eps.nosub .ep .eps-sub{font-size:13.5px;font-variant-numeric:tabular-nums}
 /* 話数の編集：日付の枠は日付がちょうど入る幅に。ドラマは［話数］［日付］［✕］を1行に */
 .er{display:grid;gap:6px;align-items:center;padding:6px 8px;border-top:1px solid var(--u-line);grid-template-columns:64px 1fr 108px 30px}
@@ -1742,3 +1745,5 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 @media (max-width:899px){
   .fsh.subopen .fsh-subb{flex:1;min-height:0;padding-bottom:4px;max-height:none;overflow:visible;overscroll-behavior:auto}
 }
+/* ドラマの次の話：「見た」があるので「未視聴」の印は出さない（日付を1行に収める） */
+.eps.nosub .ep.next .epun{display:none}
