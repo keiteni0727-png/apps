@@ -700,12 +700,12 @@ function restoreXser() {
   xserY = b.y;
 }
 let xserY = null;
-/* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す（別のメニューへ移るとき）。やめたら true */
+/* シリーズをまたいで見る表示（xser）をやめる（左メニューなどを押したとき）。入る前の一覧の状態に戻す。やめたら true */
 function leaveXser() {
   if (!state.xser) return false;
-  state.xser = false;
   state.series = [];
-  xserBack = null;
+  restoreXser();
+  xserY = null;
   return true;
 }
 function render() {
