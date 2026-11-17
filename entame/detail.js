@@ -275,7 +275,9 @@ function epOneHtml(it, e, i) {
 function epEditorHtml(it) {
   const l = epEdit.list;
   const A = it.k === "a";
-  return `${A ? `<div class="edtop"><button type="button" id="spOpen">Wikiから貼り付け</button><span class="hint">各話リストからサブタイトル・放送日を読み取ります</span></div>` : ""}<div class="eped${A ? "" : " nosub"}">${
+  /* 日付をそろえる：1話の日付を全話にコピー（配信でまとめて公開された作品など） */
+  const same = l.length > 1 ? `<button type="button" class="edsame" id="erSameDay" title="1話の日付を全話に入れます">日付をそろえる</button>` : "";
+  return `${A || same ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button><span class="hint">各話リストからサブタイトル・放送日を読み取ります</span>` : ""}${same}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
     l.length
       ? l
           .map((e, i) => {
@@ -1015,6 +1017,22 @@ const EPEDIT_ACTIONS = [
       epEdit = null;
       saveEps(it, l, "話数を保存しました");
       refreshSheet();
+    },
+  ],
+  [
+    "#erSameDay",
+    (el, it) => {
+      const l = epEdit.list;
+      const j = l[0] && jst(l[0].t);
+      if (!j) return toast("1話の日付を入れてください");
+      l.forEach((x, k) => {
+        if (!k) return;
+        const hm = x.t ? jst(x.t).hm : j.hm;
+        if (!x.t) x.nt = l[0].nt;
+        x.t = dayTimeToT(j.day, hm);
+        x.moved = true;
+      });
+      refreshEditor();
     },
   ],
   [

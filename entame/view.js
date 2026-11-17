@@ -145,7 +145,9 @@ function periodOf(it) {
   const last = eps.length ? jst(eps[eps.length - 1].t).day : it.to;
   const first = it.from || (eps.length ? jst(eps[0].t).day : "");
   if (!first) return "";
-  return fmtD(first) + " 〜 " + (last && last !== first ? fmtD(last) : "");
+  /* 全話が同じ日（まとめて配信など）・開始日と終了日が同じなら、日付だけ（「〜」を付けない） */
+  if (last && last === first) return fmtD(first);
+  return fmtD(first) + " 〜 " + (last ? fmtD(last) : "");
 }
 
 setInterval(() => {
