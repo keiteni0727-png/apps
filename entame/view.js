@@ -683,16 +683,32 @@ function setMain(html) {
   }
   main.innerHTML = m ? m[0] + `<div id="results">${html.slice(m.index + m[0].length)}</div>` : html;
 }
-/* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す。やめたら true */
+/* シリーズをまたいで見る表示（xser）に入る前の一覧の状態（絞り込み・並び順・見出しの開閉・スクロール位置） */
+let xserBack = null;
+/* シリーズの絞り込みを外したら、入る前の一覧の状態に戻す */
+function restoreXser() {
+  const b = xserBack;
+  xserBack = null;
+  state.xser = false;
+  if (!b || b.mode !== state.mode) return;
+  Object.assign(state, b.st);
+  collapsed.clear();
+  b.col.forEach(k => collapsed.add(k));
+  saveCol();
+  xserY = b.y;
+}
+let xserY = null;
+/* シリーズをまたいで見る表示（xser）をやめて、シリーズの絞り込みも外す（別のメニューへ移るとき）。やめたら true */
 function leaveXser() {
   if (!state.xser) return false;
   state.xser = false;
   state.series = [];
+  xserBack = null;
   return true;
 }
 function render() {
   /* シリーズの絞り込みを外したら、ジャンルをまたぐ表示（アニメ・ドラマのラベルも）も終わり */
-  if (state.xser && !state.series.length) state.xser = false;
+  if (state.xser && !state.series.length) restoreXser();
   const yt = state.mode === "yt";
   /* YouTubeは「すべて」をなくし、投稿者ごとのタブだけ。今の投稿者がいなければ先頭にする */
   const al = ytAuthors();
@@ -717,7 +733,10 @@ function render() {
     body = body.slice(0, ce) + gb[0] + body.slice(ce);
   }
   setMain(body);
-  if (U.lockY === null) scrollTo(0, y);
+  if (xserY != null) {
+    scrollTo(0, xserY);
+    xserY = null;
+  } else if (U.lockY === null) scrollTo(0, y);
   placeFsh();
   if (typeof markStuck === "function") markStuck();
   saveUI();
@@ -755,6 +774,8 @@ const go = () => {
 function showSeries(name, g) {
   close();
   if (!["a", "d", "m", "s"].includes(state.mode)) setMode(g === "d" ? "d" : "a");
+  if (!state.xser)
+    xserBack = { mode: state.mode, st: Object.fromEntries([...FKEEP, "sort", "limit"].map(k => [k, Array.isArray(state[k]) ? [...state[k]] : state[k]])), col: [...collapsed], y: scrollY };
   Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
   go();
 }

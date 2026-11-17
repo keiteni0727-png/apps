@@ -314,7 +314,7 @@ const FILTER_ACTIONS = [
   [
     "[data-xseroff]",
     () => {
-      state.xser = false;
+      state.series = [];
       render();
     },
   ],
