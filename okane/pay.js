@@ -44,8 +44,8 @@
     svErr: false,
     svAt: null, // 最後に保存した時刻
   };
-  /* 表示中の月度は家計簿と共通（FIN.period） */
-  Object.defineProperty(S, "period", { get: () => FIN.period, set: v => (FIN.period = v) });
+  /* 表示中の月度は家計簿とは別（FIN.payPeriod）。まだ決まっていなければ、いまの月度 */
+  Object.defineProperty(S, "period", { get: () => FIN.payPeriod || FIN.currentPeriod(), set: v => (FIN.payPeriod = v) });
   FIN.paydayNum = () => S.cfg.payday || DEFAULT_PAYDAY;
   /* 画面の部品の状態 */
   const ui = {
@@ -948,6 +948,16 @@
       render();
     },
   });
+  /* 最初に出す月度：いまの月度の支払を全部処理し終えていたら（未払が残っていなければ）翌月度 */
+  function autoPeriod() {
+    const cur = periodOf(today());
+    if (!S.loaded.m) return cur;
+    return periodStats(cur).its.some(i => i.status === "planned") ? cur : addMonths(cur, 1);
+  }
+  /* 支払いの画面を開いたとき：自分で月度を動かしていなければ、最初に出す月度に合わせる */
+  function enter() {
+    if (!ui.manualP) S.period = autoPeriod();
+  }
   /* 日付の見出し：その日の合計と、まだ払っていない分の支払方法ごとの額 */
   function dayHeadHTML(its, cur) {
     const day = its.filter(x => x.date === cur && x.status !== "deferred");
@@ -2567,6 +2577,14 @@
     renderSettings: renderMaster,
     /* 右上の＋：支払い画面は支払、残高と計画は口座を追加 */
     add: k => (k === "acc" ? editAccount(null) : editItem(null)),
+    enter,
+    period: () => S.period,
+    /* 上の月度の切り替え（支払い・残高と計画の画面のとき） */
+    setPeriod: v => {
+      ui.manualP = true;
+      S.period = v;
+      render();
+    },
     aiData: aiPayload, // AI分析に渡す返済のデータ
     aiHash,
     saveAI,
@@ -2607,7 +2625,9 @@
         for (const k in S.pending) if (S.pending[k] > 0 && S.months[k]) o[k] = S.months[k]; // 保存中の月は自分の内容を優先
         S.months = o;
         S._base = null;
+        const first = !S.loaded.m;
         S.loaded.m = true;
+        if (first && (S.view === "home" || S.view === "balance")) enter();
         paintSave();
         FIN.renderAll(); // 月度の選択肢に支払いの月も入れる
       },

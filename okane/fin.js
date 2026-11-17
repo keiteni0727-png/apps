@@ -72,11 +72,13 @@ const FIN = {
   FIN.pad = pad;
   FIN.ds = ds;
   FIN.pd = pd;
-  FIN.period = FIN.currentPeriod();
+  FIN.period = FIN.currentPeriod(); // 家計簿・グラフの月度
+  FIN.payPeriod = null; // 支払い・残高と計画の月度（家計簿とは別。null はまだ決めていない）
 
   /* 給料日が変わったら、いまの月度を見ていた場合はいまの月度に合わせ直す */
   FIN.paydayChanged = before => {
     if (FIN.period === before) FIN.period = FIN.currentPeriod();
+    if (FIN.payPeriod === before) FIN.payPeriod = null;
   };
   /* 両方の画面を描き直す */
   FIN.renderAll = () => {

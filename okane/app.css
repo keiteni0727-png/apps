@@ -1608,3 +1608,48 @@ input.calcon{border-color:var(--u-accent)!important;box-shadow:0 0 0 2px color-m
 .kb .dcard .seth{width:100%;margin:0}
 /* PC：支払いの件数・合計は「絞り込み」のすぐ横に（一覧の列の外まで離さない） */
 @media (min-width:900px){.pay #cFbar .fcnt{margin-left:14px}.pay .listbar{margin-bottom:-4px}}
+
+/* ===================== 2026-11-17 午後：PCの左メニューをエンタメ管理と同じ形に ===================== */
+:root{--k-list:var(--u-acct);--k-pay:#2457d6;--k-an:#0f8a8a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--k-pay:#6f97ff;--k-an:#3fcfcf}}
+:root[data-theme="dark"]{--k-pay:#6f97ff;--k-an:#3fcfcf}
+.kb .mic.list{color:var(--k-list)}.kb .mic.home{color:var(--k-pay)}.kb .mic.an{color:var(--k-an)}
+@media (min-width:900px){
+  :root{--sbw:248px}
+  body.sbc{--sbw:68px}
+  .u-app .sb{padding:0 12px 14px;gap:1px;font-size:15px}
+  .u-app .sb .sb-top{box-sizing:border-box;height:57px;min-height:57px;margin:0 -12px 10px;padding:0 14px;gap:8px;flex-direction:row;align-items:center;border-bottom:1px solid var(--u-line)}
+  .u-app .sb .sb-top b{font-size:16px;font-weight:900}
+  .u-app .sb .sb-ham{flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--u-r);display:grid;place-items:center;padding:0;cursor:pointer}
+  .u-app .sb .sb-ham svg{width:20px;height:20px}
+  .u-app .sb .sb-ham:hover{background:var(--u-line)}
+  .u-app .sb .sb-add{height:38px;padding:0;margin:0 0 6px;font-size:14px}
+  .u-app .sb .sb-sec{padding:4px 8px 2px}
+  .u-app .sb .sb-foot{padding-top:6px;gap:2px}
+  .u-app .sb .sb-foot .sb-it{height:36px;padding-top:0;padding-bottom:0}
+  /* たたんだとき：☰だけを真ん中に。今開いているメニューの枠に色 */
+  body.sbc .u-app .sb .sb-top{justify-content:center;padding:0}
+  body.sbc .u-app .sb .sb-logo{display:none}
+  body.sbc .u-app .sb .sbp.cur{background:color-mix(in srgb,var(--u-accent) 16%,var(--u-chip));box-shadow:inset 0 0 0 2px var(--u-accent)}
+  body.sbc .u-app .sb .sb-add{height:38px;padding:0}
+}
+
+/* ===================== 家計簿：日付を全部並べる・日ごとに＋と折りたたみ ===================== */
+.kb #list .day{align-items:center;padding:0 6px 0 4px;gap:4px;min-height:40px}
+.kb #list .day .dtog{flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:0;background:none;padding:8px 4px;margin:0;font:inherit;font-weight:700;color:var(--u-ink);text-align:left;cursor:pointer;line-height:1.3}
+.kb #list .day .dtog:not([aria-expanded]){cursor:default}
+.kb #list .day .dtog .fic,.kb #list .day .fic-sp{width:12px;flex:none}
+.kb #list .day .dd{white-space:nowrap}
+.kb #list .day .dn{font-family:var(--u-num);font-size:11.5px;font-weight:600;color:var(--u-sub)}
+.kb #list .day .tdy{font-style:normal;font-size:10.5px;font-weight:700;color:var(--u-on);background:var(--u-accent);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.kb #list .day .dsum{flex:none;font-family:var(--u-num);font-size:13px;font-weight:600;color:var(--u-sub)}
+.kb #list .day .dadd{flex:none;width:34px;height:30px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-acct);border-radius:var(--u-r);font-size:18px;font-weight:700;line-height:1;padding:0;display:grid;place-items:center;cursor:pointer}
+.kb #list .day .dadd:hover{border-color:var(--u-accent)}
+.kb #list .day.empty{background:transparent}
+.kb #list .day.empty .dd{color:var(--u-sub);font-weight:600}
+.kb #list .day.empty .dsum{opacity:.5}
+.kb #list .day.today .dadd{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.kb #list .day+.day{margin-top:0;border-top:0}
+.kb #list .day:first-child{margin-top:0}
+.kb #list .addf{border-color:var(--u-accent);margin:8px 0 10px}
+@media (min-width:900px){.kb #list .day .dsum{font-size:15px}.kb #list .day .dn{font-size:12.5px}}

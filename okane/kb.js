@@ -188,7 +188,14 @@ const ledger = {
   editId: null, // その場で編集中の明細のID
   draft: null, // 編集中の内容
   pending: [], // 追加前の確認に並んでいる明細
+  dayAdd: null, // 日付の行の＋で開いた入力欄 {date, draft}
 };
+/* 日ごとの折りたたみ（この端末に覚える）。たたんでいる日付の一覧 */
+const KDF = "okane.dayfold";
+const dayFold = new Set(lsGet(KDF, []) || []);
+function saveDayFold() {
+  lsSet(KDF, [...dayFold].sort().slice(-400));
+}
 /* グラフ画面 */
 const graph = { by: "category", per: "3", sel: "", m: "" }; // 集計の単位・期間・絞り込んだ項目・選んだ月/日
 /* 設定 */
@@ -807,6 +814,7 @@ function aiInput() {
 }
 /* ===================== 描画 ===================== */
 /* ---------- 画面の切り替え ---------- */
+let prevPay = false;
 function setTab(t) {
   if (t === "an") t = AN.includes(lsRaw(KAN)) ? lsRaw(KAN) : "graph"; // 分析は前回の画面を開く
   if (t === "rules" && isWide()) {
@@ -822,7 +830,11 @@ function setTab(t) {
   if (t === "rules") renderRules();
   else lsSet(KTAB, t, true);
   if (AN.includes(t)) lsSet(KAN, t, true);
+  const wasPay = prevPay;
+  prevPay = t === "home" || t === "balance";
+  if (prevPay && !wasPay && FIN.pay.enter) FIN.pay.enter();
   FIN.pay.show && FIN.pay.show(t === "home" || t === "balance" ? t : "none");
+  if ($("month")) renderMonthBar();
 }
 /* 下のメニュー・左メニュー・分析の切り替えで、いまの画面に印をつける（分析の3画面では「分析」にも） */
 function markTabs(t) {
@@ -867,8 +879,8 @@ function setAnFold(f) {
 function setSidebar(c) {
   document.body.classList.toggle("sbc", c);
   const b = $("sbtog");
-  b.textContent = c ? "»" : "«";
   b.setAttribute("aria-label", c ? "メニューを開く" : "メニューを折りたたむ");
+  b.setAttribute("aria-expanded", String(!c));
 }
 function gearPressed(v) {
   $("gear").setAttribute("aria-pressed", v);
@@ -892,11 +904,27 @@ function closePanels() {
 
 /* ---------- 全体・メッセージ ---------- */
 /* fromAll：FIN.renderAll から呼ばれたとき（支払いの画面はそちらで描く） */
-function render(fromAll) {
-  $("month").innerHTML = periodChoices()
-    .map(m => `<option value="${m}"${m === view.month ? " selected" : ""}>${FIN.periodLabel(m)}</option>`)
+/* 上の月度の切り替え：支払い・残高と計画の画面は支払いの月度、ほかは家計簿の月度（別々に動かす） */
+const payTab = () => view.tab === "home" || view.tab === "balance";
+const barMonth = () => (payTab() && FIN.pay.period ? FIN.pay.period() : view.month);
+function setBarMonth(m) {
+  if (payTab() && FIN.pay.setPeriod) {
+    FIN.pay.setPeriod(m);
+    renderMonthBar();
+  } else {
+    view.month = m;
+    render();
+  }
+}
+function renderMonthBar() {
+  const cur = barMonth();
+  $("month").innerHTML = periodChoices(cur)
+    .map(m => `<option value="${m}"${m === cur ? " selected" : ""}>${FIN.periodLabel(m)}</option>`)
     .join("");
-  $("mcur").disabled = view.month === thisPeriod();
+  $("mcur").disabled = cur === thisPeriod();
+}
+function render(fromAll) {
+  renderMonthBar();
   const mi = items.filter(i => inPeriod(i.date, view.month)).sort((a, b) => b.date.localeCompare(a.date));
   const pm = shiftM(view.month, -1),
     pi = items.filter(i => inPeriod(i.date, pm));
@@ -911,15 +939,15 @@ function render(fromAll) {
   if (!fromAll && (view.tab === "home" || view.tab === "balance") && FIN.pay.render) FIN.pay.render(); // 現金の支出が変わる
 }
 /* 月度の選択肢：明細・支払いのある月度から、いまの12か月度先まで（新しい順に最大120） */
-function periodChoices() {
+function periodChoices(shown) {
   const cur = thisPeriod();
   const all = [
-    view.month,
+    shown || view.month,
     cur,
     ...items.map(i => FIN.periodOf(i.date)),
     ...(FIN.pay.months ? FIN.pay.months() : []),
   ].sort();
-  const hi = [shiftM(cur, 12), view.month].sort().pop();
+  const hi = [shiftM(cur, 12), shown || view.month].sort().pop();
   const out = [];
   for (let m = hi; m >= all[0] && out.length < 120; m = shiftM(m, -1)) out.push(m);
   return out;
@@ -992,49 +1020,47 @@ function renderList(mi) {
   $("fsum").innerHTML = UI.filter.sum("kb", conds);
   ledger.shown = fl;
   if (UI.filter.isOpen("kb")) UI.filter.refresh();
-  let html = "",
-    last = "";
-  fl.forEach(i => {
-    if (i.date !== last) {
-      last = i.date;
-      const w = dow(i.date);
-      html += `<div data-day="${i.date}" class="day ${["sun", "", "", "", "", "", "sat"][w]}"><span>${i.date.slice(5).replace("-", "/")} <small>（${"日月火水木金土"[w]}）</small></span><span>${yen(sumOf(fl.filter(x => x.date === i.date)))}</span></div>`;
-    }
-    html +=
-      i.id === ledger.editId
-        ? editForm(i)
-        : `<div class="it${ledger.sel.has(i.id) ? " on" : ""}" data-edit="${i.id}"><input type="checkbox" class="ck" data-ck="${i.id}" aria-label="選択"${ledger.sel.has(i.id) ? " checked" : ""}>${ico(i.category)}<div class="itm itm2"><div class="l1">${chip(i.category)}${i.memo && i.memo !== i.category ? `<span class="memo sm">${esc(i.memo)}</span>` : ""}</div><div class="l2">${mchip(i.method)}</div></div><span class="amt">${yen(i.amount)}</span></div>`;
+  /* 並べる日付：絞り込みなし＝月度の初日から今日まで（過去の月度は最後の日まで）全部。絞り込み中は明細のある日だけ */
+  const fon = !!(ledger.filter.c || ledger.filter.m || q);
+  const days = new Set(fl.map(i => i.date));
+  if (!fon) {
+    const [ps, pe] = FIN.periodRange(view.month);
+    const last = [pe, today()].sort()[0];
+    for (let d = ps; d <= last; d = FIN.ds(new Date(FIN.pd(d).getTime() + 864e5))) days.add(d);
+  }
+  if (ledger.dayAdd && inPeriod(ledger.dayAdd.date, view.month)) days.add(ledger.dayAdd.date);
+  const by = {};
+  fl.forEach(i => (by[i.date] = by[i.date] || []).push(i));
+  const td = today();
+  let html = "";
+  [...days].sort().reverse().forEach(d => {
+    const l = by[d] || [],
+      w = dow(d),
+      adding = ledger.dayAdd && ledger.dayAdd.date === d,
+      fold = l.length && dayFold.has(d) && !adding;
+    html += `<div data-day="${d}" class="day ${["sun", "", "", "", "", "", "sat"][w]}${l.length ? "" : " empty"}${d === td ? " today" : ""}"><button type="button" class="dtog" data-dfold="${d}"${l.length ? ` aria-expanded="${!fold}"` : ""}>${l.length ? FOLD_IC : '<i class="fic-sp"></i>'}<span class="dd">${d.slice(5).replace("-", "/")} <small>（${"日月火水木金土"[w]}）</small>${d === td ? '<em class="tdy">今日</em>' : ""}</span>${l.length ? `<span class="dn">${l.length}件</span>` : ""}</button><span class="dsum">${l.length ? yen(sumOf(l)) : "—"}</span><button type="button" class="dadd" data-dadd="${d}" aria-label="${+d.slice(5, 7)}月${+d.slice(8)}日に追加">＋</button></div>`;
+    if (adding) html += addForm(d);
+    if (fold) return;
+    l.forEach(i => {
+      html +=
+        i.id === ledger.editId
+          ? editForm(i)
+          : `<div class="it${ledger.sel.has(i.id) ? " on" : ""}" data-edit="${i.id}"><input type="checkbox" class="ck" data-ck="${i.id}" aria-label="選択"${ledger.sel.has(i.id) ? " checked" : ""}>${ico(i.category)}<div class="itm itm2"><div class="l1">${chip(i.category)}${i.memo && i.memo !== i.category ? `<span class="memo sm">${esc(i.memo)}</span>` : ""}</div><div class="l2">${mchip(i.method)}</div></div><span class="amt">${yen(i.amount)}</span></div>`;
+    });
   });
-  $("list").innerHTML = html || '<div class="mu empty">明細なし</div>';
+  $("list").innerHTML = html || `<div class="mu empty">${fon ? "条件に合う明細はありません" : "この月度はまだ始まっていません"}</div>`;
 }
-UI.filter.define("kb", {
-  cfg() {
-    const mi = ledger.mi || [],
-      f = ledger.filter;
-    const base = k => mi.filter(i => (k === "c" || !f.c || i.category === f.c) && (k === "m" || !f.m || i.method === f.m));
-    const row = (k, label, list, fld) => {
-      const b = base(k);
-      return {
-        k,
-        label,
-        cur: f[k],
-        all: b.length,
-        opts: list
-          .map(v => ({ v, label: v, html: `${emo(v)} ${esc(v)}`, n: b.filter(i => i[fld] === v).length }))
-          .filter(o => o.n || o.v === f[k]),
-      };
-    };
-    return { rows: [row("c", "分類", CATS, "category"), row("m", "支払い方法", METHODS, "method")], n: ledger.shown.length, unit: "件" };
-  },
-  pick(k, v) {
-    ledger.filter[k] = v;
-    render();
-  },
-  reset() {
-    ledger.filter = { q: "", c: "", m: "" };
-    render();
-  },
-});
+/* 日付の行の＋で開く入力欄（日付はその日） */
+function addForm(d) {
+  const x = ledger.dayAdd.draft;
+  return `<div class="rv addf" data-a="${d}">
+  <label class="fl">日付<input type="date" data-af="date" value="${esc(x.date)}"></label>
+  <label class="fl">金額<span class="yen"><input type="number" data-af="amount" value="${x.amount || ""}" placeholder="0" inputmode="numeric"></span></label>
+  <label class="fl">分類<select data-af="category">${opts(CATS, x.category)}</select></label>
+  <label class="fl">支払い方法<select data-af="method">${opts(METHODS, x.method)}</select></label>
+  ${memoChips(x.category, x.memo)}<label class="fl full">メモ<input type="text" data-af="memo" list="memos" value="${esc(x.memo)}" placeholder="上の候補から選ぶか入力"></label>
+  <div class="row sp full"><span></span><div class="row"><button class="ghost" data-acancel="1">キャンセル</button><button class="pri" data-asave="1">追加</button></div></div></div>`;
+}
 function editForm(i) {
   return `<div class="rv" data-e="${i.id}">
   <label class="fl">日付<input type="date" data-ef="date" value="${esc(ledger.draft.date)}"></label>
@@ -2062,17 +2088,9 @@ function doAdd() {
     return;
   }
   if (view.tab !== "list") setTab("list");
-  ledger.pending.push(blank());
-  renderReview();
-  setMsg("");
-  /* 追加した行を見せて、金額欄にすぐ入力できるようにする（スマホは電卓が出る） */
-  const am = $("review").querySelectorAll('[data-f="amount"]');
-  const el = am[am.length - 1];
-  if (el) {
-    $("review").scrollIntoView({ block: "start", behavior: "auto" });
-    scrollBy(0, -((document.querySelector(".appbar")?.offsetHeight || 56) + 12));
-    el.focus({ preventScroll: true });
-  }
+  /* 今日の行に入力欄を開く（金額欄にすぐ入力できる。スマホは電卓が出る） */
+  if (!inPeriod(today(), view.month)) view.month = thisPeriod();
+  openDayAdd(today());
 }
 function paintTheme() {
   markCurrent("[data-theme]", "theme", U.theme());
@@ -2125,11 +2143,9 @@ function clickHeader(t, d) {
     setTab(d.tab);
     window.scrollTo(0, 0);
   } else if (t.id === "mprev" || t.id === "mnext") {
-    view.month = shiftM(view.month, t.id === "mprev" ? -1 : 1);
-    render();
+    setBarMonth(shiftM(barMonth(), t.id === "mprev" ? -1 : 1));
   } else if (t.id === "mcur") {
-    view.month = thisPeriod();
-    render();
+    setBarMonth(thisPeriod());
   } else if (t.id === "hTheme") {
     const nx = { auto: "light", light: "dark", dark: "auto" }[U.theme()];
     U.setTheme(nx);
@@ -2181,8 +2197,57 @@ function clickAdd(t, d) {
   return true;
 }
 /* 明細：絞り込みの解除・その場の編集・削除・メモ候補 */
+function openDayAdd(date) {
+  const last = items.length ? [...items].sort((a, b) => (a.date < b.date ? 1 : -1))[0] : null;
+  ledger.dayAdd = { date, draft: { ...blank(), date, method: last && METHODS.includes(last.method) ? last.method : METHODS[0] } };
+  ledger.editId = null;
+  ledger.draft = null;
+  dayFold.delete(date);
+  saveDayFold();
+  render();
+  const f = document.querySelector(`.addf[data-a="${date}"]`);
+  if (f) {
+    const hd = (document.querySelector(".appbar")?.offsetHeight || 56) + ($("lhead")?.offsetHeight || 0) + 8;
+    const day = f.previousElementSibling || f;
+    scrollBy(0, day.getBoundingClientRect().top - hd);
+    f.querySelector('[data-af="amount"]')?.focus({ preventScroll: true });
+  }
+}
+function saveDayAdd() {
+  const x = ledger.dayAdd && ledger.dayAdd.draft;
+  if (!x || !(x.amount > 0) || !x.date) {
+    toast("金額と日付を入れてください");
+    return;
+  }
+  const nw = runRules([{ ...x, id: uid() }]);
+  items = items.concat(nw.out);
+  nw.out.forEach(learn);
+  save();
+  if (!inPeriod(x.date, view.month)) view.month = FIN.periodOf(x.date);
+  ledger.dayAdd = null;
+  toast(`${md(x.date)} に ${yen(x.amount)} を追加しました${nw.changed ? "（ルールで変更）" : ""}`);
+  render();
+}
 function clickLedger(t, d) {
-  if (d.del) {
+  if (d.dadd) {
+    UI.calcClose();
+    openDayAdd(d.dadd);
+  } else if (d.dfold) {
+    if (ledger.sel.size) {
+      const ids = ledger.shown.filter(i => i.date === d.dfold),
+        all = ids.every(i => ledger.sel.has(i.id));
+      ids.forEach(i => (all ? ledger.sel.delete(i.id) : ledger.sel.add(i.id)));
+    } else if (t.hasAttribute("aria-expanded")) {
+      dayFold.has(d.dfold) ? dayFold.delete(d.dfold) : dayFold.add(d.dfold);
+      saveDayFold();
+    } else return true;
+    render();
+  } else if (d.asave) {
+    saveDayAdd();
+  } else if (d.acancel) {
+    ledger.dayAdd = null;
+    render();
+  } else if (d.del) {
     if (!arm(d.del, t, "もう一度押すと削除")) deleteItem(d.del);
   } else if (ledger.sel.size && d.day) {
     const ids = ledger.shown.filter(i => i.date === d.day),
@@ -2191,7 +2256,10 @@ function clickLedger(t, d) {
     render();
   } else if (d.memo !== undefined) {
     const row = t.closest(".rv");
-    if (row && row.dataset.e && ledger.draft) {
+    if (row && row.dataset.a && ledger.dayAdd) {
+      ledger.dayAdd.draft.memo = d.memo;
+      render();
+    } else if (row && row.dataset.e && ledger.draft) {
       ledger.draft.memo = d.memo;
       render();
     } else if (row && row.dataset.k !== undefined && ledger.pending[+row.dataset.k]) {
@@ -2209,6 +2277,7 @@ function clickLedger(t, d) {
     const src = items.find(i => i.id === d.edit);
     if (src) {
       ledger.editId = d.edit;
+      ledger.dayAdd = null;
       view.armed = null;
       ledger.draft = { ...src };
       render();
@@ -2329,12 +2398,14 @@ document.addEventListener("change", e => {
     d = t.dataset || {},
     v = t.value;
   if (t.id === "month") {
-    view.month = v;
-    render();
+    setBarMonth(v);
   } else if (t.id === "file") {
     const fs = [...t.files];
     t.value = "";
     if (fs.length) analyze(fs);
+  } else if (d.af === "category" && ledger.dayAdd) {
+    ledger.dayAdd.draft.category = v;
+    render();
   } else if (t.id === "qc") {
     quickSet("category", v);
   } else if (t.id === "qm") {
@@ -2385,6 +2456,9 @@ document.addEventListener("input", e => {
   } else if (d.ef && ledger.draft) {
     /* 明細の編集フォーム */
     ledger.draft[d.ef] = val(d.ef);
+  } else if (d.af && ledger.dayAdd) {
+    /* 日付の行の＋で開いた入力欄 */
+    ledger.dayAdd.draft[d.af] = val(d.af);
   }
 });
 
@@ -2400,6 +2474,12 @@ document.addEventListener("keydown", e => {
   } else if (t.id === "maddn") {
     e.preventDefault();
     mAdd();
+  } else if (d.af) {
+    const b = document.querySelector("[data-asave]");
+    if (b) {
+      e.preventDefault();
+      b.click();
+    }
   } else if (d.ef) {
     const b = document.querySelector("[data-esave]");
     if (b) {
