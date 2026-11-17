@@ -376,6 +376,7 @@ function startListeners(){
   // ガチャのキャラ（オーナーが登録した画像）
   subs.push(onSnapshot(query(collection(db,'gachaChars'), orderBy('ts','desc')), s => {
     S.gchars = s.docs.map(d => ({ id:'c_' + d.id, docId:d.id, ...d.data() })); render();
+    if(S.role === 'owner' && !s.metadata.fromCache) seedUribo().catch(err => console.error(err));
   }, ()=>{}));
   if(S.role === 'member') startColListeners();
   else subs.push(onSnapshot(doc(db,'game','main'), { includeMetadataChanges:true }, s => { if(s.metadata.fromCache && !S.gameReady) return; S.game = s.data()||{}; S.gameReady = true; render(); }, () => { S.gameReady = false; render(); }));
@@ -399,6 +400,21 @@ function startColListeners(){
 }
 
 /* ===== ミッション・ガチャのしくみ ===== */
+/* ウリボーシリーズ（ウリログのうりぼー）をオーナーが開いたときに1回だけ自動で登録 */
+const URIBO = [['1_mogumogu','もぐもぐウリボー','N'],['2_gokugoku','ごくごくウリボー','N'],['3_suyasuya','すやすやウリボー','N'],
+  ['4_mukimuki','ムキムキウリボー','R'],['5_tekuteku','てくてくウリボー','R'],['6_kirakira','きらきらウリボー','SR']];
+let uriboBusy = false;
+async function seedUribo(){
+  const KEY = 'fl_uribo_seeded';
+  try{ if(localStorage.getItem(KEY)) return; }catch(e){}
+  if(uriboBusy || S.gchars.some(c => String(c.img || '').includes('chars/uribo-'))){ try{ localStorage.setItem(KEY, '1'); }catch(e){} return; }
+  uriboBusy = true;
+  try{
+    for(const [f, name, rarity] of URIBO) await addDoc(collection(db,'gachaChars'), { name, rarity, series:'ウリボー', img:`chars/uribo-${f}.jpg`, ts: serverTimestamp() });
+    try{ localStorage.setItem(KEY, '1'); }catch(e){}
+    toast('ウリボーシリーズ（6体）をガチャに追加しました 🐗');
+  } finally { uriboBusy = false; }
+}
 const allChars = () => [...S.gchars].sort((a,b) => RARITY_ORDER[a.rarity] - RARITY_ORDER[b.rarity]);
 /* シリーズ（ちいかわ・進撃の巨人…）。登録が古い順に並べて、「いろいろ」は最後 */
 const serOf = c => String(c.series || '').trim() || DEF_SERIES;
