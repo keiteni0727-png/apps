@@ -501,11 +501,26 @@ const UI = {};
       });
     } else {
       b.className = "pop-m";
-      const r = el.getBoundingClientRect();
-      const w = 264,
+      const w = b.offsetWidth,
         h = b.offsetHeight;
+      let r = el.getBoundingClientRect();
+      /* 上にも下にも入らないときは、欄の下に入るように画面を動かす */
+      if (innerHeight - r.bottom - 12 < h && r.top - 12 < h && !cs.moved) {
+        cs.moved = true;
+        const top = (document.querySelector(".appbar")?.getBoundingClientRect().bottom || 56) + 8;
+        const d = Math.min(r.bottom + h + 18 - innerHeight, r.top - top);
+        const sc = el.closest(".sheet,.pop");
+        if (d > 0) {
+          if (sc && sc.scrollHeight > sc.clientHeight) sc.scrollTop += d;
+          else scrollBy(0, d);
+          r = el.getBoundingClientRect();
+        }
+      }
+      let top = innerHeight - r.bottom - 12 >= h ? r.bottom + 6 : r.top - 12 >= h ? r.top - h - 6 : r.bottom + 6;
+      /* どんなときも画面の中に収める */
+      top = Math.max(8, Math.min(top, innerHeight - h - 8));
       b.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + "px";
-      b.style.top = (innerHeight - r.bottom - 12 >= h || r.top < h + 12 ? r.bottom + 6 : r.top - h - 6) + "px";
+      b.style.top = top + "px";
     }
   }
   function calcOpen(el) {
@@ -522,6 +537,7 @@ const UI = {};
     cs.expr = el.value && /^\d+$/.test(el.value) ? String(Number(el.value)) : "";
     cs.start = el.value;
     cs.fresh = true;
+    cs.moved = false;
     const b = cBox();
     document.getElementById("calcLab").textContent = cLabel(el);
     b.hidden = false;

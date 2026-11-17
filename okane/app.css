@@ -1549,7 +1549,7 @@ html.pkopen,html.pkopen body{overflow:hidden}
 #calc{position:fixed;z-index:88;background:var(--u-surface);color:var(--u-ink);font:15px/1.4 var(--u-f);user-select:none;-webkit-user-select:none}
 #calc[hidden]{display:none}
 #calc.sheet-m{left:0;right:0;bottom:0;border-top:1px solid var(--u-line);border-radius:18px 18px 0 0;box-shadow:0 -8px 28px rgba(16,24,40,.2);padding:8px max(10px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
-#calc.pop-m{width:264px;border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);padding:8px}
+#calc.pop-m{width:264px;max-height:calc(100vh - 16px);overflow:auto;border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22);padding:8px}
 #calc .c-h{display:flex;align-items:center;gap:6px;padding:2px 2px 6px}
 #calc .c-lab{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--u-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #calc .c-nav{width:38px;height:32px;border:1px solid var(--u-line);background:var(--u-surface);border-radius:8px;font:inherit;font-size:20px;line-height:1;color:var(--u-ink);padding:0;cursor:pointer}
@@ -1572,7 +1572,8 @@ html.pkopen,html.pkopen body{overflow:hidden}
 #calc.pop-m .c-expr{font-size:20px}
 #calc.pop-m .cky{height:38px;font-size:17px;border-radius:10px}
 #calc.pop-m .cky.go{font-size:14px}
-@media (min-width:1600px){#calc.pop-m{zoom:1.12}}
+/* モニター：zoom を使うと位置がずれて画面の外に出るので、大きさだけ変える */
+@media (min-width:1600px){#calc.pop-m{width:296px}#calc.pop-m .cky{height:42px;font-size:19px}#calc.pop-m .c-expr{font-size:22px}}
 input.calcon{border-color:var(--u-accent)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--u-accent) 35%,transparent)!important}
 @media (max-width:899px){
   html.calcopen body{padding-bottom:calc(var(--calch,360px) + 24px)!important}
