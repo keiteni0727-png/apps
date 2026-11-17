@@ -203,9 +203,11 @@ form[data-gtype=time] .gstr, form[data-gtype=time] .gstr-i, form[data-gtype=str]
 <div id="toast" class="toast"></div>
 
 <script src="../shared/u-sync.js"></script>
+<script src="../shared/u-auth.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import * as AU from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+const { getAuth, onAuthStateChanged, signOut, isSignInWithEmailLink, signInWithEmailAndPassword, sendPasswordResetEmail } = AU;
 import * as FS from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 const { getFirestore, doc, getDoc, getDocFromServer, collection, query, orderBy, limit, serverTimestamp, Timestamp } = FS;
 /* 読み込み・書き込みは共通の見張り役（shared/u-sync.js）を通す：止まったら自動でつなぎ直し、保存に失敗したら自動で保存し直す */
@@ -302,8 +304,8 @@ const unsub = arr => { arr.forEach(f=>{ try{f()}catch(e){} }); arr.length = 0; }
 
 /* ===== 起動 ===== */
 const LOGIN = { link:null, sent:false, busy:false };
-const appUrl = () => location.origin + location.pathname;
-const STANDALONE = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+/* ログインのエラー文・端末の判定・Googleやメールリンクのログイン処理は共通の shared/u-auth.js */
+const { appUrl, STANDALONE } = UAuth;
 // 予期しないエラーが起きたら、真っ白（ピンク）にせず画面に出す
 function showFatal(msg){
   if($app.querySelector('.fatal')) return;
@@ -664,28 +666,12 @@ async function compress(file, max, q, maxLen){
 
 /* ===== 画面 ===== */
 /* ===== ログイン（Google／メールのリンク） ===== */
-function authErr(err){
-  return ({
-    'auth/invalid-email':'メールアドレスの形がちがうみたい',
-    'auth/invalid-credential':'メールアドレスかパスワードがちがうみたい。まだ作っていないなら「パスワードをまだ作っていない」を押してね',
-    'auth/wrong-password':'メールアドレスかパスワードがちがうみたい',
-    'auth/user-not-found':'メールアドレスかパスワードがちがうみたい',
-    'auth/missing-password':'パスワードを入れてね',
-    'auth/weak-password':'パスワードは6文字以上にしてね',
-    'auth/too-many-requests':'何度も失敗したので、少し時間をおいてね',
-    'auth/network-request-failed':'ネットにつながっていないみたい',
-    'auth/invalid-action-code':'このリンクは使えません（期限切れか使用済み）。もう一度送ってね',
-    'auth/expired-action-code':'リンクの期限が切れています。もう一度送ってね',
-    'auth/quota-exceeded':'今日はメールを送れる回数の上限です。明日また試してね',
-    'auth/operation-not-allowed':'Firebaseでメールリンクのログインがまだ有効になっていません',
-    'auth/unauthorized-continue-uri':'Firebaseの承認済みドメインにこのサイトが入っていません',
-  })[err.code] || 'ログインできませんでした';
-}
+const authErr = err => UAuth.msg(err, {
+  'auth/invalid-credential':'メールアドレスかパスワードがちがうみたい。まだ作っていないなら「パスワードをまだ作っていない」を押してね',
+});
 async function finishEmailLink(email, link){
-  await signInWithEmailLink(auth, email.trim().toLowerCase(), link);
-  localStorage.removeItem('fitlife_email');
+  await UAuth.finishLink(auth, AU, email, link, 'fitlife_email');
   LOGIN.link = null; LOGIN.sent = false;
-  if(location.search || location.hash) history.replaceState(null, '', appUrl());
 }
 function renderLogin(){
   const saved = localStorage.getItem('fitlife_email') || '';
@@ -1669,10 +1655,8 @@ async function handleForm(kind, f){
       break;
     }
     case 'sendlink': {
-      const email = v.email.trim().toLowerCase();
       const inv = localStorage.getItem('fitlife_invite');
-      await sendSignInLinkToEmail(auth, email, { url: appUrl() + (inv ? '?invite=' + inv : ''), handleCodeInApp: true });
-      localStorage.setItem('fitlife_email', email);
+      await UAuth.sendLink(auth, AU, v.email, appUrl() + (inv ? '?invite=' + inv : ''), 'fitlife_email');
       LOGIN.sent = true; renderLogin();
       return;
     }
@@ -1683,14 +1667,7 @@ async function handleForm(kind, f){
       return;
     case 'setpw': {
       if(v.p1 !== v.p2) throw new Error('2つのパスワードがちがうみたい');
-      const u = auth.currentUser;
-      try{
-        if((u.providerData||[]).some(p => p.providerId === 'password')) await updatePassword(u, v.p1);
-        else await linkWithCredential(u, EmailAuthProvider.credential(u.email, v.p1));
-      }catch(err){
-        if(err.code === 'auth/requires-recent-login') throw new Error('安全のため、一度ログアウトして、もう一度ログインしてから設定してね');
-        throw err;
-      }
+      await UAuth.setPassword(AU, auth.currentUser, v.p1);
       break;
     }
     case 'pastelink': {
@@ -1742,9 +1719,7 @@ document.addEventListener('click', async e => {
   try{
     switch(a){
       case 'login': {
-        const pv = new GoogleAuthProvider(); pv.setCustomParameters({ prompt:'select_account' });
-        try{ await signInWithPopup(auth, pv); }
-        catch(err){ if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(err.code)) await signInWithRedirect(auth, pv); else if(err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') toast('ログインできませんでした'); }
+        try{ await UAuth.google(auth, AU); }catch(err){ toast(authErr(err)); }
         break;
       }
       case 'logout': await signOut(auth); break;

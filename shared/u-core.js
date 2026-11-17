@@ -112,20 +112,11 @@ U.applyTheme();
       ev.preventDefault();
       const btn = host.querySelector("button");
       btn.disabled = true;
-      const pv = new mod.GoogleAuthProvider();
-      pv.setCustomParameters({ prompt: "select_account" });
+      /* Googleログインの処理は4アプリ共通の shared/u-auth.js */
       try {
-        await mod.signInWithPopup(auth, pv);
+        if (!(await window.UAuth.google(auth, mod))) btn.disabled = false;
       } catch (e) {
-        const code = e && e.code;
-        if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(code)) {
-          try {
-            await mod.signInWithRedirect(auth, pv);
-            return;
-          } catch (e2) {}
-        }
-        if (["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(code)) btn.disabled = false;
-        else loginForm(auth, mod, `ログインできませんでした。もう一度お試しください。（${code || "error"}）`);
+        loginForm(auth, mod, `ログインできませんでした。もう一度お試しください。（${(e && e.code) || "error"}）`);
       }
     };
   }

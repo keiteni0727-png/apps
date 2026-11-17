@@ -228,14 +228,10 @@ function openSetPw(){
     if (p1 !== p2) return er.textContent = "2つのパスワードがちがうみたい";
     const b = ev.target.querySelector("button"); b.disabled = true;
     try {
-      const u = auth.currentUser;
-      if ((u.providerData || []).some(p => p.providerId === "password")) await updatePassword(u, p1);
-      else await linkWithCredential(u, EmailAuthProvider.credential(u.email, p1));
+      await UAuth.setPassword(AU, auth.currentUser, p1);
       closeSheet(); toast("パスワードを設定しました🔑");
     } catch (e) {
-      er.textContent = e.code === "auth/requires-recent-login"
-        ? "安全のため、一度ログアウトして、もう一度ログインしてから設定してね"
-        : authMsg(e);
+      er.textContent = authMsg(e);
       b.disabled = false;
     }
   };

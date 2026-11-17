@@ -10,7 +10,8 @@
   }
 
   ({ initializeApp } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`));
-  ({ getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updatePassword, linkWithCredential, EmailAuthProvider } = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`));
+  AU = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+  ({ getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, isSignInWithEmailLink } = AU);
   FS = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
   ({ getFirestore, doc, collection, getDoc, getDocs, serverTimestamp, arrayUnion, deleteField, increment } = FS);
 

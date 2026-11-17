@@ -106,8 +106,7 @@ function renderLogin(){
     ev.preventDefault();
     const email = normEmail(new FormData(sendf).get("email")), b = sendf.querySelector("button"); b.disabled = true;
     try {
-      await sendSignInLinkToEmail(auth, email, { url: appUrl(), handleCodeInApp: true });
-      localStorage.setItem("futari_email", email);
+      await UAuth.sendLink(auth, AU, email, appUrl(), "futari_email");
       LOGIN.sent = true; renderLogin();
     } catch (e) { document.getElementById("merr").textContent = authMsg(e); b.disabled = false; }
   };

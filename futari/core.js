@@ -100,46 +100,23 @@ const dayDiff = (a, b) => Math.round((ymd(b) - ymd(a)) / 86400000);
 const addDays = (s, n) => { const t = new Date(ymd(s) + n * 86400000); return `${t.getUTCFullYear()}-${String(t.getUTCMonth()+1).padStart(2,"0")}-${String(t.getUTCDate()).padStart(2,"0")}`; };
 function fmtDate(s){ if(!s) return ""; const [y,m,d] = String(s).split("-"); return `${y}年${+m}月${+d}日`; }
 function ms(t){ return t && t.toMillis ? t.toMillis() : (typeof t === "number" ? t : Date.now()); }
-const AUTH_ERR = {
-  "auth/invalid-email":"メールアドレスの形がちがうみたい",
-  "auth/missing-password":"パスワードを入れてね",
-  "auth/weak-password":"パスワードは6文字以上にしてね",
-  "auth/email-already-in-use":"このメールアドレスはもう登録されているよ。「ログイン」から入ってね",
-  "auth/invalid-credential":"メールアドレスかパスワードがちがうみたい",
-  "auth/wrong-password":"メールアドレスかパスワードがちがうみたい",
-  "auth/user-not-found":"メールアドレスかパスワードがちがうみたい",
-  "auth/too-many-requests":"何度も失敗したので、少し時間をおいてね",
-  "auth/network-request-failed":"ネットにつながっていないみたい",
-  "auth/operation-not-allowed":"Firebaseで、このログイン方法がまだオンになっていないみたい",
-  "auth/unauthorized-domain":"このURLがFirebaseの「承認済みドメイン」に入っていないみたい",
-  "auth/unauthorized-continue-uri":"このURLがFirebaseの「承認済みドメイン」に入っていないみたい",
-  "auth/invalid-action-code":"このリンクは使えません（期限切れか使用ずみ）。もう一度メールを送ってね",
-  "auth/expired-action-code":"リンクの期限が切れています。もう一度メールを送ってね",
-  "auth/quota-exceeded":"今日はメールを送れる回数の上限です。明日また試すか、Googleでログインしてね",
-  "auth/account-exists-with-different-credential":"このメールアドレスは別の方法で登録ずみです。メールのリンクでログインしてね"
-};
-const authMsg = e => AUTH_ERR[e?.code] || ("うまくいかなかったよ（" + (e?.code || e?.message || "不明") + "）");
+/* ログインのエラー文・端末の判定・メールアドレスの整え方は共通の shared/u-auth.js */
+const authMsg = e => UAuth.msg(e);
 
-const appUrl = () => location.origin + location.pathname;
-const STANDALONE = navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
-const IN_LINE = / Line\//i.test(navigator.userAgent);
-const normEmail = s => String(s || "").trim().toLowerCase();
-const emailOk = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+const { appUrl, STANDALONE, IN_LINE, normEmail, emailOk } = UAuth;
 
 
 /* ---------- Firebase の関数（boot.js でつないだときに入る） ---------- */
-let initializeApp, getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, updatePassword, linkWithCredential, EmailAuthProvider;
+let initializeApp, getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, isSignInWithEmailLink;
 let FS, getFirestore, doc, collection, getDoc, getDocs, serverTimestamp, arrayUnion, deleteField, increment;
 let onSnapshot, setDoc, updateDoc, addDoc, deleteDoc, writeBatch;
-let fbApp, auth, db;
+let AU, fbApp, auth, db; // AU＝firebase-auth の関数一式
 
 /* メールのリンクから開かれたとき：リンクを覚えておき、送ったアドレスが分かればそのままログイン（boot.js で確認） */
 const LOGIN = { link: null, sent: false };
 async function finishEmailLink(email, link){
-  await signInWithEmailLink(auth, normEmail(email), link);
-  localStorage.removeItem("futari_email");
+  await UAuth.finishLink(auth, AU, email, link, "futari_email");
   LOGIN.link = null; LOGIN.sent = false;
-  history.replaceState(null, "", appUrl());
 }
 
 /* ---------- 状態 ---------- */

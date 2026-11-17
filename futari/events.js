@@ -15,12 +15,7 @@ document.addEventListener("click", async ev => {
     case "mode": S.authMode = el.dataset.v; S.openPw = true; renderLogin(); break;
     case "resend": LOGIN.sent = false; renderLogin(); break;
     case "google": {
-      const pv = new GoogleAuthProvider(); pv.setCustomParameters({ prompt: "select_account" });
-      try { await signInWithPopup(auth, pv); }
-      catch (e) {
-        if (["auth/popup-blocked", "auth/operation-not-supported-in-this-environment"].includes(e.code)) await signInWithRedirect(auth, pv);
-        else if (!["auth/popup-closed-by-user", "auth/cancelled-popup-request"].includes(e.code)) toast(authMsg(e));
-      }
+      try { await UAuth.google(auth, AU); } catch (e) { toast(authMsg(e)); }
       break;
     }
     case "forgot": {
