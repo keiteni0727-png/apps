@@ -631,8 +631,8 @@ function groupedHtml(list) {
 function renderList() {
   const list = filtered();
   const sortHtml = sortSteps([
-    { h: "分け方", attr: "data-grp", cur: state.grp, opts: GROUPS },
-    { h: "その中の順番", attr: "data-sort", cur: state.sort, opts: SORTS },
+    { h: "グループ", attr: "data-grp", cur: state.grp, opts: GROUPS },
+    { h: "並び替え", attr: "data-sort", cur: state.sort, opts: SORTS },
   ]);
   /* ★保存・並び順は今までどおりボタンの下に出す。絞り込みはシート（fSheetHtml） */
   const panel = { sv: svPanelHtml, sort: () => sortHtml }[state.fOpen];

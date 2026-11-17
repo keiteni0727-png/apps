@@ -689,9 +689,9 @@ function fshFocusQ(sel) {
 const sortSteps = steps =>
   steps
     .map(
-      (st, i) =>
-        `<div class="fgroup sstep"><h5><b class="sn">${"①②③"[i]}</b>${st.h}</h5><div class="chips sortlist" role="radiogroup" aria-label="${st.h}">${st.opts
-          .map(([v, l]) => `<button type="button" role="radio" ${st.attr}="${v}" aria-checked="${st.cur === v}" aria-pressed="${st.cur === v}">${st.cur === v ? "✓ " : ""}${l}</button>`)
+      st =>
+        `<div class="fgroup sstep"><h5>${st.h}</h5><div class="chips sortlist" role="radiogroup" aria-label="${st.h}">${st.opts
+          .map(([v, l]) => `<button type="button" role="radio" ${st.attr}="${v}" aria-checked="${st.cur === v}" aria-pressed="${st.cur === v}">${l}</button>`)
           .join("")}</div></div>`,
     )
     .join("");

@@ -274,8 +274,8 @@ function renderYt() {
       : "");
   /* 並び順・分け方：作品と同じ順番・見た目（並び順が上、分け方が下） */
   const sBody = sortSteps([
-    { h: "分け方", attr: "data-ytgrp", cur: yst.grp, opts: YT_GRPS },
-    { h: "その中の順番", attr: "data-ytsort", cur: yst.sort, opts: YT_SORTS },
+    { h: "グループ", attr: "data-ytgrp", cur: yst.grp, opts: YT_GRPS },
+    { h: "並び替え", attr: "data-ytsort", cur: yst.sort, opts: YT_SORTS },
   ]);
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
   const srt = [srt0[0], (yst.grp === "year" ? "年別・" : "ジャンル別・") + srt0[1]];

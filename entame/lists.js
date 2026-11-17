@@ -22,12 +22,12 @@ function lSortPop() {
   const steps =
     state.mode === "sr"
       ? [
-          { h: "分け方", attr: 'data-lsort="sr.grp" data-v', cur: lst.sr.grp, opts: SR_GRPS },
-          { h: "その中の順番", attr: 'data-lsort="sr.sort" data-v', cur: lst.sr.sort, opts: SR_SORTS },
+          { h: "グループ", attr: 'data-lsort="sr.grp" data-v', cur: lst.sr.grp, opts: SR_GRPS },
+          { h: "並び替え", attr: 'data-lsort="sr.sort" data-v', cur: lst.sr.sort, opts: SR_SORTS },
         ]
       : [
-          { h: "分け方", attr: 'data-lsort="mu.grp" data-v', cur: lst.mu.grp, opts: MU_GRPS },
-          { h: "その中の順番", attr: 'data-lsort="mu.ord" data-v', cur: lst.mu.ord, opts: MU_ORDS },
+          { h: "グループ", attr: 'data-lsort="mu.grp" data-v', cur: lst.mu.grp, opts: MU_GRPS },
+          { h: "並び替え", attr: 'data-lsort="mu.ord" data-v', cur: lst.mu.ord, opts: MU_ORDS },
         ];
   return `<div class="fpop-scrim"></div><div class="fsdrop fpop k-sort" role="dialog" aria-label="並び替え"><div class="fpop-h"><b>並び替え</b><button type="button" class="u-btn sm" data-lpop="sort">完了</button></div>${sortSteps(steps)}</div>`;
 }

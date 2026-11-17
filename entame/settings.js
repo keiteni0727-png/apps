@@ -54,10 +54,15 @@ function seriesSettingsHtml() {
             .map(n => {
               const c = cnt[n] || 0;
               return `<div class="srow${c ? "" : " zero"}">
-      ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="sname" data-seropen="${esc(n)}" title="作品一覧を開く">${esc(n)}</button>`}
-      <span class="kind ${smap[n] === "a" ? "a" : "d"}">${smap[n] === "a" ? "アニメ" : "ドラマ"}</span>
+      ${
+        setRen === n
+          ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">`
+          : setEdit
+            ? `<button type="button" class="sname ed" data-mrename="${esc(n)}" aria-label="${esc(n)}の名前を変更">${esc(n)}</button>`
+            : `<button type="button" class="sname" data-seropen="${esc(n)}" title="作品一覧を開く">${esc(n)}</button>`
+      }
+      ${setEdit ? `<button type="button" class="kind ${smap[n] === "a" ? "a" : "d"} kindsw" data-sermain="${esc(n)}" aria-label="ジャンルを切り替え">${smap[n] === "a" ? "アニメ" : "ドラマ"} ⇄</button>` : `<span class="kind ${smap[n] === "a" ? "a" : "d"}">${smap[n] === "a" ? "アニメ" : "ドラマ"}</span>`}
       <small class="mcnt">${c}作品</small>
-      <button type="button" class="sren" data-mrename="${esc(n)}" aria-label="${esc(n)}の名前を変更">✎</button>
       ${setEdit ? `<button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button>` : ""}</div>`;
             })
             .join("")
@@ -69,14 +74,14 @@ function masterListHtml() {
   const cnt = usedNames(setKey);
   const unit = setKey === "authors" || setKey === "groups" || setKey === "soloGroups" ? "本" : "作品";
   const rows = M(setKey);
-  return `<p class="hint" style="margin:8px 0">⠿をドラッグして並び順を変えると、編集画面の選択肢やフィルタの並びに反映されます。名前を押すと変更できます。名前を変えると、使っている作品もまとめて変わります。</p>
+  return `<p class="hint" style="margin:8px 0">⠿をドラッグして並び順を変えると、編集画面の選択肢やフィルタの並びに反映されます。名前の変更・削除は右上の「編集」から。名前を変えると、使っている作品もまとめて変わります。</p>
     <div class="mlist">${
       rows.length
         ? rows
             .map(
               (n, i) => `<div class="mrow2" data-mi="${i}" data-sortrow>
       ${GRIP("master")}
-      ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="mname" data-mrename="${esc(n)}">${esc(n)}</button>`}
+      ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : setEdit ? `<button type="button" class="mname ed" data-mrename="${esc(n)}" aria-label="${esc(n)}の名前を変更">${esc(n)}</button>` : `<span class="mname">${esc(n)}</span>`}
       <small class="mcnt">${cnt[n] || 0}${unit}</small>
       ${setEdit ? `<button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button>` : ""}</div>`,
             )
@@ -106,12 +111,12 @@ function settingsHtml() {
   const th = U.theme();
   if (setPage) {
     const isM = MKEYS.some(([k]) => k === setPage);
-    const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3>${isM ? `<button type="button" class="setedit${setEdit ? " on" : ""}" data-setedit="1">${setEdit ? "完了" : "編集"}</button>` : ""}<button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
+    const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3>${isM ? `<button type="button" class="u-btn sm setedit${setEdit ? " pri" : ""}" data-setedit="1">${setEdit ? "完了" : "編集"}</button>` : ""}<button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
     if (setPage === "bk") return head + backupHtml();
     if (setPage === "trash") return head + trashHtml();
     const ser = setPage === "series";
     return `${head}${ser ? seriesSettingsHtml() : masterListHtml()}
-    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" data-madd="1">＋ 追加</button></div>`;
+    <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" class="u-btn sm" data-madd="1">＋ 追加</button></div>`;
   }
   const row = (k, lab, val, attr = `data-setpg="${k}"`) => `<button type="button" class="setrow" ${attr}>${setIc(k)}<span class="setl">${lab}</span><span class="setv">${val}</span><svg class="setcv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
   const tl = trashList().length;
