@@ -632,6 +632,8 @@ function missingOf(i) {
   const add = (k, j = "", n = "") => (!n || !nf.includes(n)) && out.push({ k, j, n });
   if (!i.s) add("ステータス");
   if (md !== "movie" && md !== "sp" && !episodes(i).length) add("話数");
+  /* アニメ：登録済みの話のうち、1話でもサブタイトルが空なら（「なし」にはできない。サブタイトル欄はアニメだけ） */
+  if (i.k === "a" && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
@@ -653,7 +655,7 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-const MISS_KEYS = ["ステータス", "話数", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
+const MISS_KEYS = ["ステータス", "話数", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);

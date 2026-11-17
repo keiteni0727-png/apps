@@ -420,7 +420,9 @@ function missDetail(it) {
   const main = x =>
     x.k === "話数"
       ? `<button type="button" data-dtab="ep">話数を登録</button>`
-      : x.j
+      : x.k === "サブタイトル"
+        ? `<button type="button" data-dtab="ep">✎ サブタイトル</button>`
+        : x.j
         ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
         : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
   const btn = x =>
