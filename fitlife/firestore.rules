@@ -115,8 +115,10 @@ service cloud.firestore {
       allow write: if isMember();
     }
 
+    // 食事・ジム・お水・睡眠はオーナーも見るだけOK。体重・目標・ひみつは彼女だけ
     match /{col}/{id} {
-      allow read: if col in ['meals', 'gym', 'weights', 'water', 'sleep'] && isMember();
+      allow read: if (col in ['meals', 'gym', 'weights', 'water', 'sleep'] && isMember())
+        || (col in ['meals', 'gym', 'water', 'sleep'] && isOwner());
       allow create, update: if col in ['meals', 'gym', 'weights', 'water', 'sleep']
         && isMember()
         && request.resource.data.date is string;

@@ -282,6 +282,7 @@ const SLOTS = ['朝ごはん','昼ごはん','夜ごはん','間食'];
 const CONDS = ['腹痛','腰痛','頭痛','むくみ','だるい','眠い','肌あれ','イライラ','気分↓','元気'];
 const LOG_TYPES = ['生理開始','生理中','生理終了','体調メモ'];
 const COLS = ['meals','gym','weights','water','sleep'];
+const OWNER_COLS = ['meals','gym','water','sleep'];
 const COL_LABEL = { meals:'食事', gym:'ジム', weights:'体重', water:'水分', sleep:'睡眠', profile:'目標・プロフィール' };
 
 /* ===== 状態 ===== */
@@ -378,13 +379,14 @@ function startListeners(){
     S.gchars = s.docs.map(d => ({ id:'c_' + d.id, docId:d.id, ...d.data() })); render();
     if(S.role === 'owner' && !s.metadata.fromCache) seedUribo().catch(err => console.error(err));
   }, ()=>{}));
-  if(S.role === 'member') startColListeners();
-  else subs.push(onSnapshot(doc(db,'game','main'), { includeMetadataChanges:true }, s => { if(s.metadata.fromCache && !S.gameReady) return; S.game = s.data()||{}; S.gameReady = true; render(); }, () => { S.gameReady = false; render(); }));
+  startColListeners();
 }
 
 function startColListeners(){
   unsub(colSubs);
-  for(const col of COLS){
+  const isM = S.role === 'member';
+  // オーナーは食事・ジム・お水・睡眠だけ（体重・目標・ひみつは彼女だけ）
+  for(const col of (isM ? COLS : OWNER_COLS)){
     S.denied[col] = false;
     const q = query(collection(db,col), orderBy('date','desc'), limit(400));
     colSubs.push(onSnapshot(q, s => {
@@ -395,7 +397,7 @@ function startColListeners(){
       if(LOADED.has('weights')) ['meals','gym'].filter(c => LOADED.has(c)).forEach(c => backfillKcal(c).catch(err => console.error(err)));
     }, () => { S.denied[col] = true; S.data[col] = []; render(); }));
   }
-  colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
+  if(isM) colSubs.push(onSnapshot(doc(db,'profile','main'), s => { S.profile = s.data()||{}; render(); }, () => { S.profile = {}; }));
   colSubs.push(onSnapshot(doc(db,'game','main'), { includeMetadataChanges:true }, s => { if(s.metadata.fromCache && !S.gameReady) return; S.game = s.data()||{}; S.gameReady = true; render(); }, () => { S.gameReady = false; render(); }));
 }
 
@@ -721,9 +723,9 @@ function render(){
   if(!S.user || !S.role) return;
   const isM = S.role === 'member';
   const tabs = isM ? [['home','ホーム',IC.home],['meals','食事',IC.meal],['gym','ジム',IC.gym],['body','からだ',IC.body],['gacha','ガチャ',IC.gacha],['secret','ひみつ',IC.lock]]
-                   : [['home','応援',IC.heart.replace('fill="#f48fb1"','fill="none" stroke-width="1.8" stroke-linejoin="round"')],['ogacha','ガチャ',IC.gacha],['chars','キャラ',IC.star]];
+                   : [['home','応援',IC.heart.replace('fill="#f48fb1"','fill="none" stroke-width="1.8" stroke-linejoin="round"')],['orec','きろく',IC.meal],['ogacha','ガチャ',IC.gacha],['chars','キャラ',IC.star]];
   const views = isM ? { home:viewHome, meals:viewMeals, gym:viewGym, body:viewBody, gacha:viewGacha, secret:viewSecret, settings:viewSettings }
-                    : { home:viewOwnerHome, ogacha:viewOwnerGacha, chars:viewOwnerChars, settings:viewSettings };
+                    : { home:viewOwnerHome, orec:viewOwnerRec, ogacha:viewOwnerGacha, chars:viewOwnerChars, settings:viewSettings };
   const fabTarget = isM ? ({ meals:'meal', gym:'gym', secret: S.key ? 'log' : null })[S.tab] : null;
   const y = window.scrollY;
   $app.innerHTML = `
@@ -771,21 +773,7 @@ function viewHome(){
   }
 
   // 今日のまとめ
-  const kcal = S.data.meals.filter(m => m.date === t).reduce((a,m) => a + (m.kcal||0), 0);
-  const water = S.data.water.filter(x => x.date === t).reduce((a,x) => a + (x.ml||0), 0);
-  const wGoal = num(p.waterGoal) || 1500, kGoal = num(p.kcalGoal);
-  const sl = S.data.sleep[0];
-  const weekGym = new Set(S.data.gym.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
-  const weekBurn = sumKcal(S.data.gym.filter(g => g.date >= daysAgo(6)));
-  const cell = (col, label, val, unit, extra='') => S.denied[col]
-    ? `<div class="card stat"><div class="label">${label}</div><div class="muted" style="margin-top:6px">共有されていません</div></div>`
-    : `<div class="card stat"><div class="label">${label}</div><div class="val">${val}<small>${unit}</small></div>${extra}</div>`;
-  html += `<div class="grid2" style="margin-bottom:14px">
-    ${cell('meals','今日のカロリー', kcal, kGoal ? ` / ${kGoal}kcal` : 'kcal', kGoal ? `<div class="bar"><i style="width:${Math.min(100,kcal/kGoal*100)}%"></i></div>` : '')}
-    ${cell('water','今日のお水', water, ` / ${wGoal}ml`, `<div class="bar"><i style="width:${Math.min(100,water/wGoal*100)}%"></i></div>`)}
-    ${cell('sleep','最近の睡眠', sl ? hm(sl.minutes) : '--', '', sl ? `<div class="muted">${fmtDate(sl.date)} ${esc(sl.bed)}→${esc(sl.wake)}</div>` : '')}
-    ${cell('gym','今週のジム', weekGym, '回', `<div class="muted">目安：週2回${weekBurn ? ` ・ 🔥${weekBurn}kcal` : ''}</div>`)}
-  </div>`;
+  html += todayGrid(p, t);
 
   if(isM){
     html += `<div class="card"><h2>お水をのむ</h2><div class="water-btns">
@@ -794,9 +782,29 @@ function viewHome(){
       <button class="btn sub" data-a="water" data-v="500">＋500ml</button></div></div>
       <div class="row" style="margin-bottom:14px"><button class="btn sub" data-a="open" data-v="meal">食事を記録</button><button class="btn sub" data-a="open" data-v="sleep">睡眠を記録</button><button class="btn sub" data-a="open" data-v="gym">ジムを記録</button></div>`;
   }
-  return html + pastCheers();
+  return html + pastCheers() + (isM ? `<p class="muted" style="text-align:center;font-size:12px;margin:4px 0 14px">食事・ジム・お水・睡眠は${FROM}にも見えるよ（体重・ひみつは見えません）</p>` : '');
+}
+/* 今日のまとめ（カロリー・お水・睡眠・ジム） */
+function todayGrid(p, t){
+  const kcal = S.data.meals.filter(m => m.date === t).reduce((a,m) => a + (m.kcal||0), 0);
+  const water = S.data.water.filter(x => x.date === t).reduce((a,x) => a + (x.ml||0), 0);
+  const wGoal = waterGoal(), kGoal = num(p.kcalGoal);
+  const sl = S.data.sleep[0];
+  const weekGym = new Set(S.data.gym.filter(g => g.date >= daysAgo(6)).map(g => g.date)).size;
+  const weekBurn = sumKcal(S.data.gym.filter(g => g.date >= daysAgo(6)));
+  const cell = (col, label, val, unit, extra='') => S.denied[col]
+    ? `<div class="card stat"><div class="label">${label}</div><div class="muted" style="margin-top:6px">共有されていません</div></div>`
+    : `<div class="card stat"><div class="label">${label}</div><div class="val">${val}<small>${unit}</small></div>${extra}</div>`;
+  return `<div class="grid2" style="margin-bottom:14px">
+    ${cell('meals','今日のカロリー', kcal, kGoal ? ` / ${kGoal}kcal` : 'kcal', kGoal ? `<div class="bar"><i style="width:${Math.min(100,kcal/kGoal*100)}%"></i></div>` : '')}
+    ${cell('water','今日のお水', water, wGoal ? ` / ${wGoal}ml` : 'ml', wGoal ? `<div class="bar"><i style="width:${Math.min(100,water/wGoal*100)}%"></i></div>` : '')}
+    ${cell('sleep','最近の睡眠', sl ? hm(sl.minutes) : '--', '', sl ? `<div class="muted">${fmtDate(sl.date)} ${esc(sl.bed)}→${esc(sl.wake)}</div>` : '')}
+    ${cell('gym','今週のジム', weekGym, '回', `<div class="muted">目安：週2回${weekBurn ? ` ・ 🔥${weekBurn}kcal` : ''}</div>`)}
+  </div>`;
 }
 const FROM = 'Keisuke';
+// お水の目標：オーナーには目標（プロフィール）が見えないので出さない
+const waterGoal = () => S.role === 'member' ? (num(S.profile.waterGoal) || 1500) : null;
 const gameWait = () => `<div class="card"><p class="muted" style="margin:0">ガチャのデータを読み込み中…</p></div>`;
 function missionCard(){
   if(!S.gameReady) return gameWait();
@@ -918,8 +926,17 @@ function viewOwnerHome(){
     ${S.cheers.length ? `<ul class="list">${S.cheers.slice(0, n).map((c,i) => `<li class="editable" data-a="cheeropen" data-id="${c.id}"><div class="main"><div style="white-space:pre-wrap">${esc(c.text)}</div>
       <div class="s">${cheerDate(c)}${c.ticket ? ' ・ 🎟️' : ''}${i === 0 ? ' ・ <b style="color:var(--pink-d)">表示中</b>' : ''}</div></div></li>`).join('')}</ul>
       ${S.cheers.length > 5 ? `<button class="btn ghost block sm" data-a="omore" data-v="moreCheers" style="margin-top:8px">${S.moreCheers ? 'とじる' : `もっと見る（あと${S.cheers.length - 5}件）`}</button>` : ''}` : '<p class="empty">まだ送っていません</p>'}
-    <p class="muted" style="margin-bottom:0">彼女の記録（食事・体重・ひみつの記録など）は、あなたには表示されません。</p></div>`;
+    <p class="muted" style="margin-bottom:0">「きろく」タブで、彼女の食事・ジム・お水・睡眠を見られます（見るだけ）。体重・目標・ひみつの記録は表示されません。</p></div>`;
   return html;
+}
+/* 彼女のきろく（見るだけ）。体重・目標・ひみつは出さない */
+const OREC = [['sum','まとめ'],['meals','食事'],['gym','ジム'],['body','お水・睡眠']];
+function viewOwnerRec(){
+  const cur = OREC.some(([k]) => k === S.orec) ? S.orec : 'sum';
+  const tabs = `<div class="sertabs">${OREC.map(([k,l]) => `<button class="${k === cur ? 'on' : ''}" ${k === cur ? 'style="background:var(--pink-d)"' : ''} data-a="orec" data-v="${k}">${l}</button>`).join('')}</div>`;
+  const body = cur === 'meals' ? viewMeals() : cur === 'gym' ? viewGym() : cur === 'body' ? viewBody()
+    : `<div class="card"><h2>今日の彼女<span class="sub">見るだけ</span></h2><p class="muted" style="margin:0">体重・目標・ひみつの記録は表示されません。</p></div>${todayGrid({}, today())}`;
+  return tabs + body;
 }
 function viewOwnerGacha(){
   if(!S.gameReady) return `<div class="card"><h2>🎰 彼女のガチャ</h2><p class="muted" style="margin:0">読み込み中…（ずっとこのままなら、Firebaseのルールを確認してね）</p></div>`;
@@ -1084,8 +1101,9 @@ function viewGym(){
 
 function viewBody(){
   let html = '';
-  // 体重
-  if(S.denied.weights) html += deniedCard('weights');
+  // 体重（彼女だけ）
+  if(!canEdit()){}
+  else if(S.denied.weights) html += deniedCard('weights');
   else {
     const w = S.data.weights;
     html += `<div class="card"><h2>体重の推移${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="weight">＋記録</button></span>` : ''}</h2>
@@ -1095,16 +1113,16 @@ function viewBody(){
   // 水分
   if(S.denied.water) html += deniedCard('water');
   else {
-    const goal = num(S.profile.waterGoal) || 1500;
+    const goal = waterGoal();
     const days = [...Array(7)].map((_,i) => daysAgo(6-i));
     const tot = days.map(d => S.data.water.filter(x => x.date === d).reduce((a,x) => a + (x.ml||0), 0));
-    const mx = Math.max(goal, ...tot);
+    const mx = Math.max(goal || 0, ...tot, 1);
     html += `<div class="card"><h2>お水（7日間）${canEdit() ? `<span class="sub"><button class="btn sub sm" data-a="open" data-v="water">＋入力</button></span>` : ''}</h2>
       <svg class="chart" viewBox="0 0 320 130">
-        <line x1="10" x2="310" y1="${110 - goal/mx*95}" y2="${110 - goal/mx*95}" stroke="#f48fb1" stroke-dasharray="4 4"/>
-        ${tot.map((v,i) => `<rect x="${18+i*42}" y="${110 - v/mx*95}" width="26" height="${Math.max(0,v/mx*95)}" rx="8" fill="${v >= goal ? '#e46f98' : '#f8bcd2'}"/>
+        ${goal ? `<line x1="10" x2="310" y1="${110 - goal/mx*95}" y2="${110 - goal/mx*95}" stroke="#f48fb1" stroke-dasharray="4 4"/>` : ''}
+        ${tot.map((v,i) => `<rect x="${18+i*42}" y="${110 - v/mx*95}" width="26" height="${Math.max(0,v/mx*95)}" rx="8" fill="${goal && v >= goal ? '#e46f98' : '#f8bcd2'}"/>
           <text x="${31+i*42}" y="125" font-size="10" text-anchor="middle" fill="#a8899a">${fmtDate(days[i]).replace(/\(.\)/,'')}</text>`).join('')}
-      </svg><div class="muted">点線：目標 ${goal}ml</div>
+      </svg>${goal ? `<div class="muted">点線：目標 ${goal}ml</div>` : ''}
       ${canEdit() ? `<div class="water-btns"><button class="btn sub sm" data-a="water" data-v="150">＋150ml</button><button class="btn sub sm" data-a="water" data-v="200">＋200ml</button><button class="btn sub sm" data-a="water" data-v="500">＋500ml</button></div>` : ''}
       ${S.data.water.filter(x => x.date === today()).length && canEdit() ? `<ul class="list" style="margin-top:8px">${S.data.water.filter(x => x.date === today()).map(x => `<li${editAttr('water', x.id)}><div class="main"><span class="t">${x.ml}ml</span> <span class="s">今日</span></div></li>`).join('')}</ul>` : ''}
     </div>`;
@@ -1238,7 +1256,7 @@ function viewSettings(){
         <div><label class="f">お水の目標(ml)</label><input class="in" type="number" inputmode="numeric" name="waterGoal" value="${esc(p.waterGoal ?? 1500)}"></div></div>
       <button class="btn block" style="margin-top:14px">保存</button></form>
       <p class="muted" style="margin-top:8px">急に減らすより、ゆっくり続けるのがいちばん。健康第一でいこうね。</p></div>
-    <div class="card"><h2>プライバシー</h2><p class="muted">あなたの記録はすべて、あなただけが見られます（オーナーにも見えません）。生理・体調・体型写真は、さらに合言葉で暗号化しています。</p></div>`;
+    <div class="card"><h2>プライバシー</h2><p class="muted">食事・ジム・お水・睡眠の記録は、${FROM}も見られます（見るだけで、書きかえはできません）。体重・目標と、ひみつの記録はあなただけが見られます。生理・体調・体型写真は、さらに合言葉で暗号化しています。</p></div>`;
   }
   html += `<div class="card"><h2>アカウント</h2><p class="muted">${esc(S.user.email)}</p>
     <details style="margin:0 0 12px"><summary style="cursor:pointer">🔑 パスワードを設定${(S.user.providerData||[]).some(p => p.providerId === 'password') ? '' : '（未設定）'}</summary>
@@ -1767,6 +1785,7 @@ document.addEventListener('click', async e => {
       case 'pull': await pullGacha(); break;
       case 'gser': S.gser = v; render(); break;
       case 'oser': S.oser = v; render(); break;
+      case 'orec': S.orec = v; window.scrollTo(0,0); render(); break;
       case 'newser': { const f = el.closest('form'), box = f.querySelector('.sernew'); box.hidden = false; f.querySelector('.serpick').hidden = true; box.querySelector('input').focus(); break; }
       case 'newsercancel': { const f = el.closest('form'), box = f.querySelector('.sernew'); box.querySelector('input').value = ''; box.hidden = true; f.querySelector('.serpick').hidden = false; break; }
       case 'cser': S.cser = v; render(); break;
