@@ -1834,10 +1834,8 @@ button.setrow:hover{background:var(--u-soft)}
 .ghd .gtog span:not(.gcnt){margin-left:0}
 .fsdrop.fpop.k-sort .sortlist{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
 .fsdrop.fpop.k-sort .sortlist button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mlist.slist{display:block;height:auto;max-height:none}
 .slist .srow{min-height:46px;height:auto;padding:4px 10px;box-sizing:border-box;border-top:1px solid var(--u-soft)}
 .slist .srow:first-child{border-top:0}
-.mlist.slist{height:auto!important;min-height:0!important;flex:none!important;background:var(--u-surface)}
 /* === 選択ボタンを全部同じ見た目に（編集画面・絞り込み・並び替え・未入力の項目・シリーズ候補） === */
 .chips button,.fsdrop .fgroup .chips button,.fsdrop.fpop .fgroup .chips button,.field .chips button,.fgroup .chips button,.fsdrop.fpop.k-sort .sortlist button,.fsh-subb .serbox button,.mkeys button{
   border:1px solid var(--u-line)!important;background:transparent!important;color:var(--u-ink)!important;border-radius:10px!important;
@@ -1867,3 +1865,5 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
   .fsdrop.fpop.k-sort{left:0;right:auto}
 }
 .sb-add{flex:none}
+/* 設定のシリーズ：一覧の中でスクロール（行は伸ばさず上詰め） */
+.mlist.slist{align-content:start;grid-auto-rows:min-content;background:var(--u-surface);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
