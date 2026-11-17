@@ -2,11 +2,11 @@
 
 /* ---------- 共通：簡単な絞り込みシート・並び順・検索の状態 ---------- */
 const lst = Object.assign(
-  { sr: { g: "all", prog: "all", sort: "count" }, mu: { t: "all", dl: "all", k: "all", grp: "ar" } },
+  { sr: { g: "all", prog: "all", sort: "count", grp: "none" }, mu: { t: "all", dl: "all", k: "all", grp: "ar", ord: "old" } },
   ls.get("adb.v3.lists") || {},
 );
-lst.sr = Object.assign({ g: "all", prog: "all", sort: "count" }, lst.sr);
-lst.mu = Object.assign({ t: "all", dl: "all", k: "all", grp: "ar" }, lst.mu);
+lst.sr = Object.assign({ g: "all", prog: "all", sort: "count", grp: "none" }, lst.sr);
+lst.mu = Object.assign({ t: "all", dl: "all", k: "all", grp: "ar", ord: "old" }, lst.mu);
 const lui = { q: "", qOpen: false, fp: "", fSub: "" }; // 端末に覚えない
 const saveLists = () => ls.set("adb.v3.lists", { sr: lst.sr, mu: lst.mu });
 const LA = { sheet: 'data-lsheet="1"', sort: 'data-lpop="sort"', q: "data-lqtog", reset: 'data-lreset="1"', close: 'data-lshclose="1"', sub: "data-lfsub", miss: "data-lnomiss" };
@@ -17,16 +17,27 @@ function lSheet(id, rows, n, unit, nConds) {
   /* 未入力の行はないので消す */
   return fshShell({ id, a: LA, rows, sub: lui.fSub, nConds, n, unit, miss: { on: false, n: 0, keys: "" } }).replace(/<div class="fsh-it"><button type="button" class="fsh-row fsh-sw[\s\S]*?<\/button><\/div>/, "");
 }
-function lSortPop(title, key, cur, opts) {
+function lSortPop() {
   if (lui.fp !== "sort") return "";
-  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${title}"><div class="fpop-h"><b>${title}</b><button type="button" class="u-btn sm" data-lpop="sort">完了</button></div><div class="fgroup"><h5>${title}</h5><div class="chips sortlist" role="radiogroup">${opts.map(([v, l]) => `<button type="button" role="radio" data-lsort="${key}:${v}" aria-checked="${cur === v}" aria-pressed="${cur === v}">${cur === v ? "✓ " : ""}${l}</button>`).join("")}</div></div></div>`;
+  const steps =
+    state.mode === "sr"
+      ? [
+          { h: "分け方", attr: 'data-lsort="sr.grp" data-v', cur: lst.sr.grp, opts: SR_GRPS },
+          { h: "その中の順番", attr: 'data-lsort="sr.sort" data-v', cur: lst.sr.sort, opts: SR_SORTS },
+        ]
+      : [
+          { h: "分け方", attr: 'data-lsort="mu.grp" data-v', cur: lst.mu.grp, opts: MU_GRPS },
+          { h: "その中の順番", attr: 'data-lsort="mu.ord" data-v', cur: lst.mu.ord, opts: MU_ORDS },
+        ];
+  return `<div class="fpop-scrim"></div><div class="fsdrop fpop k-sort" role="dialog" aria-label="並び替え"><div class="fpop-h"><b>並び替え</b><button type="button" class="u-btn sm" data-lpop="sort">完了</button></div>${sortSteps(steps)}</div>`;
 }
 const lHead = (bar, conds, n, unit) =>
   `${lui.qOpen || lui.q ? fshSearch({ id: "lq", ph: state.mode === "sr" ? "シリーズ名で検索" : "曲名・アーティスト・作品名で検索", q: lui.q, a: "data-lqtog" }) : ""}
-  <div class="fwrap">${lui.qOpen || lui.q ? "" : bar}${state.mode === "sr" ? lSortPop("並び順", "sr.sort", lst.sr.sort, SR_SORTS) : lSortPop("分け方", "mu.grp", lst.mu.grp, MU_GRPS)}</div>
+  <div class="fwrap">${lui.qOpen || lui.q ? "" : bar}${lSortPop()}</div>
   ${fshSum(conds, LA)}${fshCount(n, unit, lui.q)}`;
 
 /* ---------- シリーズ ---------- */
+const SR_GRPS = [["none", "分けない"], ["genre", "ジャンル別"]];
 const SR_SORTS = [["count", "作品数の多い順"], ["name", "名前順"], ["new", "新しい作品がある順"], ["left", "未視聴が多い順"]];
 function seriesStats() {
   const m = new Map();
@@ -62,7 +73,7 @@ function renderSeries() {
   const bar = `<div class="fbar">
     <button type="button" class="fb fsh-b${conds.length ? " on" : ""}" ${LA.sheet} aria-haspopup="dialog">${FSH_IC}<span class="v">絞り込み</span>${conds.length ? `<b class="fsh-n">${conds.length}</b>` : ""}</button>
     <button type="button" class="fb srmgr" data-gear="series"><span class="v">管理</span></button>
-    <button type="button" class="fb srt${f.sort !== "count" ? " on" : ""}" ${LA.sort} aria-label="並び順">${SORT_IC}</button>
+    <button type="button" class="fb srt${f.sort !== "count" || f.grp !== "none" ? " on" : ""}" ${LA.sort} aria-expanded="${lui.fp === "sort"}" aria-label="並び替え">${SORT_IC}</button>
     <button type="button" class="fb fq" data-lqtog="1" aria-label="検索">${FQ_IC}</button></div>`;
   const card = x => {
     const tot = x.l.length - x.drop;
@@ -70,13 +81,24 @@ function renderSeries() {
     const other = x.kinds.filter(k => k !== x.main);
     return `<button type="button" class="srcard" data-seropen2="${esc(x.name)}"><span class="srt1"><b>${esc(x.name)}</b><span class="kind ${x.main}">${x.main === "a" ? "アニメ" : "ドラマ"}</span>${other.map(k => `<span class="kind ${k}">${k === "a" ? "アニメ" : "実写"}</span>`).join("")}<small>${x.l.length}作品</small></span><span class="srbar" aria-label="見た割合 ${pct}%"><i style="width:${pct}%"></i></span><span class="srmini">${x.done ? `<span class="w">視聴済 ${x.done}</span>` : ""}${x.now ? `<span class="c">視聴中 ${x.now}</span>` : ""}${x.want ? `<span class="n">未視聴 ${x.want}</span>` : ""}${x.drop ? `<span>見ない ${x.drop}</span>` : ""}</span></button>`;
   };
+  const shown = list.slice(0, state.limit);
+  const body =
+    f.grp === "genre"
+      ? [["a", "アニメ"], ["d", "ドラマ・実写"]]
+          .map(([g, lab]) => {
+            const l = shown.filter(x => x.main === g);
+            return l.length ? `<section class="mugrp"><h3 class="muh">${lab}<small>${list.filter(x => x.main === g).length}シリーズ</small></h3><div class="srlist">${l.map(card).join("")}</div></section>` : "";
+          })
+          .join("")
+      : `<div class="srlist">${shown.map(card).join("")}</div>`;
   return `${lHead(bar, conds, list.length, "シリーズ")}
     <div id="fshBox">${lSheet("sr", rows, list.length, "シリーズ", conds.length)}</div>
-    ${list.length ? `<div class="srlist">${list.slice(0, state.limit).map(card).join("")}</div>${list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : ""}` : `<p class="empty">${all.length ? "条件に合うシリーズはありません。" : "シリーズが付いた作品はまだありません。"}</p>`}`;
+    ${list.length ? `${body}${list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : ""}` : `<p class="empty">${all.length ? "条件に合うシリーズはありません。" : "シリーズが付いた作品はまだありません。"}</p>`}`;
 }
 
 /* ---------- 主題歌 ---------- */
-const MU_GRPS = [["ar", "アーティスト別"], ["work", "作品別"], ["none", "分けない（曲名順）"]];
+const MU_GRPS = [["ar", "アーティスト別"], ["work", "作品別"], ["type", "種類別"], ["none", "分けない"]];
+const MU_ORDS = [["old", "古い順"], ["new", "新しい順"], ["name", "曲名順"]];
 const MU_TYPES = ["OP", "ED", "主題歌", "挿入歌"];
 function songRows() {
   const out = [];
@@ -84,7 +106,7 @@ function songRows() {
     songsOf(i).forEach((x, k) => {
       const { st, ar } = songTA(x);
       if (!st.trim() && !ar.trim()) return;
-      out.push({ it: i, k, type: x.type || "OP", st: st.trim(), ar: ar.trim(), dl: !!x.dl });
+      out.push({ it: i, k, type: x.type || "OP", st: st.trim(), ar: ar.trim(), dl: !!x.dl, a: x.a == null ? 0 : +x.a });
     }),
   );
   return out;
@@ -97,7 +119,15 @@ function renderSongs() {
   const dOk = r => f.dl === "all" || (f.dl === "yes" ? r.dl : !r.dl);
   const kOk = r => f.k === "all" || (f.k === "a" ? r.it.k === "a" : r.it.k !== "a");
   const qOk = r => !nq || norm(r.st + " " + r.ar + " " + r.it.t).includes(nq);
-  const list = all.filter(r => tOk(r) && dOk(r) && kOk(r) && qOk(r));
+  /* ② その中の順番：古い順＝放送が古い作品から（同じ作品は種類→話数の順） */
+  const TO = t => (MU_TYPES.indexOf(t) + 9) % 9;
+  const dt = r => String(r.it.from || "");
+  const ORD = {
+    old: (a, b) => dt(a).localeCompare(dt(b)) || a.it.t.localeCompare(b.it.t, "ja") || TO(a.type) - TO(b.type) || a.a - b.a,
+    new: (a, b) => dt(b).localeCompare(dt(a)) || a.it.t.localeCompare(b.it.t, "ja") || TO(a.type) - TO(b.type) || a.a - b.a,
+    name: (a, b) => a.st.localeCompare(b.st, "ja"),
+  };
+  const list = all.filter(r => tOk(r) && dOk(r) && kOk(r) && qOk(r)).sort(ORD[f.ord] || ORD.old);
   const DL = { all: "すべて", no: "未DLだけ", yes: "DL済みだけ" };
   const KL = { all: "すべて", a: "アニメ", d: "ドラマ・そのほか" };
   const conds = [...(f.t !== "all" ? [f.t] : []), ...(f.dl !== "all" ? [DL[f.dl]] : []), ...(f.k !== "all" ? [KL[f.k]] : [])];
@@ -107,19 +137,22 @@ function renderSongs() {
     ["dl", "ダウンロード", DL[f.dl], () => lOpts("mu.dl", f.dl, ["all", "no", "yes"].map(v => [v, DL[v], cnt(r => (v === "all" ? true : v === "yes" ? r.dl : !r.dl), tOk, kOk)]))],
     ["k", "ジャンル", KL[f.k], () => lOpts("mu.k", f.k, ["all", "a", "d"].map(v => [v, KL[v], cnt(r => (v === "all" ? true : v === "a" ? r.it.k === "a" : r.it.k !== "a"), tOk, dOk)]))],
   ];
-  const bar = fshBar({ a: LA, n: conds.length, open: lui.fp === "all", srtOn: f.grp !== "ar", srtOpen: lui.fp === "sort", srtLab: (MU_GRPS.find(x => x[0] === f.grp) || MU_GRPS[0])[1] });
+  const bar = fshBar({ a: LA, n: conds.length, open: lui.fp === "all", srtOn: f.grp !== "ar" || f.ord !== "old", srtOpen: lui.fp === "sort", srtLab: (MU_GRPS.find(x => x[0] === f.grp) || MU_GRPS[0])[1] });
   const row = r =>
-    `<div class="murow"><span class="mut ${SG_CLS[r.type] || ""}">${esc(r.type)}</span><button type="button" class="mux" data-id="${r.it.id}"><b>${esc(r.st || "（曲名なし）")}</b><small>${f.grp === "ar" ? esc(r.it.t) : `${esc(r.ar || "アーティスト未入力")}${f.grp === "none" ? "・" + esc(r.it.t) : ""}`}</small></button><button type="button" class="mudl${r.dl ? " on" : ""}" data-mudl="${r.it.id}:${r.k}" aria-pressed="${r.dl}" aria-label="${esc(r.st)}を${r.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.dl ? "♪DL済" : "DL"}</button></div>`;
+    `<div class="murow"><span class="mut ${SG_CLS[r.type] || ""}">${esc(r.type)}</span><button type="button" class="mux" data-id="${r.it.id}"><b>${esc(r.st || "（曲名なし）")}</b><small>${f.grp === "ar" ? esc(r.it.t) : f.grp === "work" ? esc(r.ar || "アーティスト未入力") : `${esc(r.ar || "アーティスト未入力")}・${esc(r.it.t)}`}</small></button><button type="button" class="mudl${r.dl ? " on" : ""}" data-mudl="${r.it.id}:${r.k}" aria-pressed="${r.dl}" aria-label="${esc(r.st)}を${r.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.dl ? "♪DL済" : "DL"}</button></div>`;
   let body = "";
-  if (f.grp === "none") body = `<div class="mulist">${list.sort((a, b) => a.st.localeCompare(b.st, "ja")).slice(0, state.limit).map(row).join("")}</div>`;
+  if (f.grp === "none") body = `<div class="mulist">${list.slice(0, state.limit).map(row).join("")}</div>`;
   else {
     const g = new Map();
     list.forEach(r => {
-      const key = f.grp === "ar" ? r.ar || "（アーティスト未入力）" : r.it.t;
+      const key = f.grp === "ar" ? r.ar || "（アーティスト未入力）" : f.grp === "type" ? r.type : r.it.t;
       if (!g.has(key)) g.set(key, []);
       g.get(key).push(r);
     });
-    const keys = [...g.keys()].sort((a, b) => (a.startsWith("（") ? 1 : b.startsWith("（") ? -1 : f.grp === "ar" ? g.get(b).length - g.get(a).length || a.localeCompare(b, "ja") : a.localeCompare(b, "ja")));
+    /* 見出しの並び：アーティストは名前順、種類はOP→ED→主題歌→挿入歌、作品は②の順番どおり */
+    const keys = [...g.keys()];
+    if (f.grp === "ar") keys.sort((a, b) => (a.startsWith("（") ? 1 : b.startsWith("（") ? -1 : a.localeCompare(b, "ja")));
+    if (f.grp === "type") keys.sort((a, b) => TO(a) - TO(b));
     let budget = state.limit;
     body = keys
       .map(key => {
@@ -168,8 +201,8 @@ const LIST_ACTIONS = [
   [
     "[data-lsort]",
     el => {
-      const [path, v] = el.dataset.lsort.split(":");
-      const [a, b] = path.split(".");
+      const [a, b] = el.dataset.lsort.split(".");
+      const v = el.dataset.v;
       lst[a][b] = v;
       lui.fp = "";
       lRender();

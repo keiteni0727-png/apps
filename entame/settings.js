@@ -34,6 +34,7 @@ function commitRename(cancel) {
 /* 設定のシリーズ：数が多いので並び替えはせず、ジャンルで分けて五十音順／作品数順。名前を押すとその作品一覧、✎で名前の変更 */
 let setSerG = "all",
   setSerSort = "kana";
+/* シリーズの管理：検索・ジャンル・並び順は1行に収める。名前を押すと作品一覧、✎で名前の変更、削除は右上の「編集」を押したときだけ */
 function seriesSettingsHtml() {
   const cnt = usedNames("series");
   const smap = seriesMainMap().map;
@@ -42,10 +43,11 @@ function seriesSettingsHtml() {
   const nG = g => all.filter(n => g === "all" || smap[n] === g).length;
   let rows = all.filter(n => (setSerG === "all" || smap[n] === setSerG) && (!q || norm(n).includes(q)));
   rows.sort(setSerSort === "count" ? (a, b) => (cnt[b] || 0) - (cnt[a] || 0) || a.localeCompare(b, "ja") : (a, b) => a.localeCompare(b, "ja"));
-  const seg = (attr, cur, opts) => `<div class="sseg" role="radiogroup">${opts.map(([v, l]) => `<button type="button" role="radio" ${attr}="${v}" aria-checked="${cur === v}">${l}</button>`).join("")}</div>`;
-  return `<p class="hint" style="margin:8px 0">名前：作品一覧を開く　✎：名前を変更（作品もまとめて変わる）　ラベル：ジャンルを切り替え</p>
-    <div class="sbar">${seg("data-serg", setSerG, [["all", `すべて <small>${nG("all")}</small>`], ["a", `アニメ <small>${nG("a")}</small>`], ["d", `ドラマ・実写 <small>${nG("d")}</small>`]])}${seg("data-sersort", setSerSort, [["kana", "五十音順"], ["count", "作品数順"]])}</div>
-    <input id="mq" type="search" class="mq" placeholder="名前で絞り込み" value="${esc(setQ)}" autocomplete="off">
+  return `<div class="smbar">
+      <div class="sseg" role="radiogroup" aria-label="ジャンル">${[["all", "すべて"], ["a", "アニメ"], ["d", "ドラマ"]].map(([v, l]) => `<button type="button" role="radio" data-serg="${v}" aria-checked="${setSerG === v}">${l}<small>${nG(v)}</small></button>`).join("")}</div>
+      <button type="button" class="smsort" data-sersort="${setSerSort === "count" ? "name" : "count"}" aria-label="並び順を切り替え">${SORT_IC}<span>${setSerSort === "count" ? "作品数" : "名前"}</span></button>
+    </div>
+    <input id="mq" type="search" class="mq" placeholder="シリーズ名で探す" value="${esc(setQ)}" autocomplete="off">
     <div class="mlist slist">${
       rows.length
         ? rows
@@ -53,10 +55,10 @@ function seriesSettingsHtml() {
               const c = cnt[n] || 0;
               return `<div class="srow${c ? "" : " zero"}">
       ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="sname" data-seropen="${esc(n)}" title="作品一覧を開く">${esc(n)}</button>`}
-      <small class="mcnt" title="${c}作品">${c}</small>
-      <button type="button" class="smain sm-${smap[n]}" data-sermain="${esc(n)}" title="メインのジャンル（押すと切り替え）">${smap[n] === "a" ? "アニメ" : "ドラマ"}</button>
+      <span class="kind ${smap[n] === "a" ? "a" : "d"}">${smap[n] === "a" ? "アニメ" : "ドラマ"}</span>
+      <small class="mcnt">${c}作品</small>
       <button type="button" class="sren" data-mrename="${esc(n)}" aria-label="${esc(n)}の名前を変更">✎</button>
-      <button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button></div>`;
+      ${setEdit ? `<button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button>` : ""}</div>`;
             })
             .join("")
         : `<p class="hint" style="padding:10px">${q ? "一致するシリーズはありません" : "まだありません"}</p>`
@@ -76,14 +78,15 @@ function masterListHtml() {
       ${GRIP("master")}
       ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : `<button type="button" class="mname" data-mrename="${esc(n)}">${esc(n)}</button>`}
       <small class="mcnt">${cnt[n] || 0}${unit}</small>
-      <button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button></div>`,
+      ${setEdit ? `<button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button>` : ""}</div>`,
             )
             .join("")
         : `<p class="hint">まだありません</p>`
     }</div>`;
 }
 /* 設定は「表示・選択肢の管理・データ・アカウント」の一覧。項目を押すとその中身の画面へ（setPage） */
-let setPage = "";
+let setPage = "",
+  setEdit = false; // 「編集」を押したときだけ削除ボタンを出す
 const SET_IC = {
   theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   series: '<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',
@@ -102,7 +105,8 @@ const SET_TITLE = { bk: "バックアップ", trash: "ゴミ箱", ...Object.from
 function settingsHtml() {
   const th = U.theme();
   if (setPage) {
-    const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
+    const isM = MKEYS.some(([k]) => k === setPage);
+    const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3>${isM ? `<button type="button" class="setedit${setEdit ? " on" : ""}" data-setedit="1">${setEdit ? "完了" : "編集"}</button>` : ""}<button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
     if (setPage === "bk") return head + backupHtml();
     if (setPage === "trash") return head + trashHtml();
     const ser = setPage === "series";
@@ -244,6 +248,7 @@ SORT_DONE.master = (box, rows) => {
 };
 function openSettings(page = "") {
   setPage = page || "";
+  setEdit = false;
   if (MKEYS.some(([k]) => k === setPage)) setKey = setPage;
   bkPending = null;
   trashOpen = setPage === "trash";
@@ -357,11 +362,20 @@ function toast(m) {
 }
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
+  [
+    "[data-setedit]",
+    () => {
+      setEdit = !setEdit;
+      setDel = null;
+      refreshSettings();
+    },
+  ],
   /* 設定の中の画面を移る（data-setpg="" は一覧に戻る） */
   [
     "[data-setpg]",
     el => {
       setPage = el.dataset.setpg;
+      setEdit = false;
       if (MKEYS.some(([k]) => k === setPage)) setKey = setPage;
       setQ = "";
       setDel = null;

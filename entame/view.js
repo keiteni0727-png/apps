@@ -577,7 +577,8 @@ const collapsed = new Set(ls.get("adb.v3.col") || []);
 const saveCol = () => ls.set("adb.v3.col", [...collapsed]);
 const gHead = (key, title, count) => {
   const c = collapsed.has(key);
-  return `<h2 class="ghd"><button type="button" class="gtog" data-gtog="${esc(key)}" aria-expanded="${!c}"><span class="chev">${FOLD_IC}</span>${title}</button><span>${count}</span></h2>`;
+  /* 見出しの行のどこを押しても開け閉めできる（右の件数も含めてボタン） */
+  return `<h2 class="ghd"><button type="button" class="gtog" data-gtog="${esc(key)}" aria-expanded="${!c}"><span class="chev">${FOLD_IC}</span>${title}<span class="gcnt">${count}</span></button></h2>`;
 };
 const bulkBtns = keys =>
   keys.length > 1
@@ -629,8 +630,10 @@ function groupedHtml(list) {
 }
 function renderList() {
   const list = filtered();
-  const sortHtml = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${SORTS.map(([v, l]) => `<button type="button" role="radio" data-sort="${v}" aria-checked="${state.sort === v}" aria-pressed="${state.sort === v}">${state.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
-    <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${GROUPS.map(([v, l]) => `<button type="button" role="radio" data-grp="${v}" aria-checked="${state.grp === v}" aria-pressed="${state.grp === v}">${state.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
+  const sortHtml = sortSteps([
+    { h: "分け方", attr: "data-grp", cur: state.grp, opts: GROUPS },
+    { h: "その中の順番", attr: "data-sort", cur: state.sort, opts: SORTS },
+  ]);
   /* ★保存・並び順は今までどおりボタンの下に出す。絞り込みはシート（fSheetHtml） */
   const panel = { sv: svPanelHtml, sort: () => sortHtml }[state.fOpen];
   const searching = state.qOpen || !!state.q;
@@ -763,7 +766,7 @@ const go = () => {
 /* シリーズの作品一覧を開く（アニメ・ドラマ・映画・配信をまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
 function showSeries(name, g) {
   close();
-  if (state.mode === "w" || state.mode === "yt" || state.mode === "h") setMode(g === "d" ? "d" : "a");
+  if (!["a", "d", "m", "s"].includes(state.mode)) setMode(g === "d" ? "d" : "a");
   Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
   go();
 }

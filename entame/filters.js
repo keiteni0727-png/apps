@@ -4,7 +4,7 @@
 /* ---------- 絞り込み：画面幅に収まる1列のボタン。押すとその項目だけ下から出す ---------- */
 /* 絞り込みボタン（視聴ステータスは一覧の上の切り替え、種別は左のメニューで選ぶ） */
 const FKEYS = ["vod", "time", "series", "sv", "sort"];
-const FTITLE = { vod: "配信サイト", time: "時期", series: "シリーズ", sv: "保存したフィルタ", sort: "並び順・分け方" };
+const FTITLE = { vod: "配信サイト", time: "時期", series: "シリーズ", sv: "保存したフィルタ", sort: "並び替え" };
 const SORT_IC =
   '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></svg>';
 function fBtnLab(k) {
@@ -35,7 +35,7 @@ function fPopHtml(body) {
   if (!body) return "";
   /* 保存フィルタの編集中は、上の「完了」で編集を終える（完了ボタンは1つだけ） */
   const done = k === "sv" && state.svMode === "edit" ? `<button type="button" class="u-btn sm pri" data-svcancel="1">完了</button>` : `<button type="button" class="u-btn sm" data-fpop="${k}">完了</button>`;
-  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${FTITLE[k]}"><div class="fpop-h"><b>${FTITLE[k]}</b>${done}</div>${body}</div>`;
+  return `<div class="fpop-scrim"></div><div class="fsdrop fpop k-${k}" role="dialog" aria-label="${FTITLE[k]}"><div class="fpop-h"><b>${FTITLE[k]}</b>${done}</div>${body}</div>`;
 }
 function vodPanelHtml() {
   const used = new Set(items.filter(ofKind).flatMap(vodsOf));
@@ -684,3 +684,14 @@ function fshFocusQ(sel) {
     } else sh.style.transform = "";
   });
 })();
+
+/* ---------- 並び替え：① 分け方 → ② その中の順番 の2段（全メニュー共通） ---------- */
+const sortSteps = steps =>
+  steps
+    .map(
+      (st, i) =>
+        `<div class="fgroup sstep"><h5><b class="sn">${"①②③"[i]}</b>${st.h}</h5><div class="chips sortlist" role="radiogroup" aria-label="${st.h}">${st.opts
+          .map(([v, l]) => `<button type="button" role="radio" ${st.attr}="${v}" aria-checked="${st.cur === v}" aria-pressed="${st.cur === v}">${st.cur === v ? "✓ " : ""}${l}</button>`)
+          .join("")}</div></div>`,
+    )
+    .join("");

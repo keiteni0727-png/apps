@@ -214,8 +214,8 @@ function ytRowHtml(sortLab) {
 function ytPopHtml(panels) {
   const k = yst.fp;
   if (!panels[k]) return "";
-  const T = { genre: "ジャンル", sort: "並び順・分け方" };
-  return `<div class="fpop-scrim"></div><div class="fsdrop fpop" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-ytpop="${k}">完了</button></div>${panels[k]}</div>`;
+  const T = { genre: "ジャンル", sort: "並び替え" };
+  return `<div class="fpop-scrim"></div><div class="fsdrop fpop k-${k}" role="dialog" aria-label="${T[k]}"><div class="fpop-h"><b>${T[k]}</b><button type="button" class="u-btn sm" data-ytpop="${k}">完了</button></div>${panels[k]}</div>`;
 }
 function renderYt() {
   /* 検索：全角・半角などのゆれをそろえ、空白で区切ると「どれも含む」 */
@@ -273,8 +273,10 @@ function renderYt() {
         )
       : "");
   /* 並び順・分け方：作品と同じ順番・見た目（並び順が上、分け方が下） */
-  const sBody = `<div class="fgroup"><h5>並び順</h5><div class="chips sortlist" role="radiogroup" aria-label="並び順">${YT_SORTS.map(([v, l]) => `<button type="button" role="radio" data-ytsort="${v}" aria-checked="${yst.sort === v}" aria-pressed="${yst.sort === v}">${yst.sort === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>
-    <div class="fgroup"><h5>分け方</h5><div class="chips sortlist" role="radiogroup" aria-label="見出しの分け方">${YT_GRPS.map(([v, l]) => `<button type="button" role="radio" data-ytgrp="${v}" aria-checked="${yst.grp === v}" aria-pressed="${yst.grp === v}">${yst.grp === v ? "✓ " : ""}${l}</button>`).join("")}</div></div>`;
+  const sBody = sortSteps([
+    { h: "分け方", attr: "data-ytgrp", cur: yst.grp, opts: YT_GRPS },
+    { h: "その中の順番", attr: "data-ytsort", cur: yst.sort, opts: YT_SORTS },
+  ]);
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
   const srt = [srt0[0], (yst.grp === "year" ? "年別・" : "ジャンル別・") + srt0[1]];
   /* アニメ・ドラマと同じ形：絞り込み（シート）・並び順・検索、条件のラベル、件数 */
