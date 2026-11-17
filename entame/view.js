@@ -650,13 +650,21 @@ let loaded = false;
 function placeFsh() {
   const sh = document.querySelector(".fsh");
   if (!sh) return;
-  if (!IS_PC()) return sh.style.removeProperty("left"), sh.style.removeProperty("top");
   const b = document.querySelector(".fsh-b");
   if (!b) return;
   const r = b.getBoundingClientRect();
-  sh.style.left = Math.max(8, Math.min(r.left, innerWidth - 388)) + "px";
   sh.style.top = r.bottom + 6 + "px";
-  sh.style.maxHeight = innerHeight - r.bottom - 22 + "px";
+  if (IS_PC()) {
+    sh.style.left = Math.max(8, Math.min(r.left, innerWidth - 388)) + "px";
+    sh.style.maxHeight = innerHeight - r.bottom - 22 + "px";
+  } else {
+    /* スマホ：幅いっぱい、下メニューにかからない高さまで */
+    sh.style.removeProperty("left");
+    const nav = document.querySelector(".tbwrap");
+    const nr = nav && nav.getBoundingClientRect();
+    const bottom = nr && nr.height ? nr.top - 8 : innerHeight - 12;
+    sh.style.maxHeight = Math.max(240, bottom - r.bottom - 6) + "px";
+  }
 }
 addEventListener("resize", () => placeFsh());
 function setMain(html) {
@@ -744,8 +752,8 @@ function render() {
     body = body.slice(0, ce) + gb[0] + body.slice(ce);
   }
   setMain(body);
-  placeFsh();
   if (lockY === null) scrollTo(0, y);
+  placeFsh();
   if (typeof markStuck === "function") markStuck();
   saveUI();
   const hd = document.querySelector("header");

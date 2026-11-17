@@ -643,7 +643,8 @@ function fshFocusQ(sel) {
     "touchstart",
     e => {
       d = null;
-      if (IS_PC() || e.touches.length !== 1) return;
+      /* 絞り込み・並び替え・保存フィルタはボタンの下に出す形になったので、下スワイプで閉じる動きは使わない */
+      if (true || IS_PC() || e.touches.length !== 1) return;
       const sh = sheetOf(e.target);
       if (!sh || e.target.closest("input,textarea,.serbox,.mkeys")) return;
       d = { sh, y: e.touches[0].clientY, x: e.touches[0].clientX, dy: 0, top: scrollerTop(e.target, sh), go: false };

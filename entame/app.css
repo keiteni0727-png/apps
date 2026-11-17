@@ -1719,8 +1719,8 @@ body:has(#layer .sheet) .tbwrap{display:none}
   .sheet.form{top:calc(var(--hdh,56px) + 10px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-height:calc(100% - var(--hdh,56px) - 84px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
   /* 並び順・保存フィルタも、絞り込みと同じく下から出るシート（下にスワイプで閉じる） */
   .fpop-scrim{z-index:60;background:rgba(0,0,0,.4)}
-  .fsdrop.fpop:not(.k-sort){position:fixed;left:0;right:0;top:auto;bottom:0;z-index:61;max-height:80vh;border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(0,0,0,.2);animation:ddup .2s ease-out}
-  .fsdrop.fpop:not(.k-sort)::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--u-strong);margin:-4px auto 10px}
+  .fsdrop.fpop.k-bottomsheet{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:61;max-height:80vh;border-radius:18px 18px 0 0;border-width:1px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(0,0,0,.2);animation:ddup .2s ease-out}
+  .fsdrop.fpop.k-bottomsheet::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--u-strong);margin:-4px auto 10px}
   html:has(.fpop-scrim),html:has(.fpop-scrim) body{overflow:hidden}
 }
 .fsh-subb.chipsmode .fgroup:only-child>h5{display:none}
@@ -1867,3 +1867,24 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .sb-add{flex:none}
 /* 設定のシリーズ：一覧の中でスクロール（行は伸ばさず上詰め） */
 .mlist.slist{align-content:start;grid-auto-rows:min-content;background:var(--u-surface);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* スマホも絞り込み・保存フィルタはボタンのすぐ下に出す（PCと同じ形） */
+@media (max-width:899px){
+  .fsh{left:8px;right:8px;bottom:auto;height:auto;max-height:70vh;border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding-bottom:0}
+  .fsh.in{animation:fdrop .14s ease-out}
+  .fsh-grab{display:none}
+  .fsh.subopen{min-height:min(420px,60vh)}
+  .fsh.subopen .fsh-sub{border-radius:14px}
+  .fsh.subopen .fsh-subb{padding-bottom:12px}
+  .fsh-scrim{background:rgba(0,0,0,.25)}
+  .fsdrop.fpop{z-index:61;max-height:70vh;overflow:auto}
+  .fpop-scrim{z-index:60;background:rgba(0,0,0,.25)}
+}
+@media (max-width:899px){
+  /* 選択肢はPCと同じく項目のすぐ下に開く */
+  .fsh.subopen{min-height:0}
+  .fsh.subopen .fsh-sub{position:static;display:block;margin:0 10px 10px;border:1px solid var(--u-line);border-radius:12px;overflow:hidden}
+  .fsh.subopen .fsh-subb{max-height:46vh;overflow:auto;padding-bottom:4px}
+  .fsh.subopen .fsh-subh{padding-top:6px}
+  .fsh-it.open .fsh-cv{transform:rotate(90deg)}
+}
+@media (max-width:899px){.fsh-subh .fsh-back{display:none}.fsh-subh{padding-left:14px}}
