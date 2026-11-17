@@ -160,13 +160,12 @@
     const box = document.getElementById("okMove");
     if (!box || !s.db) return;
     if (s.kind === "fb") {
-      box.innerHTML = `<div class="dcard"><b>データ</b><div class="mu">claude.ai版で書き出したデータを、このアプリに取り込めます。</div>
-        <div class="row mt8"><button type="button" class="pri" data-movein>データを取り込む</button><button type="button" data-logout>ログアウト</button></div></div>`;
+      box.innerHTML = `<div class="mu st-desc">claude.ai版で書き出したデータを、このアプリに取り込めます。</div>
+        <div class="setgrp setform"><button type="button" class="pri" data-movein>データを取り込む</button></div>`;
       box.querySelector("[data-movein]").onclick = () => moveIn(s);
-      box.querySelector("[data-logout]").onclick = () => s.logout();
     } else if (s.kind === "db") {
-      box.innerHTML = `<div class="dcard"><b>引っ越し</b><div class="mu">iPhone単独版への引っ越し用に、いまのデータをまるごと書き出します（このアプリのデータは変わりません）。</div>
-        <div class="row mt8"><button type="button" class="pri" data-moveout>引っ越し用に書き出す</button></div></div>`;
+      box.innerHTML = `<div class="mu st-desc">iPhone単独版への引っ越し用に、いまのデータをまるごと書き出します（このアプリのデータは変わりません）。</div>
+        <div class="setgrp setform"><button type="button" class="pri" data-moveout>引っ越し用に書き出す</button></div>`;
       box.querySelector("[data-moveout]").onclick = () => moveOut(s);
       cache = readAll(s);
     }

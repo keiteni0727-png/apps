@@ -171,14 +171,13 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
   <div class="mu mt6">分類・支払い方法の変更、合算、削除は下部のバーから行えます。</div>
   <div id="bmsg" class="err mt6"></div></div>
 
-<div class="card pop" id="rulepanel" hidden>
-  <div class="row sp"><b class="ptitle">設定</b><button class="ghost" id="rclose">閉じる</button></div>
-  <div class="throw"><span class="thl">表示</span><div class="seg thseg" role="group" aria-label="表示"><button data-theme="auto">自動</button><button data-theme="light">ライト</button><button data-theme="dark">ダーク</button></div></div>
-  <div class="seg" role="tablist" aria-label="設定の項目"><button data-stab="rules">分類ルール</button><button data-stab="master">マスタ</button><button data-stab="pay">支払い</button></div>
+<div class="card pop setpanel" id="rulepanel" hidden role="dialog" aria-modal="true" aria-label="設定">
+  <div class="sethd"><button type="button" class="setback" data-stab="home" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><b class="ptitle" id="stTitle">設定</b><button type="button" class="setedit" id="stEdit" data-setedit="" hidden>編集</button><button type="button" class="setx" id="rclose" aria-label="閉じる"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="stbody" id="stBody">
+  <div id="st-home"></div>
   <div id="st-rules">
   <div class="mu st-desc">「自動適用」がオンのルールは、新しく追加する明細にかかります。登録済みの明細には、ルールごとに「既存データに適用」で対象を確認してから反映します。</div>
-  <div class="seth"><b>ルール</b><button type="button" class="setedit" data-setedit="rules" aria-pressed="false">編集</button></div>
-  <div id="rules"></div>
+  <div id="rules" class="setgrp rgrp"></div>
   <div class="row mt4"><button class="ghost" id="rundo">直前の変更を取り消す</button></div>
   <div id="rmsg" class="mu"></div>
   <div class="rform" id="rform">
@@ -205,27 +204,27 @@ html.noai .kb .addcard #msg:empty,html.noai .kb .addcard #review:empty{display:n
   </div>
   </div>
   <div id="st-master" hidden>
-    <div class="seth"><div class="seg sm" role="tablist" aria-label="マスタの種類"><button data-mk="cats">分類</button><button data-mk="mets">支払い方法</button></div><button type="button" class="setedit" data-setedit="master" aria-pressed="false">編集</button></div>
-    <div class="mu st-desc">右上の「編集」で、アイコン・名前の変更、⠿での並び替え（入力欄やグラフの並びに反映）、削除ができます。名前を変えると、登録済みの明細とルールにも反映されます。既にある名前に変えると、その項目に統合されます。</div>
-    <div id="mlist"></div>
+    <div class="mu st-desc">⠿での並び替えは入力欄やグラフの並びに反映されます。右上の「編集」で、アイコン・名前の変更・削除ができます。名前を変えると、登録済みの明細とルールにも反映されます。既にある名前に変えると、その項目に統合されます。</div>
+    <div id="mlist" class="setgrp"></div>
     <div id="mconf"></div>
-    <div class="madd"><input type="text" id="madde" maxlength="4" placeholder="🏷️" aria-label="アイコン（絵文字）"><input type="text" id="maddn" placeholder="新しい分類の名前" aria-label="新しい名前"><button class="pri" id="maddb">追加</button></div>
+    <div class="madd setadd"><input type="text" id="madde" maxlength="4" placeholder="🏷️" aria-label="アイコン（絵文字）"><input type="text" id="maddn" placeholder="新しい分類の名前" aria-label="新しい名前"><button id="maddb">＋ 追加</button></div>
     <div id="mmsg" class="mu"></div>
   </div>
   <div id="st-pay" hidden>
-    <div class="dcard"><b>収入と給料日</b><div class="mu">月度（給料日から次の給料日の前日まで。土日は直前の平日）は、家計簿・支払い・分析のすべてで使います。</div>
-      <div class="rv pset"><label>標準の手取り（毎月）<input type="number" id="mIncome" inputmode="numeric"></label><label>給料日<input type="number" id="mPayday" min="1" max="28" inputmode="numeric"></label></div>
-      <button class="pri" id="mSaveCfg">保存</button></div>
-    <div class="dcard"><div class="seth"><b>引落口座（支払いの支払方法）</b><button type="button" class="setedit" data-setedit="paym" aria-pressed="false">編集</button></div><div class="mu">「編集」で、⠿での並び替え（支払いの入力欄の並びに反映）と削除ができます。</div>
-      <div class="pml" id="mMethods"></div>
-      <form id="mMethodForm" class="pmadd"><input type="text" id="mMethodIn" placeholder="例：楽天銀行" aria-label="新しい引落口座"><button class="pri">追加</button></form></div>
-    <div class="dcard"><b>支払予定の作成</b><div class="mu">返済中の口座は、次の給料日以降の支払予定を いまの残高・年利・返済条件 から作り直せます（3年分）。延滞分・支払済・口座なしの支払はそのまま残ります。口座の設定を保存したときも、その口座の分は自動で作り直します。</div>
-      <button class="pri" id="mRegen">今後の支払予定を作り直す</button>
-      <div class="mu mt6">奨学金などの定額の支払は、月を指定してまとめて作れます（同じ月にすでにある口座はとばします）。</div>
-      <div class="pgen"><input type="month" id="mGenMonth" aria-label="作成する月"><button class="pri" id="mGen">支払予定を作成</button></div></div>
+    <div data-pg="inc"><div class="mu st-desc">月度（給料日から次の給料日の前日まで。土日は直前の平日）は、家計簿・支払い・分析のすべてで使います。</div>
+      <div class="setgrp setform"><div class="rv pset"><label>標準の手取り（毎月）<input type="number" id="mIncome" inputmode="numeric"></label><label>給料日<input type="number" id="mPayday" min="1" max="28" inputmode="numeric"></label></div>
+      <button class="pri" id="mSaveCfg">保存</button></div></div>
+    <div data-pg="paym"><div class="mu st-desc">支払いの「支払方法」に出す口座です。⠿での並び替えは支払いの入力欄の並びに反映されます。右上の「編集」で削除ができます。</div>
+      <div class="setgrp"><div class="pml" id="mMethods"></div></div>
+      <form id="mMethodForm" class="pmadd setadd"><input type="text" id="mMethodIn" placeholder="追加する口座（例：楽天銀行）" aria-label="新しい引落口座"><button>＋ 追加</button></form></div>
+    <div data-pg="gen"><div class="mu st-desc">返済中の口座は、次の給料日以降の支払予定を いまの残高・年利・返済条件 から作り直せます（3年分）。延滞分・支払済・口座なしの支払はそのまま残ります。口座の設定を保存したときも、その口座の分は自動で作り直します。</div>
+      <div class="setgrp setform"><button class="pri" id="mRegen">今後の支払予定を作り直す</button></div>
+      <div class="mu st-desc mt12">奨学金などの定額の支払は、月を指定してまとめて作れます（同じ月にすでにある口座はとばします）。</div>
+      <div class="setgrp setform"><div class="pgen"><input type="month" id="mGenMonth" aria-label="作成する月"><button class="pri" id="mGen">支払予定を作成</button></div></div></div>
     <div id="pmsg" class="mu"></div>
   </div>
-  <div id="okMove"></div>
+  <div id="st-move" hidden><div id="okMove"></div></div>
+  </div>
 </div>
 </div>
 <script>window.U_APP={id:"okane",user:true,fb:{"apiKey": "AIzaSyCTyub7aHKuwtjqahlCxU5Tji4D0ydz570", "authDomain": "apps-78dd3.firebaseapp.com", "projectId": "apps-78dd3", "storageBucket": "apps-78dd3.firebasestorage.app", "messagingSenderId": "593145768210", "appId": "1:593145768210:web:1269b3e88b34d825746bcb"},root:u=>"users/"+u+"/apps/okane"}</script>

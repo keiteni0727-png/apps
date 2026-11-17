@@ -1395,7 +1395,6 @@
   /* ---------- 設定 ---------- */
   function renderMaster() {
     const ms = S.cfg.methods;
-    $("mMethods").classList.toggle("editing", !!ui.mEdit);
     $("mMethods").innerHTML = ms
       .map(
         (m, i) =>
@@ -2448,13 +2447,7 @@
     if (!t) return;
     const d = t.dataset;
     /* ヘッダー・通知・シート */
-    if (d.setedit === "paym") {
-      ui.mEdit = !ui.mEdit;
-      t.textContent = ui.mEdit ? "完了" : "編集";
-      t.classList.toggle("on", ui.mEdit);
-      t.setAttribute("aria-pressed", String(ui.mEdit));
-      renderMaster();
-    } else if (d.close) closeSheet();
+    if (d.close) closeSheet();
     else if (d.goto) {
       FIN.kb.setTab(d.goto);
       window.scrollTo(0, 0);
@@ -2578,6 +2571,7 @@
     /* 右上の＋：支払い画面は支払、残高と計画は口座を追加 */
     add: k => (k === "acc" ? editAccount(null) : editItem(null)),
     enter,
+    cfg: () => S.cfg,
     period: () => S.period,
     /* 上の月度の切り替え（支払い・残高と計画の画面のとき） */
     setPeriod: v => {

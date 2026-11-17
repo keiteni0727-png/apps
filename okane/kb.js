@@ -200,12 +200,12 @@ function saveDayFold() {
 const graph = { by: "category", per: "3", sel: "", m: "" }; // 集計の単位・期間・絞り込んだ項目・選んだ月/日
 /* 設定 */
 const setting = {
-  tab: "rules", // rules / master / data
+  tab: "home", // 設定の画面 home（一覧）/ rules / cats / mets / inc / paym / gen / move
   kind: "cats", // マスタの種類 cats / mets
   merge: null, // マスタの統合の確認 {kind, old, nn}
   preview: null, // 既存データへの適用の対象一覧 {rid, rows, off}
   editRule: null, // 編集中のルールのID
-  edit: { rules: false, master: false }, // 右上の「編集」を押しているか（行ごとの変更・削除・並び替えを出す）
+  edit: { rules: false, master: false, paym: false }, // 右上の「編集」を押しているか（行ごとの変更・削除を出す）
 };
 let aiAbort = null; // AI分析を中止するための AbortController
 
@@ -817,7 +817,7 @@ function aiInput() {
 let prevPay = false;
 function setTab(t) {
   if (t === "an") t = AN.includes(lsRaw(KAN)) ? lsRaw(KAN) : "graph"; // 分析は前回の画面を開く
-  if (t === "rules" && isWide()) {
+  if (t === "rules") {
     openRules();
     return;
   }
@@ -886,10 +886,14 @@ function gearPressed(v) {
   $("gear").setAttribute("aria-pressed", v);
   $("sbgear").setAttribute("aria-pressed", v);
 }
-function openRules() {
+/* 設定：スマホ・PCとも真ん中に出すパネル。page を渡すとその画面から開く（エンタメ管理と同じ形） */
+function openRules(page) {
   closePanels();
+  setting.tab = page || "home";
+  setting.edit = { rules: false, master: false, paym: false };
   $("rulepanel").hidden = false;
   $("rbk").hidden = false;
+  document.documentElement.classList.add("setopen");
   gearPressed("true");
   renderRules();
   renderSettings();
@@ -898,8 +902,9 @@ function closePanels() {
   $("rulepanel").hidden = true;
   $("bulk").hidden = true;
   $("rbk").hidden = true;
+  document.documentElement.classList.remove("setopen");
   setting.preview = null;
-  gearPressed(String(view.tab === "rules" && !isWide()));
+  gearPressed("false");
 }
 
 /* ---------- 全体・メッセージ ---------- */
@@ -1400,16 +1405,65 @@ function renderAI() {
 }
 
 /* ---------- 設定：項目の切り替え・マスタ ---------- */
+const SET_IC = {
+  theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+  rules: '<path d="M4 6h16M4 12h10M4 18h6"/><path d="m15 16 2 2 4-4"/>',
+  cats: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+  mets: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/>',
+  inc: '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/>',
+  paym: '<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+  gen: '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v4M10 15h4"/>',
+  move: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  save: '<path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/><path d="m9.5 13.5 2 2 3.5-4"/>',
+  out: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
+};
+const setIc = k => `<svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SET_IC[k]}</svg>`;
+const SET_CV = `<svg class="setcv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>`;
+const SET_PG = { home: "設定", rules: "分類ルール", cats: "分類", mets: "支払い方法", inc: "収入と給料日", paym: "引落口座", gen: "支払予定の作成", move: "データの取り込み" };
+const SET_EDIT = { rules: "rules", cats: "master", mets: "master", paym: "paym" };
+const PAY_PG = ["inc", "paym", "gen"];
+/* 設定の一覧（表示・家計簿・支払い・データ・アカウント） */
+function renderSetHome() {
+  const th = U.theme();
+  const cfg = (FIN.pay.cfg && FIN.pay.cfg()) || {};
+  const row = (k, lab, val) => `<button type="button" class="setrow" data-stab="${k}">${setIc(k)}<span class="setl">${lab}</span><span class="setv">${val}</span>${SET_CV}</button>`;
+  const sv = $("saveSt");
+  $("st-home").innerHTML = `<div class="setsec">表示</div>
+    <div class="setgrp"><div class="setrow static">${setIc("theme")}<span class="setl">テーマ</span><div class="seg thseg" role="group" aria-label="テーマ">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" data-theme="${v}"${th === v ? ' aria-current="page"' : ""}>${l}</button>`).join("")}</div></div></div>
+    <div class="setsec">家計簿</div>
+    <div class="setgrp">${row("rules", "分類ルール", `${rules.length}件`)}${row("cats", "分類", CATS.length)}${row("mets", "支払い方法", METHODS.length)}</div>
+    <div class="setsec">支払い</div>
+    <div class="setgrp">${row("inc", "収入と給料日", `${cfg.income ? yen(cfg.income) + "・" : ""}${FIN.paydayNum()}日`)}${row("paym", "引落口座", (cfg.methods || []).length)}${row("gen", "支払予定の作成", "作り直す・作成")}</div>
+    <div class="setsec">データ</div>
+    <div class="setgrp">${row("move", "データの取り込み", "引っ越し用")}</div>
+    <div class="setsec">アカウント</div>
+    <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv"><span class="${sv ? sv.className : "savest"}">${sv ? esc(sv.textContent) : ""}</span></span></div><button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
+}
 function renderSettings() {
-  markCurrent("[data-stab]", "stab", setting.tab);
-  $("st-rules").hidden = setting.tab !== "rules";
-  $("st-master").hidden = setting.tab !== "master";
-  $("st-pay").hidden = setting.tab !== "pay";
-  if (setting.tab === "master") renderMaster();
-  if (setting.tab === "pay" && FIN.pay.renderSettings) FIN.pay.renderSettings();
+  const pg = SET_PG[setting.tab] ? setting.tab : "home";
+  $("stTitle").textContent = SET_PG[pg];
+  document.querySelector("#rulepanel .setback").hidden = pg === "home";
+  const ek = SET_EDIT[pg] || "";
+  const eb = $("stEdit");
+  eb.hidden = !ek;
+  eb.dataset.setedit = ek;
+  if (ek) paintSetEdit(ek, setting.edit[ek]);
+  $("st-home").hidden = pg !== "home";
+  $("st-rules").hidden = pg !== "rules";
+  $("st-master").hidden = pg !== "cats" && pg !== "mets";
+  $("st-pay").hidden = !PAY_PG.includes(pg);
+  document.querySelectorAll("#st-pay [data-pg]").forEach(e => (e.hidden = e.dataset.pg !== pg));
+  $("st-move").hidden = pg !== "move";
+  $("mMethods").classList.toggle("editing", setting.edit.paym);
+  if (pg === "home") renderSetHome();
+  if (pg === "cats" || pg === "mets") {
+    setting.kind = pg;
+    renderMaster();
+  }
+  if (PAY_PG.includes(pg) && FIN.pay.renderSettings) FIN.pay.renderSettings();
 }
 /* 設定のその項目を開いているか（支払いの設定を描き直すかどうか） */
-const settingsOpen = tab => setting.tab === tab && (!$("rulepanel").hidden || view.tab === "rules");
+const settingsOpen = tab => !$("rulepanel").hidden && (tab === "pay" ? PAY_PG.includes(setting.tab) : setting.tab === tab);
 function mUse(kind, n) {
   const f = kind === "cats" ? "category" : "method";
   const c = items.filter(i => i[f] === n).length;
@@ -1421,7 +1475,6 @@ function mUse(kind, n) {
   return { c, r };
 }
 function renderMaster() {
-  markCurrent("[data-mk]", "mk", setting.kind);
   const L = MASTER[setting.kind];
   $("maddn").placeholder = setting.kind === "cats" ? "新しい分類の名前" : "新しい支払い方法の名前";
   const ed = setting.edit.master;
@@ -1431,7 +1484,7 @@ function renderMaster() {
     const u = mUse(setting.kind, x.n),
       used = u.c + u.r > 0;
     if (!ed)
-      return `<div class="mrow view" data-mi="${i}"><span class="me" style="${hs(x.n)}" aria-hidden="true">${esc(x.e)}</span><span class="mn">${esc(x.n)}</span><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div>`;
+      return `<div class="mrow view" data-sortrow data-mi="${i}">${GRIP("kbm")}<span class="me" style="${hs(x.n)}" aria-hidden="true">${esc(x.e)}</span><span class="mn">${esc(x.n)}</span><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div>`;
     return `<div class="mrow${used ? " used" : ""}" data-sortrow data-mi="${i}">${GRIP("kbm")}<input type="text" class="me" data-me="${i}" value="${esc(x.e)}" maxlength="4" style="${hs(x.n)}" aria-label="${esc(x.n)}のアイコン"><input type="text" class="mn" data-mn="${i}" value="${esc(x.n)}" aria-label="名前"><button class="ghost mdel" data-mdel="${i}"${used ? ` title="使用中のため削除できません" aria-disabled="true"` : ""}>削除</button><div class="info"><span class="cnt">明細 ${u.c}件${u.r ? ` ・ ルール ${u.r}件` : ""}</span></div></div>`;
   }).join("");
   $("mconf").innerHTML = setting.merge
@@ -1894,9 +1947,7 @@ function ruleFromSel() {
   const a = selItems();
   if (!a.length) return;
   const memos = [...new Set(a.map(i => i.memo).filter(Boolean))];
-  setting.tab = "rules";
-  if (isWide()) openRules();
-  else setTab("rules");
+  openRules("rules");
   resetForm();
   $("rk").value = "set";
   rkUpdate();
@@ -2135,12 +2186,18 @@ function clickHeader(t, d) {
     U.setTheme(d.theme);
     renderThemeBtn();
     paintTheme();
-  } else if (d.setedit === "rules" || d.setedit === "master") {
+  } else if (d.setedit === "rules" || d.setedit === "master" || d.setedit === "paym") {
     setting.edit[d.setedit] = !setting.edit[d.setedit];
     setting.merge = null;
     view.armed = null;
     if (d.setedit === "rules") renderRules();
-    else renderMaster();
+    else if (d.setedit === "master") renderMaster();
+    else {
+      $("mMethods").classList.toggle("editing", setting.edit.paym);
+      paintSetEdit("paym", setting.edit.paym);
+    }
+  } else if (d.logout) {
+    U.store().then(s => (s.logout ? s.logout() : toast("この環境ではログアウトできません")));
   } else if (d.tab) {
     setTab(d.tab);
     window.scrollTo(0, 0);
@@ -2170,12 +2227,8 @@ function clickHeader(t, d) {
     setSidebar(c);
     lsSet(KSBC, c ? "1" : "", true);
   } else if (t.id === "gear" || t.id === "sbgear") {
-    if (!isWide() && view.tab === "rules") setTab(view.prevTab);
-    else setTab("rules");
-    window.scrollTo(0, 0);
-  } else if (t.id === "rclose" && view.tab === "rules" && !isWide()) {
-    setTab(view.prevTab);
-    window.scrollTo(0, 0);
+    if ($("rulepanel").hidden) openRules();
+    else closePanels();
   } else if (t.id === "rclose" || t.id === "rbk" || t.id === "bclose") {
     closePanels();
   } else if (t.id === "syncnow") {
@@ -2332,7 +2385,11 @@ function clickRules(t, d) {
   if (d.stab) {
     setting.tab = d.stab;
     setting.merge = null;
+    setting.preview = null;
+    setting.edit = { rules: false, master: false, paym: false };
+    renderRules();
     renderSettings();
+    $("stBody").scrollTop = 0;
   } else if (d.rdel) {
     if (arm(d.rdel, t, "もう一度押すと削除")) return true;
     rules = rules.filter(r => r.id !== d.rdel);
