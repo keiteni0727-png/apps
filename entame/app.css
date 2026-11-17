@@ -1855,3 +1855,15 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 /* 編集画面の選択（segc）と同じ形：角丸10px・選ぶと白（ダーク）／黒（ライト） */
 .segc button{font-size:13.5px}
 .cyb{border-radius:10px}
+/* 編集ボタンは設定と同じ形（角丸の普通のボタン）にそろえる：作品詳細・YouTube・設定 */
+.editbtn,.ich .iedit,.dhead .editbtn,.sheet:not(.form) .editbtn{border:1px solid var(--u-line)!important;background:var(--u-surface)!important;color:var(--u-ink)!important;border-radius:var(--u-r)!important;font:inherit;font-size:13px!important;font-weight:700!important;padding:0 12px!important;height:30px;line-height:1}
+.setedit{height:30px;padding:0 12px!important;font-size:13px!important;display:inline-flex;align-items:center}
+/* PC：絞り込み・並び替えはボタンのすぐ下に出す */
+@media (min-width:900px){
+  html.fshopen,html.fshopen body{overflow:hidden}
+  .fsh-scrim{background:rgba(0,0,0,.12)}
+  .fsh{top:auto;right:auto;bottom:auto;width:380px;max-height:calc(100vh - 140px);height:auto;border:1px solid var(--u-line)!important;border-radius:14px;box-shadow:0 12px 32px rgba(16,24,40,.22)}
+  .fsh.in{animation:fdrop .14s ease-out}
+  .fsdrop.fpop.k-sort{left:0;right:auto}
+}
+.sb-add{flex:none}

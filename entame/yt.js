@@ -351,7 +351,7 @@ const chipBtn = (attr, val, on, label, n, cls) =>
 /* ---------- 詳細：作品の詳細と同じ形
    上：投稿者・ジャンル・視聴ステータスのラベル／前・次・編集・閉じる、タイトルとコピー
    YOUTUBEカード：「項目名　内容」を1行ずつ（再生リスト・まとめ動画も行の中）。中身を押しても編集しない。
-   編集はカードの見出しの右の「✎ 編集」から、そのカードの場所でまとめて編集（作品の ON AIR と同じ） ---------- */
+   編集はカードの見出しの右の「編集」から、そのカードの場所でまとめて編集（作品の ON AIR と同じ） ---------- */
 let ytOpen = null;
 let ytStMenu = false; // 視聴ステータスの選択肢を開いているか
 const YT_ST = [
@@ -379,7 +379,7 @@ function ytDetailHtml(x) {
     row("再生リスト", x.pl ? `<a class="ilnk" href="${esc(x.pl)}" target="_blank" rel="noopener" aria-label="${esc(x.t)}をYouTubeで見る">${IC_PLAY}YouTubeで見る</a>` : nf("pl") ? nn("なし") : un("未設定")),
     row("まとめ動画", x.sm ? `<a class="ilnk" href="${esc(x.sm)}" target="_blank" rel="noopener">まとめ動画を開く${IC_EXT}</a>` : nf("sm") ? nn("なし") : un("未設定")),
   ];
-  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span><button type="button" class="editbtn iedit" data-jump="ycard" aria-label="基本情報を編集">✎ 編集</button></div><dl class="idl">${rows.join("")}</dl></div>`;
+  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span><button type="button" class="editbtn iedit" data-jump="ycard" aria-label="基本情報を編集">編集</button></div><dl class="idl">${rows.join("")}</dl></div>`;
   const prog = `<div class="icard iprog"><div class="ich"><span class="ilamp progl">PROGRESS</span><span class="inow">${n ? `${pw} / ${n}本 見た` : "パート数を入れると進み具合を記録できます"}</span></div>${
     n
       ? `<div class="prog"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></div>
@@ -393,7 +393,7 @@ function ytDetailHtml(x) {
   const c = ytCat(x),
     sb = ytGrp(x);
   const gBtn = c ? `<button type="button" class="dmt lab s" data-jump="yfGenre" title="ジャンルを変える">${c}${sb ? `・${esc(sb)}` : ""}</button>` : "";
-  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="editbtn" id="ytEdit" aria-label="再生リストを編集">✎ 編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="editbtn" id="ytEdit" aria-label="再生リストを編集">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>${ytMissDetail(x)}</div>
     <div class="ydbody">${info}${prog}
     <div class="links"><button type="button" class="delsm" id="ytDel">削除</button></div></div>`;
@@ -459,7 +459,7 @@ async function ytSave(id, patch, msg) {
 /* ---------- 追加・編集 ----------
    項目ごとの部品（P）を組み合わせて、全体の編集画面と「その項目だけ」の編集画面を作る（作品の編集画面と同じ作り） */
 let yform = null;
-/* その項目だけ編集するときの見出しと部品。詳細の中で開く（ycard＝YOUTUBEカードの「✎ 編集」、ほかは未入力アラートの項目ボタン） */
+/* その項目だけ編集するときの見出しと部品。詳細の中で開く（ycard＝YOUTUBEカードの「編集」、ほかは未入力アラートの項目ボタン） */
 const ONLY_Y = {
   ycard: ["基本情報", ["author", "genre", "up", "n", "dur", "pl", "sm"]],
   yfAuthor: ["投稿者", ["author"]],
@@ -583,7 +583,7 @@ function ytOpenForm(x, target) {
     if (!TOUCH) el.focus({ preventScroll: true });
   } else if (!TOUCH) $("#y-t").focus({ preventScroll: true });
 }
-/* 詳細の中で編集：カードの「✎ 編集」はそのカードの場所がそのまま編集画面に、未入力アラートの項目は見出しのすぐ下に出す */
+/* 詳細の中で編集：カードの「編集」はそのカードの場所がそのまま編集画面に、未入力アラートの項目は見出しのすぐ下に出す */
 function ytOpenInline(target) {
   const inn = $("#ytIn");
   yform.only = target;

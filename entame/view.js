@@ -646,6 +646,19 @@ function renderList() {
 }
 let loaded = false;
 /* 検索欄は作り直さない（作り直すと入力中の文字・日本語変換・カーソルが壊れるため） */
+/* PC：絞り込みのパネルを「絞り込み」ボタンのすぐ下に置く */
+function placeFsh() {
+  const sh = document.querySelector(".fsh");
+  if (!sh) return;
+  if (!IS_PC()) return sh.style.removeProperty("left"), sh.style.removeProperty("top");
+  const b = document.querySelector(".fsh-b");
+  if (!b) return;
+  const r = b.getBoundingClientRect();
+  sh.style.left = Math.max(8, Math.min(r.left, innerWidth - 388)) + "px";
+  sh.style.top = r.bottom + 6 + "px";
+  sh.style.maxHeight = innerHeight - r.bottom - 22 + "px";
+}
+addEventListener("resize", () => placeFsh());
 function setMain(html) {
   const main = $("#main");
   /* 絞り込みシートを開いたまま選んだときは、シートの中だけ描き直す（後ろの一覧まで作り直すと画面が揺れるため。一覧は閉じたときに描き直す） */
@@ -670,6 +683,7 @@ function setMain(html) {
       const oc = main.querySelector(".count .cnt"),
         nc = t.content.querySelector(".count .cnt");
       if (oc && nc) oc.innerHTML = nc.innerHTML;
+      placeFsh();
       return;
     }
   }
@@ -730,6 +744,7 @@ function render() {
     body = body.slice(0, ce) + gb[0] + body.slice(ce);
   }
   setMain(body);
+  placeFsh();
   if (lockY === null) scrollTo(0, y);
   if (typeof markStuck === "function") markStuck();
   saveUI();
