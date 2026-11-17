@@ -1822,3 +1822,7 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
   .e1 .e1-s{grid-column:1/-1;grid-row:2}
 }
 .edtop .edsame{margin-left:auto}
+/* スマホの絞り込み：開いた選択肢は内側でスクロールさせず、シート全体のスクロールで最後まで見られるようにする */
+@media (max-width:899px){
+  .fsh.subopen .fsh-subb{max-height:none;overflow:visible;overscroll-behavior:auto}
+}
