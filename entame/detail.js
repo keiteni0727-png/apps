@@ -208,11 +208,7 @@ function epListHtml(it, eps) {
     const n = epNum(e.n);
     return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
   };
-  /* 1話の行：押すと視聴チェック（見た話は番号の丸を塗る）、右端の ✎ でその話だけ編集。2行目は放送日と見た日 */
-  const md = t => {
-    const d = new Date(t);
-    return `${d.getMonth() + 1}/${d.getDate()}`;
-  };
+  /* 1話の行：押すと視聴チェック（見た話は番号の丸を塗る）、右端の ✎ でその話だけ編集。2行目は放送日（見た日は出さない） */
   const epRow = (e, i) => {
     if (epOne === i) return epOneHtml(it, e, i);
     const fut = !aired(e);
@@ -220,9 +216,9 @@ function epListHtml(it, eps) {
     const circ = Number.isFinite(num) && num > 0 && num < 1000 ? String(num) : esc(e.n).slice(0, 3);
     const when = epWhen(e, it, true);
     const whenTx = when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
-    /* ドラマ（サブタイトルなし）：番号は丸にあるので、1行目は放送日。2行目は見た日だけ */
+    /* ドラマ（サブタイトルなし）：番号は丸にあるので、1行目は放送日 */
     const ttl = A ? (e.sub ? esc(e.sub) : esc(e.n)) : whenTx || esc(e.n);
-    const sub2 = [A ? whenTx : "", e.w && e.wt ? `${md(e.wt)} に視聴` : ""].filter(Boolean).join(" ・ ");
+    const sub2 = A ? whenTx : "";
     return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : !fut ? " unseen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" aria-label="${esc(e.n)}${A && e.sub ? " " + esc(e.sub) : ""}" data-ep="${i}"><span class="epc" aria-hidden="true">${circ}</span><span class="epm"><span class="eps-sub">${ttl}</span>${sub2 || (!e.w && !fut) ? `<span class="epd">${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${sub2}</span>` : ""}</span>${i === nx && !fut ? `<span class="epgo" aria-hidden="true">見た</span>` : ""}</button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
   };
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
