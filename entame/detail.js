@@ -300,10 +300,17 @@ function epOneHtml(it, e, i) {
   const A = it.k === "a";
   const j = jst(e.t);
   return `<div class="epw e1${A ? "" : " nosub"}" role="listitem" data-e1="${i}">
-    <input class="e1-n" value="${esc(e.n)}" aria-label="話数" autocomplete="off">
+    ${epNumInput("e1-n", e.n)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
     <div class="e1-b"><button type="button" class="e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
+}
+/* 話数の入力欄：数字だけ（小数可）。数字以外の話数は欄を空にして今の名前を薄く出し、赤枠。空のままなら名前はそのまま */
+function epNumInput(cls, n) {
+  const v = epVal(n);
+  return v
+    ? `<input class="${cls}" type="number" step="any" min="0" inputmode="decimal" value="${v}" data-orig="${esc(n)}" aria-label="話数" autocomplete="off">`
+    : `<input class="${cls} epbad" type="number" step="any" min="0" inputmode="decimal" value="" placeholder="${esc(n)}" data-orig="${esc(n)}" title="数字以外の話数です。数字を入れると置き換わります" aria-label="話数（今は「${esc(n)}」）" autocomplete="off">`;
 }
 function epEditorHtml(it) {
   const l = epEdit.list;
@@ -316,7 +323,7 @@ function epEditorHtml(it) {
           .map((e, i) => {
             const j = jst(e.t);
             return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}">
-      <input class="er-n" value="${esc(e.n)}" aria-label="話数">
+      ${epNumInput("er-n", e.n)}
       ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
       <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
       <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button></div>`;
@@ -461,8 +468,8 @@ function missDetail(it) {
   const main = x =>
     x.k === "話数"
       ? `<button type="button" data-dtab="ep">話数を登録</button>`
-      : x.k === "サブタイトル"
-        ? `<button type="button" data-dtab="ep">✎ サブタイトル</button>`
+      : x.k === "サブタイトル" || x.k === "話数の表記"
+        ? `<button type="button" data-dtab="ep">✎ ${x.k}</button>`
         : x.j
         ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
         : `<button type="button" class="st" tabindex="-1">${esc(x.k)}（上で選択）</button>`;
@@ -672,7 +679,7 @@ function nextEp(it, list) {
   const n = last ? epNum(last.n) : null;
   const ova = mediaOf(it).media === "ova";
   const t = last ? (last.t && !ova ? last.t + WEEK : 0) : it.from ? dayTimeToT(it.from, it.time) : 0;
-  return { n: `${n != null ? n + 1 : list.length + 1}話`, sub: "", t, w: false, nt: last ? !!last.nt : !hasTime(it) };
+  return { n: `${n != null ? Math.floor(n) + 1 : list.length + 1}話`, sub: "", t, w: false, nt: last ? !!last.nt : !hasTime(it) };
 }
 /* 貼り付けた各話リストを読み取り、登録済みの話と比べた一覧を出す */
 function readPaste(it) {
@@ -1103,7 +1110,8 @@ function saveEpOne(it) {
   const dI = r.querySelector(".e1-d");
   const day = normDate(dI.value, dI.dataset.ref);
   if (day === null) return toast("日付は 2018/08/25 のように入力してください");
-  x.n = r.querySelector(".e1-n").value.trim() || x.n;
+  const nv = r.querySelector(".e1-n").value.trim();
+  if (nv) x.n = epLab(nv);
   const s = r.querySelector(".e1-s");
   if (s) x.sub = s.value.trim();
   const j = jst(x.t);

@@ -1751,3 +1751,6 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 @media (max-width:600px){
   body:has(#layer .sheet:not(.form)){--u-toast-b:12px}
 }
+/* 話数の欄：数字以外の話数（OVA・総集編など）が入っている話は赤枠 */
+.er input.epbad,.e1 input.epbad{border-color:var(--u-danger)}
+.er input.epbad::placeholder,.e1 input.epbad::placeholder{color:var(--u-danger);opacity:.7}

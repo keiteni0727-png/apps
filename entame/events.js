@@ -537,7 +537,7 @@ const INPUT_ACTIONS = [
     t => {
       if (!epEdit) return false;
       const i = +t.closest("[data-er]").dataset.er;
-      if (t.classList.contains("er-n")) epEdit.list[i].n = t.value;
+      if (t.classList.contains("er-n")) epEdit.list[i].n = t.value.trim() ? epLab(t.value) : t.dataset.orig || epEdit.list[i].n;
       if (t.classList.contains("er-s")) epEdit.list[i].sub = t.value;
     },
   ],

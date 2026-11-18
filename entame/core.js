@@ -182,7 +182,7 @@ const songsOf = i => i.songs || [];
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
 const songJoin = (st, ar) => [st.trim(), ar.trim()].filter(Boolean).join(" ");
 function epSpan(it) {
-  const ns = (it ? episodes(it) : []).map(e => parseInt(String(e.n).replace(/[^0-9]/g, ""), 10)).filter(n => !isNaN(n));
+  const ns = (it ? episodes(it) : []).map(e => epNum(e.n)).filter(n => n != null);
   return ns.length ? [Math.min(...ns), Math.max(...ns)] : null;
 }
 /* 曲の種類ごとの色（OP=青・ED=紫・主題歌=緑・挿入歌=橙） */
@@ -636,6 +636,7 @@ function missingOf(i) {
   /* アニメ：登録済みの話のうち、1話でもサブタイトルが空なら（「なし」にはできない。サブタイトル欄はアニメだけ）
      今クール・通年の作品はサブタイトル未定が多いので対象外 */
   if (i.k === "a" && !(ns && episodes(i).length < 2) && !coursOf(i).some(c => c === ALLYEAR || c === nowCour()) && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
+  if (episodes(i).some(e => !epVal(e.n))) add("話数の表記");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
@@ -657,7 +658,7 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-const MISS_KEYS = ["ステータス", "話数", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
+const MISS_KEYS = ["ステータス", "話数", "話数の表記", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);
@@ -673,7 +674,14 @@ function missOk(i) {
   return state.missKey ? l.some(x => x.k === state.missKey) : l.length > 0;
 }
 const epNum = n => {
-  const m = /\d+/.exec(n || "");
+  const m = /\d+(?:\.\d+)?/.exec(n || "");
   return m ? +m[0] : null;
 };
+/* 話数は数字だけ（5.5 など小数も可）。「1話」「第1話」「1」は数字の話数、それ以外（OVA・総集編など）は表記アラートの対象 */
+const EP_PLAIN = /^第?\s*(\d+(?:\.\d+)?)\s*話?$/;
+const epVal = n => {
+  const m = EP_PLAIN.exec(String(n ?? "").trim());
+  return m ? String(+m[1]) : "";
+};
+const epLab = v => `${+v}話`;
 /* 折りたたみの印（FOLD_IC）と並び替え（GRIP／SORT_DONE）は、ほかのアプリと共通で shared/u-core.js にある */
