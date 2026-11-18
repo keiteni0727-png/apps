@@ -437,6 +437,18 @@ function redrawForm() {
   $("#formIn").innerHTML = formHtml();
   sh.scrollTop = y;
 }
+/* 編集画面の一部だけ描き直す（sels に合う所を、今の form で作った中身と入れかえる） */
+function redrawParts(sels) {
+  const box = $("#formIn");
+  if (!box) return;
+  const t = document.createElement("template");
+  t.innerHTML = formHtml();
+  sels.forEach(s => {
+    const a = box.querySelector(s),
+      b = t.content.querySelector(s);
+    if (a && b) a.replaceWith(b);
+  });
+}
 /* 作品の追加・編集画面を開く。it＝編集する作品（なければ追加）、target・el＝詳細で押した項目（その項目だけ詳細の中で編集） */
 function openForm(it, target, el) {
   epEdit = null;

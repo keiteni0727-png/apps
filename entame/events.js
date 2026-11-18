@@ -392,8 +392,18 @@ const CHANGE_ACTIONS = [
     },
   ],
   /* 編集画面：開始日（放送クールの候補が変わる）・「なし」・曲の種類（その種類の区切りへ移す）・クールの年 */
+  /* 開始日：入力中の欄を消さないよう、日付で変わる所（放送曜日の案内・放送クールの候補）だけ描き直す
+     （全体を作り直すと、iPhoneでキーボードが閉じて画面が上に戻ってしまうため） */
   [
-    "#f-from,.sg-t",
+    "#f-from",
+    () => {
+      if (!form) return false;
+      readForm();
+      redrawParts(["#schedHint", "#coursBox"]);
+    },
+  ],
+  [
+    ".sg-t",
     () => {
       if (!form) return false;
       readForm();
