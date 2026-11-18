@@ -357,7 +357,7 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   const foot = v === "hero" ? coursOf(i).map(c => courLab(c)).join("") + (per ? `<span class="wc-per">${esc(per)}</span>` : "") : "";
   /* 視聴ボタン：未視聴があれば「○話を見た」 */
   const tick = back[0]
-    ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(back[0].n)}を視聴済にする">${esc(back[0].n)}を見た</button>`
+    ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
     : "";
   /* PCの曜日の列：どのカードも同じ高さ（ラベルは1行・タイトルと話は2行まで、下端に視聴ボタンか状態） */
   if (v === "col") {
@@ -536,7 +536,9 @@ const groupTitle = k =>
     : k === "?"
       ? "時期不明"
       : k[0] === "Y"
-        ? `${k.slice(1)}年<small>クール未設定・映画・OVA・TV SP</small>`
+        ? state.mode === "m" || state.mode === "s"
+          ? `${k.slice(1)}年`
+          : `${k.slice(1)}年<small>クール未設定</small>`
         : `${k.slice(0, 4)}年 <span class="sea ${SEASON_CLS[k.slice(4)] || ""}">${k.slice(4)}</span><small>${["1〜3月", "4〜6月", "7〜9月", "10〜12月"][SI[k.slice(4)]]}</small>`;
 /* 見出しを押すと折りたたむ。開閉は端末に覚えておく */
 const collapsed = new Set(ls.get("adb.v3.col") || []);

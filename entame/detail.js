@@ -247,10 +247,22 @@ function epListHtml(it, eps) {
     const x = warnOf(e);
     return x.n || x.s;
   }).length;
-  const arcIdx = e => {
+  const arcOfNum = e => {
     const n = epNum(e.n);
-    return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
+    return n == null ? null : arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
   };
+  /* 総集編・特別編など数字でない話は、直前の話と同じ編に入れる（先頭なら次の話の編）。編の途中で見出しが分かれないように */
+  const arcMap = new Map();
+  if (arcs.length) {
+    const raw = eps.map(arcOfNum);
+    let prev = null;
+    raw.forEach((k, i) => {
+      if (k == null) k = prev ?? raw.slice(i + 1).find(x => x != null) ?? -1;
+      arcMap.set(eps[i], k);
+      prev = k;
+    });
+  }
+  const arcIdx = e => (arcMap.has(e) ? arcMap.get(e) : -1);
   /* 1話の行：押すと視聴チェック（見た話は番号の丸を塗る）、右端の ✎ でその話だけ編集。2行目は放送日（見た日は出さない） */
   /* 1話の行（タイムライン）：左の印を押したときだけ視聴チェック（行のほかの所では付かない）。右端の ✎ でその話だけ編集
      見た話は印を塗る・次の話は大きな輪・放送前は点線・特別話（数字以外の話数）はひし形 */
@@ -313,7 +325,7 @@ function epRef(it, list, i) {
 function epOneHtml(it, e, i) {
   const A = it.k === "a";
   const j = jst(e.t);
-  return `<div class="epw e1${A ? "" : " nosub"}" role="listitem" data-e1="${i}">
+  return `<div class="epw e1${A ? "" : " nosub"}${e.w ? " seen" : ""}" role="listitem" data-e1="${i}">
     ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">

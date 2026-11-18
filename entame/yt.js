@@ -191,7 +191,7 @@ function ytGenreGroups(list) {
         const [c, g] = k.split("|");
         const l = by.get(k).sort(ytSortFn());
         const key = "ytg:" + k;
-        const title = !c ? "ジャンル未設定" : g ? `${c}・${g}` : `${c}（グループなし）`;
+        const title = !c ? "ジャンル未設定" : g ? `${c}・${g}` : c;
         return `<section class="cgroup">${gHead(key, title, l.length + "本")}${collapsed.has(key) ? "" : `<div class="slots">${l.map(ytRow).join("")}</div>`}</section>`;
       })
       .join("")
