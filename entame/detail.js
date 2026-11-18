@@ -375,8 +375,8 @@ function vodName(it) {
 }
 /* 詳細のMUSICでたたんでいる種類（OP・EDなど）。作品をまたいで同じ状態を保つ */
 const musFold = new Set();
-/* 関連放送で開いているもの（作品ID#何番目）。最初はたたんだ状態 */
-const rbOpen = new Set();
+/* 関連放送の小見出し（OP・EDなど）で開いている種類。最初はたたんだ状態 */
+const rbUnfold = new Set();
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
   const nn = t => `<span class="nosong">${t}</span>`;
@@ -428,12 +428,10 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       const sub = [r.rng.length ? `<span class="ieps">${r.rng.map((t, j) => `<span class="iep inum${j === r.now ? " now " + SG_CLS[r.k] : ""}">${esc(t)}</span>`).join("")}</span>` : ""].filter(Boolean).join("");
       /* 同じ種類に2曲以上あるときは、小見出しを押してたためる（初めは開いている） */
       const cnt = songRows.filter(q => q.k === r.k).length;
-      const fold = cnt > 1 && musFold.has(r.k);
+      const fold = musFold.has(r.k);
       const head =
         j === 0 || songRows[j - 1].k !== r.k
-          ? cnt > 1
-            ? `<button type="button" class="imt ${SG_CLS[r.k]}" data-imfold="${r.k}" aria-expanded="${!fold}"><b>${r.k}</b><small>${cnt}曲</small>${FOLD_IC}</button>`
-            : `<div class="imt ${SG_CLS[r.k]}"><b>${r.k}</b></div>`
+          ? `<button type="button" class="imt ${SG_CLS[r.k]}" data-imfold="${r.k}" aria-expanded="${!fold}"><b>${r.k}</b><small>${cnt}曲</small>${FOLD_IC}</button>`
           : "";
       if (fold) return head;
       return `${head}<div class="imsg ${SG_CLS[r.k]}${songRows.nowN == null ? "" : r.now >= 0 ? " isnow" : " notnow"}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${sub ? `<span class="ima">${sub}</span>` : ""}</div>`;
@@ -442,27 +440,22 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
 
   /* 関連放送（旧作・再放送など）：MUSICの中に点線で区切って、タイトルと放送期間の下に曲を並べる */
   const rbRng = x => (x.a == null ? "" : x.b == null || x.b === x.a ? `${x.a}話${x.b == null && x.a !== 1 ? "〜" : ""}` : `${x.a}〜${x.b}話`);
-  /* 開閉は作品のMUSIC・編と同じ作り：見出しを押すとたたむ（最初はたたんだ状態）。OP・EDなどの小見出しは同じ種類が2曲以上のときに押してたためる */
+  /* 関連放送：見出し（タイトル・放送期間）の下に、OP・EDなどの小見出し。小見出しは最初たたんだ状態で、押すと開く（開いた種類はアプリを開いている間覚える） */
   const relb = (it.relb || [])
     .map((r, k) => {
       const per = r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${r.to ? fmtD(r.to) : ""}` : "";
-      const key = `${it.id}#${k}`,
-        open = rbOpen.has(key);
       const name = esc(r.t || "関連放送");
-      const hd = `<div class="irbh"><button type="button" class="irbt" data-rbfold="${esc(key)}" aria-expanded="${open}"><span class="irbn">${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}${FOLD_IC}</button><button type="button" class="editbtn iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
-      if (!open) return `<div class="irb">${hd}</div>`;
+      const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="editbtn iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
       const sl = r.songs || [];
       const rows = sl
         .map((x, j) => {
           const t = x.type || "";
           const cnt = sl.filter(q => (q.type || "") === t).length;
           const fk = "rb:" + t,
-            fold = cnt > 1 && musFold.has(fk);
+            fold = !rbUnfold.has(fk);
           const head =
             j === 0 || (sl[j - 1].type || "") !== t
-              ? cnt > 1
-                ? `<button type="button" class="imt ${SG_CLS[t] || ""}" data-imfold="${esc(fk)}" aria-expanded="${!fold}"><b>${esc(t)}</b><small>${cnt}曲</small>${FOLD_IC}</button>`
-                : `<div class="imt ${SG_CLS[t] || ""}"><b>${esc(t)}</b></div>`
+              ? `<button type="button" class="imt ${SG_CLS[t] || ""}" data-rbtfold="${esc(fk)}" aria-expanded="${!fold}"><b>${esc(t)}</b><small>${cnt}曲</small>${FOLD_IC}</button>`
               : "";
           if (fold) return head;
           const { st, ar } = songTA(x);
@@ -470,7 +463,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
           return `${head}<div class="imsg ${SG_CLS[t] || ""}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${rg ? `<span class="ima"><span class="ieps"><span class="iep inum">${esc(rg)}</span></span></span>` : ""}</div>`;
         })
         .join("");
-      return `<div class="irb open">${hd}${rows || `<p class="inos">${un("主題歌 未登録")}</p>`}</div>`;
+      return `<div class="irb">${hd}${rows || `<p class="inos">${un("主題歌 未登録")}</p>`}</div>`;
     })
     .join("");
   /* 曲が1曲もなくてもカードは出す（「編集」ボタンから登録できるように） */
@@ -848,11 +841,11 @@ const DETAIL_ACTIONS = [
     },
   ],
   [
-    "[data-rbfold]",
+    "[data-rbtfold]",
     el => {
-      const k = el.dataset.rbfold;
-      if (rbOpen.has(k)) rbOpen.delete(k);
-      else rbOpen.add(k);
+      const k = el.dataset.rbtfold;
+      if (rbUnfold.has(k)) rbUnfold.delete(k);
+      else rbUnfold.add(k);
       refreshSheet();
     },
   ],
