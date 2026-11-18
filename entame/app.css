@@ -1747,3 +1747,7 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 }
 /* ドラマの次の話：「見た」があるので「未視聴」の印は出さない（日付を1行に収める） */
 .eps.nosub .ep.next .epun{display:none}
+/* スマホ：作品・YouTubeの詳細を開いている間は、通知を詳細の枠の下（画面のいちばん下の空き）に出す */
+@media (max-width:600px){
+  body:has(#layer .sheet:not(.form)){--u-toast-b:12px}
+}
