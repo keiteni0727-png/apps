@@ -412,6 +412,18 @@ function fixOldData() {
     if (loaded) rebuild();
   });
 }
+/* 前の版で TV SP を追加したときに自動で作っていた話「SP」（1話だけ）を消す（番組表は放送日で出すので不要。最初に読み込んだとき1回だけ） */
+let spDropped = false;
+function dropAutoSp() {
+  if (spDropped || !db) return;
+  spDropped = true;
+  Object.entries(prog).forEach(([id, p]) => {
+    const o = over[id];
+    if (!o || o.media !== "sp" || !p || !Array.isArray(p.eps) || p.eps.length !== 1 || p.eps[0].n !== "SP") return;
+    delete prog[id];
+    removeDoc("progress", id).catch(fail);
+  });
+}
 /* ゴミ箱：削除した作品は deleted（削除した日時）を付けて30日残し、過ぎたら完全に削除する（最新のデータが届いたあと1回だけ） */
 const TRASH_DAYS = 30;
 const purged = { titles: false, yt: false };
@@ -445,6 +457,7 @@ async function initStore() {
     if (got.titles && got.master) fixOldData();
     if (!got.titles || !got.progress) return;
     loaded = true;
+    dropAutoSp();
     calcLastAt();
     rebuild();
     render();

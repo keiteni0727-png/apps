@@ -218,6 +218,13 @@ const ROW_ACTIONS = [
       askSub(it, i);
     },
   ],
+  [
+    "[data-spdone]",
+    el => {
+      const it = items.find(x => x.id === el.dataset.spdone);
+      if (it) setStatus(it, "視聴済み");
+    },
+  ],
   ["[data-id]", el => openDetail(el.dataset.id)],
 ];
 /* もっと見る・戻る・閉じる・追加 */

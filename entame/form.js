@@ -658,11 +658,6 @@ async function submitForm() {
   const n = noSched(f.media) ? 0 : Math.min(2000, +f.n || 0);
   close();
   await saveTitle(id, patch, "追加しました");
-  /* TV SPは1話（放送日）を自動で作る（番組表に出すため。1話だけなので詳細には話数タブを出さない） */
-  if (f.media === "sp" && f.from) {
-    const it = items.find(x => x.id === id);
-    await saveEps(it, [{ n: "SP", sub: "", t: dayTimeToT(f.from, "9:00"), nt: true, w: false }]);
-  }
   if (n) {
     const it = items.find(x => x.id === id);
     const l = [];

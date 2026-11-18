@@ -233,25 +233,31 @@ function isFinOn(i, day) {
 }
 /* ---------- 番組表（アニメ・ドラマ）：作品が少ないので1作品を大きいカードで。PCは1週間を曜日ごとに2列、スマホは上の曜日タブで1日ずつ ---------- */
 /* 番組表に出すのは「視聴中」で、今が放送期間の中の作品だけ（昔の作品は出さない）
-   ・話の放送日がある：1話が1週間以内に始まる〜最終話の放送から14日以内（見逃した分を追いかける猶予）。最終話が先なら放送中
-   ・放送日がない：放送開始日・終了日で同じように判断。日付が何もない作品は出さない
+   ・放送期間（開始日〜終了日）で判断：開始日の1週間前〜終了日の14日後（見逃した分を追いかける猶予）。話数の日付は使わない
+   ・終了日がない作品は開始日から半年まで。開始日がない作品は出さない
+   ・TV SP は放送日（開始日）の1日だけの放送として同じように判断
    ・通年の作品は、視聴中ならいつでも出す */
 const AIR_GRACE = 14 * 1440,
   AIR_SOON = 7 * 1440;
 function onAirNow(i) {
   if (coursOf(i).includes(ALLYEAR)) return true;
   const now = NOWMIN();
-  const ts = episodes(i)
-    .map(e => e.t)
-    .filter(Boolean);
-  if (ts.length) return Math.min(...ts) <= now + AIR_SOON && Math.max(...ts) >= now - AIR_GRACE;
   const dm = d => (d ? Math.floor(new Date(d.slice(0, 10) + "T00:00:00+09:00").getTime() / 60000) : null);
   const f = dm(i.from),
-    t = dm(i.to);
+    t = isSp(i) ? f : dm(i.to);
   if (f == null) return false;
   /* 終了日がない作品は、放送開始から半年（2クール）までを放送中とみなす */
   return f <= now + AIR_SOON && (t != null ? t + 1440 >= now - AIR_GRACE : f >= now - 183 * 1440);
 }
+/* TV SP：番組表では放送日（開始日）に1回だけ出す。spT＝放送の時刻（分）、spDay＝放送日（端末の日付の0時） */
+const isSp = i => mediaOf(i).media === "sp";
+const spT = i => (i.from ? dayTimeToT(i.from.slice(0, 10), hasTime(i) ? i.time : "0:00") : 0);
+const spDay = i => {
+  const [y, m, d] = String(i.from || "").slice(0, 10).split("-").map(Number);
+  return y && m && d ? new Date(y, m - 1, d) : null;
+};
+/* TV SP で話数を登録していない作品は、ステータスで見たかどうかを決める（放送後で視聴中なら「見た」ボタン） */
+const spUnseen = i => isSp(i) && !episodes(i).length && i.s === "視聴中" && spT(i) && spT(i) <= NOWMIN();
 function weekPool() {
   return items.filter(i => ofKind(i) && i.s === "視聴中" && onAirNow(i) && (!state.unOnly || nextInfo(i).back.length));
 }
@@ -260,8 +266,17 @@ function weekGroups() {
   const pool = weekPool();
   const now = new Date();
   const by = new Map();
+  const free = pool.filter(i => i.dow < 0 && !isSp(i));
+  /* TV SP：これからの放送（今日を含む）はその日に、放送が過ぎたものは「その他」に */
+  pool.filter(isSp).forEach(i => {
+    const d = spDay(i);
+    if (!d || d.getTime() < t0Today()) return free.push(i);
+    const k = d.getTime();
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push(i);
+  });
   pool
-    .filter(i => i.dow >= 0)
+    .filter(i => i.dow >= 0 && !isSp(i))
     .forEach(i => {
       const d = nextSlotDay(i, now);
       if (!d) return;
@@ -272,7 +287,6 @@ function weekGroups() {
   const g = [...by.keys()]
     .sort((a, b) => a - b)
     .map(k => ({ k: String(k), day: new Date(k), list: by.get(k).sort((a, b) => mins(a.time) - mins(b.time)) }));
-  const free = pool.filter(i => i.dow < 0);
   if (free.length) g.push({ k: "free", day: null, list: free.sort((a, b) => a.t.localeCompare(b.t, "ja")) });
   return g;
 }
@@ -302,7 +316,7 @@ function weekDayTabs() {
   return g.map(x => {
     const lab = x.day ? DOW[(x.day.getDay() + 6) % 7] : "他";
     const sub = x.day ? (x.day.getTime() === t0Today() ? "今日" : `${x.day.getDate()}`) : "";
-    const dot = x.list.some(i => nextInfo(i).back.length);
+    const dot = x.list.some(i => nextInfo(i).back.length || spUnseen(i));
     return [x.k, lab, null, !state.unOnly && x.k === cur, `<b>${lab}</b>${sub ? `<small>${sub}</small>` : ""}${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}`];
   });
 }
@@ -333,6 +347,10 @@ function weekEp(i, dayKey, preferBack) {
 /* 話の1行：「次回：7話「サブタイトル」」の形（放送中・未視聴・放送済も同じ形） */
 function weekEpLine(i, e, onAir) {
   const eps = episodes(i);
+  if (!e && isSp(i) && !eps.length) {
+    const j = jst(spT(i));
+    return `<span class="wc-ep">${j ? `<em class="p-${spT(i) <= NOWMIN() ? "放送済" : "次回"}">${spT(i) <= NOWMIN() ? "放送済" : "放送日"}：</em>${j.md}(${j.dow})` : "放送日未設定"}</span>`;
+  }
   if (!e) return `<span class="wc-ep">${eps.length ? "放送予定の話はありません" : "話数未登録"}</span>`;
   const pre = onAir ? "放送中" : !aired(e) ? "次回" : e.w ? "放送済" : "未視聴";
   return `<span class="wc-ep"><em class="p-${pre}">${pre}：</em>${esc(e.n)}${e.sub ? `「${esc(e.sub)}」` : ""}</span>`;
@@ -358,12 +376,14 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   /* 視聴ボタン：未視聴があれば「○話を見た」 */
   const tick = back[0]
     ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
-    : "";
+    : spUnseen(i)
+      ? `<button type="button" class="wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
+      : "";
   /* PCの曜日の列：どのカードも同じ高さ（ラベルは1行・タイトルと話は2行まで、下端に視聴ボタンか状態） */
   if (v === "col") {
     const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
     const more = sites.length - 1;
-    const okMsg = !eps.length ? "話数未登録" : w === eps.length ? "全話視聴済" : "放送済みは視聴済";
+    const okMsg = !eps.length ? (isSp(i) ? "放送前" : "話数未登録") : w === eps.length ? "全話視聴済" : "放送済みは視聴済";
     return `<div class="wcard v-col${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
       <button type="button" class="wc-main" data-id="${i.id}">
         <span class="wc-row1"><span class="wc-time">${time}</span>${st ? `<span class="wc-st">${esc(st)}</span>` : ""}${badge}</span>
@@ -455,7 +475,7 @@ function renderWeek() {
       const x = g.find(y => y.day && dkey(y.day) === dkey(d)) || { k: String(d.getTime()), day: d, list: [] };
       const isT = d.getTime() === t0.getTime();
       const sub = isT ? "今日" : d.getTime() === t0.getTime() + 86400e3 ? "明日" : `${d.getDate()}`;
-      const dot = x.list.some(i => nextInfo(i).back.length);
+      const dot = x.list.some(i => nextInfo(i).back.length || spUnseen(i));
       cols.push(
         `<section class="wcol${isT ? " today" : ""}" aria-label="${DOW[(d.getDay() + 6) % 7]}曜日"><div class="wcol-hd"><small>${sub}</small><b>${DOW[(d.getDay() + 6) % 7]}</b>${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}</div>${x.list.map(i => card(x, i, false, "col")).join("") || `<p class="wcol-none">なし</p>`}</section>`,
       );
