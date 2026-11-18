@@ -177,10 +177,6 @@ const mediaLabOf = i => {
 const ONE_LAB = { movie: "映画", ova: "OVA", sp: "TV SP" };
 /* 主題歌: songs＝[{type,s,a,b,ex}] a〜b話で使われた曲。ex＝飛び飛びのときの追加の話 [{a,b}] */
 const songsOf = i => i.songs || [];
-const songText = i =>
-  songsOf(i)
-    .map(x => x.type + " " + x.s)
-    .join(" ");
 /* 曲名とアーティストは入力欄ごとに別々に保存（自動で分けたりつないだりしない）。
    s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
