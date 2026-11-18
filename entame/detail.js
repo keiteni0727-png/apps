@@ -310,15 +310,15 @@ function epOneHtml(it, e, i) {
 }
 const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
 /* 話数の入力欄：数字だけ（小数可）。数字以外の話数は欄を空にして今の名前を薄く出し、赤枠。空のままなら名前はそのまま
-   「特別」にチェックした話は文字の欄（特別編・OVA など） */
+   「文字で入力」にチェックした話は文字の欄（特別編・OVA など） */
 function epNumInput(cls, n, sp) {
   const v = epVal(n);
   const box = sp
     ? `<input class="${cls}" type="text" value="${esc(n)}" data-orig="${esc(n)}" placeholder="特別編など" aria-label="話数（特別話）" autocomplete="off">`
     : v
     ? `<input class="${cls}" type="number" step="any" min="0" inputmode="decimal" value="${v}" data-orig="${esc(n)}" aria-label="話数" autocomplete="off">`
-    : `<input class="${cls} epbad" type="number" step="any" min="0" inputmode="decimal" value="" placeholder="${esc(n)}" data-orig="${esc(n)}" title="数字以外の話数です。数字を入れると置き換わります（文字のままにするなら「特別」にチェック）" aria-label="話数（今は「${esc(n)}」）" autocomplete="off">`;
-  return `<span class="epnw">${box}<label class="epspk" title="数字以外の話数（特別編・OVA など）"><input type="checkbox" class="ep-sp" ${sp ? "checked" : ""}><span>特別</span></label></span>`;
+    : `<input class="${cls} epbad" type="number" step="any" min="0" inputmode="decimal" value="" placeholder="${esc(n)}" data-orig="${esc(n)}" title="数字以外の話数です。数字を入れると置き換わります（文字のままにするなら「文字で入力」にチェック）" aria-label="話数（今は「${esc(n)}」）" autocomplete="off">`;
+  return `<span class="epnw">${box}<label class="epspk" title="数字以外の話数（特別編・OVA など）"><input type="checkbox" class="ep-sp" ${sp ? "checked" : ""}><span>文字で入力</span></label></span>`;
 }
 function epEditorHtml(it) {
   const l = epEdit.list;

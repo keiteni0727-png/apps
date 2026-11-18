@@ -546,7 +546,7 @@ const INPUT_ACTIONS = [
   ],
 ];
 document.addEventListener("input", e => runInputs(INPUT_ACTIONS, e));
-/* 話数の「特別」チェック：数字の欄 ⇔ 文字の欄を切り替える（話数の編集・1話だけ編集） */
+/* 話数の「文字で入力」チェック：数字の欄 ⇔ 文字の欄を切り替える（話数の編集・1話だけ編集） */
 document.addEventListener("change", e => {
   const cb = e.target;
   if (!cb.classList || !cb.classList.contains("ep-sp")) return;
