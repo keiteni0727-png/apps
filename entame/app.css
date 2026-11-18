@@ -1823,3 +1823,11 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .sg .sg-r .sg-t{color:var(--u-ink);font-weight:700;font-size:13px!important;padding:5px 8px;max-width:110px;min-width:64px}
 /* 設定の保存状況：「保存済み」と「最終変更」の間をあける */
 .setv .sv+.svat{margin-left:8px}
+/* 関連放送（旧作・再放送など）：MUSICの中に点線で区切って表示 */
+.epadd+.epadd{margin-left:10px}
+.irb{border-top:1px dashed var(--u-line);margin-top:8px;padding-top:8px;display:flex;flex-direction:column;gap:4px}
+.irbh{display:flex;align-items:center;gap:8px;min-width:0}
+.irbt{font-size:13px;font-weight:800;color:var(--u-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irbd{font-size:11.5px;color:var(--u-sub);white-space:nowrap}
+.irbh .iedit{margin-left:auto}
+.irbk{flex:none;font-size:10.5px;font-weight:800;color:var(--u-sub);margin-right:6px}

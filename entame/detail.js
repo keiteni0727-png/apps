@@ -438,9 +438,24 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     })
     .join("");
 
+  /* 関連放送（旧作・再放送など）：MUSICの中に点線で区切って、タイトルと放送期間の下に曲を並べる */
+  const rbRng = x => (x.a == null ? "" : x.b == null || x.b === x.a ? `${x.a}話${x.b == null && x.a !== 1 ? "〜" : ""}` : `${x.a}〜${x.b}話`);
+  const relb = (it.relb || [])
+    .map((r, k) => {
+      const per = r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${r.to ? fmtD(r.to) : ""}` : "";
+      const rows = (r.songs || [])
+        .map(x => {
+          const { st, ar } = songTA(x);
+          const rg = rbRng(x);
+          return `<div class="imsg irbs ${SG_CLS[x.type] || ""}"><span class="imn"><b class="irbk">${esc(x.type || "")}</b>${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${rg ? `<span class="ima"><span class="ieps"><span class="iep inum">${esc(rg)}</span></span></span>` : ""}</div>`;
+        })
+        .join("");
+      return `<div class="irb"><div class="irbh"><span class="irbt">${esc(r.t || "関連放送")}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}<button type="button" class="editbtn iedit" data-jump="relb" data-rbk="${k}" aria-label="${esc(r.t || "関連放送")}を編集">編集</button></div>${rows || `<p class="inos">${un("主題歌 未登録")}</p>`}</div>`;
+    })
+    .join("");
   /* 曲が1曲もなくてもカードは出す（「編集」ボタンから登録できるように） */
   const noS = !songs && ((it.noSongs || []).length ? nn("OP・ED・主題歌 なし") : un("未登録"));
-  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>`}</div>`;
+  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>`}${relb}</div>`;
 }
 /* 前・次の矢印（文字だと丸の中で上下左右にずれるので図形で描く） */
 const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="${d < 0 ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -485,7 +500,7 @@ function renderDetail(it) {
     ${missDetail(it)}
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="delsm" id="delItem">削除</button></div></div>
+    <div class="links">${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }

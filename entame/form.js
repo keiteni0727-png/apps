@@ -283,10 +283,14 @@ const ONLY_A = {
   "f-from": ["放送日", ["from"]],
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
+  relb: ["関連放送", ["relb"]],
   onair: ["基本情報", ["media", "from", "time", "cours", "series", "url", "vurl"]],
   "f-url": ["公式サイト", ["url"]],
   "f-vurl": ["配信サイトURL", ["vurl"]],
 };
+/* 日付の入力欄（yyyy/MM/dd・カレンダー付き）。開始日と同じ作り */
+const dtField = (id, lab, v) =>
+  `<label class="field"><span>${lab}</span><span class="dtw"><input id="${id}" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${esc(dtShow(v || ""))}"><button type="button" class="dtcal" data-dtcal="${id}" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="${id}"></span></label>`;
 function formHtml() {
   const f = form;
   const y = new Date().getFullYear();
@@ -353,6 +357,10 @@ function formHtml() {
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
 </div>`,
+    /* 関連放送（旧作・再放送など）：タイトル・放送開始と終了・主題歌。主題歌の行は作品の主題歌と同じ作り */
+    relb: `<label class="field full"><span>タイトル</span><input id="f-rbt" type="text" autocomplete="off" placeholder="HUNTER×HUNTER（1999年版）・再放送 など" value="${esc(f.rbT || "")}"></label>
+        ${dtField("f-rbf", "放送開始", f.rbF)}${dtField("f-rbto", "放送終了", f.rbTo)}
+        <div class="field full"><span>主題歌</span><div class="sglist" id="sgList">${songRowsHtml()}</div></div>`,
     url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
     vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信URL</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
   };
@@ -362,7 +370,7 @@ function formHtml() {
     const sgNone = f.only === "sgList" ? sgNoneBox() : "";
     return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
-    <div class="ffoot"><button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
+    <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="delsm" id="rbDel">この関連放送を削除</button>` : ""}<button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
@@ -393,6 +401,9 @@ function readForm() {
   if ($("#f-from")) form.from = normDate($("#f-from").value) || "";
   v("#f-url", "url");
   v("#f-vurl", "vurl");
+  v("#f-rbt", "rbT");
+  if ($("#f-rbf")) form.rbF = normDate($("#f-rbf").value) || "";
+  if ($("#f-rbto")) form.rbTo = normDate($("#f-rbto").value) || "";
   v("#f-n", "n");
   v("#f-sernew", "serNewName");
   const cy = g("#f-cy");
@@ -499,6 +510,12 @@ function openForm(it, target, el) {
       cours: [],
       cy: y,
     };
+  /* 関連放送の編集：主題歌の欄はその関連放送の曲に入れ替えて開く（保存も関連放送にだけ書く） */
+  if (it && target === "relb") {
+    const k = el && el.dataset && el.dataset.rbk != null ? el.dataset.rbk : "new";
+    const r = k === "new" ? {} : (it.relb || [])[+k] || {};
+    Object.assign(form, { rbK: k, rbT: r.t || "", rbF: r.from || "", rbTo: r.to || "", songs: (r.songs || []).map(x => ({ ...x })) });
+  }
   sgFold = new Set();
   /* 1話だけの曲（最初＝最後）は「1話だけ」にチェックを入れて開く */
   form.songs.forEach(x => {
@@ -527,6 +544,7 @@ function inlineAnchor(target, el) {
   /* 未入力アラート（上に固定の見出しの中）から開いたときは、見出しの中ではなく見出しのすぐ下に出す。
      見出しの中に出すと、固定の見出しが伸びてスクロールや矢印キーでの移動がおかしくなるため */
   if (el.closest(".dhead")) return el.closest(".dhead");
+  if (target === "relb" && el.closest(".links")) return el.closest(".links");
   return el.closest(".icard,.dmiss,.ilinks") || el;
 }
 function openInlineForm(target, el) {
@@ -618,9 +636,30 @@ function buildPatch(f) {
   patch.noF.forEach(k => clr[k]());
   return patch;
 }
+/* 関連放送を保存（k＝何番目か。null で削除） */
+async function saveRelb(f, del) {
+  const it = items.find(x => x.id === f.id);
+  if (!it) return;
+  const l = (it.relb || []).map(x => ({ ...x }));
+  const k = f.rbK === "new" ? -1 : +f.rbK;
+  if (del) {
+    if (k >= 0) l.splice(k, 1);
+  } else {
+    const r = { t: (f.rbT || "").trim(), from: f.rbF || "", to: f.rbTo || "", songs: buildPatch(f).songs };
+    if (!r.t && !r.from && !r.to && !r.songs.length) {
+      closeInlineForm();
+      return;
+    }
+    if (k >= 0) l[k] = r;
+    else l.push(r);
+  }
+  form = null;
+  await saveTitle(f.id, { relb: l }, del ? "関連放送を削除しました" : "保存しました");
+}
 async function submitForm() {
   readForm();
   const f = form;
+  if (f.only === "relb") return saveRelb(f);
   const t = (f.t || "").trim();
   if (!t) {
     $("#f-t").focus();
@@ -678,6 +717,19 @@ const formEdit = (fn, after) => el => {
   if (after) after();
 };
 const FORM_ACTIONS = [
+  [
+    "#rbDel",
+    el => {
+      if (!form) return;
+      /* 1回目は確認（もう1回押すと削除） */
+      if (!el.classList.contains("armed")) {
+        el.classList.add("armed");
+        el.textContent = "もう一度押すと削除";
+        return;
+      }
+      saveRelb(form, true);
+    },
+  ],
   ["[data-fm]", formEdit(el => (form.media = el.dataset.fm))],
   ["[data-frel]", formEdit(el => (form.rel = el.dataset.frel))],
   [
