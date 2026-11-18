@@ -467,7 +467,7 @@ function fBarHtml() {
     srtLab: SORTS.find(x => x[0] === state.sort)[1],
   });
 }
-const fSearchHtml = () => fshSearch({ id: "q", ph: "タイトル・主題歌・放送局で検索", q: state.q, a: "data-qtog" });
+const fSearchHtml = () => fshSearch({ id: "q", ph: "タイトルで検索", q: state.q, a: "data-qtog" });
 const fSumHtml = () => fshSum(fConds(), FA);
 function fSubBody(k) {
   if (k === "st") {

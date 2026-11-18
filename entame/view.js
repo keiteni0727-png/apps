@@ -481,19 +481,8 @@ function filtered() {
     /* 全角・半角、ひらがな・カタカナ、大文字・小文字、記号のゆれをそろえて探す。空白で区切ると「どれも含む」 */
     const qs = state.q.split(/[\s　]+/).map(norm).filter(Boolean);
     list = list.filter(i => {
-      const h = norm(
-        i.t +
-        " " +
-        songText(i) +
-        " " +
-        (i.stations || []).join(" ") +
-        " " +
-        (i.plat || []).join(" ") +
-        " " +
-        (i.vods || []).join(" ") +
-        " " +
-        (i.series || ""),
-      );
+      /* 探すのはタイトルだけ（放送局・主題歌などは絞り込みや専用メニューで探す） */
+      const h = norm(i.t || "");
       return qs.every(q => h.includes(q));
     });
   }
