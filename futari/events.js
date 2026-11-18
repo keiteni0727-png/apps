@@ -206,10 +206,6 @@ document.addEventListener("click", async ev => {
       try { await deleteDoc(doc(db, "rooms", S.roomId, "quiz", pendingQuiz)); closeSheet(); openQuiz(); }
       catch (e) { toast("うまくいきませんでした（" + (e.code || e.message) + "）"); }
       break;
-    case "swipe": openSwipe(); break;
-    case "swregion": S.swRegion = el.dataset.v; openSwipe(); break;
-    case "sw": swipeOut(el.dataset.v === "1"); break;
-    case "unpass": unpass(); break;
     case "fxclose": document.getElementById("fx").innerHTML = ""; break;
     case "fxopen": document.getElementById("fx").innerHTML = ""; S.tab = "list"; S.who = "both"; render(); openDetail(id); break;
     case "zoom": { const z = document.createElement("div"); z.className = "zoom"; z.innerHTML = `<img src="${el.src}" alt="">`; z.onclick = () => z.remove(); document.body.appendChild(z); break; }
