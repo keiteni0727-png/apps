@@ -29,9 +29,9 @@ function cleanSub(s) {
     .trim()
     .replace(/^「(.*)」$|^『(.*)』$|^"(.*)"$/, (m, a, b, c) => (a ?? b ?? c)); // 全体を囲むカッコだけ外す（途中の『』は残す）
 }
-/* 「カルテ1」「魔の1」「Episode 1」など、決まった言葉＋数字で始まる行。
+/* 「カルテ1」「魔の1」「1Fr」「Episode 1」など、数字の前後に言葉が付いた行。
    誤読を防ぐため、同じ言葉が2行以上あるときだけ話数として扱う */
-const GEN_RE = /^(\s*)([^\d０-９\t]{1,12}?)\s*([0-9０-９]+)\s*(?:(\t)|[:：.．]\s*|\s+(?=\S)|(?=「))(.*)$/;
+const GEN_RE = /^(\s*)([^\d０-９\t]{0,12}?)\s*([0-9０-９]+)([^\d０-９\s「:：.．]{0,6})\s*(?:(\t)|[:：.．]\s*|\s+(?=\S)|(?=「))(.*)$/;
 const LEAD_RE = /^\s*(?:\d{4}\s*年\s*)?\d{1,2}\s*月\s*\d{1,2}\s*日\s*\t/;
 function genSplit(line) {
   const ld = zen(line).match(LEAD_RE);
@@ -40,9 +40,12 @@ function genSplit(line) {
   if (EP_RE.test(body)) return null;
   const g = GEN_RE.exec(body);
   if (!g) return null;
-  const key = g[2].trim().toLowerCase();
-  if (!key || /^[第#＃]$/.test(key) || /[年月日]$/.test(key)) return null;
-  return { key, head, n: g[3], tab: !!g[4], rest: g[5] };
+  const pre = g[2].trim().toLowerCase(),
+    suf = g[4].toLowerCase();
+  if (!pre && !suf) return null;
+  if (/^[第#＃]$/.test(pre) && !suf) return null;
+  if (/[年月日]$/.test(pre) || /^[年月日時分秒話回]/.test(suf)) return null;
+  return { key: pre + "|" + suf, head, n: g[3], tab: !!g[5], rest: g[6] };
 }
 function normGeneric(lines) {
   const cnt = {};
@@ -678,7 +681,7 @@ function readPaste(it) {
   if (!parsed.length) {
     subPaste = { text };
     refreshSheet();
-    toast("話数とサブタイトルを読み取れませんでした。「第1話」「1話」「魔の1」などで始まる行が必要です");
+    toast("話数とサブタイトルを読み取れませんでした。「第1話」「1話」「魔の1」「1Fr」などで始まる行が必要です");
     return;
   }
   const eps = epEdit ? epEdit.list : episodes(it);
