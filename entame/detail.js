@@ -225,6 +225,11 @@ function nextIdx(eps) {
   const a = eps.findIndex(e => !e.w && aired(e));
   return a >= 0 ? a : eps.findIndex(e => !e.w);
 }
+/* 話数リストでアラートの対象になっている話：数字以外の話数で「文字で入力」なし／サブタイトルのアラートが出ている作品の空のサブタイトル */
+function epWarn(it) {
+  const subA = it.k === "a" && missingOf(it).some(x => x.k === "サブタイトル");
+  return e => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim() });
+}
 function epListHtml(it, eps) {
   if (arcEdit) return arcEditHtml();
   const A = it.k === "a";
@@ -237,6 +242,11 @@ function epListHtml(it, eps) {
   const w = eps.filter(e => e.w).length;
   const nx = nextIdx(eps);
   const arcs = arcsOf(it);
+  const warnOf = epWarn(it);
+  const warnN = eps.filter(e => {
+    const x = warnOf(e);
+    return x.n || x.s;
+  }).length;
   const arcIdx = e => {
     const n = epNum(e.n);
     return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
@@ -252,9 +262,10 @@ function epListHtml(it, eps) {
     const when = epWhen(e, it, true);
     const whenTx = when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
     const st = e.w ? " seen" : fut ? " future" : " unseen";
-    const meta = `<span class="tlmeta"><b class="tln">${esc(nlab)}</b>${whenTx ? `<span>${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}</span>`;
-    const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : "";
-    return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}" role="listitem"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
+    const wn = warnOf(e);
+    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span>${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}</span>`;
+    const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
+    return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${wn.n || wn.s ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
 
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
@@ -288,7 +299,7 @@ function epListHtml(it, eps) {
     arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
   } else rowsHtml = eps.map(epRow).join("");
   return `<div class="epset"><button type="button" id="allAired">放送済み<span class="epx">を全部</span> ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編を登録</button></div>
-    ${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
+    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>（押すと最初の話へ）</span></button>` : ""}${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */
 function epRef(it, list, i) {
@@ -928,6 +939,26 @@ const DETAIL_ACTIONS = [
   ],
   [null, (el, it, e) => !!arcEdit && runActions(ARC_ACTIONS, e, it)],
   /* 編の見出し：開く／たたむ */
+  /* 要確認の最初の話へ（たたんだ編の中なら開いてから） */
+  [
+    "#epWarnGo",
+    (el, it) => {
+      const l = episodes(it),
+        wo = epWarn(it);
+      const i = l.findIndex(e => {
+        const x = wo(e);
+        return x.n || x.s;
+      });
+      if (i < 0) return;
+      const n = epNum(l[i].n);
+      const r = arcsOf(it).find(r => n != null && n >= r.a && (r.b == null || n <= r.b));
+      if (r && arcFold.get(arcKey(r)) !== true) {
+        arcFold.set(arcKey(r), true);
+        refreshSheet();
+      }
+      requestAnimationFrame(() => document.getElementById("epr-" + i)?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    },
+  ],
   [
     "[data-arc]",
     el => {

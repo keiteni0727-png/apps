@@ -1789,3 +1789,10 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .epnw>input{min-width:0}
 .epspk{flex:none;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--u-sub);white-space:nowrap;cursor:pointer}
 .er .epspk input,.e1 .epspk input{margin:0;padding:0;width:15px;height:15px;flex:none;border:0;accent-color:var(--u-accent)}
+/* 話数リストのアラート：要確認の話を赤で示す */
+.tln.tlbad{color:var(--u-danger)}
+.tl.unseen .tln.tlbad{color:var(--u-danger)}
+.tlt.tlmiss{color:var(--u-danger);font-size:13px;font-weight:700}
+.tl.seen .tlt.tlmiss{color:var(--u-danger);font-weight:700}
+.epwarn{display:flex;align-items:center;gap:4px;width:100%;margin:0 0 8px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--u-danger) 35%,transparent);border-radius:var(--u-r);background:var(--u-danger2);color:var(--u-danger);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+.epwarn span{font-weight:500;font-size:11.5px;opacity:.85}
