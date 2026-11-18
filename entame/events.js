@@ -537,12 +537,45 @@ const INPUT_ACTIONS = [
     t => {
       if (!epEdit) return false;
       const i = +t.closest("[data-er]").dataset.er;
-      if (t.classList.contains("er-n")) epEdit.list[i].n = t.value.trim() ? epLab(t.value) : t.dataset.orig || epEdit.list[i].n;
+      if (t.classList.contains("er-n")) {
+        const x = epEdit.list[i];
+        x.n = !t.value.trim() ? t.dataset.orig || x.n : x.sp ? t.value.trim() : epLab(t.value);
+      }
       if (t.classList.contains("er-s")) epEdit.list[i].sub = t.value;
     },
   ],
 ];
 document.addEventListener("input", e => runInputs(INPUT_ACTIONS, e));
+/* 話数の「特別」チェック：数字の欄 ⇔ 文字の欄を切り替える（話数の編集・1話だけ編集） */
+document.addEventListener("change", e => {
+  const cb = e.target;
+  if (!cb.classList || !cb.classList.contains("ep-sp")) return;
+  const inp = cb.closest(".epnw").querySelector(".er-n,.e1-n");
+  const row = cb.closest("[data-er]");
+  const x = row && epEdit ? epEdit.list[+row.dataset.er] : null;
+  const cur = x ? x.n : inp.dataset.orig;
+  if (cb.checked) {
+    inp.type = "text";
+    inp.removeAttribute("step");
+    inp.removeAttribute("min");
+    inp.inputMode = "text";
+    inp.value = cur;
+    inp.placeholder = "特別編など";
+    inp.classList.remove("epbad");
+  } else {
+    const v = epVal(inp.value);
+    inp.type = "number";
+    inp.step = "any";
+    inp.min = "0";
+    inp.inputMode = "decimal";
+    inp.value = v;
+    inp.placeholder = v ? "" : cur;
+    inp.classList.toggle("epbad", !v);
+    if (x && v) x.n = epLab(v);
+  }
+  inp.dataset.orig = cur;
+  if (x) x.sp = cb.checked;
+});
 let sTimer = 0;
 function searchSoon() {
   clearTimeout(sTimer);

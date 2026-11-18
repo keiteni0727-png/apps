@@ -547,7 +547,7 @@ function episodes(it) {
   const ks = m ? epKeys(p.eps) : null;
   return p.eps.map((e, i) => {
     const v = m ? +m[ks[i]] || 0 : e.w ? +e.wt || 1 : 0;
-    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0 };
+    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp };
   });
 }
 /* 話数リストまるごとの保存用の中身（eps の w・wt は前の版の画面が開いたままの端末のための控え。読むときは w の印を使う） */
@@ -558,7 +558,7 @@ function progDoc(list) {
     if (e.w) w[ks[i]] = e.wt || 1;
   });
   return {
-    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
     w,
   };
 }
@@ -636,7 +636,7 @@ function missingOf(i) {
   /* アニメ：登録済みの話のうち、1話でもサブタイトルが空なら（「なし」にはできない。サブタイトル欄はアニメだけ）
      今クール・通年の作品はサブタイトル未定が多いので対象外 */
   if (i.k === "a" && !(ns && episodes(i).length < 2) && !coursOf(i).some(c => c === ALLYEAR || c === nowCour()) && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
-  if (episodes(i).some(e => !epVal(e.n))) add("話数の表記");
+  if (episodes(i).some(e => !epVal(e.n) && !e.sp)) add("話数の表記");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
@@ -677,7 +677,7 @@ const epNum = n => {
   const m = /\d+(?:\.\d+)?/.exec(n || "");
   return m ? +m[0] : null;
 };
-/* 話数は数字だけ（5.5 など小数も可）。「1話」「第1話」「1」は数字の話数、それ以外（OVA・総集編など）は表記アラートの対象 */
+/* 話数は数字だけ（5.5 など小数も可）。「1話」「第1話」「1」は数字の話数。それ以外（OVA・総集編など）は「特別」にチェック（sp）した話だけ文字で持てる。チェックなしの文字の話数は表記アラートの対象 */
 const EP_PLAIN = /^第?\s*(\d+(?:\.\d+)?)\s*話?$/;
 const epVal = n => {
   const m = EP_PLAIN.exec(String(n ?? "").trim());

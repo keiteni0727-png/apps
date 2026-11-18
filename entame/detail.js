@@ -242,18 +242,21 @@ function epListHtml(it, eps) {
     return arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
   };
   /* 1話の行：押すと視聴チェック（見た話は番号の丸を塗る）、右端の ✎ でその話だけ編集。2行目は放送日（見た日は出さない） */
+  /* 1話の行（タイムライン）：左の印を押したときだけ視聴チェック（行のほかの所では付かない）。右端の ✎ でその話だけ編集
+     見た話は印を塗る・次の話は大きな輪・放送前は点線・特別話（数字以外の話数）はひし形 */
   const epRow = (e, i) => {
     if (epOne === i) return epOneHtml(it, e, i);
     const fut = !aired(e);
-    const num = epNum(e.n);
-    const circ = Number.isFinite(num) && num > 0 && num < 1000 ? String(num) : esc(e.n).slice(0, 3);
+    const v = epVal(e.n);
+    const nlab = v ? `${v}話` : e.n;
     const when = epWhen(e, it, true);
     const whenTx = when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
-    /* ドラマ（サブタイトルなし）：番号は丸にあるので、1行目は放送日 */
-    const ttl = A ? (e.sub ? esc(e.sub) : esc(e.n)) : whenTx || esc(e.n);
-    const sub2 = A ? whenTx : "";
-    return `<div class="epw${e.w ? " seen" : ""}${i === nx ? " next" : ""}" role="listitem"><button type="button" class="ep${fut ? " future" : ""}${e.w ? " seen" : !fut ? " unseen" : ""}${i === nx ? " next" : ""}" role="checkbox" aria-checked="${e.w}" aria-label="${esc(e.n)}${A && e.sub ? " " + esc(e.sub) : ""}" data-ep="${i}"><span class="epc" aria-hidden="true">${circ}</span><span class="epm"><span class="eps-sub">${ttl}</span>${sub2 || (!e.w && !fut) ? `<span class="epd">${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${sub2}</span>` : ""}</span>${i === nx && !fut ? `<span class="epgo" aria-hidden="true">見た</span>` : ""}</button><button type="button" class="epe" data-epone="${i}" aria-label="${esc(e.n)}を編集" title="この話だけ編集">✎</button></div>`;
+    const st = e.w ? " seen" : fut ? " future" : " unseen";
+    const meta = `<span class="tlmeta"><b class="tln">${esc(nlab)}</b>${whenTx ? `<span>${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}</span>`;
+    const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : "";
+    return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}" role="listitem"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
+
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
   let rowsHtml,
     arcBar = "";
@@ -300,17 +303,22 @@ function epOneHtml(it, e, i) {
   const A = it.k === "a";
   const j = jst(e.t);
   return `<div class="epw e1${A ? "" : " nosub"}" role="listitem" data-e1="${i}">
-    ${epNumInput("e1-n", e.n)}
+    ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
     <div class="e1-b"><button type="button" class="e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
 }
-/* 話数の入力欄：数字だけ（小数可）。数字以外の話数は欄を空にして今の名前を薄く出し、赤枠。空のままなら名前はそのまま */
-function epNumInput(cls, n) {
+const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
+/* 話数の入力欄：数字だけ（小数可）。数字以外の話数は欄を空にして今の名前を薄く出し、赤枠。空のままなら名前はそのまま
+   「特別」にチェックした話は文字の欄（特別編・OVA など） */
+function epNumInput(cls, n, sp) {
   const v = epVal(n);
-  return v
+  const box = sp
+    ? `<input class="${cls}" type="text" value="${esc(n)}" data-orig="${esc(n)}" placeholder="特別編など" aria-label="話数（特別話）" autocomplete="off">`
+    : v
     ? `<input class="${cls}" type="number" step="any" min="0" inputmode="decimal" value="${v}" data-orig="${esc(n)}" aria-label="話数" autocomplete="off">`
-    : `<input class="${cls} epbad" type="number" step="any" min="0" inputmode="decimal" value="" placeholder="${esc(n)}" data-orig="${esc(n)}" title="数字以外の話数です。数字を入れると置き換わります" aria-label="話数（今は「${esc(n)}」）" autocomplete="off">`;
+    : `<input class="${cls} epbad" type="number" step="any" min="0" inputmode="decimal" value="" placeholder="${esc(n)}" data-orig="${esc(n)}" title="数字以外の話数です。数字を入れると置き換わります（文字のままにするなら「特別」にチェック）" aria-label="話数（今は「${esc(n)}」）" autocomplete="off">`;
+  return `<span class="epnw">${box}<label class="epspk" title="数字以外の話数（特別編・OVA など）"><input type="checkbox" class="ep-sp" ${sp ? "checked" : ""}><span>特別</span></label></span>`;
 }
 function epEditorHtml(it) {
   const l = epEdit.list;
@@ -323,7 +331,7 @@ function epEditorHtml(it) {
           .map((e, i) => {
             const j = jst(e.t);
             return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}">
-      ${epNumInput("er-n", e.n)}
+      ${epNumInput("er-n", e.n, e.sp)}
       ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
       <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
       <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button></div>`;
@@ -539,7 +547,7 @@ function setDTab(t) {
   sh.scrollTop = 0;
   if (t === "ep")
     requestAnimationFrame(() => {
-      const n = sh.querySelector(".dp-ep .ep.next");
+      const n = sh.querySelector(".dp-ep .tl.next");
       if (n) {
         const hd = sh.querySelector(".dhead");
         const sr = sh.getBoundingClientRect(),
@@ -1111,7 +1119,10 @@ function saveEpOne(it) {
   const day = normDate(dI.value, dI.dataset.ref);
   if (day === null) return toast("日付は 2018/08/25 のように入力してください");
   const nv = r.querySelector(".e1-n").value.trim();
-  if (nv) x.n = epLab(nv);
+  const sp = r.querySelector(".ep-sp").checked;
+  if (sp) x.n = nv || x.n;
+  else if (nv) x.n = epLab(nv);
+  x.sp = sp;
   const s = r.querySelector(".e1-s");
   if (s) x.sub = s.value.trim();
   const j = jst(x.t);
