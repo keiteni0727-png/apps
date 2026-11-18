@@ -268,7 +268,6 @@ const FILTER_ACTIONS = [
     "[data-seradd]",
     el => {
       state.series = [...state.series, el.dataset.seradd];
-      if (state.sort === "new") state.sort = "old";
       state.limit = 200;
       render();
       if (!TOUCH) $("#seriesQ")?.focus();
