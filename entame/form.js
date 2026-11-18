@@ -228,17 +228,15 @@ function songRowsHtml() {
     <div class="sg-body">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
-    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw"${one ? " hidden" : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one ? `<span class="sg-all">全話</span>` : ""}
-      <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label>
-      <span class="sg-sp"></span>
-      <select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select>
-      <button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div>
+    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${x.a ?? ""}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw${one ? " inv" : ""}" ${one ? 'aria-hidden="true"' : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${x.b ?? ""}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one ? `<span class="sg-all">全話</span>` : ""}
+      <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label></div>
     ${(x.ex || [])
       .map(
         (r, j) =>
           `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほかの話</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-xh">1話だけなら「最後」は空</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
       )
-      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button></div></div>`;
+      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button>
+    <div class="sg-ft"><span class="sg-rl">種類</span><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
   };
   const secs = types
     .map(t => {
@@ -370,7 +368,7 @@ function formHtml() {
     const sgNone = f.only === "sgList" ? sgNoneBox() : "";
     return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
-    <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="delsm" id="rbDel">この関連放送を削除</button>` : ""}<button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
+    <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="delsm" id="rbDel" aria-label="この関連放送を削除">削除</button>` : ""}<button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
@@ -724,7 +722,7 @@ const FORM_ACTIONS = [
       /* 1回目は確認（もう1回押すと削除） */
       if (!el.classList.contains("armed")) {
         el.classList.add("armed");
-        el.textContent = "もう一度押すと削除";
+        el.textContent = "もう一度押す";
         return;
       }
       saveRelb(form, true);
