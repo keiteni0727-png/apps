@@ -1,297 +1,21 @@
 /* ===================== 作品の詳細：基本情報・話数（視聴チェック・各話リストの貼り付け・話数の編集・〇〇編） ===================== */
 let openId = null, // 開いている作品
   epEdit = null; // 話数の編集中の下書き
-/* 貼り付けた各話リストから「話数 → サブタイトル」を読み取る */
-const KN = { 〇: 0, 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
-function kanjiNum(t) {
-  if (/^\d+$/.test(t)) return +t;
-  let total = 0,
-    cur = 0;
-  for (const c of t) {
-    if (c in KN) cur = cur * 10 + KN[c];
-    else if (c === "十") {
-      total += (cur || 1) * 10;
-      cur = 0;
-    } else if (c === "百") {
-      total += (cur || 1) * 100;
-      cur = 0;
-    } else return NaN;
-  }
-  return total + cur;
-}
-const EP_RE =
-  /^\s*(?:第\s*([0-9０-９〇零一二三四五六七八九十百]+)\s*[話回]|#\s*([0-9０-９]+)|([0-9０-９]+)\s*[話回]|([0-9０-９]+)(?=\t))\s*[\t:：.．\s]*(.*)$/;
-const zen = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
-function cleanSub(s) {
-  return s
-    .replace(/\[(?:各回補足|注釈?|注|脚注|補足)?\s*[0-9０-９a-zA-Z]+\]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^「(.*)」$|^『(.*)』$|^"(.*)"$/, (m, a, b, c) => (a ?? b ?? c)); // 全体を囲むカッコだけ外す（途中の『』は残す）
-}
-/* 「カルテ1」「魔の1」「1Fr」「Episode 1」など、数字の前後に言葉が付いた行。
-   誤読を防ぐため、同じ言葉が2行以上あるときだけ話数として扱う */
-const GEN_RE = /^(\s*)([^\d０-９\t]{0,12}?)\s*([0-9０-９]+)([^\d０-９\s「:：.．]{0,6})\s*(?:(\t)|[:：.．]\s*|\s+(?=\S)|(?=「))(.*)$/;
-const LEAD_RE = /^\s*(?:\d{4}\s*年\s*)?\d{1,2}\s*月\s*\d{1,2}\s*日\s*\t/;
-function genSplit(line) {
-  const ld = zen(line).match(LEAD_RE);
-  const head = ld ? line.slice(0, ld[0].length) : "";
-  const body = line.slice(head.length);
-  if (EP_RE.test(body)) return null;
-  const g = GEN_RE.exec(body);
-  if (!g) return null;
-  const pre = g[2].trim().toLowerCase(),
-    suf = g[4].toLowerCase();
-  if (!pre && !suf) return null;
-  if (/^[第#＃]$/.test(pre) && !suf) return null;
-  if (/[年月日]$/.test(pre) || /^[年月日時分秒話回]/.test(suf)) return null;
-  return { key: pre + "|" + suf, head, n: g[3], tab: !!g[5], rest: g[6] };
-}
-function normGeneric(lines) {
-  const cnt = {};
-  const hits = lines.map(l => {
-    const h = genSplit(l);
-    if (h) cnt[h.key] = (cnt[h.key] || 0) + 1;
-    return h;
-  });
-  return lines.map((l, i) => {
-    const h = hits[i];
-    if (!h || cnt[h.key] < 2) return l;
-    return h.head + h.n + (h.tab ? "\t" : "話 ") + h.rest;
-  });
-}
-function parseSubtitles(text) {
-  const lines = normGeneric(
-    String(text || "")
-      .replace(/\r/g, "")
-      .split("\n")
-  );
-  const out = [];
-  let open = null,
-    last = null; // open: 直前の行がサブタイトルで終わっていて、次の行に続きがある可能性
-  let yearHead = null, // 「2002年」だけの行（以降の放送日の年）
-    leadMode = false, // 「放送日 → 話数 → サブタイトル」の順の表
-    prevLead = null;
-  for (const raw of lines) {
-    let line = raw.replace(/ /g, " ");
-    const yh = zen(line).match(/^\s*(\d{4})\s*年\s*$/);
-    if (yh) {
-      yearHead = +yh[1];
-      open = null;
-      continue;
-    }
-    // 先頭が放送日の行（例: 10月3日<TAB>1<TAB>サブタイトル）は日付を外して話数の行として読む
-    let lead = null;
-    const ld = zen(line).match(/^\s*(?:(\d{4})\s*年\s*)?(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*\t/);
-    if (ld && EP_RE.test(line.slice(ld[0].length))) {
-      if (ld[1]) yearHead = +ld[1];
-      lead = `${yearHead ? yearHead + "年" : ""}${ld[2]}月${ld[3]}日`;
-      line = line.slice(ld[0].length);
-      leadMode = true;
-    }
-    const m = EP_RE.exec(line);
-    if (m) {
-      // 2話連続放送などで日付の列が空の行は、直前の放送日を引き継ぐ
-      if (!lead && leadMode && prevLead) lead = prevLead;
-      if (lead) prevLead = lead;
-      const n = kanjiNum(zen(m[1] || m[2] || m[3] || m[4]));
-      if (!Number.isFinite(n)) {
-        open = null;
-        continue;
-      }
-      const rest = m[5] || "";
-      const parts = rest.split("\t");
-      let sub = parts[0],
-        blk = parts.slice(1).join(" ");
-      if (!line.includes("\t") && /「.+」/.test(rest)) {
-        const q = rest.match(/「(.+?)」/);
-        sub = q[1];
-        blk = rest.slice(q.index + q[0].length);
-      } // 「第1話「タイトル」」形式
-      const e = { n, sub: cleanSub(sub), blk, lead };
-      out.push(e);
-      last = e;
-      open = parts.length === 1 && line.includes("\t") ? e : null;
-      continue;
-    }
-    let rest2 = line;
-    if (open) {
-      const ps = line.split("\t");
-      const first = ps[0].trim();
-      if (first && !/^(\d{4}年|\d{1,2}月\d{1,2}日|第\d+シーズン|第[一二三四五六七八九十]+期)/.test(first)) {
-        open.sub = cleanSub(open.sub + " " + first);
-        rest2 = ps.slice(1).join(" ");
-      }
-      open = null;
-    }
-    if (/^\s*第\s*[0-9０-９一二三四五六七八九十]+\s*(シーズン|期|部|章)/.test(line)) {
-      last = null;
-      continue;
-    }
-    if (last) last.blk += " " + rest2;
-  }
-  // 初放送日: 各話の行と続きの行から最後の日付を拾う。年が省略された行は直前の年を引き継ぐ
-  let year = null,
-    prevM = 0;
-  out.forEach(e => {
-    const t = zen(e.lead || e.blk || "");
-    delete e.lead;
-    const re = /(?:(\d{4})\s*[年\/\-.]\s*)?(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})\s*日?/g;
-    let m,
-      hit = null;
-    while ((m = re.exec(t))) if (+m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31) hit = m;
-    if (!hit) {
-      delete e.blk;
-      return;
-    }
-    let y = hit[1] ? +hit[1] : year;
-    const mo = +hit[2],
-      d = +hit[3];
-    if (!hit[1] && y && mo < prevM) y++;
-    if (y) {
-      year = y;
-      prevM = mo;
-      e.date = `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    } else e.md = [mo, d];
-    delete e.blk;
-  });
-  // 同じ話数が複数あれば最初のもの（第2シーズンで番号が戻る場合は別の範囲として貼る）
-  const seen = new Set();
-  return out.filter(e => e.sub && !seen.has(e.n) && seen.add(e.n));
-}
-
-/* ---------- 各話リストの整形（Wikiから貼り付けの中）：Excelのような表にして、列ごとに役割を選び、いらない行を消す ---------- */
-const G_ROLES = [
-  ["n", "話数"],
-  ["sub", "サブタイトル"],
-  ["date", "放送日"],
-];
-const gCol = c => String.fromCharCode(65 + (c % 26)) + (c >= 26 ? Math.floor(c / 26) : "");
-const G_EP = /^\s*(?:第|#|＃)?\s*([0-9０-９]+(?:\.[0-9]+)?|[〇零一二三四五六七八九十百]+)\s*[話回]?\s*$/;
-const G_DATE = /(?:(\d{4})\s*[年\/\-.]\s*)?(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})/;
-function gNum(v) {
-  const m = G_EP.exec(zen(String(v || "")));
-  if (!m) return null;
-  const k = /^[\d.]+$/.test(m[1]) ? +m[1] : kanjiNum(m[1]);
-  return Number.isFinite(k) ? k : null;
-}
-function gDate(v) {
-  const m = G_DATE.exec(zen(String(v || "")));
-  return m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31 ? m : null;
-}
-/* 貼り付けた文字を表に（タブで列に分ける。空の行は消す）。列の役割は中身から推測
-   Wikiの表は1つのマスの中の改行でも行が分かれるので、話数で始まらない行は直前の話の続きとしてつなぐ
-   （続きの行の最初のマス＝直前の行の最後のマスの続き、残りは次の列）。[名前](URL) のリンクは名前だけにする */
-const gLink = c => c.replace(/\[([^\]]*)\]\((?:[^()\s]|\([^()\s]*\))*\)/g, "$1");
-const gYearOnly = r => r.length === 1 && /^\s*\d{4}\s*年\s*$/.test(zen(r[0]));
-function gridFrom(text) {
-  let rows = String(text || "")
-    .replace(/\r/g, "")
-    .split("\n")
-    .filter(l => l.trim())
-    .map(l => l.split("\t").map(c => gLink(c.replace(/ /g, " ")).trim()));
-  const isHead = r => gNum(r[0]) != null;
-  if (rows.filter(isHead).length >= 2) {
-    const out = [];
-    let cur = null;
-    rows.forEach(r => {
-      if (isHead(r)) out.push((cur = [...r]));
-      else if (!cur || gYearOnly(r)) out.push(r);
-      else {
-        cur[cur.length - 1] = `${cur[cur.length - 1]} ${r[0]}`.trim();
-        cur.push(...r.slice(1));
-      }
-    });
-    rows = out;
-  }
-  const pad = () => {
-    const nc = Math.max(1, ...rows.map(r => r.length));
-    rows.forEach(r => {
-      while (r.length < nc) r.push("");
-    });
-    return nc;
-  };
-  let nc = pad();
-  const rate = (c, f) => {
-    const v = rows.filter(isHead).map(r => r[c]).filter(Boolean);
-    return v.length ? v.filter(f).length / v.length : 0;
-  };
-  const cols = () => [...Array(nc).keys()];
-  const best = (f, used) => {
-    let b = -1,
-      bv = 0.5;
-    cols().forEach(c => {
-      if (used.includes(c)) return;
-      const r = rate(c, f);
-      if (r > bv) (b = c), (bv = r);
-    });
-    return b;
-  };
-  const n = best(v => gNum(v) != null, []);
-  const date = best(v => !!gDate(v), [n]);
-  /* 放送日のマスがない話（2話連続放送でマスが縦につながっている）は、放送日の列に空のマスを入れて右にずらす */
-  if (date >= 0 && date > n)
-    rows.forEach(r => {
-      if (isHead(r) && r[date] && !gDate(r[date])) r.splice(date, 0, "");
-    });
-  nc = pad();
-  /* サブタイトル：残りの列で、数字・日付でない文字が入っている一番左の列 */
-  const sub = cols().find(c => c !== n && c !== date && rate(c, v => gNum(v) == null && !gDate(v)) >= 0.6) ?? -1;
-  return { rows, nc, role: { n, sub, date } };
-}
+/* 整形の表（1話＝1行。話数・サブタイトル・放送日はマスを押して直せる。その他は薄く1マスに） */
 function gridHtml(g) {
-  const bad = g.rows.filter(r => gNum(r[g.role.n]) == null).length;
-  const roleOf = c => G_ROLES.find(([k]) => g.role[k] === c);
-  const pick = ([k, lab]) =>
-    `<div class="gpick"><span>${lab}</span><div class="segc" role="group" aria-label="${lab}の列">${[...Array(g.nc).keys()]
-      .map(c => `<button type="button" data-grole="${k}:${c}" aria-pressed="${g.role[k] === c}">${gCol(c)}</button>`)
-      .join("")}<button type="button" data-grole="${k}:-1" aria-pressed="${g.role[k] < 0}">なし</button></div></div>`;
-  const head = [...Array(g.nc).keys()].map(c => {
-    const r = roleOf(c);
-    return `<th class="${r ? "on" : ""}">${gCol(c)}${r ? `<b>${r[1]}</b>` : ""}</th>`;
-  });
-  /* 役割のある列は入力欄（押すと直せる）、ない列は文字だけ（細く・薄く） */
-  const cell = (v, i, c) => (roleOf(c) ? `<td class="on r-${roleOf(c)[0]}"><input class="gc" data-g="${i}:${c}" value="${esc(v)}" autocomplete="off" aria-label="${i + 1}行目 ${gCol(c)}列"></td>` : `<td><span title="${esc(v)}">${esc(v)}</span></td>`);
+  const bad = g.rows.filter(r => gNum(r.n) == null).length;
+  const inp = (i, k, v, lab) => `<td class="on r-${k}"><input class="gc" data-g="${i}:${k}" value="${esc(v)}" autocomplete="off" aria-label="${i + 1}行目 ${lab}"></td>`;
   return `<div class="spaste spgrid">
-    <p class="hint" style="margin:0 0 8px">列ごとに「話数・サブタイトル・放送日」がどの列か選び、いらない行は ✕ で消してください。セルを押すと中身を直せます。放送日が空の行は上の行と同じ日、年がない日付は開始日の年から数えます。</p>
-    <div class="gpicks">${G_ROLES.map(pick).join("")}</div>
+    <p class="hint" style="margin:0 0 8px">話数・サブタイトル・放送日を行ごとに振り分けました。違うところはマスを押して直し、いらない行は ✕ で消してください。${g.dropped ? `見出しなど${g.dropped}行は外しています。` : ""}放送日が空の行は上の行と同じ日になります。</p>
+    ${g.max > 1 ? `<div class="gpick"><span>使う日付</span><div class="segc" role="group" aria-label="使う日付">${g.names.map((nm, k) => `<button type="button" data-gslot="${k}" aria-pressed="${g.k === k}">${esc(nm)}</button>`).join("")}</div></div>` : ""}
     ${bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
-    <div class="gw"><table class="sgt"><thead><tr><th class="gno"></th>${head.join("")}<th class="gx"></th></tr></thead><tbody>${g.rows
-      .map((r, i) => `<tr class="${gNum(r[g.role.n]) == null ? "bad" : ""}" data-gr="${i}"><td class="gno">${i + 1}</td>${r.map((v, c) => cell(v, i, c)).join("")}<td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td></tr>`)
+    <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th>話数</th><th>サブタイトル</th><th>放送日</th><th>その他</th></tr></thead><tbody>${g.rows
+      .map(
+        (r, i) =>
+          `<tr class="${gNum(r.n) == null ? "bad" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno">${i + 1}</td>${inp(i, "n", r.n, "話数")}${inp(i, "sub", r.sub, "サブタイトル")}${inp(i, "d", gDay(g, r), "放送日")}<td class="oth"><span title="${esc(r.other)}">${esc(r.other)}</span></td></tr>`,
+      )
       .join("")}</tbody></table></div>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead" ${g.role.n < 0 ? "disabled" : ""}>この形で読み取る</button></div></div>`;
-}
-/* 表から各話を読み取る（話数が読めない行は飛ばす・同じ話数は最初の行） */
-function gridParse(it, g) {
-  const { n, sub, date } = g.role;
-  let y = yearOf(it) || new Date().getFullYear(),
-    pm = 0,
-    last = "";
-  const seen = new Set(),
-    out = [];
-  g.rows.forEach(r => {
-    const yr = r.map(c => /^\s*(\d{4})\s*年\s*$/.exec(zen(c))).find(Boolean);
-    if (yr) {
-      y = +yr[1];
-      pm = 0;
-    }
-    const num = gNum(r[n]);
-    if (num == null || seen.has(num)) return;
-    seen.add(num);
-    let d = "";
-    if (date >= 0) {
-      const m = gDate(r[date]);
-      if (m) {
-        if (m[1]) y = +m[1];
-        else if (+m[2] < pm) y++;
-        pm = +m[2];
-        d = `${y}-${String(m[2]).padStart(2, "0")}-${String(m[3]).padStart(2, "0")}`;
-      } else if (!r[date].trim()) d = last;
-      last = d || last;
-    }
-    out.push({ n: num, sub: sub >= 0 ? cleanSub(r[sub] || "") : "", ...(d ? { date: d } : {}) });
-  });
-  return out;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
 }
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
@@ -891,15 +615,20 @@ function nextEp(it, list) {
 /* 貼り付けた各話リストを読み取り、登録済みの話と比べた一覧を出す */
 function readPaste(it) {
   const text = $("#spText").value;
-  const parsed = parseSubtitles(text);
+  /* 表をコピーしたもの（タブ区切り）は整形の表と同じ読み方のほうが多く読めればそちらを使う */
+  const ps = parseSubtitles(text, { from: it.from });
+  const g = text.includes("\t") ? gridFrom(text, it.from) : null;
+  const gp = g ? gridParse(g, it.from).filter(x => x.sub) : [];
+  const useG = gp.length && gp.length >= ps.length;
+  const parsed = useG ? gp : ps;
   if (!parsed.length) {
     /* 1話も読み取れないときは、そのまま整形の表を開く */
-    subPaste = { text, grid: gridFrom(text) };
+    subPaste = { text, grid: g || gridFrom(text, it.from) };
     refreshSheet();
-    toast("読み取れなかったので、表で列を選んでください");
+    toast("読み取れなかったので、表で直してください");
     return;
   }
-  buildPaste(it, parsed, text);
+  buildPaste(it, parsed, text, useG ? g : null);
 }
 /* 読み取った各話（{n, sub, date か md}）を登録済みの話と比べる。grid＝整形から来たとき（戻る先）
    サブタイトルの列がない・空のときは今のサブタイトルのまま（日付だけ直したいとき用） */
@@ -1311,19 +1040,17 @@ const PASTE_ACTIONS = [
     () => {
       /* 読み取った結果の画面から開く。前に整形した表があれば続きから。「戻る」で結果の画面へ */
       const p = subPaste;
-      subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text), back: p };
+      subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text, (items.find(x => x.id === openId) || {}).from), back: p };
       refreshSheet();
     },
   ],
+  /* 使う日付（初放送日・再放送日など）を切り替える。手で直した放送日は戻す */
   [
-    "[data-grole]",
+    "[data-gslot]",
     el => {
       const g = subPaste.grid;
-      const [k, c] = el.dataset.grole.split(":");
-      const v = +c;
-      /* 1つの列に役割は1つ（ほかの役割に付いていたら外す） */
-      if (v >= 0) G_ROLES.forEach(([x]) => g.role[x] === v && (g.role[x] = -1));
-      g.role[k] = v;
+      g.k = +el.dataset.gslot;
+      g.rows.forEach(r => (r.d = null));
       refreshSheet();
     },
   ],
@@ -1338,7 +1065,7 @@ const PASTE_ACTIONS = [
     "#gDelBad",
     () => {
       const g = subPaste.grid;
-      g.rows = g.rows.filter(r => gNum(r[g.role.n]) != null);
+      g.rows = g.rows.filter(r => gNum(r.n) != null);
       refreshSheet();
     },
   ],
@@ -1353,8 +1080,8 @@ const PASTE_ACTIONS = [
     "#gRead",
     (el, it) => {
       const g = subPaste.grid;
-      const parsed = gridParse(it, g);
-      if (!parsed.length) return toast("話数を読み取れる行がありません。話数の列を確かめてください");
+      const parsed = gridParse(g, it.from);
+      if (!parsed.length) return toast("話数を読み取れる行がありません。話数のマスを確かめてください");
       buildPaste(it, parsed, subPaste.text, g);
     },
   ],

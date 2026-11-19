@@ -6,6 +6,7 @@ const SHELL = [
   "core.js",
   "view.js",
   "filters.js",
+  "paste.js",
   "detail.js",
   "form.js",
   "settings.js",
