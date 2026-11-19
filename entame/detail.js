@@ -76,7 +76,6 @@ function subPasteHtml(it) {
   if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
-    <p class="hint" style="margin:0 0 8px">Wikipediaの「各話リスト」などをそのまま貼り付けてください。話数とサブタイトルだけを読み取り、ほかの列（絵コンテ・演出など）は無視します。読み取った結果がおかしいときは、次の画面の「整形」で表にして直せます。</p>
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length,
