@@ -254,7 +254,7 @@ function renderYt() {
   if (yst.genre !== "すべて") rows.push(["sub", "グループ", yst.sub, () => fOpt("data-ytsub", "すべて", "すべて", yst.sub === "すべて", ab.filter(x => ytCat(x) === yst.genre).length) + grpOpts.map(g => fOpt("data-ytsub", g, esc(g), yst.sub === g, ab.filter(x => ytCat(x) === yst.genre && ytGrp(x) === g).length)).join("")]);
   const mCnt = {};
   mBase.forEach(l => l.forEach(m => (mCnt[m.k] = (mCnt[m.k] || 0) + 1)));
-  rows.push(["miss", "要確認", missVal(yst.missOnly, yst.missKey), () => missPanel("data-ytfmiss", yst.missOnly, yst.missKey, mCnt, mN, [["項目", YT_MISS_KEYS]])]);
+  rows.push(["miss", "要確認", missVal(yst.missOnly, yst.missKey), () => missPanel("data-ytfmiss", yst.missOnly, yst.missKey, mCnt, mN, [["項目", YT_MISS_KEYS]]), "grid"]);
   const sheet =
     yst.fp === "all"
       ? fshShell({ id: "yt", a: YA, rows, sub: yst.fSub, nConds: conds.length, n: list.length, unit: "本" })

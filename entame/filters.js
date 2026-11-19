@@ -54,35 +54,33 @@ function seriesPanelHtml() {
       <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
 }
 /* 絞り込みの中身：時期（放送クール・放送年） */
-function timePanelHtml() {
-  const tb = items.filter(i => ofKind(i) && seriesOk(i) && typeOk(i));
-  const chip = (attr, val, cur, label, n) =>
-    `<button type="button" ${attr}="${esc(val)}" aria-pressed="${val === "すべて" ? !cur.length : cur.includes(val)}">${esc(label)}${n != null ? `<small>${n}</small>` : ""}</button>`;
-  const courYears = [
-    ...new Set(
-      items
-        .flatMap(i => coursOf(i))
-        .filter(c => /^\d{4}/.test(c))
-        .map(c => +c.slice(0, 4)),
-    ),
-  ].sort((a, b) => b - a);
-  const cy = courYears.includes(state.courY) ? state.courY : courYears[0];
+/* 放送クール・放送年の選択肢（要確認と同じボタンの並び。どちらも複数選べる） */
+const mpTile = (attr, val, on, label, n) =>
+  `<button type="button" class="mp-t${on ? " on" : ""}" ${attr}="${esc(val)}" aria-pressed="${on}"><span class="mp-l">${esc(label)}</span>${n != null ? `<span class="mp-n">${n}</span>` : ""}</button>`;
+const timeBase = () => items.filter(i => ofKind(i) && seriesOk(i) && typeOk(i));
+/* 放送クール：年を ‹ › で切り替えて季節を選ぶ。最初は選んでいるクールの年（なければ最新の年） */
+function courPanelHtml() {
+  const tb = timeBase();
+  const courYears = [...new Set(items.flatMap(i => coursOf(i)).filter(c => /^\d{4}/.test(c)).map(c => +c.slice(0, 4)))].sort((a, b) => b - a);
+  const picked = state.cour.filter(c => /^\d{4}/.test(c)).map(c => +c.slice(0, 4));
+  const cy = courYears.includes(state.courY) ? state.courY : picked.length ? Math.max(...picked) : courYears[0];
   const yAll = SEASONS.every(se => state.cour.includes(cy + se));
-  return `<div class="fgroup"><h5>放送クール</h5><div class="chips">${chip("data-cour", "すべて", state.cour, "すべて")}${chip("data-cour", ALLYEAR, state.cour, "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}
-      <span class="cyb" role="group" aria-label="クールの年"><button type="button" data-couryb="1" aria-label="前の年" ${courYears.indexOf(cy) >= courYears.length - 1 ? "disabled" : ""}>‹</button><b>${cy}年</b><button type="button" data-couryb="-1" aria-label="次の年" ${courYears.indexOf(cy) <= 0 ? "disabled" : ""}>›</button></span>
-      <button type="button" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button>
-      ${SEASONS.map(se => {
-        const key = `${cy}${se}`;
-        return chip("data-cour", key, state.cour, se, tb.filter(i => coursOf(i).includes(key)).length);
-      }).join("")}</div></div>
-    <div class="fgroup"><h5>放送年 <span class="hint" style="font-weight:400">クール未設定の作品も</span></h5><div class="chips">${chip("data-era", "すべて", state.era, "すべて")}${eras
-      .map(e => {
-        const n = tb.filter(e.test).length;
-        return n ? chip("data-era", e.key, state.era, e.key, n) : "";
-      })
-      .join("")}</div></div>`;
+  return `<div class="mp-top one">${mpTile("data-cour", "すべて", !state.cour.length, "指定なし")}</div>
+    ${cy ? `<div class="mp-sec"><div class="mp-yr"><button type="button" class="mp-yb" data-couryb="1" data-cy="${cy}" aria-label="前の年" ${courYears.indexOf(cy) >= courYears.length - 1 ? "disabled" : ""}>‹</button><b>${cy}年</b><button type="button" class="mp-yb" data-couryb="-1" data-cy="${cy}" aria-label="次の年" ${courYears.indexOf(cy) <= 0 ? "disabled" : ""}>›</button><button type="button" class="mp-ya${yAll ? " on" : ""}" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button></div>
+      <div class="mp-grid g4">${SEASONS.map(se => mpTile("data-cour", cy + se, state.cour.includes(cy + se), se, tb.filter(i => coursOf(i).includes(cy + se)).length)).join("")}</div></div>` : ""}
+    <div class="mp-sec"><div class="mp-grid g1">${mpTile("data-cour", ALLYEAR, state.cour.includes(ALLYEAR), "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}</div></div>`;
 }
-
+/* 放送年：古い年は30作品くらいでまとめたもの（クール未設定の作品も） */
+function eraPanelHtml() {
+  const tb = timeBase();
+  const t = eras
+    .map(e => {
+      const n = tb.filter(e.test).length;
+      return n || state.era.includes(e.key) ? mpTile("data-era", e.key, state.era.includes(e.key), e.key, n) : "";
+    })
+    .join("");
+  return `<div class="mp-top one">${mpTile("data-era", "すべて", !state.era.length, "指定なし")}</div>${t ? `<div class="mp-sec"><div class="mp-grid g3">${t}</div></div>` : ""}`;
+}
 
 /* ---------- 保存したフィルタ（アニメ・ドラマで別々。マスタに保存するので端末をまたいで同じ） ---------- */
 const SVK = ["sf", "era", "type", "cour", "series"];
@@ -304,7 +302,7 @@ const FILTER_ACTIONS = [
       const v = el.dataset.stf;
       if (state.fSub === "st" && Date.now() - fSubOpenedAt < 300) return;
       state.sf = !v || (state.sf.length === 1 && state.sf[0] === v) ? [] : [v];
-      state.fSub = "";
+      if (!IS_PC()) state.fSub = "";
       state.limit = 200;
       saveUI();
       render();
@@ -407,7 +405,7 @@ function fshShell(o) {
     .join("");
   const r = o.rows.find(x => x[0] === cur);
   const pane = r
-    ? `<div class="fsh-sub${subFirst ? " in" : ""}" role="group" aria-label="${r[1]}"><div class="fsh-subh"><button type="button" class="fsh-back" ${o.a.sub}="" aria-label="戻る">${FSH_BACK}</button><b>${r[1]}</b><span class="fsh-hint">${r[4] ? "複数選べます" : ""}</span></div><div class="fsh-subb${r[4] ? " chipsmode" : " dd-list"}" role="${r[4] ? "group" : "listbox"}">${r[3]()}</div></div>`
+    ? `<div class="fsh-sub${subFirst ? " in" : ""}" role="group" aria-label="${r[1]}"><div class="fsh-subh"><button type="button" class="fsh-back" ${o.a.sub}="" aria-label="戻る">${FSH_BACK}</button><b>${r[1]}</b><span class="fsh-hint">${r[4] === true || r[0] === "cour" || r[0] === "era" ? "複数選べます" : ""}</span></div><div class="fsh-subb${r[4] === "grid" ? " mpwrap" : r[4] ? " chipsmode" : " dd-list"}" role="${r[4] ? "group" : "listbox"}">${r[3]()}</div></div>`
     : "";
   return `<div class="fsh-scrim" ${o.a.close}></div><div class="fsh${o.sub ? " subopen" : ""}${first ? " in" : ""}" role="dialog" aria-label="絞り込み">
     <div class="fsh-h"><b>絞り込み</b>${o.nConds ? `<button type="button" class="fsh-reset" ${o.a.reset}>リセット</button>` : ""}<button type="button" class="fsh-x" ${o.a.close} aria-label="閉じる">${FSH_X}</button></div>
@@ -420,22 +418,22 @@ const fshClosed = () => {
   fshSubShown = "";
   return "";
 };
-/* 要確認の選択肢：すべて（絞らない）・要確認あり（どれか）・項目ごと（まとまりの見出しつき。0件の項目は出さない）
+/* 要確認の選択肢：指定なし（絞らない）・要確認あり（全項目のどれか）・項目ごと（まとまりの見出しつき。0件の項目は出さない）
    groups＝[[見出し, [項目…]]]、cnt＝項目ごとの件数、n＝要確認ありの件数 */
 function missPanel(attr, on, cur, cnt, n, groups) {
-  const opt = (v, lab, sel, c) => fOpt(attr, v, esc(lab), sel, c);
+  const tile = (v, lab, sel, c) =>
+    `<button type="button" class="mp-t${sel ? " on" : ""}" ${attr}="${esc(v)}" aria-pressed="${sel}"><span class="mp-l">${esc(lab)}</span>${c != null ? `<span class="mp-n">${c}</span>` : ""}</button>`;
   return (
-    opt("__off", "すべて", !on) +
-    opt("", "要確認あり（どれか）", on && !cur, n) +
+    `<div class="mp-top">${tile("__off", "指定なし", !on)}${tile("", "全項目", on && !cur, n)}</div>` +
     groups
       .map(([h, ks]) => {
         const l = ks.filter(k => cnt[k] || cur === k);
-        return l.length ? `<div class="dd-sec">${esc(h)}</div>` + l.map(k => opt(k, k, on && cur === k, cnt[k] || 0)).join("") : "";
+        return l.length ? `<div class="mp-sec"><h6>${esc(h)}</h6><div class="mp-grid">${l.map(k => tile(k, k, on && cur === k, cnt[k] || 0)).join("")}</div></div>` : "";
       })
       .join("")
   );
 }
-const missVal = (on, cur) => (on ? cur || "要確認あり" : "すべて");
+const missVal = (on, cur) => (on ? cur || "全項目" : "すべて");
 /* 選んだ値を missOnly・missKey に */
 const missSet = (st, v) => {
   st.missOnly = v !== "__off";
@@ -505,7 +503,8 @@ function fSubBody(k) {
     const l = [...new Set([...VOD_TOP, ...M("vods"), ...used])].filter(v => used.has(v) || v === state.vod);
     return fOpt("data-fvod", "", "すべて", !state.vod, fCountWithout(["vod"])) + l.map(v => fOpt("data-fvod", v, `<i class="dd-dot"${vcStyle(v)}></i>${esc(v)}`, state.vod === v, fCountWithout(["vod"], i => vodsOf(i).includes(v)))).join("");
   }
-  if (k === "time") return timePanelHtml();
+  if (k === "cour") return courPanelHtml();
+  if (k === "era") return eraPanelHtml();
   if (k === "series") return seriesPanelHtml();
   if (k === "miss") {
     const keep = [state.missOnly, state.missKey];
@@ -522,12 +521,13 @@ function fSheetHtml() {
   if (state.fOpen !== "all") return fshClosed();
   const one = l => (l.length ? l.join("・") : "すべて");
   const rows = [["st", "視聴ステータス", one(state.sf.map(stLabel))]];
-  if (state.mode === "a" || state.mode === "d") rows.push(["type", "種別", one(state.type.map(v => MEDIA_LAB[v] || v))]);
-  if (state.mode === "m") rows.push(["type", "種類", { a: "アニメ映画", d: "実写映画" }[state.sub] || "すべて"]);
-  rows.push(["vod", "配信", state.vod || "すべて"]);
-  rows.push(["time", "時期", one([...state.cour.map(courTxt), ...state.era]), , true]);
+  if (state.mode === "a" || state.mode === "d") rows.push(["type", "放送形態", one(state.type.map(v => MEDIA_LAB[v] || v))]);
+  if (state.mode === "m") rows.push(["type", "アニメ／実写", { a: "アニメ映画", d: "実写映画" }[state.sub] || "すべて"]);
+  rows.push(["vod", "配信サイト", state.vod || "すべて"]);
+  rows.push(["cour", "放送クール", one(state.cour.map(courTxt)), , "grid"]);
+  rows.push(["era", "放送年", one(state.era), , "grid"]);
   rows.push(["series", "シリーズ", one(state.series), , true]);
-  rows.push(["miss", "要確認", missVal(state.missOnly, state.missKey)]);
+  rows.push(["miss", "要確認", missVal(state.missOnly, state.missKey), , "grid"]);
   rows.forEach(r => (r[3] = () => fSubBody(r[0])));
   return fshShell({
     id: "lib",
@@ -585,6 +585,9 @@ const SHEET_ACTIONS = [
       const was = state.fSub;
       /* PCは右に選択肢を出したまま切り替えるだけ（同じ項目を押しても閉じない） */
       state.fSub = !k ? "" : IS_PC() || state.fSub !== k ? k : "";
+      /* 放送クールを開いたら、選んでいるクールの年から見せる */
+      const py = state.cour.filter(c => /^\d{4}/.test(c)).map(c => +c.slice(0, 4));
+      if (k === "cour" && k !== was && py.length) state.courY = Math.max(...py);
       fSubOpenedAt = Date.now();
       render();
       fshFocusAfter(was);
@@ -600,7 +603,7 @@ const SHEET_ACTIONS = [
     "[data-couryb]",
     el => {
       const ys = [...new Set(items.flatMap(i => coursOf(i)).filter(c => /^\d{4}/.test(c)).map(c => +c.slice(0, 4)))].sort((a, b) => b - a);
-      const i = Math.max(0, ys.indexOf(state.courY));
+      const i = Math.max(0, ys.indexOf(+el.dataset.cy || state.courY));
       state.courY = ys[Math.min(ys.length - 1, Math.max(0, i + +el.dataset.couryb))] || state.courY;
       saveUI();
       render();

@@ -1795,7 +1795,6 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
    PC：横長。左に項目、右に選択肢 */
 .fsh-rows .fsh-row{border-top:1px solid var(--u-soft)}
 .fsh-pane{min-height:0}
-.dd-sec{padding:12px 16px 4px;font-size:11.5px;font-weight:700;color:var(--u-sub);letter-spacing:.04em;border-top:1px solid var(--u-soft)}
 @media (max-width:899px){
   .fsh.subopen .fsh-rows{display:none}
   .fsh-subh{position:sticky;top:0;z-index:1;background:var(--u-surface)}
@@ -1813,3 +1812,33 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
   .fsh-subh{position:sticky;top:0;z-index:1;background:var(--u-surface);padding-left:16px}
   .fsh-subh .fsh-back{display:none}
 }
+/* 選択肢の件数は右にそろえる */
+.fsh .dd-row .dd-l{display:flex;align-items:center;flex:1;min-width:0}
+.fsh .dd-row .dd-l small{margin-left:auto;padding:0 10px;font-family:var(--u-num);font-size:12.5px;color:var(--u-sub)}
+/* 要確認：上に「すべて／要確認あり」、下はまとまりごとに2列のボタン（件数は右） */
+.mpwrap{padding:10px 14px 16px}
+.mp-top{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mp-sec h6{margin:16px 2px 6px;font-size:12px;font-weight:700;color:var(--u-sub)}
+.mp-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mp-t{display:flex;align-items:center;gap:6px;min-width:0;min-height:42px;padding:0 12px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:10px;font:inherit;font-size:13.5px;font-weight:700;text-align:left;cursor:pointer}
+.mp-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-n{flex:none;font-family:var(--u-num);font-size:12.5px;font-weight:500;color:var(--u-sub)}
+.mp-t.on{border-color:var(--u-warn);background:var(--u-warn);color:var(--u-on)}
+.mp-t.on .mp-n{color:inherit;opacity:.85}
+@media (min-width:900px){.mp-grid{grid-template-columns:repeat(3,1fr)}}
+/* 放送時期：年の切り替え・「この年すべて」・季節は4列、放送年は3列 */
+.mp-top.one{grid-template-columns:1fr}
+.mp-sec h6 small{margin-left:8px;font-weight:400}
+.mp-yr{display:flex;align-items:center;gap:6px;margin:0 0 8px}
+.mp-yr b{min-width:64px;text-align:center;font-family:var(--u-num);font-size:15px}
+.mp-yb{width:36px;height:36px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:10px;font-size:17px;font-weight:700;cursor:pointer;padding:0}
+.mp-yb:disabled{opacity:.3;cursor:default}
+.mp-ya{margin-left:auto;height:36px;padding:0 12px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.mp-ya.on{border-color:var(--u-warn);background:var(--u-warn);color:var(--u-on)}
+.mp-grid.g4{grid-template-columns:repeat(4,1fr)}
+.mp-grid.g3{grid-template-columns:repeat(3,1fr)}
+.mp-grid.g1{grid-template-columns:1fr 1fr;margin-top:6px}
+.mp-grid.g4 .mp-t{justify-content:center;flex-direction:column;gap:0;padding:4px 0;text-align:center}
+.mp-grid.g4 .mp-l{flex:none}
+.mp-sec{margin-top:12px}
+.mp-sec h6{margin-top:4px}

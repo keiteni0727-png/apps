@@ -620,11 +620,12 @@ function placeFsh() {
     sh.style.removeProperty("left");
     const nav = document.querySelector(".tbwrap");
     const nr = nav && nav.getBoundingClientRect();
-    const bottom = nr && nr.height ? nr.top - 8 : innerHeight - 12;
-    if (bottom - top < 420) top = Math.max(minTop, bottom - 420);
+    const bottom = nr && nr.height ? nr.top - 20 : innerHeight - 20;
+    if (bottom - top < 360) top = Math.max(minTop, bottom - 360);
     sh.style.top = top + "px";
-    sh.style.maxHeight = "none";
-    sh.style.height = Math.min(620, bottom - top) + "px";
+    sh.style.height = "";
+    /* 長くなりすぎないように、画面の6割くらいまで */
+    sh.style.maxHeight = Math.min(bottom - top, Math.round(innerHeight * 0.6)) + "px";
   }
 }
 addEventListener("resize", () => placeFsh());
