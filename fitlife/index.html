@@ -252,7 +252,7 @@ const IC = {
 };
 
 /* ===== ガチャ ===== */
-const RARITY_W = { N:70, R:25, SR:5 };
+const RARITY_W = { N:60, R:30, SR:10 };
 const RARITY_ORDER = { SR:0, R:1, N:2 };
 const SHARD_NEED = 3;
 const COMP_BONUS = 3;          // シリーズをぜんぶ集めたときのごほうびチケット
@@ -519,7 +519,9 @@ async function claimGifts(){
   if(n) toast(`${FROM}からチケット＋${n} 🎟️`);
 }
 function rollChar(ser){
-  const chars = ser === MIX ? allChars() : serChars(ser);
+  // ミックスは先にシリーズを同じ確率で選んでから、その中で抽選
+  if(ser === MIX){ const l = seriesList().filter(n => serChars(n).length); ser = l[Math.floor(Math.random() * l.length)]; }
+  const chars = serChars(ser);
   const tot = Object.values(RARITY_W).reduce((a,b) => a+b, 0);
   let r = Math.random() * tot, rar = 'N';
   for(const [k,w] of Object.entries(RARITY_W)){ if((r -= w) < 0){ rar = k; break; } }
@@ -849,13 +851,13 @@ function viewGacha(){
       return `<button class="${n === ser ? 'on' : ''}" ${n === ser ? `style="background:${tc}"` : ''} data-a="gser" data-v="${esc(n)}">${esc(serLabel(n))}<small>${own}/${cs.length}</small></button>`; }).join('')}</div>
     <div class="card gacha-top" style="--gc3:${c3}">
       <div style="font-weight:700;color:${c1};font-size:17px">${esc(ser === MIX ? '🌈 ミックスガチャ' : ser + 'ガチャ')}</div>
-      ${ser === MIX ? '<p class="muted" style="margin:2px 0 0;font-size:12px">ぜんぶのシリーズから出るよ</p>' : ''}
+      ${ser === MIX ? '<p class="muted" style="margin:2px 0 0;font-size:12px">どのシリーズも同じ確率で出るよ</p>' : ''}
       <svg class="machine" viewBox="0 0 120 140"><rect x="22" y="78" width="76" height="56" rx="14" fill="${c1}"/><circle cx="60" cy="50" r="42" fill="#fff" stroke="${c3}" stroke-width="3"/>
         <circle cx="42" cy="58" r="10" fill="#ff8fb3"/><circle cx="64" cy="66" r="10" fill="#ffd34d"/><circle cx="78" cy="48" r="10" fill="#9fd3ff"/><circle cx="50" cy="38" r="10" fill="#c9b8ff"/><circle cx="70" cy="30" r="9" fill="#8fd19e"/>
         <circle cx="60" cy="104" r="12" fill="#fff"/><rect x="56" y="96" width="8" height="16" rx="4" fill="${c1}"/><rect x="44" y="122" width="32" height="7" rx="3.5" fill="rgba(0,0,0,.25)"/></svg>
       <div class="muted">もっているチケット</div><div class="tixbig">🎟️ ${g.tickets}<small style="font-size:14px"> 枚</small></div>
       <button class="btn block" data-a="pull" style="margin-top:10px;background:${c1}${g.tickets < 1 ? ';opacity:.5' : ''}" ${g.tickets < 1 ? 'disabled' : ''}>ガチャをまわす（1枚）</button>
-      <p class="muted" style="margin:8px 0 0">出やすさ：N 70% ・ R 25% ・ SR 5%</p>
+      <p class="muted" style="margin:8px 0 0">出やすさ：N 60% ・ R 30% ・ SR 10%</p>
       <p class="muted" style="margin:4px 0 0;font-size:12px">シリーズをぜんぶ集めるとチケット＋${COMP_BONUS}枚！</p>
       <p class="muted" style="margin:4px 0 0;font-size:12px">ガチャの結果とずかんは${FROM}にも見えるよ ♡</p></div>
     <div class="card"><h2>💎 かけら<span class="sub">${g.shards} / ${SHARD_NEED}</span></h2>
