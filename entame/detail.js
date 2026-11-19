@@ -179,26 +179,48 @@ function gDate(v) {
   const m = G_DATE.exec(zen(String(v || "")));
   return m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31 ? m : null;
 }
-/* 貼り付けた文字を表に（タブで列に分ける。空の行は消す）。列の役割は中身から推測 */
+/* 貼り付けた文字を表に（タブで列に分ける。空の行は消す）。列の役割は中身から推測
+   Wikiの表は1つのマスの中の改行でも行が分かれるので、話数で始まらない行は直前の話の続きとしてつなぐ
+   （続きの行の最初のマス＝直前の行の最後のマスの続き、残りは次の列）。[名前](URL) のリンクは名前だけにする */
+const gLink = c => c.replace(/\[([^\]]*)\]\((?:[^()\s]|\([^()\s]*\))*\)/g, "$1");
+const gYearOnly = r => r.length === 1 && /^\s*\d{4}\s*年\s*$/.test(zen(r[0]));
 function gridFrom(text) {
-  const rows = String(text || "")
+  let rows = String(text || "")
     .replace(/\r/g, "")
     .split("\n")
     .filter(l => l.trim())
-    .map(l => l.split("\t").map(c => c.replace(/\u00a0/g, " ").trim()));
-  const nc = Math.max(1, ...rows.map(r => r.length));
-  rows.forEach(r => {
-    while (r.length < nc) r.push("");
-  });
+    .map(l => l.split("\t").map(c => gLink(c.replace(/ /g, " ")).trim()));
+  const isHead = r => gNum(r[0]) != null;
+  if (rows.filter(isHead).length >= 2) {
+    const out = [];
+    let cur = null;
+    rows.forEach(r => {
+      if (isHead(r)) out.push((cur = [...r]));
+      else if (!cur || gYearOnly(r)) out.push(r);
+      else {
+        cur[cur.length - 1] = `${cur[cur.length - 1]} ${r[0]}`.trim();
+        cur.push(...r.slice(1));
+      }
+    });
+    rows = out;
+  }
+  const pad = () => {
+    const nc = Math.max(1, ...rows.map(r => r.length));
+    rows.forEach(r => {
+      while (r.length < nc) r.push("");
+    });
+    return nc;
+  };
+  let nc = pad();
   const rate = (c, f) => {
-    const v = rows.map(r => r[c]).filter(Boolean);
+    const v = rows.filter(isHead).map(r => r[c]).filter(Boolean);
     return v.length ? v.filter(f).length / v.length : 0;
   };
-  const cols = [...Array(nc).keys()];
+  const cols = () => [...Array(nc).keys()];
   const best = (f, used) => {
     let b = -1,
       bv = 0.5;
-    cols.forEach(c => {
+    cols().forEach(c => {
       if (used.includes(c)) return;
       const r = rate(c, f);
       if (r > bv) (b = c), (bv = r);
@@ -207,15 +229,14 @@ function gridFrom(text) {
   };
   const n = best(v => gNum(v) != null, []);
   const date = best(v => !!gDate(v), [n]);
-  /* サブタイトル：残りの列で、数字だけでない文字が一番長い列 */
-  let sub = -1,
-    sl = 0;
-  cols.forEach(c => {
-    if (c === n || c === date) return;
-    const v = rows.map(r => r[c]).filter(x => x && gNum(x) == null && !gDate(x));
-    const avg = v.length ? v.reduce((a, x) => a + x.length, 0) / rows.length : 0;
-    if (avg > sl) (sub = c), (sl = avg);
-  });
+  /* 放送日のマスがない話（2話連続放送でマスが縦につながっている）は、放送日の列に空のマスを入れて右にずらす */
+  if (date >= 0 && date > n)
+    rows.forEach(r => {
+      if (isHead(r) && r[date] && !gDate(r[date])) r.splice(date, 0, "");
+    });
+  nc = pad();
+  /* サブタイトル：残りの列で、数字・日付でない文字が入っている一番左の列 */
+  const sub = cols().find(c => c !== n && c !== date && rate(c, v => gNum(v) == null && !gDate(v)) >= 0.6) ?? -1;
   return { rows, nc, role: { n, sub, date } };
 }
 function gridHtml(g) {
@@ -249,6 +270,11 @@ function gridParse(it, g) {
   const seen = new Set(),
     out = [];
   g.rows.forEach(r => {
+    const yr = r.map(c => /^\s*(\d{4})\s*年\s*$/.exec(zen(c))).find(Boolean);
+    if (yr) {
+      y = +yr[1];
+      pm = 0;
+    }
     const num = gNum(r[n]);
     if (num == null || seen.has(num)) return;
     seen.add(num);
