@@ -218,11 +218,43 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sp-list{max-height:320px;overflow:auto;overscroll-behavior:none;border:1px solid var(--u-line);border-radius:8px}
 .sp-r{display:grid;grid-template-columns:52px 1fr auto;gap:8px;padding:7px 10px;border-top:1px solid var(--u-line);font-size:13px;align-items:baseline}
 .sp-r:first-child{border-top:0}
-.sp-r small{display:block;color:var(--u-sub);font-size:11px;text-decoration:line-through}
+.sp-r small{display:block;color:var(--u-sub);font-size:11px}
+.sp-r del{color:var(--u-sub);text-decoration:line-through;text-decoration-thickness:1.5px}
+.spc{min-width:0}
+.spv{display:block}
+.spv del{display:block;font-size:11.5px}
+.spv b{display:block;font-weight:700}
+.sp-r .dch{margin-top:2px;opacity:.55}
+.sp-r .dch.on{opacity:1}
+.sp-r .dch b{color:var(--accent);font-weight:700}
+.sp-r .dch del{font-size:11px}
+.sp-r .dsame{margin-top:2px}
 .sp-st{font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
 .sp-r.miss .sp-st{color:var(--u-acct)}
 .spaste .ffoot{position:static;margin-top:12px;padding-bottom:0}
 .dconfirm{margin-top:10px;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
+.spgrid .hint{font-size:12px}
+.gpicks{display:grid;gap:6px;margin-bottom:8px}
+.gpick{display:grid;grid-template-columns:84px 1fr;white-space:nowrap;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+.gpick .segc{gap:4px}
+.gpick .segc button{flex:0 0 auto;min-width:32px;padding:4px 7px;font-size:12px}
+.gdelbad{margin:0 0 8px;color:var(--u-danger)}
+.gw{max-height:360px;overflow:auto;overscroll-behavior:none;border:1px solid var(--u-line);border-radius:8px}
+.sgt{border-collapse:collapse;font-size:12.5px;width:max-content;min-width:100%}
+.sgt th{position:sticky;top:0;z-index:1;background:var(--u-chip);color:var(--u-sub);font-weight:700;font-size:11px;padding:4px 6px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--u-line)}
+.sgt th.on{color:var(--u-ink)}
+.sgt th b{margin-left:5px;padding:1px 6px;border-radius:999px;background:var(--accent);color:#fff;font-size:10.5px}
+.sgt td{border-top:1px solid var(--u-line);padding:0;vertical-align:middle}
+.sgt td span{display:block;max-width:56px;padding:5px 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--u-sub);opacity:.7}
+.sgt td.on{min-width:72px}
+.sgt td.on input{width:100%;min-width:72px;border:0;background:transparent;color:var(--u-ink);font:inherit;padding:6px;border-radius:0}
+.sgt td.r-sub,.sgt td.r-sub input{min-width:220px}
+.sgt td.on input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--u-bg)}
+.sgt td.gno,.sgt th.gno{width:28px;text-align:right;color:var(--u-sub);font-family:var(--u-num);font-size:10.5px;padding:0 6px}
+.sgt td.gx,.sgt th.gx{width:30px;text-align:center}
+.sgt td.gx button{border:0;background:none;color:var(--u-sub);font-size:13px;padding:6px 8px;cursor:pointer}
+.sgt tr.bad td{background:var(--u-danger2)}
+.sgt tr.bad td.gno{color:var(--u-danger)}
 #sheetIn,#ytIn{padding-bottom:14px}
 /* popups: no background scroll, no iOS zoom on focus。画面の端で引っ張っても余白が出ないように */
 html{scrollbar-gutter:stable}
@@ -1835,3 +1867,9 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .sg .sg-ft .sg-t{width:auto;color:var(--u-ink);font-weight:700;font-size:13px!important;padding:5px 26px 5px 8px;border-radius:7px;max-width:120px;min-width:72px}
 .sg .sg-ft .del{margin-left:auto;font-size:13px;padding:6px 4px}
 .ffoot button{white-space:nowrap}
+
+/* 話数タブ：日付のアラート */
+.tlmeta .tldbad{color:var(--u-danger);font-weight:700}
+.tlmeta .tlwhy{flex-basis:100%;color:var(--u-danger);font-size:11.5px}
+.epfix{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.epfix button{border:1px solid var(--u-danger);background:var(--u-surface);color:var(--u-danger);border-radius:var(--u-r);padding:6px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}

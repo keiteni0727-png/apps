@@ -636,6 +636,51 @@ const nowCour = () => {
   return `${d.getUTCFullYear()}${SEASONS[Math.floor(d.getUTCMonth() / 3)]}`;
 };
 const IS_PC = () => matchMedia("(min-width:900px)").matches;
+/* ---------- 話数の日付のチェック（話数タブの「要確認」・未入力アラートの「日付の確認」） ----------
+   rev＝前の話より前の日付 / gap＝前の話から180日以上空いている / start＝1話の日付が開始日と違う /
+   dow＝放送曜日と1日ずれている（深夜枠で実際の日付と「木 26:00」の書き方が混ざったとき。-1＝1日前にずらす、1＝1日後に）
+   映画は対象外。全話が同じ日（まとめて配信）のときは曜日を見ない */
+const dayNo = d => Math.round(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 86400e3);
+const DATE_WHY = { rev: "前の話より前の日付です", gap: "前の話から半年以上空いています", start: "開始日と違います", dow: "放送曜日と1日ずれています" };
+function epDateCheck(it) {
+  const md = mediaOf(it).media;
+  const l = episodes(it);
+  const out = { eps: l.map(() => null), start: "", dowN: 0, n: 0 };
+  if (md === "movie") return out;
+  const ds = l.map(e => (e.t ? jst(e.t).day : ""));
+  const dated = ds.filter(Boolean);
+  if (!dated.length) return out;
+  const mark = (i, k, v = true) => ((out.eps[i] = out.eps[i] || {})[k] = v);
+  let prev = -1;
+  ds.forEach((d, i) => {
+    if (!d) return;
+    if (prev >= 0) {
+      const g = dayNo(d) - dayNo(ds[prev]);
+      if (g < 0) mark(i, "rev");
+      else if (g >= 180) mark(i, "gap");
+    }
+    prev = i;
+  });
+  const f = normDate(it.from || "");
+  if (f && ds[0] && ds[0] !== f) {
+    mark(0, "start");
+    out.start = ds[0];
+  }
+  const weekly = !noSched(md) && f && !(it.noF || []).includes("time") && !dated.every(d => d === dated[0]);
+  if (weekly) {
+    const fd = (dayNo(f) + 4) % 7; // 1970/1/1＝木
+    ds.forEach((d, i) => {
+      if (!d) return;
+      const df = ((dayNo(d) + 4) % 7 - fd + 7) % 7;
+      if (df === 1 || df === 6) {
+        mark(i, "dow", df === 1 ? -1 : 1);
+        out.dowN++;
+      }
+    });
+  }
+  out.n = out.eps.filter(Boolean).length;
+  return out;
+}
 function missingOf(i) {
   const m = mediaOf(i);
   const md = m.media,
@@ -650,6 +695,7 @@ function missingOf(i) {
      今クール・通年の作品はサブタイトル未定が多いので対象外 */
   if (i.k === "a" && !(ns && episodes(i).length < 2) && !coursOf(i).some(c => c === ALLYEAR || c === nowCour()) && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
   if (episodes(i).some(e => !epVal(e.n) && !e.sp)) add("話数の表記");
+  if (epDateCheck(i).n) add("日付の確認");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
@@ -671,7 +717,7 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-const MISS_KEYS = ["ステータス", "話数", "話数の表記", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
+const MISS_KEYS = ["ステータス", "話数", "話数の表記", "日付の確認", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);

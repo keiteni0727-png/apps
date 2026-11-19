@@ -160,6 +160,113 @@ function parseSubtitles(text) {
   return out.filter(e => e.sub && !seen.has(e.n) && seen.add(e.n));
 }
 
+/* ---------- 各話リストの整形（Wikiから貼り付けの中）：Excelのような表にして、列ごとに役割を選び、いらない行を消す ---------- */
+const G_ROLES = [
+  ["n", "話数"],
+  ["sub", "サブタイトル"],
+  ["date", "放送日"],
+];
+const gCol = c => String.fromCharCode(65 + (c % 26)) + (c >= 26 ? Math.floor(c / 26) : "");
+const G_EP = /^\s*(?:第|#|＃)?\s*([0-9０-９]+(?:\.[0-9]+)?|[〇零一二三四五六七八九十百]+)\s*[話回]?\s*$/;
+const G_DATE = /(?:(\d{4})\s*[年\/\-.]\s*)?(\d{1,2})\s*[月\/\-.]\s*(\d{1,2})/;
+function gNum(v) {
+  const m = G_EP.exec(zen(String(v || "")));
+  if (!m) return null;
+  const k = /^[\d.]+$/.test(m[1]) ? +m[1] : kanjiNum(m[1]);
+  return Number.isFinite(k) ? k : null;
+}
+function gDate(v) {
+  const m = G_DATE.exec(zen(String(v || "")));
+  return m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31 ? m : null;
+}
+/* 貼り付けた文字を表に（タブで列に分ける。空の行は消す）。列の役割は中身から推測 */
+function gridFrom(text) {
+  const rows = String(text || "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .filter(l => l.trim())
+    .map(l => l.split("\t").map(c => c.replace(/\u00a0/g, " ").trim()));
+  const nc = Math.max(1, ...rows.map(r => r.length));
+  rows.forEach(r => {
+    while (r.length < nc) r.push("");
+  });
+  const rate = (c, f) => {
+    const v = rows.map(r => r[c]).filter(Boolean);
+    return v.length ? v.filter(f).length / v.length : 0;
+  };
+  const cols = [...Array(nc).keys()];
+  const best = (f, used) => {
+    let b = -1,
+      bv = 0.5;
+    cols.forEach(c => {
+      if (used.includes(c)) return;
+      const r = rate(c, f);
+      if (r > bv) (b = c), (bv = r);
+    });
+    return b;
+  };
+  const n = best(v => gNum(v) != null, []);
+  const date = best(v => !!gDate(v), [n]);
+  /* サブタイトル：残りの列で、数字だけでない文字が一番長い列 */
+  let sub = -1,
+    sl = 0;
+  cols.forEach(c => {
+    if (c === n || c === date) return;
+    const v = rows.map(r => r[c]).filter(x => x && gNum(x) == null && !gDate(x));
+    const avg = v.length ? v.reduce((a, x) => a + x.length, 0) / rows.length : 0;
+    if (avg > sl) (sub = c), (sl = avg);
+  });
+  return { rows, nc, role: { n, sub, date } };
+}
+function gridHtml(g) {
+  const bad = g.rows.filter(r => gNum(r[g.role.n]) == null).length;
+  const roleOf = c => G_ROLES.find(([k]) => g.role[k] === c);
+  const pick = ([k, lab]) =>
+    `<div class="gpick"><span>${lab}</span><div class="segc" role="group" aria-label="${lab}の列">${[...Array(g.nc).keys()]
+      .map(c => `<button type="button" data-grole="${k}:${c}" aria-pressed="${g.role[k] === c}">${gCol(c)}</button>`)
+      .join("")}<button type="button" data-grole="${k}:-1" aria-pressed="${g.role[k] < 0}">なし</button></div></div>`;
+  const head = [...Array(g.nc).keys()].map(c => {
+    const r = roleOf(c);
+    return `<th class="${r ? "on" : ""}">${gCol(c)}${r ? `<b>${r[1]}</b>` : ""}</th>`;
+  });
+  /* 役割のある列は入力欄（押すと直せる）、ない列は文字だけ（細く・薄く） */
+  const cell = (v, i, c) => (roleOf(c) ? `<td class="on r-${roleOf(c)[0]}"><input class="gc" data-g="${i}:${c}" value="${esc(v)}" autocomplete="off" aria-label="${i + 1}行目 ${gCol(c)}列"></td>` : `<td><span title="${esc(v)}">${esc(v)}</span></td>`);
+  return `<div class="spaste spgrid">
+    <p class="hint" style="margin:0 0 8px">列ごとに「話数・サブタイトル・放送日」がどの列か選び、いらない行は ✕ で消してください。セルを押すと中身を直せます。放送日が空の行は上の行と同じ日、年がない日付は開始日の年から数えます。</p>
+    <div class="gpicks">${G_ROLES.map(pick).join("")}</div>
+    ${bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
+    <div class="gw"><table class="sgt"><thead><tr><th class="gno"></th>${head.join("")}<th class="gx"></th></tr></thead><tbody>${g.rows
+      .map((r, i) => `<tr class="${gNum(r[g.role.n]) == null ? "bad" : ""}" data-gr="${i}"><td class="gno">${i + 1}</td>${r.map((v, c) => cell(v, i, c)).join("")}<td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td></tr>`)
+      .join("")}</tbody></table></div>
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">貼り直す</button><button type="button" class="u-btn pri primary" id="gRead" ${g.role.n < 0 ? "disabled" : ""}>この形で読み取る</button></div></div>`;
+}
+/* 表から各話を読み取る（話数が読めない行は飛ばす・同じ話数は最初の行） */
+function gridParse(it, g) {
+  const { n, sub, date } = g.role;
+  let y = yearOf(it) || new Date().getFullYear(),
+    pm = 0,
+    last = "";
+  const seen = new Set(),
+    out = [];
+  g.rows.forEach(r => {
+    const num = gNum(r[n]);
+    if (num == null || seen.has(num)) return;
+    seen.add(num);
+    let d = "";
+    if (date >= 0) {
+      const m = gDate(r[date]);
+      if (m) {
+        if (m[1]) y = +m[1];
+        else if (+m[2] < pm) y++;
+        pm = +m[2];
+        d = `${y}-${String(m[2]).padStart(2, "0")}-${String(m[3]).padStart(2, "0")}`;
+      } else if (!r[date].trim()) d = last;
+      last = d || last;
+    }
+    out.push({ n: num, sub: sub >= 0 ? cleanSub(r[sub] || "") : "", ...(d ? { date: d } : {}) });
+  });
+  return out;
+}
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
 let stMenu = false; // 視聴ステータスの選択肢を開いているか
@@ -203,22 +310,32 @@ function arcSync() {
 }
 function subPasteHtml(it) {
   const p = subPaste;
+  if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
-    <p class="hint" style="margin:0 0 8px">Wikipediaの「各話リスト」などをそのまま貼り付けてください。話数とサブタイトルだけを読み取り、ほかの列（絵コンテ・演出・放送日など）は無視します。</p>
+    <p class="hint" style="margin:0 0 8px">Wikipediaの「各話リスト」などをそのまま貼り付けてください。話数とサブタイトルだけを読み取り、ほかの列（絵コンテ・演出など）は無視します。形が合わず読み取れないときは「整形」で表にして直せます。</p>
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length,
     same = p.rows.filter(r => r.idx >= 0 && r.old === r.sub && !r.dateCh).length,
     miss = p.rows.filter(r => r.idx < 0).length,
     dch = p.rows.filter(r => r.dateCh).length;
-  const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : "");
+  const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}(${"日月火水木金土"[new Date(d).getUTCDay()]})` : "");
+  /* 変わる所は「今の値（取り消し線）→ 更新後（太字）」。日付は年が違うときだけ年も出す */
+  const yd = (d, o) => (d && o && d.slice(0, 4) !== o.slice(0, 4) ? `${d.slice(0, 4)}/` : "");
+  const subCell = r => (r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><del>${esc(r.old)}</del><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
+  const dateCell = r =>
+    r.dateCh
+      ? `<small class="dch${p.useDate ? " on" : ""}">日付 <del>${yd(r.oldDay, r.date)}${md(r.oldDay)}</del> → <b>${yd(r.date, r.oldDay)}${md(r.date)}</b></small>`
+      : r.date
+        ? `<small class="dsame">日付 ${md(r.date)}</small>`
+        : "";
   return `<div class="spaste">
     <p class="sp-sum">${p.rows.length}話分を読み取りました。<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。</p>
-    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " miss" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span>${esc(r.sub)}${r.idx >= 0 && r.old && r.old !== r.sub ? `<small>今：${esc(r.old)}</small>` : ""}</span>${r.dateCh ? `<small class="dch${p.useDate ? " on" : ""}">日付 ${md(r.oldDay)} → <b>${md(r.date)}</b>${r.date.slice(0, 4) !== r.oldDay.slice(0, 4) ? `（${r.date.slice(0, 4)}年）` : ""}</small>` : ""}<span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
+    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " miss" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
     ${dch ? `<div class="dconfirm"><b>貼り付けた放送日が、登録済みの日付と${dch}話分違います。</b><label class="yr"><input type="checkbox" id="spDate" ${p.useDate ? "checked" : ""}>日付も貼り付けた内容に更新する（時刻はそのまま）</label></div>` : ""}
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">${p.fromGrid ? "整形に戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
 }
 /* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
 function nextIdx(eps) {
@@ -228,8 +345,10 @@ function nextIdx(eps) {
 /* 話数リストでアラートの対象になっている話：数字以外の話数で「文字で入力」なし／サブタイトルのアラートが出ている作品の空のサブタイトル */
 function epWarn(it) {
   const subA = it.k === "a" && missingOf(it).some(x => x.k === "サブタイトル");
-  return e => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim() });
+  const dc = epDateCheck(it);
+  return (e, i) => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim(), d: dc.eps[i] || null });
 }
+const warnAny = x => x.n || x.s || x.d;
 function epListHtml(it, eps) {
   if (arcEdit) return arcEditHtml();
   const A = it.k === "a";
@@ -243,10 +362,12 @@ function epListHtml(it, eps) {
   const nx = nextIdx(eps);
   const arcs = arcsOf(it);
   const warnOf = epWarn(it);
-  const warnN = eps.filter(e => {
-    const x = warnOf(e);
-    return x.n || x.s;
-  }).length;
+  const warnN = eps.filter((e, i) => warnAny(warnOf(e, i))).length;
+  const dc = epDateCheck(it);
+  /* 日付のアラートを直すボタン：曜日のずれ（まとめて1日ずらす）・開始日を1話の日付に合わせる */
+  const fixDow = dc.dowN ? `<button type="button" id="epFixDow">曜日を放送日に合わせる（${dc.dowN}話を1日ずらす）</button>` : "";
+  const fixStart = dc.start && !dc.eps[0]?.dow ? `<button type="button" id="epFixStart">開始日を1話の日付（${fmtD(dc.start)}）に合わせる</button>` : "";
+  const fixBar = fixDow || fixStart ? `<div class="epfix">${fixDow}${fixStart}</div>` : "";
   const arcOfNum = e => {
     const n = epNum(e.n);
     return n == null ? null : arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
@@ -274,10 +395,11 @@ function epListHtml(it, eps) {
     const when = epWhen(e, it, true);
     const whenTx = when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
     const st = e.w ? " seen" : fut ? " future" : " unseen";
-    const wn = warnOf(e);
-    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span>${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}</span>`;
+    const wn = warnOf(e, i);
+    const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
+    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why ? `<span class="tlwhy">${why}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
-    return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${wn.n || wn.s ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
+    return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
 
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
@@ -311,7 +433,7 @@ function epListHtml(it, eps) {
     arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
   } else rowsHtml = eps.map(epRow).join("");
   return `<div class="epset"><button type="button" id="allAired">放送済み<span class="epx">を全部</span> ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編を登録</button></div>
-    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>（押すと最初の話へ）</span></button>` : ""}${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
+    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>（押すと最初の話へ）</span></button>` : ""}${fixBar}${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */
 function epRef(it, list, i) {
@@ -527,7 +649,7 @@ function missDetail(it) {
   const main = x =>
     x.k === "話数"
       ? `<button type="button" data-dtab="ep">話数を登録</button>`
-      : x.k === "サブタイトル" || x.k === "話数の表記"
+      : x.k === "サブタイトル" || x.k === "話数の表記" || x.k === "日付の確認"
         ? `<button type="button" data-dtab="ep">✎ ${x.k}</button>`
         : x.j
         ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
@@ -747,13 +869,19 @@ function readPaste(it) {
   if (!parsed.length) {
     subPaste = { text };
     refreshSheet();
-    toast("話数とサブタイトルを読み取れませんでした。「第1話」「1話」「魔の1」「1Fr」などで始まる行が必要です");
+    toast("話数とサブタイトルを読み取れませんでした。「整形」を押すと、表にして列を選んで読み取れます");
     return;
   }
+  buildPaste(it, parsed, text);
+}
+/* 読み取った各話（{n, sub, date か md}）を登録済みの話と比べる。grid＝整形から来たとき（戻る先）
+   サブタイトルの列がない・空のときは今のサブタイトルのまま（日付だけ直したいとき用） */
+function buildPaste(it, parsed, text, grid) {
   const eps = epEdit ? epEdit.list : episodes(it);
   const fy = yearOf(it) || new Date().getFullYear();
   subPaste = {
     text,
+    ...(grid ? { fromGrid: grid } : {}),
     addMissing: !eps.length,
     useDate: false,
     rows: parsed.map(r => {
@@ -767,6 +895,7 @@ function readPaste(it) {
       const oldDay = cur && cur.t ? jst(cur.t).day : "";
       return {
         ...r,
+        sub: r.sub || (cur ? cur.sub || "" : ""),
         date,
         idx,
         old: cur ? cur.sub || "" : "",
@@ -988,16 +1117,39 @@ const DETAIL_ACTIONS = [
   ],
   [null, (el, it, e) => !!arcEdit && runActions(ARC_ACTIONS, e, it)],
   /* 編の見出し：開く／たたむ */
+  /* 日付のアラート：曜日のずれた話を1日ずらす（時刻はそのまま） */
+  [
+    "#epFixDow",
+    (el, it) => {
+      const dc = epDateCheck(it);
+      const l = episodes(it);
+      let n = 0;
+      dc.eps.forEach((x, i) => {
+        if (x && x.dow && l[i].t) {
+          l[i].t += x.dow * 1440;
+          n++;
+        }
+      });
+      if (n) saveEps(it, l, `${n}話の日付を1日ずらしました`);
+    },
+  ],
+  /* 日付のアラート：開始日を1話の日付にする（毎週の曜日も合わせる） */
+  [
+    "#epFixStart",
+    (el, it) => {
+      const d = epDateCheck(it).start;
+      if (!d) return;
+      const o = over[it.id] || {};
+      saveTitle(it.id, { from: d, ...((o.dow ?? -1) >= 0 ? { dow: dowOfDate(d) } : {}) }, `開始日を${fmtD(d)}にしました`);
+    },
+  ],
   /* 要確認の最初の話へ（たたんだ編の中なら開いてから） */
   [
     "#epWarnGo",
     (el, it) => {
       const l = episodes(it),
         wo = epWarn(it);
-      const i = l.findIndex(e => {
-        const x = wo(e);
-        return x.n || x.s;
-      });
+      const i = l.findIndex((e, k) => warnAny(wo(e, k)));
       if (i < 0) return;
       const n = epNum(l[i].n);
       const r = arcsOf(it).find(r => n != null && n >= r.a && (r.b == null || n <= r.b));
@@ -1121,11 +1273,64 @@ const PASTE_ACTIONS = [
   [
     "#spBack",
     () => {
-      subPaste = { text: subPaste.text };
+      subPaste = subPaste.fromGrid ? { text: subPaste.text, grid: subPaste.fromGrid } : { text: subPaste.text };
       refreshSheet();
     },
   ],
   ["#spRead", (el, it) => readPaste(it)],
+  /* 整形：貼り付けた文字を表にする */
+  [
+    "#spFmt",
+    () => {
+      const text = $("#spText") ? $("#spText").value : subPaste.text || "";
+      if (!text.trim()) return toast("先に各話リストを貼り付けてください");
+      subPaste = { text, grid: gridFrom(text) };
+      refreshSheet();
+    },
+  ],
+  [
+    "[data-grole]",
+    el => {
+      const g = subPaste.grid;
+      const [k, c] = el.dataset.grole.split(":");
+      const v = +c;
+      /* 1つの列に役割は1つ（ほかの役割に付いていたら外す） */
+      if (v >= 0) G_ROLES.forEach(([x]) => g.role[x] === v && (g.role[x] = -1));
+      g.role[k] = v;
+      refreshSheet();
+    },
+  ],
+  [
+    "[data-gdel]",
+    el => {
+      subPaste.grid.rows.splice(+el.dataset.gdel, 1);
+      refreshSheet();
+    },
+  ],
+  [
+    "#gDelBad",
+    () => {
+      const g = subPaste.grid;
+      g.rows = g.rows.filter(r => gNum(r[g.role.n]) != null);
+      refreshSheet();
+    },
+  ],
+  [
+    "#gBack",
+    () => {
+      subPaste = { text: subPaste.text };
+      refreshSheet();
+    },
+  ],
+  [
+    "#gRead",
+    (el, it) => {
+      const g = subPaste.grid;
+      const parsed = gridParse(it, g);
+      if (!parsed.length) return toast("話数を読み取れる行がありません。話数の列を確かめてください");
+      buildPaste(it, parsed, subPaste.text, g);
+    },
+  ],
   ["#spApply", (el, it) => applyPaste(it)],
 ];
 /* 話数の編集中 */

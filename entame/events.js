@@ -502,6 +502,18 @@ const INPUT_ACTIONS = [
       subPaste.text = t.value;
     },
   ],
+  /* 整形の表：セルを直す（描き直さず、話数が読めるかの色だけ変える） */
+  [
+    "[data-g]",
+    t => {
+      const g = subPaste && subPaste.grid;
+      if (!g) return false;
+      const [i, c] = t.dataset.g.split(":").map(Number);
+      if (!g.rows[i]) return;
+      g.rows[i][c] = t.value;
+      if (c === g.role.n) t.closest("tr").classList.toggle("bad", gNum(t.value) == null);
+    },
+  ],
   [
     "#seriesQ",
     t => {
