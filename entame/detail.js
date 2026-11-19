@@ -235,7 +235,7 @@ function epEditorHtml(it) {
   const same = l.length > 1 ? `<button type="button" class="edsame" id="erSameDay" title="1話の日付を全話に入れます">日付をそろえる</button>` : "";
   /* 並べ直す：話数順・日付順（1話ずつは⠿を押さえたまま上下に動かす） */
   const sort = l.length > 1 ? `<button type="button" id="erSortN">話数順</button><button type="button" id="erSortD">日付順</button>` : "";
-  return `${A || same || sort ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button><span class="hint">各話リストからサブタイトル・放送日を読み取ります</span>` : ""}${same || sort ? `<span class="edr">${same}${sort}</span>` : ""}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
+  return `${A || same || sort ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button>` : ""}${same || sort ? `<span class="edr">${same}${sort}</span>` : ""}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
     l.length
       ? l
           .map((e, i) => {

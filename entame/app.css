@@ -851,7 +851,6 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 }
 .edtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
 .edtop button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:var(--u-r);padding:8px 12px;font-size:13px;font-weight:700}
-.edtop .hint{font-size:11.5px;margin:0}
 /* スマホ：話数の上の4つのボタンを1段に収める */
 @media (max-width:560px){
   .sheet:not(.form) .epset{flex-wrap:nowrap}
