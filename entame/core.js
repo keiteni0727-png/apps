@@ -683,6 +683,73 @@ function epDateCheck(it) {
   out.n = out.eps.filter(Boolean).length;
   return out;
 }
+const todayStr = () => new Date(Date.now() + 540 * 60000).toISOString().slice(0, 10);
+/* 最初のクールが、開始日（または2週間後）の季節と合っているか（9月末スタートの秋アニメなど） */
+function courMismatch(i) {
+  const cs = coursOf(i).filter(c => /^\d{4}/.test(c) && c !== ALLYEAR);
+  if (!cs.length) return false;
+  const first = cs.slice().sort((a, b) => courKey(a) - courKey(b))[0];
+  const f = Date.parse(i.from.slice(0, 10) + "T00:00:00Z");
+  if (isNaN(f)) return false;
+  const cour = t => {
+    const d = new Date(t);
+    return `${d.getUTCFullYear()}${SEASONS[Math.floor(d.getUTCMonth() / 3)]}`;
+  };
+  return ![0, 14].some(k => cour(f + k * 86400e3) === first);
+}
+const courKey = c => +c.slice(0, 4) * 10 + SEASONS.indexOf(c.slice(4));
+/* 配信URLのドメインから配信サイトを判定（分からないURLは null） */
+const VURL_SITES = [
+  [/netflix\.com/, "netflix"],
+  [/disneyplus\.com|disney\.co\.jp/, "disney"],
+  [/abema\.tv|abema\.app/, "abema"],
+  [/unext\.jp/, "unext"],
+  [/primevideo\.com|amazon\.co\.jp|amazon\.com/, "amazon"],
+  [/hulu\.jp/, "hulu"],
+  [/animestore\.docomo\.ne\.jp/, "danime"],
+  [/lemino\.docomo\.ne\.jp/, "lemino"],
+  [/fod\.fujitv\.co\.jp/, "fod"],
+  [/tver\.jp/, "tver"],
+  [/youtube\.com|youtu\.be/, "youtube"],
+  [/tv\.apple\.com/, "apple"],
+  [/crunchyroll\.com/, "crunchyroll"],
+];
+const vurlSite = u => {
+  const s = String(u || "").toLowerCase();
+  const hit = s && VURL_SITES.find(([re]) => re.test(s));
+  return hit ? hit[1] : null;
+};
+/* 配信サイト名を判定用の名前に（Netflix・Disney＋・ABEMA・U-NEXT・Prime Video・dアニメストアなど） */
+const normVod = v => {
+  const s = String(v || "").normalize("NFKC").toLowerCase().replace(/[\s\-・＋+]/g, "");
+  if (/netflix|ネトフリ/.test(s)) return "netflix";
+  if (/disney|ディズニー/.test(s)) return "disney";
+  if (/abema|アベマ/.test(s)) return "abema";
+  if (/unext/.test(s)) return "unext";
+  if (/prime|amazon|アマゾン/.test(s)) return "amazon";
+  if (/hulu/.test(s)) return "hulu";
+  if (/dアニメ|danime/.test(s)) return "danime";
+  if (/lemino/.test(s)) return "lemino";
+  if (/fod/.test(s)) return "fod";
+  if (/tver/.test(s)) return "tver";
+  if (/youtube/.test(s)) return "youtube";
+  if (/apple/.test(s)) return "apple";
+  if (/crunchyroll/.test(s)) return "crunchyroll";
+  return s;
+};
+/* タイトルの重複：空白・記号・全角半角・大文字小文字の違いは同じとみなす。items が変わったときだけ数え直す */
+const normTitle = t => String(t || "").normalize("NFKC").toLowerCase().replace(/[\s・:：\-－!！?？、。,.「」『』（）()]/g, "");
+let dupCache = { src: null, set: new Set() };
+function dupTitles() {
+  if (dupCache.src === items) return dupCache.set;
+  const cnt = {};
+  items.forEach(x => {
+    const k = normTitle(x.t);
+    if (k) cnt[k] = (cnt[k] || 0) + 1;
+  });
+  dupCache = { src: items, set: new Set(Object.keys(cnt).filter(k => cnt[k] > 1)) };
+  return dupCache.set;
+}
 function missingOf(i) {
   const m = mediaOf(i);
   const md = m.media,
@@ -700,20 +767,38 @@ function missingOf(i) {
   if (epDateCheck(i).n) add("日付の確認");
   /* 「視聴済み」なのにチェックが付いていない話がある（勝手には付けない。話数タブで自分で付ける） */
   if (i.s === "視聴済み" && episodes(i).some(e => !e.w)) add("未チェックの話");
+  /* 話数の抜け（1・2・4話…）・重複（同じ話数が2つ）。数字の話数だけ見る（5.5話などは抜けに数えない） */
+  const nums = episodes(i).filter(e => !e.sp).map(e => epNum(e.n)).filter(n => n != null);
+  const ints = [...new Set(nums.filter(n => Number.isInteger(n)))].sort((a, b) => a - b);
+  if (ints.length > 1 && ints[ints.length - 1] - ints[0] + 1 > ints.length) add("話数の抜け");
+  if (new Set(nums).size < nums.length) add("話数の重複");
+  /* ステータスのずれ：視聴中なのにチェック0話／未視聴なのにチェックあり／放送前なのに視聴済み */
+  const eps = episodes(i);
+  if ((i.s === "視聴中" && eps.length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)) || (i.s === "視聴済み" && i.from && i.from.slice(0, 10) > todayStr())) add("ステータスのずれ");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
   if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
   if (md !== "stream" && !m.vods.length) add("配信サイト", "fMedia", "vods");
   if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "cours");
+  /* クールと開始日が合わない（最初のクールが開始日の季節と違う。9月末スタートの秋アニメなどは2週間までずれてよい） */
+  if (!ns && i.from && courMismatch(i)) add("クールのずれ", "coursBox");
   // 曲が1曲もなく「なし」にもしていないときだけ（OP・ED・主題歌まとめて1項目）
   if (!sl.some(x => (x.s || "").trim()) && !(i.noSongs || []).length) out.push({ k: "OP・ED・主題歌", j: "sgList", n: "", ns: 1 });
   /* 曲名・アーティストのどちらかだけ入っている曲（編集画面の2つの入力欄と同じ中身で判定） */
   const ta = sl.filter(x => (x.s || "").trim()).map(x => ({ st: songTA(x).st.trim(), ar: songTA(x).ar.trim() }));
   if (ta.some(x => x.st && !x.ar)) add("アーティスト", "sgList");
   if (ta.some(x => !x.st && x.ar)) add("曲名", "sgList");
+  /* 曲の使われた話が、登録されている話数を超えている（OPが1〜30話なのに24話まで、など） */
+  const em = Math.max(0, ...nums);
+  if (em && sl.some(x => [x.a, x.b, ...exOf(x).flatMap(r => [r.a, r.b])].some(v => v != null && +v > em))) add("曲の話数", "sgList");
   if (!(i.url || "").trim()) add("公式サイト", "f-url", "url");
   if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "vurl");
+  /* 配信URLのサイトが、作品の配信サイトに入っていない（URLからサイトが分かるときだけ） */
+  const us = vurlSite(i.vurl);
+  if (us && ![...m.plat, ...m.vods].some(v => normVod(v) === us)) add("配信URLのずれ", "f-vurl");
+  /* 同じタイトルの作品がほかにもある（二重登録かも） */
+  if (dupTitles().has(normTitle(i.t))) add("タイトルの重複", "f-t");
   return out;
 }
 /* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
@@ -721,7 +806,7 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-const MISS_KEYS = ["ステータス", "話数", "話数の表記", "日付の確認", "未チェックの話", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "OP・ED・主題歌", "曲名", "アーティスト", "公式サイト", "配信URL"];
+const MISS_KEYS = ["ステータス", "話数", "話数の表記", "話数の抜け", "話数の重複", "日付の確認", "未チェックの話", "ステータスのずれ", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "クールのずれ", "OP・ED・主題歌", "曲名", "アーティスト", "曲の話数", "公式サイト", "配信URL", "配信URLのずれ", "タイトルの重複"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);

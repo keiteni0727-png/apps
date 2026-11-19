@@ -292,6 +292,7 @@ function schedText() {
   return `毎週 <b>${DOW[d]}曜${t ? " " + esc(t) : ""}</b> ${f.media === "stream" ? "配信" : "放送"}　${fmtD(f.from)}〜`;
 }
 const ONLY_A = {
+  "f-t": ["タイトル", ["title"]],
   fSeries: ["シリーズ", ["series"]],
   "f-time": ["放送時間", ["time"]],
   fMedia: ["放送局・配信", ["media"]],
@@ -364,9 +365,6 @@ function formHtml() {
           })()}
           <button type="button" class="sugbtn${f.cours.includes(ALLYEAR) ? " on" : ""}" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
           <button type="button" class="sugbtn ghost fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
-    n: noSched(f.media)
-      ? ""
-      : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"></label>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
@@ -389,7 +387,7 @@ function formHtml() {
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
     ${sec("基本情報", P.title + P.kind + P.status + P.series)}
-    ${sec("放送", P.media + P.from + P.time + P.cours + P.n)}
+    ${sec("放送", P.media + P.from + P.time + P.cours)}
     ${sec("OP・ED・主題歌", P.songs, "", sgNoneBox())}
     ${sec("リンク", P.url + P.vurl)}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
@@ -418,7 +416,6 @@ function readForm() {
   v("#f-rbt", "rbT");
   if ($("#f-rbf")) form.rbF = normDate($("#f-rbf").value) || "";
   if ($("#f-rbto")) form.rbTo = normDate($("#f-rbto").value) || "";
-  v("#f-n", "n");
   v("#f-sernew", "serNewName");
   const cy = g("#f-cy");
   if (cy) form.cy = +cy;
@@ -502,7 +499,6 @@ function openForm(it, target, el) {
       vurl: it.vurl || "",
       cours: [...coursOf(it)],
       cy: yearOf(it) || y,
-      n: epMax(it) ? String(epMax(it)) : "",
     };
   } else
     form = {
@@ -682,8 +678,6 @@ async function submitForm() {
     return;
   }
   const patch = buildPatch(f);
-  /* 全話数を増やしたら、足りない話を後ろに足す（減らしても話は消さない） */
-  if (f.id && !noSched(f.media)) await addEpsUpTo(f.id, Math.min(2000, +f.n || 0));
   /* 開いたときから変わった項目だけ保存する（触っていない項目で、ほかの端末の変更を消さないため） */
   if (f.id && f.init) {
     const base = buildPatch(JSON.parse(f.init));
@@ -711,32 +705,8 @@ async function submitForm() {
   }
   const id = "u" + Date.now().toString(36);
   patch.added = Date.now();
-  const n = noSched(f.media) ? 0 : Math.min(2000, +f.n || 0);
   close();
   await saveTitle(id, patch, "追加しました");
-  if (n) {
-    const it = items.find(x => x.id === id);
-    const l = [];
-    for (let k = 0; k < n; k++) l.push(nextEp(it, l));
-    await saveEps(it, l);
-  }
-}
-/* 数字の話数の一番大きい数（「総集編」など文字の話数は数えない） */
-const epMax = it => Math.max(0, ...episodes(it).map(e => epNum(e.n)).filter(n => n != null).map(Math.floor));
-/* 全話数まで話を足す。日付は一番大きい話数の1週間後から */
-async function addEpsUpTo(id, target) {
-  const it = items.find(x => x.id === id);
-  if (!it) return;
-  const max = epMax(it);
-  if (target <= max) return;
-  const l = episodes(it).map(e => ({ ...e }));
-  let last = l.filter(e => epNum(e.n) != null && Math.floor(epNum(e.n)) === max).pop() || null;
-  for (let k = max + 1; k <= target; k++) {
-    const e = { ...nextEp(it, last ? [last] : []), n: `${k}話` };
-    l.push(e);
-    last = e;
-  }
-  await saveEps(it, l, `${target - max}話を追加しました`);
 }
 /* ポップアップ表示中は背景を固定する（共通部品 U.lock） */
 const TOUCH = U.TOUCH;
@@ -820,7 +790,7 @@ const FORM_ACTIONS = [
         const tp = el.dataset.sgadd;
         const same = form.songs.filter(x => x.type === tp);
         const last = same[same.length - 1];
-        const sp = form.span || (+form.n ? [1, +form.n] : null);
+        const sp = form.span;
         let nu;
         /* 前の曲が「1話だけ」なら、次の曲もその次の1話だけ（例：1話→2話→3話…） */
         if (last && last.one && last.a != null) nu = { a: last.a + 1, b: last.a + 1, one: 1 };

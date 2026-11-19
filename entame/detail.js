@@ -408,7 +408,7 @@ function missDetail(it) {
   const main = x =>
     x.k === "話数"
       ? `<button type="button" data-dtab="ep">話数を登録</button>`
-      : x.k === "サブタイトル" || x.k === "話数の表記" || x.k === "日付の確認" || x.k === "未チェックの話"
+      : ["サブタイトル", "話数の表記", "話数の抜け", "話数の重複", "日付の確認", "未チェックの話"].includes(x.k)
         ? `<button type="button" data-dtab="ep">✎ ${x.k}</button>`
         : x.j
         ? `<button type="button" data-jump="${x.j}">✎ ${esc(x.k)}</button>`
