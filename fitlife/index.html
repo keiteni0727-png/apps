@@ -121,6 +121,16 @@ svg.chart{width:100%;height:auto;display:block}
 .mis.gymb{margin-top:10px;padding:10px 12px;border:0;border-radius:14px;background:linear-gradient(135deg,#e3f0ff,#f3f8ff)}
 .tix{display:inline-flex;align-items:center;gap:4px;background:#fff3c9;color:#a77a12;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700}
 .gift{background:linear-gradient(135deg,#fff3c9,#fff9e8);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:10px}
+.petcard{text-align:center;background:linear-gradient(160deg,#ffe9d2,#fff8ef 60%,#fff)}
+.petcard .pet{width:150px;height:160px;display:block;margin:0 auto;animation:petb 2.4s ease-in-out infinite}
+.petcard .pet.zzz{animation-duration:4.5s}
+@keyframes petb{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.petnm{font-weight:700;color:#9a5b22;font-size:17px;margin:2px 0 8px}
+.petcard .bar{background:#f6e2cc}
+.petcard .bar i{background:#f0a860}
+.petrule{text-align:left;margin-top:10px;font-size:13px;color:var(--muted)}
+.petrule summary{cursor:pointer;color:#9a5b22}
+.petrule ul{margin:6px 0 0;padding-left:18px}
 .gacha-top{text-align:center;background:linear-gradient(160deg,var(--gc3,#ffd6e5),#fff4f8 55%,#fff)}
 .sertabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 0 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .sertabs::-webkit-scrollbar{display:none}
@@ -214,6 +224,7 @@ const { getFirestore, doc, getDoc, getDocFromServer, collection, query, orderBy,
 let onSnapshot, setDoc, addDoc, deleteDoc, writeBatch, runTransaction;
 import { FOODS } from "./foods.js";
 import { EXERCISES, EX_CATS } from "./exercises.js";
+import { petSVG } from "./pet.js";
 
 /* ===== Firebaseの設定（ここだけプロジェクトごとに差し替え） ===== */
 const firebaseConfig = {
@@ -476,19 +487,23 @@ const addHist = (g, c, kind) => { g.history = [{ id:c.id, name:c.name, rarity:c.
 async function updateGame(fn){
   if(!S.gameReady) throw new Error('読み込み中だよ。少し待ってからもう一度押してね');
   const ref = doc(db,'game','main');
-  let out;
+  let out, lv0 = 1;
   const g = await runTransaction(db, async tx => {
     const snap = await tx.get(ref);
     const g = { tickets:0, coll:{}, shards:0, claimed:{}, cheerDone:[], pulls:0, history:[], comp:{}, ...(snap.exists() ? snap.data() : {}) };
+    lv0 = petLevel(g.xp).lv;
     out = fn(g);
     // 「どの日にどのミッションを受け取ったか」の印だけ2週間で整理（ずかん・履歴は消えない）
     const cut = daysAgo(14);
     g.claimed = Object.fromEntries(Object.entries(g.claimed || {}).filter(([d]) => d >= cut));
+    for(const k of ['mealXp','xpDay']) if(g[k]) g[k] = Object.fromEntries(Object.entries(g[k]).filter(([d]) => d >= cut));
     g.cheerDone = (g.cheerDone || []).slice(-100);
     tx.set(ref, g);
     return g;
   });
   S.game = g; render();
+  const lv1 = petLevel(g.xp).lv;
+  if(lv1 > lv0 && S.role === 'member') showLevelUp(lv1, stageOf(lv0));
   return out;
 }
 const claimedToday = () => G().claimed[today()] || [];
@@ -500,11 +515,12 @@ async function claim(k){
   const msg = await updateGame(g => {
     const got = [...(g.claimed[t] || [])];
     if(got.includes(k)) return '';
-    got.push(k); let add = 1, msg = 'チケット＋1 🎟️';
-    if(k === 'gym'){ add = GYM_BONUS; msg = `ジムおつかれさま！チケット＋${GYM_BONUS} 🎟️`; }
-    else if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
+    got.push(k); let add = 1, xp = k === 'rest' ? 0 : XP.mission, msg = 'チケット＋1 🎟️';
+    if(k === 'gym'){ add = GYM_BONUS; xp = XP.gym; msg = `ジムおつかれさま！チケット＋${GYM_BONUS} 🎟️`; }
+    else if(k !== 'rest' && MISSIONS.every(m => got.includes(m.k)) && !got.includes('bonus')){ got.push('bonus'); add++; xp += XP.all; msg = 'ぜんぶクリア！チケット＋2 🎟️'; }
     g.claimed = { ...g.claimed, [t]: got }; g.tickets = (g.tickets || 0) + add;
-    return msg;
+    gainXp(g, xp);
+    return xp ? `${msg} ・ ${xp}XP` : msg;
   });
   if(msg) toast(msg);
 }
@@ -517,6 +533,64 @@ async function claimGifts(){
     return ids.length;
   });
   if(n) toast(`${FROM}からチケット＋${n} 🎟️`);
+}
+/* ===== 育成キャラ（まめしば） ===== */
+const PET_NAME = 'まめ';
+const XP = { mission:10, all:20, gym:30, meal:10, cheer:5 };
+const MEAL_XP_MAX = 3;  // 食事のXPは1日3回まで
+const SLEEP_DAYS = 3;   // 3日記録がないと寝る（XPは減らない）
+const STAGES = [[1,'あかちゃん'],[5,'こいぬ'],[10,'わんぱく'],[20,'おとな'],[30,'とくべつ']];
+const needXp = lv => lv < 10 ? 100 : lv < 20 ? 150 : 200;
+function petLevel(xp = 0){ let lv = 1, cur = xp || 0; while(cur >= needXp(lv)){ cur -= needXp(lv); lv++; } return { lv, cur, need: needXp(lv) }; }
+const stageOf = lv => STAGES.reduce((s, [min], i) => lv >= min ? i : s, 0);
+const gainXp = (g, n) => { if(!n) return; const t = today(); g.xp = (g.xp || 0) + n; g.xpDay = { ...(g.xpDay || {}), [t]: ((g.xpDay || {})[t] || 0) + n }; };
+function petAsleep(){
+  if(!LOADED.has('meals')) return false;
+  const cut = daysAgo(SLEEP_DAYS - 1);
+  return !['meals','gym','water','sleep','weights'].some(c => (S.data[c] || []).some(r => r.date >= cut));
+}
+const cheerToday = () => { const c = S.cheers[0]; return !!c && ymd(c.ts?.toDate ? c.ts.toDate() : new Date()) === today(); };
+async function mealXp(){
+  return updateGame(g => {
+    const t = today(), n = (g.mealXp || {})[t] || 0;
+    if(n >= MEAL_XP_MAX) return 0;
+    g.mealXp = { ...(g.mealXp || {}), [t]: n + 1 }; gainXp(g, XP.meal);
+    return XP.meal;
+  });
+}
+async function petCheer(){
+  const n = await updateGame(g => { const t = today(); if(g.cheerXp === t) return 0; g.cheerXp = t; gainXp(g, XP.cheer); return XP.cheer; });
+  if(n) toast(`${FROM}の応援で ${PET_NAME}がよろこんでる ♡ ${n}XP`);
+}
+function petCard(owner = false){
+  if(!S.gameReady) return '';
+  const g = G(), { lv, cur, need } = petLevel(g.xp), st = stageOf(lv), sleep = petAsleep(), t = today();
+  const dayXp = (g.xpDay || {})[t] || 0;
+  return `<div class="card petcard">
+    ${owner ? `<h2 style="justify-content:center">彼女の${PET_NAME}</h2>` : ''}
+    ${petSVG(st, sleep, 'pet' + (sleep ? ' zzz' : ''))}
+    <div class="petnm">${PET_NAME}　Lv.${lv} ${STAGES[st][1]}</div>
+    <div class="bar"><i style="width:${Math.min(100, cur / need * 100)}%"></i></div>
+    <div class="muted" style="margin-top:4px">次のレベルまであと ${need - cur}XP ・ 今日 +${dayXp}XP</div>
+    ${sleep ? `<p class="note" style="margin:8px 0 0">すやすや…${owner ? '最近記録がないみたい' : '記録すると起きるよ'}</p>` : ''}
+    ${!owner && cheerToday() && g.cheerXp !== t ? `<div class="gift"><span style="font-size:22px">💌</span><div style="flex:1;text-align:left">${FROM}の応援が届いたよ</div><button class="btn sm" data-a="petcheer">受け取る ${XP.cheer}XP</button></div>` : ''}
+    ${owner ? `<p class="muted" style="margin:8px 0 0;font-size:12px">応援メッセージを送ると、彼女が受け取ったときに${PET_NAME}に${XP.cheer}XP（1日1回）</p>`
+      : `<details class="petrule"><summary>XPのもらい方</summary><ul>
+        <li>ミッション1つ ${XP.mission}XP、ぜんぶクリアでさらに ${XP.all}XP</li><li>ジム ${XP.gym}XP</li>
+        <li>食事の記録 ${XP.meal}XP（1日${MEAL_XP_MAX}回まで）</li><li>${FROM}の応援 ${XP.cheer}XP（1日1回）</li>
+        <li>Lv5 こいぬ → Lv10 わんぱく → Lv20 おとな → Lv30 とくべつ</li><li>${SLEEP_DAYS}日記録がないと寝ちゃうけど、XPは減らないよ</li></ul></details>`}
+  </div>`;
+}
+function showLevelUp(lv, st0){
+  const st = stageOf(lv), grew = st > st0;
+  setTimeout(() => {
+    if($sheet.innerHTML){ toast(`${PET_NAME}が Lv.${lv} になったよ！`); return; }
+    $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><div class="reveal sparkle">
+      <div class="pic">${petSVG(st, false, 'pet')}</div>
+      <div class="nm">${grew ? `${STAGES[st][1]}に成長！` : 'レベルアップ！'}</div>
+      <span class="tag">${PET_NAME} Lv.${lv}</span></div>
+      <div class="row" style="justify-content:center;margin-top:16px"><button class="btn" data-a="close">やったね ♡</button></div></div></div>`;
+  }, 400);
 }
 function rollChar(ser){
   // ミックスは先にシリーズを同じ確率で選んでから、その中で抽選
@@ -768,7 +842,7 @@ function viewHome(){
     <div class="hello">${name ? esc(name)+'、' : ''}${greet()}♡</div>
     <p style="white-space:pre-wrap">${cheer}</p>
     ${latest ? `<p class="muted" style="text-align:right;margin-top:6px">${FROM}より♡ ${cheerDate(latest)}</p>` : ''}</div>`;
-  if(isM) html += missionCard();
+  if(isM) html += petCard() + missionCard();
 
   // 体重
   const w = S.data.weights;
@@ -827,11 +901,11 @@ function missionCard(){
   return `<div class="card"><h2>🌟 今日のミッション<span class="sub"><span class="tix">🎟️ ${g.tickets}</span></span></h2>
     ${MISSIONS.map(m => { const ok = m.ok(t), has = got.includes(m.k);
       return `<div class="mis ${ok ? 'done' : ''}"><div class="ck">${ok ? '✓' : ''}</div>
-        <div class="main"><div>${m.label}</div><div class="got">チケット1枚</div></div>
+        <div class="main"><div>${m.label}</div><div class="got">チケット1枚 ・ ${XP.mission}XP</div></div>
         ${has ? '<span class="got">受け取り済み</span>' : ok ? `<button class="btn sm" data-a="claim" data-v="${m.k}">受け取る</button>` : ''}</div>`; }).join('')}
-    <p class="muted" style="margin:8px 0 0">${allDone ? '🎉 ぜんぶクリア！ボーナス＋1枚もらったよ' : '3つぜんぶクリアで、ボーナス＋1枚'}</p>
+    <p class="muted" style="margin:8px 0 0">${allDone ? '🎉 ぜんぶクリア！ボーナス＋1枚もらったよ' : `3つぜんぶクリアで、ボーナス＋1枚 ・ ${XP.all}XP`}</p>
     <div class="mis gymb ${gymToday(t) ? 'done' : ''}"><div class="ck">${gymToday(t) ? '✓' : ''}</div>
-      <div class="main"><div>🏋️ ジムボーナス</div><div class="got">ジムを記録するとチケット${GYM_BONUS}枚</div></div>
+      <div class="main"><div>🏋️ ジムボーナス</div><div class="got">ジムを記録するとチケット${GYM_BONUS}枚 ・ ${XP.gym}XP</div></div>
       ${got.includes('gym') ? '<span class="got">受け取り済み</span>' : gymToday(t) ? `<button class="btn sm" data-a="claim" data-v="gym">受け取る</button>` : ''}</div>
     ${got.includes('rest') ? '' : `<button class="btn ghost sm" data-a="claim" data-v="rest" style="margin-top:8px">😴 今日はおやすみ（チケット1枚）</button>`}
     ${gifts.length ? `<div class="gift"><span style="font-size:22px">💌</span><div style="flex:1">${FROM}からチケットが${gifts.length}枚届いてるよ</div><button class="btn sm" data-a="gifts">受け取る</button></div>` : ''}
@@ -928,6 +1002,7 @@ function viewOwnerHome(){
   const joined = S.cfg.memberUid || S.cfg.memberEmail;
   const n = S.moreCheers ? S.cheers.length : 5;
   let html = '';
+  if(joined) html += petCard(true);
   if(!joined) html += `<div class="card"><h2>はじめに</h2><p class="muted">まだ招待していません。設定から招待しましょう。</p><button class="btn" data-a="tab" data-v="settings">招待する</button></div>`;
   html += `<div class="card cheer">${IC.heart.replace('<svg','<svg class="deco"')}
     <div class="hello">応援メッセージ</div>
@@ -1586,7 +1661,9 @@ async function handleForm(kind, f){
       const photo = file ? await compress(file, 800, 0.7, 250000) : null;
       const data = { date:v.date, slot:v.slot, name:v.name.trim(), kcal:num(v.kcal), p:num(v.p), f:num(v.f), c:num(v.c), memo:v.memo.trim() };
       if(photo || !EDIT) data.photo = photo; // 編集で写真を選ばなかったときは今の写真を残す
+      const isNew = !EDIT;
       await saveRec('meals', data);
+      if(isNew && S.role === 'member' && v.date === today()) await mealXp().catch(err => console.error(err));
       break;
     }
     case 'gym': {
@@ -1786,6 +1863,7 @@ document.addEventListener('click', async e => {
       }
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
+      case 'petcheer': await petCheer(); break;
       case 'pull': await pullGacha(); break;
       case 'gser': S.gser = v; render(); break;
       case 'oser': S.oser = v; render(); break;
