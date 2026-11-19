@@ -92,10 +92,10 @@ let over = {}, // titles：作品（1作品1件）
   prog = {}; // progress：話数リストと視聴チェック
 let items = [],
   eras = [];
-/* 画面の状態。mode＝左メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s 配信・yt YouTube）、
-   sub＝映画の中の下の項目（all/a アニメ映画/d 実写）。バラエティの下は配信サイト別で state.vod を使う
+/* 画面の状態。mode＝メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s バラエティ・yt YouTube・sr シリーズ・mu 主題歌・h 視聴記録・o その他）、
+   sub＝映画の絞り込み「種類」（all/a アニメ映画/d 実写）。
    そのほかは絞り込み（sf 視聴・era 放送年・type 種別・cour 放送クール・series シリーズ・vod 配信サイト）と並び順 */
-const SUBS = { m: ["all", "a", "d"] }; // バラエティの下は配信サイト別（state.vod で絞る）
+const SUBS = { m: ["all", "a", "d"] };
 const state = Object.assign(
   {
     mode: "w",
@@ -344,7 +344,7 @@ function usedNames(key) {
   const add = n => {
     if (n) c[n] = (c[n] || 0) + 1;
   };
-  /* シリーズはアニメ・ドラマ・映画・配信で共通の1つ（実写化などをまたいで同じ名前を使う） */
+  /* シリーズはアニメ・ドラマ・映画・バラエティで共通の1つ（実写化などをまたいで同じ名前を使う） */
   if (key === "series") items.forEach(i => add(i.series));
   else if (key === "stations") items.forEach(i => mediaOf(i).stations.forEach(add));
   else if (key === "vods")
@@ -463,6 +463,7 @@ async function initStore() {
     render();
     if (openId && !epEdit) refreshSheet();
     setTimeout(maybeAskSgFix, 800);
+    setTimeout(maybeAskWatchFix, 1200);
   };
   /* 読み込みが止まったときは U.sync が自動でつなぎ直す。ここでは「同期中」に戻すだけ */
   const onErr = k => () => {
@@ -627,7 +628,7 @@ const finIdx = it => {
 };
 const FIN = '<span class="fin">最終回</span>';
 /* 話数リストが未登録（未視聴・視聴中の作品、映画・OVA・TV SP以外） */
-/* ---------- 未入力チェック（PCだけで表示・絞り込み） ----------
+/* ---------- 未入力チェック（一覧のバッジ・詳細のアラート・絞り込み） ----------
    編集画面の項目のうち、その作品に関係あるものだけを見る。シリーズは「なければ空欄」なので対象外。
    k＝表示名、j＝押したときに開く編集項目（data-jump）、n＝「なし」にできる項目のキー（noF） */
 /* 今日（日本時間）のクール：1〜3月＝冬、4〜6月＝春、7〜9月＝夏、10〜12月＝秋 */
@@ -726,8 +727,7 @@ function missBadge(i) {
   if (!l.length) return "";
   const names = l.map(x => x.k);
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  /* PCは項目名まで、スマホは件数だけ */
-  return `<span class="miss${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span><span class="mc">${names.length}</span></span>`;
+  return `<span class="miss${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span></span>`;
 }
 function missOk(i) {
   if (!state.missOnly) return true;

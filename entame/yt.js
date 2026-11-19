@@ -134,8 +134,7 @@ function ytMissBadge(x) {
   const names = ytMissingOf(x).map(m => m.k);
   if (!names.length) return "";
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  /* PCは項目名まで、スマホは件数だけ */
-  return `<span class="miss" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span><span class="mc">${names.length}</span></span>`;
+  return `<span class="miss" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span></span>`;
 }
 /* 詳細のアラート（作品の詳細と同じ）：たたまずに、足りない項目のボタンを最初から全部出す。ボタンを押すとその項目だけ詳細の中で編集 */
 function ytMissDetail(x) {
@@ -444,7 +443,7 @@ function ytFormHtml() {
     }</div>`,
     /* 視聴ステータス：作品と同じく「未視聴」も入れた4つから選ぶ */
     status: `<div class="field full"><span>ステータス</span><div class="segc" role="group" aria-label="ステータス">${YT_ST.map(([v, l]) => `<button type="button" data-yfs="${v}" aria-pressed="${(f.s || "") === v}">${stLabel(l)}</button>`).join("")}</div></div>`,
-    up: `<label class="field"><span>初回投稿日 <span class="hint">YouTubeの日付を貼り付けできます</span></span><input id="y-up" class="dto" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>`,
+    up: `<label class="field"><span>初回投稿日</span><input id="y-up" class="dto" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>`,
     n: `<label class="field"><span>パート数</span><input id="y-n" type="number" min="0" inputmode="numeric" placeholder="12" value="${f.n || ""}"></label>`,
     dur: `<label class="field"><span>再生時間 <span class="hint">「630」で6時間30分</span></span><input id="y-dur" inputmode="numeric" autocomplete="off" placeholder="630" value="${esc(f.dur)}"><span class="hint" id="yDurMsg"></span></label>`,
     pl: `<label class="field full"><span>再生リスト</span><input id="y-pl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/playlist?list=…" value="${esc(f.pl)}"></label>`,

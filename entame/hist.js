@@ -1,5 +1,6 @@
 /* ===================== 視聴記録：話にチェックを付けた日時（wt）から、今日・週・月に見た話を出す =====================
-   「放送済みを全部 ✓」でまとめて付けた話は日時を持たないので出ない。チェックを外すと日時も消える */
+   「放送済みを全部 ✓」でまとめて付けた話も押した日時で出す（日時に0.5を足して区別し、見る時間帯の集計には入れない）。
+   「視聴済み」にして付いた話は日時を持たないので出ない。チェックを外すと日時も消える */
 const hist = Object.assign({ p: "d", off: 0 }, ls.get("adb.v3.hist") || {}, { off: 0 });
 if (!["d", "w", "m", "s"].includes(hist.p)) hist.p = "d";
 const saveHist = () => ls.set("adb.v3.hist", { p: hist.p });
@@ -121,7 +122,7 @@ function renderStats(all) {
     .join("");
   /* 見る時間帯（曜日×時間帯） */
   const grid = DOW.map(() => BANDS.map(() => 0));
-  inY.forEach(x => {
+  inY.filter(x => Number.isInteger(x.wt)).forEach(x => {
     const [d, b] = bandOf(new Date(x.wt));
     if (b >= 0) grid[d][b]++;
   });
@@ -140,7 +141,7 @@ function renderStats(all) {
     ${card("月ごとの話数", `いちばん見た月：${best + 1}月（${mon[best]}話）`, bars)}
     ${card("種別の内訳", "", `<div class="skind">${kHtml}</div>`)}
     ${card("よく見た作品", "上位5作品", `<div class="hlist">${tHtml}</div>`)}
-    ${card("見る時間帯", `いちばん多いのは ${DOW[pk[0]]}曜の${BANDS[pk[1]][0]}`, heat + `<p class="shint">朝 5〜11時・昼 11〜17時・夜 17〜22時・深夜 22〜翌5時（深夜0〜5時は前の日に数えます）</p>`)}`;
+    ${card("見る時間帯", `いちばん多いのは ${DOW[pk[0]]}曜の${BANDS[pk[1]][0]}`, heat + `<p class="shint">朝 5〜11時・昼 11〜17時・夜 17〜22時・深夜 22〜翌5時</p>`)}`;
 }
 function renderHist() {
   const seg = [

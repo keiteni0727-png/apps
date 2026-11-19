@@ -364,10 +364,9 @@ function formHtml() {
           })()}
           <button type="button" class="sugbtn${f.cours.includes(ALLYEAR) ? " on" : ""}" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
           <button type="button" class="sugbtn ghost fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
-    n:
-      f.id || noSched(f.media)
-        ? ""
-        : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"></label>`,
+    n: noSched(f.media)
+      ? ""
+      : `<label class="field"><span>全話数</span><input id="f-n" type="number" min="1" max="2000" inputmode="numeric" placeholder="12" value="${esc(f.n || "")}"></label>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
@@ -503,6 +502,7 @@ function openForm(it, target, el) {
       vurl: it.vurl || "",
       cours: [...coursOf(it)],
       cy: yearOf(it) || y,
+      n: epMax(it) ? String(epMax(it)) : "",
     };
   } else
     form = {
@@ -682,6 +682,8 @@ async function submitForm() {
     return;
   }
   const patch = buildPatch(f);
+  /* 全話数を増やしたら、足りない話を後ろに足す（減らしても話は消さない） */
+  if (f.id && !noSched(f.media)) await addEpsUpTo(f.id, Math.min(2000, +f.n || 0));
   /* 開いたときから変わった項目だけ保存する（触っていない項目で、ほかの端末の変更を消さないため） */
   if (f.id && f.init) {
     const base = buildPatch(JSON.parse(f.init));
@@ -694,6 +696,11 @@ async function submitForm() {
       }
       return;
     }
+  }
+  /* 編集画面で「視聴済み」にしたら、未チェックの話も全部チェックする */
+  if (f.id && patch.s === "視聴済み") {
+    const it0 = items.find(x => x.id === f.id);
+    if (it0 && it0.s !== "視聴済み") setTimeout(() => watchAll(items.find(x => x.id === f.id) || it0), 0);
   }
   if (f.id && f.inline) {
     form = null;
@@ -718,6 +725,23 @@ async function submitForm() {
     for (let k = 0; k < n; k++) l.push(nextEp(it, l));
     await saveEps(it, l);
   }
+}
+/* 数字の話数の一番大きい数（「総集編」など文字の話数は数えない） */
+const epMax = it => Math.max(0, ...episodes(it).map(e => epNum(e.n)).filter(n => n != null).map(Math.floor));
+/* 全話数まで話を足す。日付は一番大きい話数の1週間後から */
+async function addEpsUpTo(id, target) {
+  const it = items.find(x => x.id === id);
+  if (!it) return;
+  const max = epMax(it);
+  if (target <= max) return;
+  const l = episodes(it).map(e => ({ ...e }));
+  let last = l.filter(e => epNum(e.n) != null && Math.floor(epNum(e.n)) === max).pop() || null;
+  for (let k = max + 1; k <= target; k++) {
+    const e = { ...nextEp(it, last ? [last] : []), n: `${k}話` };
+    l.push(e);
+    last = e;
+  }
+  await saveEps(it, l, `${target - max}話を追加しました`);
 }
 /* ポップアップ表示中は背景を固定する（共通部品 U.lock） */
 const TOUCH = U.TOUCH;

@@ -228,7 +228,7 @@ const LIST_ACTIONS = [
       if (on) fshFocusQ("#lq");
     },
   ],
-  /* シリーズを押すと、アニメ・ドラマ・映画をまたいでその作品を古い順に */
+  /* シリーズを押すと、アニメ・ドラマ・映画をまたいでその作品を一覧に */
   ["[data-seropen2]", el => showSeries(el.dataset.seropen2, seriesMainMap().map[el.dataset.seropen2])],
   /* 主題歌：DL済み・未DLの切り替え（その場で保存） */
   [

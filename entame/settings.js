@@ -74,7 +74,7 @@ function masterListHtml() {
   const cnt = usedNames(setKey);
   const unit = setKey === "authors" || setKey === "groups" || setKey === "soloGroups" ? "本" : "作品";
   const rows = M(setKey);
-  return `<p class="hint" style="margin:8px 0">⠿をドラッグして並び順を変えると、編集画面の選択肢やフィルタの並びに反映されます。名前の変更・削除は右上の「編集」から。名前を変えると、使っている作品もまとめて変わります。</p>
+  return `<p class="hint" style="margin:8px 0">⠿で並び替え。名前の変更・削除は右上の「編集」から</p>
     <div class="mlist">${
       rows.length
         ? rows
@@ -154,7 +154,7 @@ function trashHtml() {
   return `<div class="bkbox bkdata trash"><div class="bkhd"><b>ゴミ箱</b><span class="trn">${l.length ? `${l.length}件` : "空です"}</span>${
     l.length ? `<span class="bkrow"><button type="button" class="u-btn sm ghost" data-trtog="1" aria-expanded="${trashOpen}">${trashOpen ? "閉じる" : "中を見る"}${FOLD_IC}</button></span>` : ""
   }</div>
-    <p class="hint">削除した作品は${TRASH_DAYS}日間ここに残り、戻せます。${TRASH_DAYS}日を過ぎると完全に削除します。</p>
+    <p class="hint">${TRASH_DAYS}日間はここから戻せます</p>
     ${trashOpen && l.length ? `<div class="trlist">${l.map(row).join("")}</div>` : ""}</div>`;
 }
 /* ゴミ箱から戻す（fromToast＝削除した直後の「元に戻す」から） */
@@ -182,7 +182,7 @@ function backupHtml() {
   const p = bkPending;
   const cnt = d => BK_COLS.map(([k, l]) => `${l} ${Object.keys(d[k] || {}).length}件`).join("・");
   return `<div class="bkbox bkdata"><div class="bkhd"><b>データのバックアップ</b><span class="bkrow"><button type="button" class="u-btn sm" data-bkout="1">ファイルに書き出す</button><label class="u-btn sm ghost bkin">ファイルから戻す<input type="file" id="bkFile" accept="application/json,.json" hidden></label></span></div>
-    <p class="hint">作品・話数・マスタ・YouTubeを1つのファイルに保存し、消してしまったときなどにそのファイルから戻せます。</p>
+    
     ${
       p
         ? `<div class="bkconf"><p><b>${esc(p.name)}</b>（${esc(p.at)}）<br>${cnt(p.data)}</p><p class="hint">ファイルにある作品などを、ファイルの内容で上書きします。ファイルにない作品はそのまま残ります。</p><div class="bkrow"><button type="button" class="u-btn sm ghost" data-bkcancel="1">やめる</button><button type="button" class="u-btn sm pri${bkArm ? " armed" : ""}" data-bkgo="1">${bkArm ? "もう一度押すと戻す" : "このファイルで戻す"}</button></div></div>`

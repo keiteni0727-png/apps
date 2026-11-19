@@ -1,7 +1,8 @@
 /* スマホのスワイプ（エンタメ管理・おかね手帳で共通）
    ・メニュー：開いているときは指に合わせて左へ引いて閉じる。左端から（またはページ送りの先頭で）右へ引くと開く
    ・ページ送り（任意）：画面を指にぴったり付けて横に動かし、離すと端まで流して隣の画面を反対側から入れる
-   uSwipe({ sb, scrim, setDrawer(on), edge, blocked(), pager: { el, block, can(dir), go(dir) } }) */
+   uSwipe({ sb, scrim, setDrawer(on), edge, blocked(), pager: { el, block, can(dir), go(dir) } })
+   sb を渡さなければメニューのスワイプはしない（ページ送りだけ） */
 (function () {
   window.uSwipe = function (o) {
     const mq = matchMedia("(max-width:899px)");
@@ -68,9 +69,9 @@
         const t = e.touches[0],
           el = e.target;
         let mode = null;
-        if (isOpen()) mode = "close";
+        if (o.sb && isOpen()) mode = "close";
         else if (o.blocked && o.blocked()) return;
-        else if (t.clientX < (o.edge || 24)) mode = "open";
+        else if (o.sb && t.clientX < (o.edge || 24)) mode = "open";
         else if (o.pager && !(el.closest && el.closest(o.pager.block))) mode = "page";
         if (mode) g = { mode, x: t.clientX, y: t.clientY, at: Date.now(), lock: false, dx: 0 };
       },
@@ -87,7 +88,7 @@
           if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
             g.lock = true;
             g.x = t.clientX - Math.sign(dx) * 2; // 動き出しで跳ねないように
-            if (g.mode === "page" && dx > 0 && !o.pager.can(-1)) g.mode = "open";
+            if (o.sb && g.mode === "page" && dx > 0 && !o.pager.can(-1)) g.mode = "open";
           } else if (Math.abs(dy) > 10) return (g = null);
           else return;
         }

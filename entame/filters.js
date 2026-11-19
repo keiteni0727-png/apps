@@ -48,7 +48,7 @@ function seriesSugHtml(q) {
 /* 絞り込みの中身：シリーズ */
 function seriesPanelHtml() {
   const cnt = seriesCounts();
-  return `<div class="fgroup"><h5>シリーズ <span class="hint" style="font-weight:400">複数選べます</span></h5>
+  return `<div class="fgroup"><h5>シリーズ</h5>
       ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
       <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
       <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
@@ -133,7 +133,7 @@ function svPanelHtml() {
   const head = `<h5>保存済み</h5>`;
   if (state.svMode === "new") {
     const def = state.svName ?? svDesc(state).slice(0, 24);
-    return `<div class="fgroup">${head}<form id="svF" class="svform" autocomplete="off"><input id="svName" maxlength="30" placeholder="名前（例：今期の視聴中）" value="${esc(def)}" aria-label="フィルタの名前"><button type="submit" class="u-btn sm svbtn pri">保存</button><button type="button" class="u-btn sm svbtn" data-svcancel="1">やめる</button><span class="hint">今の絞り込みと並び順を保存します</span></form></div>`;
+    return `<div class="fgroup">${head}<form id="svF" class="svform" autocomplete="off"><input id="svName" maxlength="30" placeholder="名前（例：今期の視聴中）" value="${esc(def)}" aria-label="フィルタの名前"><button type="submit" class="u-btn sm svbtn pri">保存</button><button type="button" class="u-btn sm svbtn" data-svcancel="1">やめる</button></form></div>`;
   }
   if (state.svMode === "edit" && l.length) {
     return `<div class="fgroup">${head}<div class="svlist">${l

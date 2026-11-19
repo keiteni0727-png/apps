@@ -37,13 +37,6 @@ function renderOther() {
 }
 /* PC：左の折りたためるメニュー */
 let sbCollapsed = !!ls.get("adb.v3.sbc");
-const sbFold = new Set(ls.get("adb.v3.sbf") || []); // 下の項目をたたんでいるメニュー
-/* メニューを押したら、そのメニューだけ開いてほかは自動でたたむ */
-function sbOnly(m) {
-  sbFold.clear();
-  MODE_KEYS.forEach(x => x !== "w" && x !== m && sbFold.add(x));
-  ls.set("adb.v3.sbf", [...sbFold]);
-}
 /* メニューごとの対象（左メニューの件数用。ofKind と同じ考え方） */
 const inMode = (m, i) =>
   m === "a" ? i.k === "a" : m === "d" ? i.k === "d" : m === "m" ? mediaOf(i).media === "movie" : m === "s" ? i.k === "r" : false;
@@ -51,42 +44,11 @@ function renderSidebar() {
   const sb = $("#sb");
   if (!sb) return;
   document.body.classList.toggle("sbc", sbCollapsed);
-  /* 左メニューは種別。アニメ・ドラマ＝TV／TV SP／映画／OVA／配信、映画＝アニメ映画／実写映画、配信＝アニメ／ドラマ・バラエティ、YouTube＝投稿者。▸▾で折りたためる
-     視聴ステータスは一覧の上の切り替えで選ぶ */
-  const oneT = state.type.length === 1 ? state.type[0] : state.type.length ? "*" : "";
-  const subOf = m => {
-    if (m === "yt") return [[`data-tb="すべて"`, "すべて", yst.author === "すべて", ytItems.length], ...ytAuthors().map(a => [`data-tb="${esc(a)}"`, (EMO[a] ? EMO[a] + " " : "") + a, yst.author === a, ytItems.filter(x => x.a === a).length])];
-    if (m === "w" || m === "h" || m === "sr" || m === "mu") return [];
-    const l = items.filter(i => inMode(m, i));
-    if (m === "m")
-      return [
-        [`data-mk="all"`, "すべて", state.sub === "all", l.length],
-        [`data-mk="a"`, "アニメ映画", state.sub === "a", l.filter(i => i.k === "a").length],
-        [`data-mk="d"`, "実写映画", state.sub === "d", l.filter(i => i.k !== "a").length],
-      ];
-    /* バラエティの下：配信サイト別（Netflix・ABEMA など）。件数の多い順 */
-    if (m === "s") {
-      const cnt = {};
-      l.forEach(i => vodsOf(i).forEach(v => (cnt[v] = (cnt[v] || 0) + 1)));
-      const vs = Object.keys(cnt).sort((p, q) => cnt[q] - cnt[p] || (p < q ? -1 : 1));
-      return [[`data-skgo=""`, "すべて", !state.vod, l.length], ...vs.map(v => [`data-skgo="${esc(v)}"`, v, state.vod === v, cnt[v]])];
-    }
-    const by = md => l.filter(i => mediaOf(i).media === md).length;
-    return [[`data-tygo=""`, "すべて", !oneT, l.length], ...MEDIA.filter(([md]) => by(md)).map(([md, lab]) => [`data-tygo="${md}"`, lab, oneT === md, by(md)])];
-  };
-  const mode = (m, ic, l) => {
-    const sub = subOf(m);
-    const fold = sbFold.has(m);
-    return `<div class="sbp${state.mode === m ? " cur" : ""}"><div class="sb-row"><button type="button" class="sb-it${state.mode === m ? " on" : ""}"${state.mode === m ? ' aria-current="page"' : ""} data-mode="${m}" title="${l}"><i aria-hidden="true">${ic}</i><span class="lbl">${l}</span></button>${sub.length ? `<button type="button" class="sb-fold lbl" data-sbfold="${m}" aria-expanded="${!fold}" aria-label="${l}の項目を${fold ? "開く" : "たたむ"}">${FOLD_IC}</button>` : ""}</div>${sub.length && !fold ? `<div class="sb-sub">${sub
-      .map(
-        ([attr, lab, on, n]) =>
-          `<button type="button" class="sb-it${state.mode === m && on ? " on" : ""}"${state.mode === m && on ? ' aria-current="page"' : ""} data-go="${m}" ${attr}><span>${esc(lab)}</span>${n != null ? `<small>${n}</small>` : ""}</button>`,
-      )
-      .join("")}</div>` : ""}</div>`;
-  };
-  /* PC：左上に☰（左メニューの折りたたみ）。上の帯と高さ・線をそろえる。スマホは右に✕。ロゴはアプリアイコンと同じマーク */
-  const mob = matchMedia("(max-width:899px)").matches;
-  sb.innerHTML = `<div class="sb-top">${mob ? "" : `<button type="button" class="sb-ham" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}" aria-expanded="${!sbCollapsed}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>`}<svg class="sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7" y="9" width="18" height="12.5" rx="2.5" fill="#fff"/><path d="M14.2 12.3v6l5-3z" fill="var(--u-accent)"/><rect x="11.5" y="23.5" width="9" height="1.8" rx=".9" fill="#fff"/></svg><b class="lbl">エンタメ管理</b>${mob ? `<button type="button" class="sb-tog" data-drawer="close" aria-label="メニューを閉じる">✕</button>` : ""}</div>
+  /* 左メニューはメニュー名だけ（種別・配信サイト・投稿者などは一覧の「絞り込み」で選ぶ） */
+  const mode = (m, ic, l) =>
+    `<div class="sbp${state.mode === m ? " cur" : ""}"><div class="sb-row"><button type="button" class="sb-it${state.mode === m ? " on" : ""}"${state.mode === m ? ' aria-current="page"' : ""} data-mode="${m}" title="${l}"><i aria-hidden="true">${ic}</i><span class="lbl">${l}</span></button></div></div>`;
+  /* PC：左上に☰（左メニューの折りたたみ）。上の帯と高さ・線をそろえる。ロゴはアプリアイコンと同じマーク（スマホは下メニューなので出さない） */
+  sb.innerHTML = `<div class="sb-top"><button type="button" class="sb-ham" data-sbtog="1" aria-label="${sbCollapsed ? "メニューを開く" : "メニューを折りたたむ"}" aria-expanded="${!sbCollapsed}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><svg class="sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7" y="9" width="18" height="12.5" rx="2.5" fill="#fff"/><path d="M14.2 12.3v6l5-3z" fill="var(--u-accent)"/><rect x="11.5" y="23.5" width="9" height="1.8" rx=".9" fill="#fff"/></svg><b class="lbl">エンタメ管理</b></div>
     <button type="button" class="sb-add" id="sbAdd" aria-label="追加">＋<span class="lbl"> 追加</span></button>
     <div class="sb-sec lbl">メニュー</div>
     ${MODE_KEYS.map(m => mode(m, `<span class="mic ${m}">${MODE_IC[m]}</span>`, MODE_NAME[m])).join("")}
@@ -94,17 +56,17 @@ function renderSidebar() {
 }
 /* 映画タブ：アニメ・ドラマの「種別＝映画」をまとめて出す（データは1件のまま、アニメ／ドラマ側にも出る） */
 /* バラエティタブ：ジャンル「バラエティ」（k="r"、恋愛リアリティなど）だけ。配信オリジナルのアニメ・ドラマはそれぞれの側で放送形態「配信」として出る */
-/* 作品詳細のシリーズ名から開いたときは、アニメ・ドラマ・映画・配信をまたいでそのシリーズを全部出す（xser） */
+/* 作品詳細のシリーズ名から開いたときは、アニメ・ドラマ・映画・バラエティをまたいでそのシリーズを全部出す（xser） */
 const ofKind = i =>
   (state.xser && state.series.length && state.mode !== "w" && state.mode !== "yt") ||
   ((state.mode !== "w" || i.k === "a" || i.k === "d") &&
   ((k => k === "all" || i.k === k || (state.mode === "m" && k === "d" && i.k === "f") || (k === "x" && i.k !== "a"))(curKind())) &&
   (state.mode !== "m" || mediaOf(i).media === "movie") &&
   (state.mode !== "s" || i.k === "r"));
-/* 配信サイトのクイック絞り込み（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
+/* 絞り込みの「配信」（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
 const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
 const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
-/* ジャンル：a=アニメ d=ドラマ f=映画（ドラマと関係ない実写映画） r=配信（恋愛リアリティ・バラエティなど、アニメでもドラマでもない配信番組） */
+/* ジャンル：a=アニメ d=ドラマ f=映画（ドラマと関係ない実写映画） r=バラエティ（恋愛リアリティなど、アニメでもドラマでもない配信番組） */
 const KIND_LAB = { a: "アニメ", d: "ドラマ", f: "映画", r: "バラエティ" };
 const kindTag = i => `<span class="kind ${i.k}">${KIND_LAB[i.k] || "ドラマ"}</span>`;
 /* 番組表の時刻の下に出す放送局（配信なら配信サイト） */
@@ -153,7 +115,7 @@ function periodOf(it) {
 setInterval(() => {
   const c = $("#clock");
   if (c) c.innerHTML = weekTopHtml();
-  /* 放送開始から1時間たった番組を翌週へ移すため、並びが変わるときだけ描き直す */
+  /* 放送が終わった番組を翌週へ移すため、並びが変わるときだけ描き直す */
   if (c && state.mode === "w" && !$("#layer").innerHTML) {
     const old = weekSig;
     renderWeek();
@@ -193,19 +155,16 @@ function contCours(i) {
   }
   return best;
 }
-/* PCの一覧の右側：OP・ED・主題歌（種類ごとに最初の1曲。ほかにもあれば「ほかN曲」） */
-function pcInfo(i) {
-  /* OP・ED は一覧に出さない（詳細の番組情報で見る） */
-  return "";
-}
 /* ライブラリの1行 */
 function slotRow(i) {
   return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
     <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || (state.xser && state.series.length) ? kindTag(i) : ""}</span>
     <span class="ttl"><strong>${esc(i.t)}</strong><span class="meta"><span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}</span></span>
-    ${pcInfo(i)}<span class="pwide">${stPill(i)}</span></button></div>`;
+    <span class="pwide">${stPill(i)}</span></button></div>`;
 }
-/* 番組表：放送開始から1時間たった番組は、翌週の同じ曜日へ移す（深夜25時台などは前日の枠のまま） */
+/* 放送の長さ（分）：アニメ30分・ドラマ60分。ON AIR の表示と、番組表で翌週へ移すときに使う */
+const airLen = i => (i.k === "d" ? 60 : 30);
+/* 番組表：放送が終わった番組は、翌週の同じ曜日へ移す（深夜25時台などは前日の枠のまま） */
 function nextSlotDay(i, now) {
   const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const m = mins(i.time);
@@ -215,7 +174,7 @@ function nextSlotDay(i, now) {
     day.setDate(t0.getDate() + k);
     if ((day.getDay() + 6) % 7 !== i.dow) continue;
     const start = new Date(day.getTime() + (hasT ? m : 0) * 60000);
-    const cut = hasT ? start.getTime() + 60 * 60000 : day.getTime() + 24 * 3600000;
+    const cut = hasT ? start.getTime() + airLen(i) * 60000 : day.getTime() + 24 * 3600000;
     if (cut > now.getTime()) return day;
   }
   return null;
@@ -234,7 +193,7 @@ function isFinOn(i, day) {
 /* ---------- 番組表（アニメ・ドラマ）：作品が少ないので1作品を大きいカードで。PCは1週間を曜日ごとに2列、スマホは上の曜日タブで1日ずつ ---------- */
 /* 番組表に出すのは「視聴中」で、今が放送期間の中の作品だけ（昔の作品は出さない）
    ・放送期間（開始日〜終了日）で判断：開始日の1週間前〜終了日の14日後（見逃した分を追いかける猶予）。話数の日付は使わない
-   ・終了日がない作品は開始日から半年まで。開始日がない作品は出さない
+   ・終了日がない作品は開始日から半年まで。ただし話数リストの最後の放送日が半年より後なら、そこまで延ばす（2クール以上の作品）。開始日がない作品は出さない
    ・TV SP は放送日（開始日）の1日だけの放送として同じように判断
    ・通年の作品は、視聴中ならいつでも出す */
 const AIR_GRACE = 14 * 1440,
@@ -243,11 +202,15 @@ function onAirNow(i) {
   if (coursOf(i).includes(ALLYEAR)) return true;
   const now = NOWMIN();
   const dm = d => (d ? Math.floor(new Date(d.slice(0, 10) + "T00:00:00+09:00").getTime() / 60000) : null);
-  const f = dm(i.from),
-    t = isSp(i) ? f : dm(i.to);
+  const f = dm(i.from);
+  let t = isSp(i) ? f : dm(i.to);
   if (f == null) return false;
-  /* 終了日がない作品は、放送開始から半年（2クール）までを放送中とみなす */
-  return f <= now + AIR_SOON && (t != null ? t + 1440 >= now - AIR_GRACE : f >= now - 183 * 1440);
+  /* 終了日がない作品は、放送開始から半年（2クール）か、話数リストの最後の放送日の遅いほうまでを放送中とみなす */
+  if (t == null) {
+    const last = Math.max(-Infinity, ...episodes(i).filter(e => e.t).map(e => dm(jst(e.t).day)));
+    t = Math.max(f + 183 * 1440 - AIR_GRACE - 1440, last);
+  }
+  return f <= now + AIR_SOON && t + 1440 >= now - AIR_GRACE;
 }
 /* TV SP：番組表では放送日（開始日）に1回だけ出す。spT＝放送の時刻（分）、spDay＝放送日（端末の日付の0時） */
 const isSp = i => mediaOf(i).media === "sp";
@@ -419,7 +382,7 @@ function renderWeek() {
   const nowMs = Date.now();
   const startOf = (x, i) => x.day.getTime() + mins(i.time) * 60000;
   const hasT = i => mins(i.time) < 9999;
-  /* 放送中（開始から30分）は ON AIR、その次に始まる枠を NEXT（どちらも今日以降の枠でいちばん近いもの） */
+  /* 放送中（開始から放送の長さの間）は ON AIR、その次に始まる枠を NEXT（どちらも今日以降の枠でいちばん近いもの） */
   let liveIds = new Set(),
     nxId = null;
   for (const x of gAll) {
@@ -427,7 +390,7 @@ function renderWeek() {
     for (const i of x.list) {
       if (!hasT(i)) continue;
       const st = startOf(x, i);
-      if (st <= nowMs && nowMs < st + 30 * 60000) liveIds.add(i.id + "@" + x.k);
+      if (st <= nowMs && nowMs < st + airLen(i) * 60000) liveIds.add(i.id + "@" + x.k);
       else if (st > nowMs && !nxId) nxId = i.id + "@" + x.k;
     }
     if (nxId) break;
@@ -783,12 +746,12 @@ const go = () => {
   render();
   scrollTo(0, 0);
 };
-/* シリーズの作品一覧を開く（アニメ・ドラマ・映画・配信をまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
+/* シリーズの作品一覧を開く（アニメ・ドラマ・映画・バラエティをまたいで出す）。g＝番組表・YouTubeから開いたときに使うメニュー */
 function showSeries(name, g) {
   close();
   if (!["a", "d", "m", "s"].includes(state.mode)) setMode(g === "d" ? "d" : "a");
   if (!state.xser)
     xserBack = { mode: state.mode, st: Object.fromEntries([...FKEEP, "sort", "limit"].map(k => [k, Array.isArray(state[k]) ? [...state[k]] : state[k]])), col: [...collapsed], y: scrollY };
-  Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], sort: "old", limit: 200 });
+  Object.assign(state, { series: [name], xser: true, sf: [], era: [], cour: [], type: [], limit: 200 });
   go();
 }

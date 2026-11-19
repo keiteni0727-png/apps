@@ -18,70 +18,12 @@ const SHELL_ACTIONS = [
 ];
 /* 左メニュー・上の切り替え・未視聴／未入力のスイッチ・見出しの開閉 */
 const NAV_ACTIONS = [
-  /* ▸▾：メニューの下の項目を開く（開くとほかはたたむ）／たたむ */
-  [
-    "[data-sbfold]",
-    el => {
-      const m = el.dataset.sbfold;
-      if (sbFold.has(m)) sbOnly(m);
-      else {
-        sbFold.add(m);
-        ls.set("adb.v3.sbf", [...sbFold]);
-      }
-      renderSidebar();
-    },
-  ],
-  /* アニメ・ドラマの下：TV・映画などの種別 */
-  [
-    "[data-tygo]",
-    el => {
-      leaveXser();
-      setMode(el.dataset.go);
-      state.type = el.dataset.tygo ? [el.dataset.tygo] : [];
-      state.limit = 200;
-      go();
-    },
-  ],
-  /* バラエティの下：配信サイト別 */
-  [
-    "[data-skgo]",
-    el => {
-      leaveXser();
-      setMode("s");
-      state.vod = el.dataset.skgo;
-      state.limit = 200;
-      go();
-    },
-  ],
-  /* 映画の下：アニメ映画／実写映画 */
-  [
-    "[data-mk]",
-    el => {
-      if (el.dataset.go) {
-        leaveXser();
-        setMode(el.dataset.go);
-      }
-      state.sub = el.dataset.mk;
-      state.limit = 200;
-      render();
-    },
-  ],
-  /* 上の切り替え：YouTubeは投稿者、映画はアニメ映画／実写、番組表は曜日 */
+  /* 番組表の曜日タブ（スマホ） */
   [
     "[data-tb]",
     el => {
-      const v = el.dataset.tb;
-      if (el.dataset.go) setMode(el.dataset.go);
-      if (state.mode === "yt") {
-        yst.author = v;
-        saveYtUI();
-      } else if (state.mode === "m") {
-        state.sub = v;
-        state.limit = 200;
-      } else if (state.mode === "w") {
-        state.wday = v;
-        state.unOnly = false;
-      }
+      state.wday = el.dataset.tb;
+      state.unOnly = false;
       go();
     },
   ],
@@ -111,16 +53,6 @@ const NAV_ACTIONS = [
       render();
     },
   ],
-  [
-    "[data-vod]",
-    el => {
-      const v = el.dataset.vod;
-      state.vod = state.vod === v ? "" : v;
-      state.limit = 200;
-      state.fOpen = "";
-      render();
-    },
-  ],
   /* スマホの下メニュー・「その他」のタイル・上の「‹」 */
   [
     "[data-bnav]",
@@ -130,7 +62,6 @@ const NAV_ACTIONS = [
       if ($("#layer").innerHTML) close();
       closeDD();
       leaveXser();
-      if (m !== "o") sbOnly(m);
       if (state.mode === m && m !== "o") {
         scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -139,19 +70,15 @@ const NAV_ACTIONS = [
       go();
     },
   ],
-  /* 左メニューの名前：そのメニューの「すべて」 */
+  /* 左メニューの名前 */
   [
     "[data-mode]",
     el => {
       const m = el.dataset.mode;
-      sbOnly(m);
-      renderSidebar();
       const wasX = leaveXser();
-      if (!wasX && state.mode === m && !state.type.length && state.sub === "all" && !(m === "s" && state.vod)) return;
+      /* 今のメニューをもう一度押したら先頭へ（スマホの下メニューと同じ） */
+      if (!wasX && state.mode === m) return scrollTo({ top: 0, behavior: "smooth" });
       setMode(m);
-      state.type = [];
-      state.sub = "all";
-      if (m === "s") state.vod = "";
       go();
     },
   ],
@@ -176,7 +103,7 @@ const NAV_ACTIONS = [
 ];
 /* フィルタ・ソートの折りたたみは、外を押したら閉じる */
 function closeDropdownOnOutsideClick(e) {
-  if (e.target.closest(".fsdrop,.fsbar,.svbar,.frow,.fbar,.fsh,.fsum,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
+  if (e.target.closest(".fsdrop,.fsbar,.frow,.fbar,.fsh,.fsum,#layer,#subPop,.u-toast") || !e.target.isConnected) return false;
   if ((state.mode === "sr" || state.mode === "mu") && lui.fp) {
     lui.fp = "";
     lui.fSub = "";
@@ -249,45 +176,14 @@ const COMMON_ACTIONS = [
   ["[data-close]", () => close()],
   ["#sbAdd,#hAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
 ];
-/* スマホ：☰メニューの開閉。メニュー内で画面を選んだら閉じる */
-function setDrawer(on) {
-  /* スマホは下メニューになったので、左から出すメニューは開かない（端からのスワイプで裏で開かないように） */
-  if (on && matchMedia("(max-width:899px)").matches) on = false;
-  document.body.classList.toggle("drawer", on);
-  const b = document.querySelector(".hmenu");
-  if (b) b.setAttribute("aria-expanded", on);
-}
-function onDrawerClick(e) {
-  const d = e.target.closest("[data-drawer]");
-  if (d) {
-    /* PCの☰は左メニューの折りたたみ（«»と同じ） */
-    if (d.dataset.drawer === "open" && !matchMedia("(max-width:899px)").matches) {
-      sbCollapsed = !sbCollapsed;
-      ls.set("adb.v3.sbc", sbCollapsed);
-      document.body.classList.toggle("sbc", sbCollapsed);
-      renderSidebar();
-      return true;
-    }
-    if (d.dataset.drawer === "open") renderSidebar();
-    setDrawer(d.dataset.drawer === "open");
-    return true;
-  }
-  if (document.body.classList.contains("drawer") && e.target.closest("#sb [data-mode],#sb [data-go],#sb [data-tb],#sb [data-gear],#sbAdd"))
-    setDrawer(false);
-  return false;
-}
-/* スワイプ（共通部品 u-swipe.js）：メニューは指に合わせて開閉、画面は指に合わせて横に動かし、離すと番組表／ライブラリなど隣の画面へ */
+/* スワイプ（共通部品 u-swipe.js）：スマホの番組表で、画面を指に合わせて横に動かし、離すと隣の曜日へ */
 const segBtns = () => [...document.querySelectorAll("#main .wtabs [data-tb]")];
 const segIdx = () => segBtns().findIndex(b => b.getAttribute("aria-selected") === "true");
 uSwipe({
-  sb: "#sb",
-  scrim: ".dscrim",
-  setDrawer,
-  edge: 24,
   blocked: () => !!($("#layer").innerHTML || state.fOpen || yst.fp),
   pager: {
     el: "#main",
-    block: "input,select,textarea,#ddPop,.fpop,.frow,.fbar,.fsh,.fsum,.bnav,.hseg,.vodbar,.svbar,.chips,#subPop,.u-toast",
+    block: "input,select,textarea,#ddPop,.fpop,.frow,.fbar,.fsh,.fsum,.bnav,.chips,#subPop,.u-toast",
     can: dir => {
       const i = segIdx();
       return i >= 0 && i + dir >= 0 && i + dir < segBtns().length;
@@ -299,14 +195,12 @@ uSwipe({
   },
 });
 matchMedia("(max-width:899px)").addEventListener("change", () => {
-  setDrawer(false);
   renderSidebar();
-  /* 未入力の絞り込みはPCだけ・番組表はPCとスマホで形が違うので、幅が変わったら描き直す */
-  if (state.missOnly || state.mode === "w") render();
+  /* 番組表はPCとスマホで形が違うので、幅が変わったら描き直す */
+  if (state.mode === "w") render();
 });
 const CLICK_HANDLERS = [
   onDDClick,
-  onDrawerClick,
   e => runActions(SHELL_ACTIONS, e),
   onSettingsClick,
   e => runActions(NAV_ACTIONS, e),

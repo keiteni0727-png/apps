@@ -50,7 +50,7 @@ function arcEditHtml() {
       <input class="ar-a" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="最初の話"><span>〜</span><input class="ar-b" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="最後の話"><span>話</span>
       <button type="button" class="del" data-ardel="${i}" aria-label="この編を削除">✕</button></div>`;
   return `<div class="spaste arced">
-    <p class="hint" style="margin:0 0 8px">長い作品を「〇〇編」で区切ります。話数は登録済みの話の番号で入れてください（最後の話を空けると、最後まで）。</p>
+    <p class="hint" style="margin:0 0 8px">話数は登録済みの番号で（最後を空けると最後まで）</p>
     <div class="arl">${arcEdit.length ? arcEdit.map(row).join("") : `<p class="empty" style="padding:10px 0;text-align:left">まだ編がありません。下のボタンで追加してください。</p>`}</div>
     <button type="button" class="u-btn ghost sm" id="arAdd">＋ 編を追加</button>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="arCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="arSave">保存</button></div></div>`;
@@ -244,7 +244,7 @@ function epEditorHtml(it) {
       : `<p class="empty" style="padding:14px">話がありません。下のボタンで追加してください。</p>`
   }</div>
     <div class="edfoot"><button type="button" id="erAdd">＋ 1話追加</button><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${l.length ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><button type="button" id="erBulkGo">話追加</button></div>
-    <p class="hint" style="margin:8px 0 0">日付を変えると、その後の話も1週間おきに自動でずれます。時刻は${esc(it.time || "各話の時刻")}のままです。</p>
+    
     <div class="ffoot"><button type="button" class="u-btn ghost" id="erCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="erSave">話数を保存</button></div>`;
 }
 /* 基本情報：放送・主題歌・リンクのカード。カードの「編集」ボタンで、そのカードの項目をその場で編集 */
@@ -517,8 +517,23 @@ async function saveTitle(id, patch, msg) {
   }
 }
 const setStatus = (it, s) => {
-  if (it.s !== s) saveTitle(it.id, { s }, `「${s}」にしました`);
+  if (it.s === s) return;
+  saveTitle(it.id, { s }, `「${s}」にしました`);
+  if (s === "視聴済み") watchAll(it);
 };
+/* 「視聴済み」にしたら、チェックが付いていない話も全部チェックする（見た日時は持たない＝視聴記録には出ない） */
+function watchAll(it) {
+  const l = episodes(it),
+    ch = [];
+  l.forEach((x, i) => {
+    if (!x.w) {
+      x.w = true;
+      x.wt = 0;
+      ch.push(i);
+    }
+  });
+  if (ch.length) saveWatch(it, l, ch);
+}
 /* 視聴チェックからステータスを自動で決める：全話✓→視聴済み、1話でも✓→視聴中（「見ない」はそのまま） */
 function autoStatus(it, list) {
   if (it.s === "見ない" || !list.length) return null;
@@ -860,6 +875,8 @@ const DETAIL_ACTIONS = [
       l.forEach((x, i) => {
         if (aired(x) && !x.w) {
           x.w = true;
+          /* まとめて付けた印：押した日時に0.5を足して区別する（視聴記録には出すが、見る時間帯の集計には入れない） */
+          x.wt = Date.now() + 0.5;
           ch.push(i);
         }
       });
@@ -1300,6 +1317,41 @@ function maybeAskSgFix() {
       saveTitle(g.it.id, { songs });
     });
     toast(`${n}曲を「全話」に戻しました`);
+  });
+}
+/* ---------- 一度だけの整理：「視聴済み」なのにチェックが付いていない話がある作品 ----------
+   一覧で見せて、確認してから全部チェックする（見た日時は持たない。この端末で一度だけ聞く） */
+const WFIX_KEY = "entame.wfix.v1";
+let wFixAsked = false;
+function maybeAskWatchFix() {
+  if (wFixAsked || !loaded || !syncOk.titles || !syncOk.progress) return;
+  /* 曲の整理を聞いている間は、閉じてから聞く */
+  if ($("#sgFix")) return setTimeout(maybeAskWatchFix, 1500);
+  wFixAsked = true;
+  try {
+    if (localStorage.getItem(WFIX_KEY)) return;
+  } catch (e) {}
+  const list = items.filter(it => it.s === "視聴済み" && episodes(it).some(e => !e.w)).map(it => ({ it, n: episodes(it).filter(e => !e.w).length }));
+  if (!list.length) return;
+  const box = document.createElement("div");
+  box.id = "sgFix";
+  box.innerHTML = `<div class="sgfix-scrim"></div><div class="sgfix" role="dialog" aria-modal="true" aria-labelledby="wFixT">
+    <h3 id="wFixT">視聴済みの作品の未チェックの話を、全部チェックしますか？</h3>
+    <p>${list.length}作品・${list.reduce((a, g) => a + g.n, 0)}話あります。</p>
+    <ul>${list.map(g => `<li><b>${esc(g.it.t)}</b><span><em>未チェック ${g.n}話</em></span></li>`).join("")}</ul>
+    <div class="sgfix-b"><button type="button" class="u-btn" data-wfix="0">そのまま</button><button type="button" class="u-btn primary" data-wfix="1">全部チェックする</button></div>
+  </div>`;
+  document.body.appendChild(box);
+  box.addEventListener("click", e => {
+    const b = e.target.closest("[data-wfix]");
+    if (!b) return;
+    try {
+      localStorage.setItem(WFIX_KEY, "1");
+    } catch (er) {}
+    box.remove();
+    if (b.dataset.wfix !== "1") return;
+    list.forEach(g => watchAll(g.it));
+    toast(`${list.length}作品の話を全部チェックしました`);
   });
 }
 /* 話数の編集：⠿で1話ずつ並び替え（しくみは shared/u-core.js の GRIP） */
