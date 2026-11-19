@@ -560,7 +560,7 @@ function episodes(it) {
   const ks = m ? epKeys(p.eps) : null;
   return p.eps.map((e, i) => {
     const v = m ? +m[ks[i]] || 0 : e.w ? +e.wt || 1 : 0;
-    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp };
+    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp, go: e.go || 0 };
   });
 }
 /* 話数リストまるごとの保存用の中身（eps の w・wt は前の版の画面が開いたままの端末のための控え。読むときは w の印を使う） */
@@ -571,7 +571,7 @@ function progDoc(list) {
     if (e.w) w[ks[i]] = e.wt || 1;
   });
   return {
-    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.go && e.go === e.t ? { go: e.go } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
     w,
   };
 }
@@ -639,7 +639,8 @@ const IS_PC = () => matchMedia("(min-width:900px)").matches;
 /* ---------- 話数の日付のチェック（話数タブの「要確認」・未入力アラートの「日付の確認」） ----------
    rev＝前の話より前の日付 / gap＝前の話から180日以上空いている / start＝1話の日付が開始日と違う /
    dow＝放送曜日と1日ずれている（深夜枠で実際の日付と「木 26:00」の書き方が混ざったとき。-1＝1日前にずらす、1＝1日後に）
-   映画は対象外。OVAは発売の間が空くことが多いので gap を見ない。全話が同じ日（まとめて配信）のときは曜日を見ない */
+   映画は対象外。OVAは発売の間が空くことが多いので gap を見ない。
+   「問題なし」を押した話は gap を見ない（go＝押したときの日時。日付を変えたらまたチェックする）。全話が同じ日（まとめて配信）のときは曜日を見ない */
 const dayNo = d => Math.round(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 86400e3);
 const DATE_WHY = { rev: "前の話より前の日付です", gap: "前の話から半年以上空いています", start: "開始日と違います", dow: "放送曜日と1日ずれています" };
 function epDateCheck(it) {
@@ -657,7 +658,7 @@ function epDateCheck(it) {
     if (prev >= 0) {
       const g = dayNo(d) - dayNo(ds[prev]);
       if (g < 0) mark(i, "rev");
-      else if (g >= 180 && md !== "ova") mark(i, "gap");
+      else if (g >= 180 && md !== "ova" && !(l[i].go && l[i].go === l[i].t)) mark(i, "gap");
     }
     prev = i;
   });

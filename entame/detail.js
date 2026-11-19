@@ -160,7 +160,7 @@ function epListHtml(it, eps) {
     const st = e.w ? " seen" : fut ? " future" : " unseen";
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why ? `<span class="tlwhy">${why}</span>` : ""}</span>`;
+    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why ? `<span class="tlwhy">${why}${wn.d.gap ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
     return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
@@ -909,6 +909,17 @@ const DETAIL_ACTIONS = [
         }
       });
       if (n) saveEps(it, l, `${n}話の日付を1日ずらしました`);
+    },
+  ],
+  /* 日付のアラート：半年以上空いていても問題ない話を確認済みにする（その話の日付を変えるまで） */
+  [
+    "[data-gapok]",
+    (el, it) => {
+      const l = episodes(it);
+      const e = l[+el.dataset.gapok];
+      if (!e || !e.t) return;
+      e.go = e.t;
+      saveEps(it, l, `${epVal(e.n) ? epVal(e.n) + "話" : e.n}の空きを確認済みにしました`);
     },
   ],
   /* 日付のアラート：開始日を1話の日付にする（毎週の曜日も合わせる） */
