@@ -259,7 +259,7 @@ function gridHtml(g) {
     <div class="gw"><table class="sgt"><thead><tr><th class="gno"></th>${head.join("")}<th class="gx"></th></tr></thead><tbody>${g.rows
       .map((r, i) => `<tr class="${gNum(r[g.role.n]) == null ? "bad" : ""}" data-gr="${i}"><td class="gno">${i + 1}</td>${r.map((v, c) => cell(v, i, c)).join("")}<td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td></tr>`)
       .join("")}</tbody></table></div>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">貼り直す</button><button type="button" class="u-btn pri primary" id="gRead" ${g.role.n < 0 ? "disabled" : ""}>この形で読み取る</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead" ${g.role.n < 0 ? "disabled" : ""}>この形で読み取る</button></div></div>`;
 }
 /* 表から各話を読み取る（話数が読めない行は飛ばす・同じ話数は最初の行） */
 function gridParse(it, g) {
@@ -339,9 +339,9 @@ function subPasteHtml(it) {
   if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
-    <p class="hint" style="margin:0 0 8px">Wikipediaの「各話リスト」などをそのまま貼り付けてください。話数とサブタイトルだけを読み取り、ほかの列（絵コンテ・演出など）は無視します。形が合わず読み取れないときは「整形」で表にして直せます。</p>
+    <p class="hint" style="margin:0 0 8px">Wikipediaの「各話リスト」などをそのまま貼り付けてください。話数とサブタイトルだけを読み取り、ほかの列（絵コンテ・演出など）は無視します。読み取った結果がおかしいときは、次の画面の「整形」で表にして直せます。</p>
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length,
     same = p.rows.filter(r => r.idx >= 0 && r.old === r.sub && !r.dateCh).length,
     miss = p.rows.filter(r => r.idx < 0).length,
@@ -358,10 +358,10 @@ function subPasteHtml(it) {
         : "";
   return `<div class="spaste">
     <p class="sp-sum">${p.rows.length}話分を読み取りました。<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。</p>
-    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " miss" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
+    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
     ${dch ? `<div class="dconfirm"><b>貼り付けた放送日が、登録済みの日付と${dch}話分違います。</b><label class="yr"><input type="checkbox" id="spDate" ${p.useDate ? "checked" : ""}>日付も貼り付けた内容に更新する（時刻はそのまま）</label></div>` : ""}
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">${p.fromGrid ? "整形に戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
 }
 /* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
 function nextIdx(eps) {
@@ -893,9 +893,10 @@ function readPaste(it) {
   const text = $("#spText").value;
   const parsed = parseSubtitles(text);
   if (!parsed.length) {
-    subPaste = { text };
+    /* 1話も読み取れないときは、そのまま整形の表を開く */
+    subPaste = { text, grid: gridFrom(text) };
     refreshSheet();
-    toast("話数とサブタイトルを読み取れませんでした。「整形」を押すと、表にして列を選んで読み取れます");
+    toast("読み取れなかったので、表で列を選んでください");
     return;
   }
   buildPaste(it, parsed, text);
@@ -1299,7 +1300,7 @@ const PASTE_ACTIONS = [
   [
     "#spBack",
     () => {
-      subPaste = subPaste.fromGrid ? { text: subPaste.text, grid: subPaste.fromGrid } : { text: subPaste.text };
+      subPaste = { text: subPaste.text };
       refreshSheet();
     },
   ],
@@ -1308,9 +1309,9 @@ const PASTE_ACTIONS = [
   [
     "#spFmt",
     () => {
-      const text = $("#spText") ? $("#spText").value : subPaste.text || "";
-      if (!text.trim()) return toast("先に各話リストを貼り付けてください");
-      subPaste = { text, grid: gridFrom(text) };
+      /* 読み取った結果の画面から開く。前に整形した表があれば続きから。「戻る」で結果の画面へ */
+      const p = subPaste;
+      subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text), back: p };
       refreshSheet();
     },
   ],
@@ -1344,7 +1345,7 @@ const PASTE_ACTIONS = [
   [
     "#gBack",
     () => {
-      subPaste = { text: subPaste.text };
+      subPaste = subPaste.back || { text: subPaste.text };
       refreshSheet();
     },
   ],
