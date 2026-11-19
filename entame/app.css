@@ -1378,19 +1378,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .dd-yb{width:38px;height:34px;border:1px solid var(--u-line);border-radius:10px;background:var(--u-bg);color:var(--u-ink);font-size:18px;line-height:1;cursor:pointer}
 .dd-yb:hover{background:var(--u-soft)}
 /* 一度だけの確認：曲の範囲を全話に戻す */
-#sgFix{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px}
-.sgfix-scrim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-.sgfix{position:relative;width:min(520px,100%);max-height:min(80vh,640px);display:flex;flex-direction:column;background:var(--u-surface);color:var(--u-ink);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.3);padding:18px}
-.sgfix h3{margin:0 0 6px;font-size:16px}
-.sgfix p{margin:0 0 10px;font-size:13px;color:var(--u-sub)}
-.sgfix ul{list-style:none;margin:0;padding:0;overflow:auto;flex:1;min-height:0;border-top:1px solid var(--u-line)}
-.sgfix li{padding:8px 0;border-bottom:1px solid var(--u-soft);display:flex;flex-direction:column;gap:4px;font-size:13px}
-.sgfix li span{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.sgfix li i{font-style:normal;font-size:11px;font-weight:700;padding:1px 6px;border-radius:5px;background:var(--u-soft)}
-.sgfix li em{font-style:normal;margin-left:auto;font-size:12px;color:var(--u-sub);white-space:nowrap}
-.sgfix-b{display:flex;gap:8px;justify-content:flex-end;padding-top:12px}
-.sgfix-b button{height:40px;padding:0 16px;border:1px solid var(--u-line);border-radius:12px;background:var(--u-surface);color:var(--u-ink);font:inherit;font-size:14px;font-weight:700;cursor:pointer}
-.sgfix-b button.primary{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
 /* YouTube詳細：上段のジャンル（押すと編集）。作品の種別ラベルと同じ形 */
 .dhead .meta .dmt.lab{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent);font-weight:700}
 

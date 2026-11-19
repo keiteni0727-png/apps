@@ -356,11 +356,11 @@ const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="
 function renderDetail(it) {
   const cs = coursOf(it);
   const stv = mediaLabels(it);
-  /* 使われた話を入れていない曲は、作品や曲の種類に関係なく「全話」と出す（話数からの自動の範囲は出さない） */
+  /* 使われた話を入れていない曲は、話数リストの最初〜最後を出す（保存は空のまま。話数が増えると表示も変わる） */
   const sl = songsOf(it);
   /* 1曲1行：曲名／アーティスト・使われた話。同じ種類が複数ある作品だけ話数の列を出す */
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
-  /* 話数の列：話が2話以上ある作品は常に出す。範囲を入れていない曲はすべて「全話」 */
+  /* 話数の列：話が2話以上ある作品は常に出す */
   const showRng = episodes(it).length > 1 || byType.some(([, l]) => l.length > 1 && l.some(([x]) => rangeList(x).length));
   /* 曲の行のデータ（種類の順・同じ種類の中は登録順）。rng＝使われた話 */
   /* 視聴中の作品は、最後に見た話（並びで一番後ろの視聴済みの話）で流れた曲を目立たせる。now＝塗るラベルの番号 */
@@ -370,7 +370,7 @@ function renderDetail(it) {
   const songRows = byType.flatMap(([tp, l]) =>
     l.map(([x, k]) => {
       const rl = rangeList(x);
-      const rng = showRng ? (rl.length ? rl : ["全話"]) : [];
+      const rng = showRng ? (rl.length ? rl : [spanTxt(epSpan(it))]) : [];
       const now = !hasNow || !rng.length ? -1 : rl.length ? rangeHit(x, nowN) : 0;
       return { k: tp, x, i: k, rng, now };
     }),
@@ -1251,59 +1251,6 @@ function onDetailClick(e) {
   return !!it && runActions(DETAIL_ACTIONS, e, it);
 }
 
-/* ---------- 一度だけの整理：自動で入った「1話〜最後の話」の範囲を空（＝全話）に戻す ----------
-   以前は編集画面を開くと範囲が空の曲に「1〜最後の話」が入り、保存するとそのまま残っていた。
-   範囲がちょうど「最初の話〜最後の話」の曲を一覧で見せて、確認してから戻す（この端末で一度だけ聞く） */
-const SGFIX_KEY = "entame.sgfix.v1";
-let sgFixAsked = false;
-function sgFixList() {
-  const out = [];
-  items.forEach(it => {
-    const sp = epSpan(it);
-    if (!sp || sp[1] <= sp[0]) return;
-    const hit = songsOf(it).filter(x => x.a === sp[0] && x.b === sp[1] && !exOf(x).length);
-    if (hit.length) out.push({ it, sp, hit });
-  });
-  return out;
-}
-function maybeAskSgFix() {
-  if (sgFixAsked || !loaded || !syncOk.titles || !syncOk.progress) return;
-  sgFixAsked = true;
-  try {
-    if (localStorage.getItem(SGFIX_KEY)) return;
-  } catch (e) {}
-  const list = sgFixList();
-  if (!list.length) return;
-  const n = list.reduce((a, g) => a + g.hit.length, 0);
-  const box = document.createElement("div");
-  box.id = "sgFix";
-  box.innerHTML = `<div class="sgfix-scrim"></div><div class="sgfix" role="dialog" aria-modal="true" aria-labelledby="sgFixT">
-    <h3 id="sgFixT">曲の「使われた話」を全話に戻しますか？</h3>
-    <p>前に自動で入った「1話〜最後の話」の範囲が残っている曲が${n}曲あります。戻すと「全話」と表示されます。</p>
-    <ul>${list.map(g => `<li><b>${esc(g.it.t)}</b>${g.hit.map(x => `<span><i class="${SG_CLS[x.type] || ""}">${esc(x.type)}</i>${esc(songTA(x).st || x.s || "")}<em>${g.sp[0]}〜${g.sp[1]}話 → 全話</em></span>`).join("")}</li>`).join("")}</ul>
-    <div class="sgfix-b"><button type="button" class="u-btn" data-sgfix="0">そのまま</button><button type="button" class="u-btn primary" data-sgfix="1">全話に戻す</button></div>
-  </div>`;
-  document.body.appendChild(box);
-  box.addEventListener("click", e => {
-    const b = e.target.closest("[data-sgfix]");
-    if (!b) return;
-    try {
-      localStorage.setItem(SGFIX_KEY, "1");
-    } catch (er) {}
-    box.remove();
-    if (b.dataset.sgfix !== "1") return;
-    list.forEach(g => {
-      const songs = songsOf(g.it).map(x => {
-        if (!g.hit.includes(x)) return x;
-        const y = { ...x, a: null, b: null };
-        delete y.one;
-        return y;
-      });
-      saveTitle(g.it.id, { songs });
-    });
-    toast(`${n}曲を「全話」に戻しました`);
-  });
-}
 /* 話数の編集：⠿で1話ずつ並び替え（しくみは shared/u-core.js の GRIP） */
 SORT_DONE.ep = (box, rows) => {
   if (!epEdit) return;

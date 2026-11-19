@@ -181,6 +181,8 @@ const songsOf = i => i.songs || [];
    s は検索用に「曲名 アーティスト」を並べたもの。st がない古いデータは s をそのまま曲名として扱う */
 const songTA = x => (x.st !== undefined ? { st: x.st || "", ar: x.ar || "" } : { st: x.s || "", ar: "" });
 const songJoin = (st, ar) => [st.trim(), ar.trim()].filter(Boolean).join(" ");
+/* 範囲を入れていない曲の表示：話数リストの最初〜最後（話数がなければ「全話」） */
+const spanTxt = sp => (!sp ? "全話" : sp[0] === sp[1] ? `${sp[0]}話` : `${sp[0]}〜${sp[1]}話`);
 function epSpan(it) {
   const ns = (it ? episodes(it) : []).map(e => epNum(e.n)).filter(n => n != null);
   return ns.length ? [Math.min(...ns), Math.max(...ns)] : null;
@@ -462,7 +464,6 @@ async function initStore() {
     rebuild();
     render();
     if (openId && !epEdit) refreshSheet();
-    setTimeout(maybeAskSgFix, 800);
   };
   /* 読み込みが止まったときは U.sync が自動でつなぎ直す。ここでは「同期中」に戻すだけ */
   const onErr = k => () => {
