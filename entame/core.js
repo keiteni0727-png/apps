@@ -639,7 +639,7 @@ const IS_PC = () => matchMedia("(min-width:900px)").matches;
 /* ---------- 話数の日付のチェック（話数タブの「要確認」・未入力アラートの「日付の確認」） ----------
    rev＝前の話より前の日付 / gap＝前の話から180日以上空いている / start＝1話の日付が開始日と違う /
    dow＝放送曜日と1日ずれている（深夜枠で実際の日付と「木 26:00」の書き方が混ざったとき。-1＝1日前にずらす、1＝1日後に）
-   映画は対象外。全話が同じ日（まとめて配信）のときは曜日を見ない */
+   映画は対象外。OVAは発売の間が空くことが多いので gap を見ない。全話が同じ日（まとめて配信）のときは曜日を見ない */
 const dayNo = d => Math.round(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 86400e3);
 const DATE_WHY = { rev: "前の話より前の日付です", gap: "前の話から半年以上空いています", start: "開始日と違います", dow: "放送曜日と1日ずれています" };
 function epDateCheck(it) {
@@ -657,7 +657,7 @@ function epDateCheck(it) {
     if (prev >= 0) {
       const g = dayNo(d) - dayNo(ds[prev]);
       if (g < 0) mark(i, "rev");
-      else if (g >= 180) mark(i, "gap");
+      else if (g >= 180 && md !== "ova") mark(i, "gap");
     }
     prev = i;
   });
