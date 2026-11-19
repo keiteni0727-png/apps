@@ -740,19 +740,6 @@ const normVod = v => {
   if (/crunchyroll/.test(s)) return "crunchyroll";
   return s;
 };
-/* タイトルの重複：空白・記号・全角半角・大文字小文字の違いは同じとみなす。items が変わったときだけ数え直す */
-const normTitle = t => String(t || "").normalize("NFKC").toLowerCase().replace(/[\s・:：\-－!！?？、。,.「」『』（）()]/g, "");
-let dupCache = { src: null, set: new Set() };
-function dupTitles() {
-  if (dupCache.src === items) return dupCache.set;
-  const cnt = {};
-  items.forEach(x => {
-    const k = normTitle(x.t);
-    if (k) cnt[k] = (cnt[k] || 0) + 1;
-  });
-  dupCache = { src: items, set: new Set(Object.keys(cnt).filter(k => cnt[k] > 1)) };
-  return dupCache.set;
-}
 function missingOf(i) {
   const m = mediaOf(i);
   const md = m.media,
@@ -800,8 +787,6 @@ function missingOf(i) {
   /* 配信URLのサイトが、作品の配信サイトに入っていない（URLからサイトが分かるときだけ） */
   const us = vurlSite(i.vurl);
   if (us && ![...m.plat, ...m.vods].some(v => normVod(v) === us)) add("配信URLのずれ", "f-vurl");
-  /* 同じタイトルの作品がほかにもある（二重登録かも） */
-  if (dupTitles().has(normTitle(i.t))) add("タイトルの重複", "f-t");
   return out;
 }
 /* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
@@ -814,9 +799,9 @@ const MISS_GROUPS = [
   ["話数", ["話数", "話数の表記", "話数の抜け", "話数の重複", "サブタイトル", "日付の確認", "未チェックの話"]],
   ["基本情報", ["ステータス", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "公式サイト", "配信URL"]],
   ["曲", ["OP・ED・主題歌", "曲名", "アーティスト", "曲の話数"]],
-  ["ずれ・重複", ["ステータスのずれ", "クールのずれ", "配信URLのずれ", "タイトルの重複"]],
+  ["ずれ", ["ステータスのずれ", "クールのずれ", "配信URLのずれ"]],
 ];
-const MISS_KEYS = ["ステータス", "話数", "話数の表記", "話数の抜け", "話数の重複", "日付の確認", "未チェックの話", "ステータスのずれ", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "クールのずれ", "OP・ED・主題歌", "曲名", "アーティスト", "曲の話数", "公式サイト", "配信URL", "配信URLのずれ", "タイトルの重複"];
+const MISS_KEYS = ["ステータス", "話数", "話数の表記", "話数の抜け", "話数の重複", "日付の確認", "未チェックの話", "ステータスのずれ", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "クールのずれ", "OP・ED・主題歌", "曲名", "アーティスト", "曲の話数", "公式サイト", "配信URL", "配信URLのずれ"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);

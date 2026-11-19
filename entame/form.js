@@ -296,7 +296,6 @@ function schedText() {
   return `毎週 <b>${DOW[d]}曜${t ? " " + esc(t) : ""}</b> ${f.media === "stream" ? "配信" : "放送"}　${fmtD(f.from)}〜`;
 }
 const ONLY_A = {
-  "f-t": ["タイトル", ["title"]],
   fSeries: ["シリーズ", ["series"]],
   "f-time": ["放送時間", ["time"]],
   fMedia: ["放送局・配信", ["media"]],
