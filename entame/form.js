@@ -697,11 +697,6 @@ async function submitForm() {
       return;
     }
   }
-  /* 編集画面で「視聴済み」にしたら、未チェックの話も全部チェックする */
-  if (f.id && patch.s === "視聴済み") {
-    const it0 = items.find(x => x.id === f.id);
-    if (it0 && it0.s !== "視聴済み") setTimeout(() => watchAll(items.find(x => x.id === f.id) || it0), 0);
-  }
   if (f.id && f.inline) {
     form = null;
     await saveTitle(f.id, patch, "保存しました");
