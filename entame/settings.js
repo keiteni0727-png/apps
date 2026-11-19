@@ -102,11 +102,12 @@ const SET_IC = {
   groups: '<circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 14.5a5 5 0 0 1 6.5 4.5"/>',
   bk: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  wp: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   save: '<path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/><path d="m9.5 13.5 2 2 3.5-4"/>',
   out: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
 };
 const setIc = k => `<svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SET_IC[k]}</svg>`;
-const SET_TITLE = { bk: "バックアップ", trash: "ゴミ箱", ...Object.fromEntries(MKEYS) };
+const SET_TITLE = { bk: "バックアップ", trash: "ゴミ箱", wp: "Wikipediaから取得", ...Object.fromEntries(MKEYS) };
 function settingsHtml() {
   const th = U.theme();
   if (setPage) {
@@ -114,6 +115,7 @@ function settingsHtml() {
     const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3>${isM ? `<button type="button" class="u-btn sm setedit${setEdit ? " pri" : ""}" data-setedit="1">${setEdit ? "完了" : "編集"}</button>` : ""}<button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
     if (setPage === "bk") return head + backupHtml();
     if (setPage === "trash") return head + trashHtml();
+    if (setPage === "wp") return head + wpBulkHtml();
     const ser = setPage === "series";
     return `${head}${ser ? seriesSettingsHtml() : masterListHtml()}
     <div class="sernew madd2"><input id="maddIn" autocomplete="off" placeholder="${ser ? "追加するシリーズ名" : "追加する名前"}"><button type="button" class="u-btn sm" data-madd="1">＋ 追加</button></div>`;
@@ -126,9 +128,82 @@ function settingsHtml() {
     <div class="setsec">選択肢の管理</div>
     <div class="setgrp">${MKEYS.map(([k, l]) => row(k, l, M(k).length)).join("")}</div>
     <div class="setsec">データ</div>
-    <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}</div>
+    <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}${row("wp", "Wikipediaから取得", `未入力${wpTargets().length}作品`)}</div>
     <div class="setsec">アカウント</div>
     <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv">${saveNoteHtml()}</span></div><button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
+}
+/* ---------- Wikipediaからまとめて取得：サブタイトルが未入力のアニメ（今クール・通年はアラートと同じく除く）。空欄のサブタイトルだけ埋める ---------- */
+let wpBulk = null; // {run, i, n, rows:[{id, t, page, fills:[{i, sub}], st, on}]}
+const wpTargets = () => items.filter(i => i.k === "a" && missingOf(i).some(x => x.k === "サブタイトル"));
+function wpBulkHtml() {
+  const tg = wpTargets();
+  if (!wpBulk) return `<div class="wpb"><p class="wpbn">サブタイトルが未入力のアニメ：${tg.length}作品</p><button type="button" class="u-btn pri" id="wpbGo" ${tg.length ? "" : "disabled"}>Wikipediaから取得する</button></div>`;
+  const b = wpBulk;
+  const on = b.rows.filter(r => r.on && r.fills.length).length;
+  const rows = b.rows
+    .map(
+      (r, k) =>
+        `<div class="wpbr"><label><input type="checkbox" data-wpbon="${k}" ${r.on && r.fills.length ? "checked" : ""} ${r.fills.length ? "" : "disabled"}><span class="wpbt">${esc(r.t)}</span></label><span class="wpbs${r.fills.length ? " ok" : ""}">${esc(r.st)}${r.page ? `<small>${esc(r.page)}</small>` : ""}</span><button type="button" class="u-btn sm" data-wpbopen="${esc(r.id)}">開く</button></div>`,
+    )
+    .join("");
+  return `<div class="wpb"><p class="wpbn">${b.run ? `取得中… ${b.i} / ${b.n}` : `${b.rows.filter(r => r.fills.length).length}作品で空欄のサブタイトルを埋められます`}</p><div class="wpbl">${rows}</div>${
+    b.run ? "" : `<div class="ffoot"><button type="button" class="u-btn ghost" id="wpbReset">やり直す</button><button type="button" class="u-btn pri primary" id="wpbApply" ${on ? "" : "disabled"}>まとめて反映（${on}作品）</button></div>`
+  }</div>`;
+}
+/* 1作品ずつ少し間をあけて取りに行く（Wikipediaに短時間で大量に取りに行かないように） */
+async function wpBulkRun() {
+  const tg = wpTargets();
+  const b = (wpBulk = { run: true, i: 0, n: tg.length, rows: [] });
+  refreshSettings();
+  for (const it of tg) {
+    if (wpBulk !== b) return;
+    const r = { id: it.id, t: it.t, page: "", fills: [], st: "", on: true };
+    try {
+      const f = await wpFind(it.t, (over[it.id] || {}).wp);
+      if (!f.tables.length) r.st = "各話リストが見つかりません";
+      else {
+        r.page = f.title;
+        const t = f.tables[wpBest(f.tables, it.from)];
+        const parsed = gridParse(gridFrom(t.text, it.from), it.from).filter(x => x.sub);
+        episodes(it).forEach((e, i) => {
+          if ((e.sub || "").trim()) return;
+          const x = parsed.find(p => p.n === epNum(e.n));
+          if (x) r.fills.push({ i, sub: x.sub });
+        });
+        r.st = r.fills.length ? `${r.fills.length}話を埋める` : "埋まる話なし";
+      }
+    } catch (e) {
+      r.st = "取得できませんでした";
+    }
+    b.rows.push(r);
+    b.i++;
+    if (setPage === "wp") refreshSettings();
+    await new Promise(res => setTimeout(res, 600));
+  }
+  b.run = false;
+  if (setPage === "wp") refreshSettings();
+}
+/* チェックした作品の空欄のサブタイトルを埋め、Wikipediaのページ名も作品に覚えておく */
+function wpBulkApply() {
+  let w = 0,
+    n = 0;
+  wpBulk.rows.forEach(r => {
+    const it = items.find(x => x.id === r.id);
+    if (!it || !r.on || !r.fills.length) return;
+    const l = episodes(it);
+    r.fills.forEach(f => {
+      if (l[f.i] && !(l[f.i].sub || "").trim()) (l[f.i].sub = f.sub), n++;
+    });
+    saveEps(it, l, "");
+    if (r.page && (over[it.id] || {}).wp !== r.page) {
+      over[it.id] = { ...(over[it.id] || {}), wp: r.page };
+      mergeDoc("titles", it.id, { wp: r.page }).catch(fail);
+    }
+    w++;
+  });
+  wpBulk = null;
+  refreshSettings();
+  toast(`${w}作品・${n}話のサブタイトルを埋めました`);
 }
 /* ---------- ゴミ箱：削除した作品（アニメ・ドラマなどとYouTube）。30日間は戻せる ---------- */
 let trashOpen = false,
@@ -364,6 +439,38 @@ function toastUndo(m, undo) {
 const toast = m => U.toast(stLabel(m));
 /* 設定画面の中の操作 */
 const SETTINGS_ACTIONS = [
+  /* Wikipediaからまとめて取得 */
+  ["#wpbGo", () => wpBulkRun()],
+  [
+    "#wpbReset",
+    () => {
+      wpBulk = null;
+      refreshSettings();
+    },
+  ],
+  ["#wpbApply", () => wpBulkApply()],
+  [
+    "[data-wpbon]",
+    el => {
+      const r = wpBulk && wpBulk.rows[+el.dataset.wpbon];
+      if (r) r.on = el.checked;
+      refreshSettings();
+    },
+  ],
+  /* うまく合わなかった作品：その作品の話数の編集を開き、Wikipediaから取得の画面へ */
+  [
+    "[data-wpbopen]",
+    el => {
+      const it = items.find(x => x.id === el.dataset.wpbopen);
+      if (!it) return;
+      openDetail(it.id);
+      setDTab("ep");
+      subPaste = null;
+      epEdit = { list: episodes(it).map(x => ({ ...x })) };
+      refreshSheet();
+      wikiOpen(it);
+    },
+  ],
   [
     "[data-setedit]",
     () => {

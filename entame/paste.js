@@ -376,5 +376,108 @@ function gridParse(g, from) {
   });
   return out;
 }
+/* ---------- Wikipediaから各話リストを取る（ブラウザだけ。APIは無料・登録なし） ----------
+   wpSearch … 作品名でページを探す（候補の一覧）
+   wpTables … ページの各話リストの表を、表をコピーしたときと同じ文字（タブ区切り）にして返す
+   wpBest   … 表が複数あるとき、作品の開始日に一番近い表 */
+const WP_API = "https://ja.wikipedia.org/w/api.php";
+async function wpGet(q) {
+  const r = await fetch(`${WP_API}?${new URLSearchParams({ ...q, format: "json", formatversion: "2", origin: "*" })}`);
+  if (!r.ok) throw new Error(`Wikipedia ${r.status}`);
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.info || "Wikipedia");
+  return j;
+}
+/* 作品名から「（第2期）」「2期」「Season 2」などを外して探す */
+const wpQuery = t =>
+  String(t || "")
+    .replace(/[（(][^)）]*[)）]/g, " ")
+    .replace(/\s*(第[0-9０-９一二三四五六七八九十]+期|[0-9０-９]+期|season\s*\d+|第[0-9０-９一二三四五六七八九十]+シーズン)\s*$/i, "")
+    .trim();
+async function wpSearch(title, q) {
+  const base = wpQuery(title);
+  const j = await wpGet({ action: "query", list: "search", srsearch: q || `${base} アニメ`, srlimit: "8", srnamespace: "0" });
+  const l = (j.query && j.query.search) || [];
+  /* 各話リストはアニメ版のページ（「〇〇 (アニメ)」）や「〇〇の各話一覧」にあることが多いので、そちらを先に */
+  const sc = t => (t.startsWith(base) ? 4 : 0) + (/[（(]アニメ[)）]|各話|エピソード/.test(t) ? 3 : 0) + (t === base ? 2 : 0) + (/アニメ/.test(t) ? 1 : 0);
+  return q ? l.map(x => x.title) : l.map(x => x.title).sort((a, b) => sc(b) - sc(a));
+}
+/* 表の文字：マスはタブ、行は改行、マスの中の改行（<br>）は改行（ブラウザで表をコピーしたときと同じ） */
+function wpTableText(t) {
+  return [...t.rows]
+    .map(tr =>
+      [...tr.cells]
+        .map(c => {
+          const x = c.cloneNode(true);
+          x.querySelectorAll("br").forEach(b => b.replaceWith("\n"));
+          x.querySelectorAll("sup.reference, .mw-editsection, style, .sortkey, [style*='display:none']").forEach(e => e.remove());
+          return x.textContent
+            .replace(/[ \t ]+/g, " ")
+            .split("\n")
+            .map(v => v.trim())
+            .filter(Boolean)
+            .join("\n");
+        })
+        .join("\t"),
+    )
+    .join("\n");
+}
+const WP_SEC = /各話|話リスト|話一覧|エピソード|放送日程|放送リスト|サブタイトル/;
+async function wpTables(page) {
+  const sj = await wpGet({ action: "parse", page, prop: "sections", redirects: "1" });
+  const title = sj.parse.title;
+  const secs = sj.parse.sections || [];
+  /* 各話リストの見出し（下の階層は親に含まれるので、親が当たったら子は取らない） */
+  const hit = [];
+  secs.forEach(s => {
+    if (!/^\d+$/.test(String(s.index)) || !WP_SEC.test(s.line.replace(/<[^>]+>/g, ""))) return;
+    if (hit.some(h => String(s.number).startsWith(h.number + "."))) return;
+    hit.push(s);
+  });
+  const htmls = hit.length
+    ? await Promise.all(hit.map(s => wpGet({ action: "parse", page: title, prop: "text", section: String(s.index) }).then(j => [s.line.replace(/<[^>]+>/g, ""), j.parse.text])))
+    : [["", (await wpGet({ action: "parse", page: title, prop: "text" })).parse.text]];
+  const tables = [];
+  htmls.forEach(([sec, html]) => {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    let head = sec;
+    doc.querySelectorAll("h2, h3, h4, h5, table").forEach(el => {
+      if (el.tagName !== "TABLE") return void (head = el.textContent.replace(/\[編集\]/g, "").trim() || head);
+      if (el.closest("table") !== el || el.rows.length < 3) return;
+      const top = [...el.rows].slice(0, 3).map(r => r.textContent).join(" ");
+      if (!/サブタイトル|タイトル/.test(top) || /^\s*表示/.test(el.textContent)) return;
+      const cap = el.caption ? el.caption.textContent.trim() : "";
+      const text = wpTableText(el);
+      /* 表の名前：見出し（同じ見出しの表が並ぶこともあるので、話数の範囲も付ける） */
+      const ns = gridParse(gridFrom(text), "").map(x => x.n);
+      tables.push({ name: `${cap || head || `表${tables.length + 1}`}${ns.length ? `（${ns[0]}〜${ns[ns.length - 1]}話）` : ""}`, text });
+    });
+  });
+  return { title, tables };
+}
+/* 作品名から各話リストのあるページを探す（候補を上から順に、表が見つかるまで3つまで）。page＝前に選んだページ */
+async function wpFind(title, page) {
+  if (page) return { ...(await wpTables(page)), cands: null };
+  const cands = await wpSearch(title);
+  for (const c of cands.slice(0, 3)) {
+    const w = await wpTables(c);
+    if (w.tables.length) return { ...w, cands };
+  }
+  return { title: cands[0] || "", tables: [], cands };
+}
+/* 開始日に一番近い最初の放送日の表（サブタイトルを読めた表の中で） */
+function wpBest(tables, from) {
+  const ft = Date.parse(from || "");
+  let best = 0,
+    bv = Infinity;
+  tables.forEach((t, i) => {
+    const p = gridParse(gridFrom(t.text, from), from).filter(x => x.sub);
+    if (!p.length) return;
+    const d = p.find(x => x.date);
+    const v = d && ft ? Math.abs(Date.parse(d.date) - ft) : 1e15 - p.length;
+    if (v < bv) (bv = v), (best = i);
+  });
+  return best;
+}
 /* Node で読み込んだとき（読み取りの確認用） */
 if (typeof module !== "undefined") module.exports = { gSetSub, gSubOpts, gPick, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };

@@ -30,6 +30,59 @@ function gridHtml(g) {
       .join("")}</tbody></table></div></div>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
 }
+/* ---------- Wikipediaから取得（作品ごと。読み取りは paste.js の wpFind・wpTables） ---------- */
+function wpBarHtml(w) {
+  const link = w.title ? `<a href="https://ja.wikipedia.org/wiki/${encodeURIComponent(w.title)}" target="_blank" rel="noopener">${esc(w.title)}</a>` : "";
+  const err = !w.tables ? `<p class="wperr">${esc(w.error || "各話リストが見つかりませんでした")}</p>` : "";
+  const tabs = w.tables && w.tables.length > 1 ? `<div class="segc wptabs" role="group" aria-label="表">${w.tables.map((t, k) => `<button type="button" data-wpt="${k}" aria-pressed="${w.ti === k}">${esc(t.name)}</button>`).join("")}</div>` : "";
+  const pick =
+    w.picking || !w.tables
+      ? `<div class="wppick">${(w.cands || []).map((c, k) => `<button type="button" data-wpp="${k}" aria-pressed="${c === w.title}">${esc(c)}</button>`).join("")}<form class="wpq" id="wpQF" autocomplete="off"><input id="wpQ" placeholder="ページを検索" value="${esc(w.q || "")}" aria-label="Wikipediaのページを検索"><button type="submit" class="u-btn sm">検索</button></form></div>`
+      : "";
+  return `<div class="wpbar"><div class="wpt"><span>Wikipedia${link ? "：" : ""}${link}</span>${w.tables ? `<button type="button" class="wplink" id="wpPick" aria-expanded="${!!w.picking}">ページを選び直す</button>` : ""}</div>${err}${tabs}${pick}</div>`;
+}
+/* page＝選んだページ（なければ前に使ったページ、それもなければ作品名で探す） */
+async function wikiOpen(it, page, cands) {
+  subPaste = { wiki: { loading: true } };
+  refreshSheet();
+  let w;
+  try {
+    const f = await wpFind(it.t, page || (over[it.id] || {}).wp);
+    w = { title: f.title, tables: f.tables.length ? f.tables : null, cands: f.cands || cands || null };
+    if (w.tables) w.ti = wpBest(w.tables, it.from);
+  } catch (e) {
+    w = { error: "Wikipediaに接続できませんでした", tables: null, cands: cands || null };
+  }
+  if (!subPaste || !subPaste.wiki || !subPaste.wiki.loading || openId !== it.id) return;
+  if (!w.tables && !w.cands) w.cands = await wpSearch(it.t).catch(() => []);
+  wikiShow(it, w);
+}
+/* ページを検索（候補を入れ替える） */
+async function wpQSubmit() {
+  const w = subPaste && subPaste.wiki;
+  const q = ($("#wpQ") || {}).value || "";
+  if (!w || !q.trim()) return;
+  w.q = q;
+  w.cands = await wpSearch("", q.trim()).catch(() => []);
+  w.picking = true;
+  refreshSheet();
+}
+/* 選んでいる表を読み取って、比較画面（読めないときは整形の表）に出す */
+function wikiShow(it, w) {
+  if (!w.tables) {
+    subPaste = { wiki: w };
+    return refreshSheet();
+  }
+  const t = w.tables[w.ti];
+  const g = gridFrom(t.text, it.from);
+  const parsed = gridParse(g, it.from).filter(x => x.sub);
+  subPaste = { wiki: w, keep: subPaste && subPaste.keep === false ? false : true };
+  if (!parsed.length) {
+    subPaste = { ...subPaste, text: t.text, grid: g };
+    return refreshSheet();
+  }
+  buildPaste(it, parsed, t.text, g);
+}
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
 let stMenu = false; // 視聴ステータスの選択肢を開いているか
@@ -73,29 +126,36 @@ function arcSync() {
 }
 function subPasteHtml(it) {
   const p = subPaste;
-  if (p.grid) return gridHtml(p.grid);
+  const w = p.wiki;
+  if (w && w.loading) return `<div class="spaste"><p class="sp-sum">Wikipediaから取得しています…</p></div>`;
+  if (w && !w.tables) return `<div class="spaste">${wpBarHtml(w)}<div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn ghost" id="wpToPaste">貼り付けに切り替え</button></div></div>`;
+  if (p.grid) return (w ? `<div class="spaste wpwrap">${wpBarHtml(w)}</div>` : "") + gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
-  const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length,
+  /* keep＝入力済みのサブタイトルはそのまま（Wikipediaから取得したとき。空欄だけ埋める） */
+  const kept = r => p.keep && r.idx >= 0 && r.old && r.old !== r.sub;
+  const keptN = p.rows.filter(kept).length;
+  const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub && !kept(r)).length,
     same = p.rows.filter(r => r.idx >= 0 && r.old === r.sub && !r.dateCh).length,
     miss = p.rows.filter(r => r.idx < 0).length,
     dch = p.rows.filter(r => r.dateCh).length;
   const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}(${"日月火水木金土"[new Date(d).getUTCDay()]})` : "");
   /* 変わる所は「今の値（灰色）→ 更新後（太字）」。日付は年が違うときだけ年も出す */
   const yd = (d, o) => (d && o && d.slice(0, 4) !== o.slice(0, 4) ? `${d.slice(0, 4)}/` : "");
-  const subCell = r => (r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><span class="was">今：${esc(r.old)}</span><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
+  const subCell = r => (kept(r) ? `<span class="spv"><span>${esc(r.old)}</span><span class="was">Wikipedia：${esc(r.sub)}</span></span>` : r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><span class="was">今：${esc(r.old)}</span><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
   const dateCell = r =>
     r.dateCh
       ? `<small class="dch${p.useDate ? " on" : ""}">日付 <span class="was">${yd(r.oldDay, r.date)}${md(r.oldDay)}</span> → <b>${yd(r.date, r.oldDay)}${md(r.date)}</b></small>`
       : r.date
         ? `<small class="dsame">日付 ${md(r.date)}</small>`
         : "";
-  return `<div class="spaste">
+  return `<div class="spaste">${w ? wpBarHtml(w) : ""}
     <p class="sp-sum">${p.rows.length}話分を読み取りました。<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。</p>
-    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
+    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : kept(r) ? "入力済み" : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
     ${dch ? `<div class="dconfirm"><b>貼り付けた放送日が、登録済みの日付と${dch}話分違います。</b><label class="yr"><input type="checkbox" id="spDate" ${p.useDate ? "checked" : ""}>日付も貼り付けた内容に更新する（時刻はそのまま）</label></div>` : ""}
+    ${keptN ? `<label class="yr"><input type="checkbox" id="spKeep" ${p.keep ? "" : "checked"}>入力済みの${keptN}話も上書きする</label>` : ""}
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
 }
@@ -234,7 +294,7 @@ function epEditorHtml(it) {
   const same = l.length > 1 ? `<button type="button" class="edsame" id="erSameDay" title="1話の日付を全話に入れます">日付をそろえる</button>` : "";
   /* 並べ直す：話数順・日付順（1話ずつは⠿を押さえたまま上下に動かす） */
   const sort = l.length > 1 ? `<button type="button" id="erSortN">話数順</button><button type="button" id="erSortD">日付順</button>` : "";
-  return `${A || same || sort ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button>` : ""}${same || sort ? `<span class="edr">${same}${sort}</span>` : ""}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
+  return `${A || same || sort ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button><button type="button" id="wpOpen">Wikipediaから取得</button>` : ""}${same || sort ? `<span class="edr">${same}${sort}</span>` : ""}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
     l.length
       ? l
           .map((e, i) => {
@@ -658,8 +718,10 @@ function readPaste(it) {
 function buildPaste(it, parsed, text, grid) {
   const eps = epEdit ? epEdit.list : episodes(it);
   const fy = yearOf(it) || new Date().getFullYear();
+  const prev = subPaste || {};
   subPaste = {
     text,
+    ...(prev.wiki ? { wiki: prev.wiki, keep: prev.keep !== false } : {}),
     ...(grid ? { fromGrid: grid } : {}),
     addMissing: !eps.length,
     useDate: false,
@@ -698,7 +760,7 @@ function applyPaste(it) {
   p.rows.forEach(r => {
     if (r.idx < 0) return;
     const x = l[r.idx];
-    if (x.sub !== r.sub) {
+    if (x.sub !== r.sub && !(p.keep && (x.sub || "").trim())) {
       x.sub = r.sub;
       n++;
     }
@@ -726,6 +788,8 @@ function applyPaste(it) {
     l.sort((a, b) => (epNum(a.n) ?? 0) - (epNum(b.n) ?? 0));
   }
   subPaste = null;
+  /* Wikipediaのページ名を作品に覚えておく（次からはすぐ取得） */
+  if (p.wiki && p.wiki.title && (over[it.id] || {}).wp !== p.wiki.title) saveTitle(it.id, { wp: p.wiki.title });
   const msg = [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : ""].filter(Boolean).join("・");
   /* 話数の編集の中から開いたときは、編集中の話数に入れて編集画面に戻る（保存は「話数を保存」で） */
   if (epEdit) {
@@ -958,6 +1022,8 @@ const DETAIL_ACTIONS = [
     },
   ],
   /* 各話リスト（サブタイトル）の貼り付け */
+  /* Wikipediaから取得（話数の編集の中） */
+  ["#wpOpen", (el, it) => wikiOpen(it)],
   [
     "#spOpen",
     () => {
@@ -1068,13 +1134,45 @@ const PASTE_ACTIONS = [
     },
   ],
   ["#spRead", (el, it) => readPaste(it)],
+  /* Wikipediaから取得：開く・表の切り替え・ページを選び直す・検索・貼り付けへ */
+  [
+    "[data-wpt]",
+    (el, it) => {
+      const w = subPaste.wiki;
+      w.ti = +el.dataset.wpt;
+      wikiShow(it, w);
+    },
+  ],
+  [
+    "#wpPick",
+    async (el, it) => {
+      const w = subPaste.wiki;
+      w.picking = !w.picking;
+      if (w.picking && !w.cands) w.cands = await wpSearch(it.t).catch(() => []);
+      refreshSheet();
+    },
+  ],
+  [
+    "[data-wpp]",
+    (el, it) => {
+      const w = subPaste.wiki;
+      wikiOpen(it, w.cands[+el.dataset.wpp], w.cands);
+    },
+  ],
+  [
+    "#wpToPaste",
+    () => {
+      subPaste = { text: "" };
+      refreshSheet();
+    },
+  ],
   /* 整形：貼り付けた文字を表にする */
   [
     "#spFmt",
     () => {
       /* 読み取った結果の画面から開く。前に整形した表があれば続きから。「戻る」で結果の画面へ */
       const p = subPaste;
-      subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text, (items.find(x => x.id === openId) || {}).from), back: p };
+      subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text, (items.find(x => x.id === openId) || {}).from), back: p, ...(p.wiki ? { wiki: p.wiki, keep: p.keep } : {}) };
       refreshSheet();
     },
   ],

@@ -230,6 +230,20 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sp-r .dch:not(.on) b{opacity:.45}
 .sp-r .dsame{margin-top:2px}
 .sp-st{font-size:11px;font-weight:700;color:var(--accent);white-space:nowrap}
+/* Wikipediaから取得：ページ名・表の切り替え・ページの選び直し */
+.wpbar{display:grid;gap:8px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px solid var(--u-line)}
+.wpwrap{margin-bottom:8px}
+.wpt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:700}
+.wpt a{color:var(--accent)}
+.wplink{margin-left:auto;border:0;background:none;padding:0;font:inherit;font-size:12px;color:var(--u-sub);text-decoration:underline;cursor:pointer}
+.wperr{margin:0;font-size:12.5px;color:var(--u-danger)}
+.wptabs{flex-wrap:wrap;gap:4px}
+.wptabs button{flex:0 0 auto;padding:4px 10px;font-size:12px}
+.wppick{display:flex;flex-wrap:wrap;gap:6px}
+.wppick>button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}
+.wppick>button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700}
+.wpq{display:flex;gap:6px;flex-basis:100%}
+.wpq input{flex:1;min-width:0;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--u-r);padding:6px 8px;font:inherit;font-size:13px}
 .sp-r.nomatch .sp-st{color:var(--u-acct)}
 .spaste .ffoot{position:static;margin-top:12px;padding-bottom:0}
 .dconfirm{margin-top:10px;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
@@ -1883,3 +1897,14 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .epfix{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .epfix button{border:1px solid var(--u-danger);background:var(--u-surface);color:var(--u-danger);border-radius:var(--u-r);padding:6px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .tlmeta .tlok{margin-left:8px;border:1px solid var(--u-danger);background:var(--u-surface);color:var(--u-danger);border-radius:999px;padding:1px 8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+/* 設定：Wikipediaからまとめて取得 */
+.wpb{display:grid;gap:10px}
+.wpbn{margin:0;font-size:13px;font-weight:700}
+.wpbl{border:1px solid var(--u-line);border-radius:var(--u-r);overflow:hidden}
+.wpbr{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid var(--u-line);font-size:13px}
+.wpbr:first-child{border-top:0}
+.wpbr label{display:flex;gap:8px;align-items:center;min-width:0}
+.wpbt{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:700}
+.wpbs{font-size:12px;color:var(--u-sub);text-align:right}
+.wpbs.ok{color:var(--accent);font-weight:700}
+.wpbs small{display:block;font-weight:400;color:var(--u-sub)}
