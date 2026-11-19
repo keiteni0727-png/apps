@@ -806,6 +806,13 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
+/* 絞り込みの「要確認」の選択肢のまとまり */
+const MISS_GROUPS = [
+  ["話数", ["話数", "話数の表記", "話数の抜け", "話数の重複", "サブタイトル", "日付の確認", "未チェックの話"]],
+  ["基本情報", ["ステータス", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "公式サイト", "配信URL"]],
+  ["曲", ["OP・ED・主題歌", "曲名", "アーティスト", "曲の話数"]],
+  ["ずれ・重複", ["ステータスのずれ", "クールのずれ", "配信URLのずれ", "タイトルの重複"]],
+];
 const MISS_KEYS = ["ステータス", "話数", "話数の表記", "話数の抜け", "話数の重複", "日付の確認", "未チェックの話", "ステータスのずれ", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "クールのずれ", "OP・ED・主題歌", "曲名", "アーティスト", "曲の話数", "公式サイト", "配信URL", "配信URLのずれ", "タイトルの重複"];
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
@@ -813,7 +820,7 @@ function missBadge(i) {
   if (!l.length) return "";
   const names = l.map(x => x.k);
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  return `<span class="miss${names.includes("話数") ? " hot" : ""}" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span></span>`;
+  return `<span class="miss${names.includes("話数") ? " hot" : ""}" title="要確認：${esc(names.join("・"))}"><b>要確認</b><span class="mh">${esc(head)}</span></span>`;
 }
 function missOk(i) {
   if (!state.missOnly) return true;

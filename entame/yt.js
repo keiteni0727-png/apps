@@ -134,7 +134,7 @@ function ytMissBadge(x) {
   const names = ytMissingOf(x).map(m => m.k);
   if (!names.length) return "";
   const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  return `<span class="miss" title="未入力：${esc(names.join("・"))}"><b>未入力</b><span class="mh">${esc(head)}</span></span>`;
+  return `<span class="miss" title="要確認：${esc(names.join("・"))}"><b>要確認</b><span class="mh">${esc(head)}</span></span>`;
 }
 /* 詳細のアラート（作品の詳細と同じ）：たたまずに、足りない項目のボタンを最初から全部出す。ボタンを押すとその項目だけ詳細の中で編集 */
 function ytMissDetail(x) {
@@ -142,7 +142,7 @@ function ytMissDetail(x) {
   if (!l.length) return "";
   const btn = m =>
     `<span class="mi"><button type="button" data-jump="${m.j}">✎ ${esc(m.k)}</button>${m.n ? `<button type="button" class="nb" data-ynof="${m.n}" title="${esc(m.k)}を「なし」にする">なし</button>` : ""}</span>`;
-  return `<div class="dmiss" role="group" aria-label="未入力 ${l.length}項目"><div class="dmh">⚠ 未入力 ${l.length}項目</div><div class="mbtns">${l.map(btn).join("")}</div></div>`;
+  return `<div class="dmiss" role="group" aria-label="要確認 ${l.length}項目"><div class="dmh">⚠ 要確認 ${l.length}項目</div><div class="mbtns">${l.map(btn).join("")}</div></div>`;
 }
 function ytRow(x) {
   const pw = +x.pw || 0,
@@ -242,7 +242,7 @@ function renderYt() {
   const srt0 = YT_SORTS.find(x => x[0] === yst.sort) || YT_SORTS[0];
   const srt = [srt0[0], (yst.grp === "year" ? "年別・" : "ジャンル別・") + srt0[1]];
   /* アニメ・ドラマと同じ形：絞り込み（シート）・並び順・検索、条件のラベル、件数 */
-  const conds = [...(yst.author !== "すべて" ? [yst.author] : []), ...yst.pri.map(stLabel), ...(yst.genre !== "すべて" ? [yst.genre] : []), ...(yst.sub !== "すべて" ? [yst.sub] : []), ...(yst.missOnly ? [yst.missKey ? `未入力：${yst.missKey}` : "未入力あり"] : [])];
+  const conds = [...(yst.author !== "すべて" ? [yst.author] : []), ...yst.pri.map(stLabel), ...(yst.genre !== "すべて" ? [yst.genre] : []), ...(yst.sub !== "すべて" ? [yst.sub] : []), ...(yst.missOnly ? [yst.missKey ? `要確認：${yst.missKey}` : "要確認あり"] : [])];
   const searching = yst.qOpen || !!yst.q;
   const grpOpts = yst.genre === SOLO ? M("soloGroups") : ytSubs();
   const all = ytItems.filter(x => ytGenreOk(x) && qOk(x));
@@ -254,9 +254,10 @@ function renderYt() {
   if (yst.genre !== "すべて") rows.push(["sub", "グループ", yst.sub, () => fOpt("data-ytsub", "すべて", "すべて", yst.sub === "すべて", ab.filter(x => ytCat(x) === yst.genre).length) + grpOpts.map(g => fOpt("data-ytsub", g, esc(g), yst.sub === g, ab.filter(x => ytCat(x) === yst.genre && ytGrp(x) === g).length)).join("")]);
   const mCnt = {};
   mBase.forEach(l => l.forEach(m => (mCnt[m.k] = (mCnt[m.k] || 0) + 1)));
+  rows.push(["miss", "要確認", missVal(yst.missOnly, yst.missKey), () => missPanel("data-ytfmiss", yst.missOnly, yst.missKey, mCnt, mN, [["項目", YT_MISS_KEYS]])]);
   const sheet =
     yst.fp === "all"
-      ? fshShell({ id: "yt", a: YA, rows, sub: yst.fSub, nConds: conds.length, n: list.length, unit: "本", miss: { on: yst.missOnly, n: mN, keys: yst.missOnly ? fshMissKeys(mCnt, YT_MISS_KEYS, yst.missKey, "data-ytmkey") : "" } })
+      ? fshShell({ id: "yt", a: YA, rows, sub: yst.fSub, nConds: conds.length, n: list.length, unit: "本" })
       : fshClosed();
   return `${searching ? fshSearch({ id: "ytq", ph: "動画タイトル・投稿者で検索", q: yst.q, a: "data-ytqtog" }) : ""}
     <div class="fwrap">${searching ? "" : fshBar({ a: YA, n: conds.length, open: yst.fp === "all", srtOn: yst.sort !== "new" || yst.grp !== "genre", srtOpen: yst.fp === "sort", srtLab: srt[1] })}${ytPopHtml({ sort: sBody })}</div>
@@ -295,7 +296,7 @@ function renderYt() {
     }
     ${list.length ? "" : `<p class="empty">条件に合う動画はありません。</p>`}`;
 }
-const YA = { sheet: 'data-ytsheet="1"', sort: 'data-ytpop="sort"', q: "data-ytqtog", reset: 'data-ytreset="1"', close: 'data-ytshclose="1"', sub: "data-ytfsub", miss: "data-ytmissw" };
+const YA = { sheet: 'data-ytsheet="1"', sort: 'data-ytpop="sort"', q: "data-ytqtog", reset: 'data-ytreset="1"', close: 'data-ytshclose="1"', sub: "data-ytfsub" };
 const YT_GRPS = [
   ["genre", "ジャンル別"],
   ["year", "年別"],
@@ -627,7 +628,7 @@ async function ytSubmit() {
 function ytPicked(set) {
   if (Date.now() - fSubOpenedAt < 300) return;
   set();
-  yst.fSub = "";
+  if (!IS_PC()) yst.fSub = "";
   saveYtUI();
   render();
   if (!TOUCH) document.querySelector(".fsh-row[aria-expanded]")?.focus();
@@ -695,7 +696,7 @@ const YT_ACTIONS = [
     "[data-ytfsub]",
     el => {
       const was = yst.fSub;
-      yst.fSub = el.dataset.ytfsub && yst.fSub !== el.dataset.ytfsub ? el.dataset.ytfsub : "";
+      yst.fSub = !el.dataset.ytfsub ? "" : IS_PC() || yst.fSub !== el.dataset.ytfsub ? el.dataset.ytfsub : "";
       fSubOpenedAt = Date.now();
       render();
       fshFocusAfter(was);
@@ -724,14 +725,7 @@ const YT_ACTIONS = [
   ["[data-ytsub]", el => ytPicked(() => (yst.sub = el.dataset.ytsub))],
   ["[data-ytau]", el => ytPicked(() => (yst.author = el.dataset.ytau))],
   ["[data-ytstf]", el => ytPicked(() => (yst.pri = !el.dataset.ytstf || (yst.pri.length === 1 && yst.pri[0] === el.dataset.ytstf) ? [] : [el.dataset.ytstf]))],
-  [
-    "[data-ytmissw]",
-    ytUI(() => {
-      yst.missOnly = !yst.missOnly;
-      yst.missKey = "";
-    }),
-  ],
-  ["[data-ytmkey]", ytUI(el => (yst.missKey = yst.missKey === el.dataset.ytmkey ? "" : el.dataset.ytmkey))],
+  ["[data-ytfmiss]", el => ytPicked(() => missSet(yst, el.dataset.ytfmiss))],
   ["[data-yt]", el => ytOpenDetail(el.dataset.yt)],
   [null, (el, x, e) => !!yform && runActions(YT_FORM_ACTIONS, e)],
   [

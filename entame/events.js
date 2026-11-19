@@ -16,7 +16,7 @@ const SHELL_ACTIONS = [
     },
   ],
 ];
-/* 左メニュー・上の切り替え・未視聴／未入力のスイッチ・見出しの開閉 */
+/* 左メニュー・上の切り替え・未視聴のスイッチ・見出しの開閉 */
 const NAV_ACTIONS = [
   /* 番組表の曜日タブ（スマホ） */
   [
@@ -25,24 +25,6 @@ const NAV_ACTIONS = [
       state.wday = el.dataset.tb;
       state.unOnly = false;
       go();
-    },
-  ],
-  [
-    "[data-missw]",
-    () => {
-      state.missOnly = !state.missOnly;
-      state.missKey = "";
-      saveUI();
-      render();
-    },
-  ],
-  [
-    "[data-mkey]",
-    el => {
-      const k = el.dataset.mkey;
-      state.missKey = state.missKey === k ? "" : k;
-      saveUI();
-      render();
     },
   ],
   [

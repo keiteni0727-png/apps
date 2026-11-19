@@ -597,24 +597,34 @@ function renderList() {
 }
 let loaded = false;
 /* 検索欄は作り直さない（作り直すと入力中の文字・日本語変換・カーソルが壊れるため） */
-/* PC：絞り込みのパネルを「絞り込み」ボタンのすぐ下に置く */
+/* 絞り込みのパネルを「絞り込み」ボタンのすぐ下に置く。高さは固定して、項目を切り替えても下が見切れないように
+   （下に十分な空きがないときは上に寄せる） */
 function placeFsh() {
   const sh = document.querySelector(".fsh");
   if (!sh) return;
   const b = document.querySelector(".fsh-b");
   if (!b) return;
   const r = b.getBoundingClientRect();
-  sh.style.top = r.bottom + 6 + "px";
+  const hd = document.querySelector("header");
+  const minTop = (hd ? hd.getBoundingClientRect().bottom : 0) + 6;
+  let top = Math.max(minTop, r.bottom + 6);
   if (IS_PC()) {
-    sh.style.left = Math.max(8, Math.min(r.left, innerWidth - 388)) + "px";
-    sh.style.maxHeight = innerHeight - r.bottom - 22 + "px";
+    const want = 560;
+    if (innerHeight - 16 - top < 360) top = Math.max(minTop, innerHeight - 16 - want);
+    sh.style.top = top + "px";
+    sh.style.left = Math.max(8, Math.min(r.left, innerWidth - sh.offsetWidth - 8)) + "px";
+    sh.style.maxHeight = "none";
+    sh.style.height = Math.min(want, innerHeight - 16 - top) + "px";
   } else {
-    /* スマホ：幅いっぱい、下メニューにかからない高さまで */
+    /* スマホ：幅いっぱい、下メニューの上まで */
     sh.style.removeProperty("left");
     const nav = document.querySelector(".tbwrap");
     const nr = nav && nav.getBoundingClientRect();
     const bottom = nr && nr.height ? nr.top - 8 : innerHeight - 12;
-    sh.style.maxHeight = Math.max(240, bottom - r.bottom - 6) + "px";
+    if (bottom - top < 420) top = Math.max(minTop, bottom - 420);
+    sh.style.top = top + "px";
+    sh.style.maxHeight = "none";
+    sh.style.height = Math.min(620, bottom - top) + "px";
   }
 }
 addEventListener("resize", () => placeFsh());

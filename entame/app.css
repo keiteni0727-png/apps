@@ -569,10 +569,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   
   
   
-  .mkeys{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
-  .mkeys button{border:1px solid var(--u-line);background:var(--u-surface);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;color:var(--u-ink)}
-  .mkeys button small{font-family:var(--u-num);font-size:10.5px;opacity:.7;margin-left:3px}
-  .mkeys button[aria-pressed="true"]{border-color:var(--u-warn);background:var(--u-warn);color:var(--u-on)}
 }
 /* PC：検索窓の上の切り替え＋歯車（ヘッダーの番組表／ライブラリ・投稿者は出さない） */
 @media (min-width:900px){
@@ -1071,8 +1067,6 @@ header .hbar{box-sizing:border-box;height:56px;padding-block:0}
   .miss .mh{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0}
   .count{flex-wrap:wrap}
   
-  .mkeys{gap:5px}
-  .mkeys button{padding:3px 9px;font-size:11.5px}
   .dmiss{margin:8px 0 0;font-size:12px}
   .dmiss summary{padding:8px 12px}
   .dmiss .mbtns button{padding:5px 12px;font-size:12.5px}
@@ -1459,19 +1453,14 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fsh-reset{border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:700;padding:6px 4px;cursor:pointer}
 .fsh-x,.dd-x{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--u-soft);color:var(--u-sub);display:grid;place-items:center;padding:0;cursor:pointer;font-size:15px}
 .fsh-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 0 6px}
-.fsh-it{border-top:1px solid var(--u-soft)}
 .fsh-row{width:100%;display:flex;align-items:center;gap:10px;min-height:52px;padding:0 14px 0 18px;border:0;background:none;color:var(--u-ink);font:inherit;font-size:15px;text-align:left;cursor:pointer}
 .fsh-row:hover,.fsh-row:focus-visible{background:var(--u-soft);outline:none}
 .fsh-k{flex:none;font-weight:700}
 .fsh-v{flex:1;min-width:0;text-align:right;color:var(--u-sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .fsh-v.on{color:var(--u-acct);font-weight:700}
 .fsh-cv{flex:none;color:var(--u-sub);transition:transform .15s}
-.fsh-sw .tr{position:relative;flex:none;width:44px;height:26px;border-radius:13px;background:var(--u-strong);transition:background .15s}
-.fsh-sw .tr i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .fsh-sw.on .tr{background:var(--u-warn)}
 .fsh-sw.on .tr i{left:21px}
-.fsh-sw .fsh-v{font-family:var(--u-num)}
-.fsh-mk{padding:0 18px 12px}
 .fsh-f{flex:none;padding:10px 16px 12px;border-top:1px solid var(--u-line)}
 .fsh-go{width:100%;height:48px;border:0;border-radius:12px;background:var(--u-ink);color:var(--u-surface);font:inherit;font-size:15px;font-weight:700;cursor:pointer}
 /* 選択肢：スマホはシートの上に重ねる（選ぶと戻る）。PCは項目のすぐ下に開く */
@@ -1498,16 +1487,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
   html.fshopen,html.fshopen body,html.pkopen,html.pkopen body{overflow:hidden}
 }
 @keyframes fshin{from{transform:translateX(24px);opacity:.5}}
-@media (min-width:900px){
-  .fsh-grab{display:none}
-  .fsh-h{padding-top:14px}
-  .fsh-it.open .fsh-cv{transform:rotate(90deg)}
-  .fsh-sub{margin:0 12px 12px;border:1px solid var(--u-line);border-radius:12px;overflow:hidden}
-  .fsh-subh .fsh-back{display:none}
-  .fsh-subh{padding-left:14px}
-  .fsh-subb.dd-list{max-height:320px;overflow:auto}
-  .fsh-row{min-height:46px;font-size:14px}
-}
 @keyframes fshpc{from{transform:translateX(30px);opacity:.6}}
 /* プルダウン（端末標準だった選択も同じ見た目に） */
 
@@ -1649,7 +1628,7 @@ button.setrow:hover{background:var(--u-soft)}
   padding:7px 12px!important;font:inherit!important;font-size:13.5px!important;font-weight:700!important;line-height:1.4!important;cursor:pointer;box-shadow:none!important;min-width:44px}
 .chips button[aria-pressed="true"],.chips button[aria-checked="true"],.field .chips button[aria-pressed="true"],.fsdrop.fpop.k-sort .sortlist button[aria-checked="true"],.mkeys button[aria-pressed="true"]{
   border-color:var(--u-ink)!important;background:var(--u-ink)!important;color:var(--u-surface)!important}
-.chips button small,.mkeys button small,.serbox button small{font-family:var(--u-num);font-size:11px!important;font-weight:500;opacity:.75;margin-left:4px}
+.chips button small,.serbox button small{font-family:var(--u-num);font-size:11px!important;font-weight:500;opacity:.75;margin-left:4px}
 .fsdrop.fpop.k-sort .sortlist{margin-top:0;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));display:flex!important;flex-wrap:wrap;gap:6px}
 .fsdrop.fpop.k-sort .fgroup.sstep>h5{display:flex!important;align-items:center;gap:6px;font-size:12.5px;color:var(--u-sub);margin:0 0 7px}
 /* 設定の編集モード：名前を押すと変更、ジャンルは押すと切り替え */
@@ -1675,21 +1654,13 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .mlist.slist{align-content:start;grid-auto-rows:min-content;background:var(--u-surface);-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 /* スマホも絞り込み・保存フィルタはボタンのすぐ下に出す（PCと同じ形） */
 @media (max-width:899px){
-  .fsh{left:8px;right:8px;bottom:auto;height:auto;max-height:70vh;border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding-bottom:0}
+  .fsh{left:8px;right:8px;bottom:auto;border:1px solid var(--u-line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding-bottom:0}
   .fsh.in{animation:fdrop .14s ease-out}
   .fsh-grab{display:none}
   .fsh-scrim{background:rgba(0,0,0,.25)}
   .fsdrop.fpop{z-index:61;max-height:70vh;overflow:auto}
   .fpop-scrim{z-index:60;background:rgba(0,0,0,.25)}
-  /* 選択肢はPCと同じく項目のすぐ下に開く */
-  .fsh.subopen{min-height:0}
-  .fsh.subopen .fsh-sub{flex-direction:column;inset:0;z-index:3;position:static;display:block;margin:0 10px 10px;border:1px solid var(--u-line);border-radius:12px;overflow:hidden}
-  .fsh.subopen .fsh-subh{padding-top:6px}
-  .fsh-it.open .fsh-cv{transform:rotate(90deg)}.fsh-subh .fsh-back{display:none}.fsh-subh{padding-left:14px}
 }
-/* 絞り込みシート：未入力ありの項目ボタンを2列でそろえる */
-.fsh-mk.mkeys{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;padding:4px 18px 14px}
-.fsh-mk.mkeys button{display:flex;align-items:center;justify-content:center;white-space:nowrap;min-width:0}
 /* 話数一覧：行の高さ・余白を詰める。ドラマ（サブタイトルなし）は放送日と見た日を1行に */
 .ep,.sheet:not(.form) .ep{font-size:14px;color:var(--u-ink);display:flex;align-items:center;grid-template-columns:none;min-height:46px;padding:6px 4px 6px 10px;gap:10px}
 .ep .epc{flex:none;border-radius:50%;border:1.5px solid var(--u-line);display:flex;align-items:center;padding:0;font-family:var(--u-f);font-weight:700;line-height:1;text-align:center;color:var(--u-sub);box-sizing:border-box;justify-content:center;font-variant-numeric:tabular-nums;letter-spacing:-.02em;width:28px;height:28px;font-size:13px}
@@ -1818,3 +1789,27 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .epfix{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .epfix button{border:1px solid var(--u-danger);background:var(--u-surface);color:var(--u-danger);border-radius:var(--u-r);padding:6px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .tlmeta .tlok{margin-left:8px;border:1px solid var(--u-danger);background:var(--u-surface);color:var(--u-danger);border-radius:999px;padding:1px 8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+
+/* ===== 絞り込みシート：項目の一覧と選択肢 =====
+   スマホ：項目を押すと選択肢の画面に切り替える（‹ で戻る）。高さは下メニューの上まで固定（placeFsh）なので下が見切れない
+   PC：横長。左に項目、右に選択肢 */
+.fsh-rows .fsh-row{border-top:1px solid var(--u-soft)}
+.fsh-pane{min-height:0}
+.dd-sec{padding:12px 16px 4px;font-size:11.5px;font-weight:700;color:var(--u-sub);letter-spacing:.04em;border-top:1px solid var(--u-soft)}
+@media (max-width:899px){
+  .fsh.subopen .fsh-rows{display:none}
+  .fsh-subh{position:sticky;top:0;z-index:1;background:var(--u-surface)}
+}
+@media (min-width:900px){
+  .fsh{width:min(760px,calc(100vw - 32px))}
+  .fsh-h{padding-top:14px}
+  .fsh-body{display:grid;grid-template-columns:260px minmax(0,1fr);overflow:hidden;padding:0}
+  .fsh-rows{overflow:auto;border-right:1px solid var(--u-line)}
+  .fsh-rows .fsh-row:first-child{border-top:0}
+  .fsh-row{min-height:46px;font-size:14px}
+  .fsh-row.cur{background:var(--u-soft)}
+  .fsh-row.cur .fsh-cv{color:var(--u-ink)}
+  .fsh-pane{overflow:auto;overscroll-behavior:contain}
+  .fsh-subh{position:sticky;top:0;z-index:1;background:var(--u-surface);padding-left:16px}
+  .fsh-subh .fsh-back{display:none}
+}

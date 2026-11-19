@@ -123,7 +123,7 @@ function svDesc(f) {
   arrOf(f.era).forEach(v => p.push(v));
   arrOf(f.cour).forEach(v => p.push(courLabel(v)));
   if (f.vod) p.push(f.vod);
-  if (f.missOnly) p.push(f.missKey ? `未入力：${f.missKey}` : "未入力あり");
+  if (f.missOnly) p.push(f.missKey ? `要確認：${f.missKey}` : "要確認あり");
   const so = f.sort && f.sort !== "new" ? (SORTS.find(x => x[0] === f.sort) || [, ""])[1] : "";
   return p.join("・") + (so ? `（${so}）` : "");
 }
@@ -389,29 +389,29 @@ const fshCount = (n, unit, q) => `<p class="count"><span class="cnt">${q ? `「$
 /* 選択肢の行（1つ選ぶ・選んだら戻る） */
 const fOpt = (attr, v, lab, on, n) =>
   `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" ${attr}="${esc(v)}"><span class="dd-l">${lab}${n != null ? `<small>${n}</small>` : ""}</span>${on ? DD_CHECK : ""}</button>`;
-/* シート本体。rows＝[キー, 名前, 今の値, 開いているときの中身, 複数選べるか] */
+/* シート本体。rows＝[キー, 名前, 今の値, 開いているときの中身, 複数選べるか]
+   スマホ：項目を押すと、その選択肢の画面に切り替わる（‹ で戻る。下が見切れないように一覧と重ねない）
+   PC：横長にして、左に項目・右に選んだ項目の選択肢（開いていなければ最初の項目） */
 function fshShell(o) {
   const first = fshShown !== o.id;
   fshShown = o.id;
-  const subFirst = o.sub && fshSubShown !== o.sub;
-  fshSubShown = o.sub;
-  const body = o.rows
-    .map(([k, lab, val, sub, multi]) => {
-      const open = o.sub === k;
+  const pc = IS_PC();
+  const cur = o.sub || (pc ? o.rows[0][0] : "");
+  const subFirst = cur && fshSubShown !== cur;
+  fshSubShown = cur;
+  const rows = o.rows
+    .map(([k, lab, val]) => {
       const on = val !== "すべて";
-      return `<div class="fsh-it${open ? " open" : ""}"><button type="button" class="fsh-row" ${o.a.sub}="${k}" aria-expanded="${open}"><span class="fsh-k">${lab}</span><span class="fsh-v${on ? " on" : ""}">${esc(val)}</span>${FSH_CHEV}</button>${
-        open
-          ? `<div class="fsh-sub${subFirst ? " in" : ""}" role="group" aria-label="${lab}"><div class="fsh-subh"><button type="button" class="fsh-back" ${o.a.sub}="" aria-label="戻る">${FSH_BACK}</button><b>${lab}</b><span class="fsh-hint">${multi ? "複数選べます" : "選ぶと閉じます"}</span></div><div class="fsh-subb${multi ? " chipsmode" : " dd-list"}" role="${multi ? "group" : "listbox"}">${sub()}</div></div>`
-          : ""
-      }</div>`;
+      return `<button type="button" class="fsh-row${cur === k ? " cur" : ""}" ${o.a.sub}="${k}" aria-expanded="${cur === k}"><span class="fsh-k">${lab}</span><span class="fsh-v${on ? " on" : ""}">${esc(val)}</span>${FSH_CHEV}</button>`;
     })
     .join("");
+  const r = o.rows.find(x => x[0] === cur);
+  const pane = r
+    ? `<div class="fsh-sub${subFirst ? " in" : ""}" role="group" aria-label="${r[1]}"><div class="fsh-subh"><button type="button" class="fsh-back" ${o.a.sub}="" aria-label="戻る">${FSH_BACK}</button><b>${r[1]}</b><span class="fsh-hint">${r[4] ? "複数選べます" : ""}</span></div><div class="fsh-subb${r[4] ? " chipsmode" : " dd-list"}" role="${r[4] ? "group" : "listbox"}">${r[3]()}</div></div>`
+    : "";
   return `<div class="fsh-scrim" ${o.a.close}></div><div class="fsh${o.sub ? " subopen" : ""}${first ? " in" : ""}" role="dialog" aria-label="絞り込み">
-    <div class="fsh-grab" aria-hidden="true"></div>
     <div class="fsh-h"><b>絞り込み</b>${o.nConds ? `<button type="button" class="fsh-reset" ${o.a.reset}>リセット</button>` : ""}<button type="button" class="fsh-x" ${o.a.close} aria-label="閉じる">${FSH_X}</button></div>
-    <div class="fsh-body">${body}
-      <div class="fsh-it"><button type="button" class="fsh-row fsh-sw${o.miss.on ? " on" : ""}" ${o.a.miss} role="switch" aria-checked="${o.miss.on}"><span class="fsh-k">未入力ありだけ</span><span class="fsh-v">${o.miss.n}件</span><span class="tr" aria-hidden="true"><i></i></span></button>${o.miss.keys}</div>
-    </div>
+    <div class="fsh-body"><div class="fsh-rows">${rows}</div>${pane ? `<div class="fsh-pane">${pane}</div>` : ""}</div>
     <div class="fsh-f"><button type="button" class="fsh-go" ${o.a.close}>${o.n}${o.unit}を表示</button></div>
   </div>`;
 }
@@ -420,16 +420,29 @@ const fshClosed = () => {
   fshSubShown = "";
   return "";
 };
-/* 未入力の項目ボタン（オンのとき） */
-const fshMissKeys = (cnt, keys, cur, attr) => {
-  const ks = keys.filter(k => cnt[k] || cur === k);
-  return ks.length
-    ? `<div class="mkeys fsh-mk" role="group" aria-label="未入力の項目で絞り込み"><button type="button" ${attr}="" aria-pressed="${!cur}">すべて</button>${ks.map(k => `<button type="button" ${attr}="${esc(k)}" aria-pressed="${cur === k}">${esc(k)}<small>${cnt[k] || 0}</small></button>`).join("")}</div>`
-    : "";
+/* 要確認の選択肢：すべて（絞らない）・要確認あり（どれか）・項目ごと（まとまりの見出しつき。0件の項目は出さない）
+   groups＝[[見出し, [項目…]]]、cnt＝項目ごとの件数、n＝要確認ありの件数 */
+function missPanel(attr, on, cur, cnt, n, groups) {
+  const opt = (v, lab, sel, c) => fOpt(attr, v, esc(lab), sel, c);
+  return (
+    opt("__off", "すべて", !on) +
+    opt("", "要確認あり（どれか）", on && !cur, n) +
+    groups
+      .map(([h, ks]) => {
+        const l = ks.filter(k => cnt[k] || cur === k);
+        return l.length ? `<div class="dd-sec">${esc(h)}</div>` + l.map(k => opt(k, k, on && cur === k, cnt[k] || 0)).join("") : "";
+      })
+      .join("")
+  );
+}
+const missVal = (on, cur) => (on ? cur || "要確認あり" : "すべて");
+/* 選んだ値を missOnly・missKey に */
+const missSet = (st, v) => {
+  st.missOnly = v !== "__off";
+  st.missKey = v === "__off" ? "" : v;
 };
-
 /* ---------- アニメ・ドラマ・映画・バラエティ ---------- */
-const FA = { sheet: 'data-fsheet="1"', sort: 'data-fpop="sort"', q: "data-qtog", reset: 'data-unset="all"', close: 'data-fshclose="1"', sub: "data-fsub", miss: "data-missw" };
+const FA = { sheet: 'data-fsheet="1"', sort: 'data-fpop="sort"', q: "data-qtog", reset: 'data-unset="all"', close: 'data-fshclose="1"', sub: "data-fsub" };
 /* その条件だけ外したときの件数（選択肢の横の数字） */
 function fCountWithout(keys, fn) {
   const keep = {};
@@ -440,7 +453,7 @@ function fCountWithout(keys, fn) {
   return fn ? l.filter(fn).length : l.length;
 }
 const courTxt = v => (/^\d{4}/.test(v) ? `${v.slice(0, 4)}年${v.slice(4)}` : v);
-/* 今かかっている条件（ラベル用）。並びは 視聴 → シリーズ → 配信 → 種別 → 時期 → 未入力 */
+/* 今かかっている条件（ラベル用）。並びは 視聴 → シリーズ → 配信 → 種別 → 時期 → 要確認 */
 function fConds() {
   const c = [];
   state.sf.forEach(v => c.push(stLabel(v)));
@@ -450,7 +463,7 @@ function fConds() {
   state.type.forEach(v => c.push(MEDIA_LAB[v] || v));
   state.cour.forEach(v => c.push(courTxt(v)));
   state.era.forEach(v => c.push(v));
-  if (state.missOnly) c.push(state.missKey ? `未入力：${state.missKey}` : "未入力あり");
+  if (state.missOnly) c.push(state.missKey ? `要確認：${state.missKey}` : "要確認あり");
   return c;
 }
 function fBarHtml() {
@@ -494,6 +507,15 @@ function fSubBody(k) {
   }
   if (k === "time") return timePanelHtml();
   if (k === "series") return seriesPanelHtml();
+  if (k === "miss") {
+    const keep = [state.missOnly, state.missKey];
+    state.missOnly = false;
+    const mBase = filtered().map(missingOf);
+    [state.missOnly, state.missKey] = keep;
+    const cnt = {};
+    mBase.forEach(l => l.forEach(x => (cnt[x.k] = (cnt[x.k] || 0) + 1)));
+    return missPanel("data-fmiss", state.missOnly, state.missKey, cnt, mBase.filter(l => l.length).length, MISS_GROUPS);
+  }
   return "";
 }
 function fSheetHtml() {
@@ -505,16 +527,8 @@ function fSheetHtml() {
   rows.push(["vod", "配信", state.vod || "すべて"]);
   rows.push(["time", "時期", one([...state.cour.map(courTxt), ...state.era]), , true]);
   rows.push(["series", "シリーズ", one(state.series), , true]);
+  rows.push(["miss", "要確認", missVal(state.missOnly, state.missKey)]);
   rows.forEach(r => (r[3] = () => fSubBody(r[0])));
-  const mBase = (() => {
-    const keep = state.missOnly;
-    state.missOnly = false;
-    const l = filtered();
-    state.missOnly = keep;
-    return l;
-  })().map(missingOf);
-  const cnt = {};
-  mBase.forEach(l => l.forEach(x => (cnt[x.k] = (cnt[x.k] || 0) + 1)));
   return fshShell({
     id: "lib",
     a: FA,
@@ -523,7 +537,6 @@ function fSheetHtml() {
     nConds: fConds().length,
     n: filtered().length,
     unit: "件",
-    miss: { on: state.missOnly, n: mBase.filter(l => l.length).length, keys: state.missOnly ? fshMissKeys(cnt, MISS_KEYS, state.missKey, "data-mkey") : "" },
   });
 }
 /* 開いた直後の指の離れで、下に出てきた選択肢を押してしまわないように少し待つ */
@@ -531,11 +544,12 @@ let fSubOpenedAt = 0;
 function fPicked(set) {
   if (Date.now() - fSubOpenedAt < 300) return;
   set();
-  state.fSub = "";
+  /* スマホは項目の一覧に戻る。PCは右の選択肢をそのまま出しておく */
+  if (!IS_PC()) state.fSub = "";
   state.limit = 200;
   saveUI();
   render();
-  if (!TOUCH) document.querySelector(".fsh-row[aria-expanded]")?.focus();
+  if (!TOUCH) document.querySelector(".fsh-row.cur,.fsh-row[aria-expanded]")?.focus();
 }
 /* シートを開く・閉じる・項目を開く（アニメ・ドラマとYouTubeで共通の動き） */
 function fshFocusAfter(prevSub) {
@@ -569,7 +583,8 @@ const SHEET_ACTIONS = [
     el => {
       const k = el.dataset.fsub;
       const was = state.fSub;
-      state.fSub = k && state.fSub !== k ? k : "";
+      /* PCは右に選択肢を出したまま切り替えるだけ（同じ項目を押しても閉じない） */
+      state.fSub = !k ? "" : IS_PC() || state.fSub !== k ? k : "";
       fSubOpenedAt = Date.now();
       render();
       fshFocusAfter(was);
@@ -579,6 +594,7 @@ const SHEET_ACTIONS = [
   ["[data-ftype]", el => fPicked(() => (state.type = el.dataset.ftype ? [el.dataset.ftype] : []))],
   ["[data-fmk]", el => fPicked(() => (state.sub = el.dataset.fmk))],
   ["[data-fvod]", el => fPicked(() => (state.vod = el.dataset.fvod))],
+  ["[data-fmiss]", el => fPicked(() => missSet(state, el.dataset.fmiss))],
   /* クールの年：登録のある年だけを順に（‹ 前の年・› 次の年） */
   [
     "[data-couryb]",
