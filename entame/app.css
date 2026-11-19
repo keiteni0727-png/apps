@@ -250,38 +250,37 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .spaste .ffoot{position:static;margin-top:12px;padding-bottom:0}
 .dconfirm{margin-top:10px;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
 .spgrid .hint{font-size:12px}
-.gpick{display:grid;grid-template-columns:auto 1fr;white-space:nowrap;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;font-weight:700}
-.gpick .segc{gap:4px}
-.gpick .segc button{flex:0 0 auto;padding:4px 10px;font-size:12px}
 .gdelbad{margin:0 0 8px;color:var(--u-danger)}
-.gwrap{position:relative}
-.gsubb{border:0;background:none;padding:0;font:inherit;color:var(--u-ink);font-weight:700;cursor:pointer}
-.gsubm{position:absolute;z-index:3;top:28px;left:0;width:min(280px,100%);max-height:260px;overflow:auto;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--u-r);box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
-.gsubm button{display:flex;gap:8px;align-items:baseline;width:100%;border:0;background:none;padding:8px 10px;border-radius:6px;font:inherit;font-size:13px;color:var(--u-ink);text-align:left;cursor:pointer}
-.gsubm button b{flex:none;font-size:12px}
-.gsubm button span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--u-sub)}
-.gsubm button[aria-selected="true"]{background:var(--u-chip)}
-.gsubm button[aria-selected="true"] b{color:var(--accent)}
-.gw{max-height:360px;overflow:auto;overscroll-behavior:none;border:1px solid var(--u-line);border-radius:8px}
-.sgt{border-collapse:collapse;font-size:12.5px;width:100%}
-.sgt th{position:sticky;top:0;z-index:1;background:var(--u-chip);color:var(--u-sub);font-weight:700;font-size:11px;padding:4px 6px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--u-line)}
-.sgt td{border-top:1px solid var(--u-line);padding:0;vertical-align:middle}
-.sgt td.on input{width:100%;border:0;background:transparent;color:var(--u-ink);font:inherit;padding:6px;border-radius:0}
-.sgt td.on input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--u-bg)}
-.sgt td.r-n input{min-width:60px}
-.sgt td.r-sub input{min-width:150px}
-.sgt td.r-d input{min-width:104px}
-.sgt td.oth button{display:block;width:96px;padding:5px 6px;border:0;background:none;font:inherit;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--u-sub);cursor:pointer}
-.sgt td.gno button{border:0;background:none;padding:6px 2px;font:inherit;color:inherit;cursor:pointer;text-decoration:underline dotted}
-.sgt tr.gpkrow td{background:var(--u-chip)}
-.gpk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;max-width:min(560px,calc(100vw - 80px))}
-.gpk span{flex-basis:100%;font-size:11px;font-weight:700;color:var(--u-sub)}
-.gpk button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer;max-width:240px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.gpk button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700}
-.sgt td.gno,.sgt th.gno{width:24px;text-align:right;color:var(--u-sub);font-family:var(--u-num);font-size:10.5px;padding:0 6px}
-.sgt td.gx,.sgt th.gx{width:28px;text-align:center}
-.sgt td.gx button{border:0;background:none;color:var(--u-sub);font-size:13px;padding:6px 8px;cursor:pointer}
+.gwarn{margin:0 0 8px;font-size:12.5px;font-weight:700;color:var(--u-danger)}
+/* 整形の表：Excelの形（列の見出しA・B…で役割を選ぶ。左の ✕・行番号・‹› は横に動かしても残す） */
+.gw{max-height:min(420px,55vh);overflow:auto;overscroll-behavior:none;border:1px solid var(--u-line);border-radius:8px}
+.sgt{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:100%}
+.sgt th,.sgt td{border-right:1px solid var(--u-line);border-bottom:1px solid var(--u-line);padding:0;vertical-align:middle;background:var(--u-surface)}
+.sgt thead th{position:sticky;top:0;z-index:2;background:var(--u-chip)}
+.sgt .gx,.sgt .gno,.sgt .gsh{position:sticky;z-index:1;background:var(--u-chip);text-align:center}
+.sgt thead .gx,.sgt thead .gno,.sgt thead .gsh{z-index:3}
+.sgt .gx{left:0;width:26px;min-width:26px}
+.sgt .gno{left:26px;width:22px;min-width:22px;color:var(--u-sub);font-family:var(--u-num);font-size:10.5px}
+.sgt .gsh{left:48px;width:46px;min-width:46px;white-space:nowrap}
+.sgt td.gx button{border:0;background:none;color:var(--u-sub);font-size:13px;padding:6px 7px;cursor:pointer}
+.sgt td.gsh button{border:0;background:none;color:var(--u-sub);font-size:15px;font-weight:700;width:21px;padding:4px 0;cursor:pointer}
+.gcolb{display:flex;align-items:center;gap:5px;width:100%;border:0;background:none;padding:5px 6px;font:inherit;font-size:11.5px;font-weight:700;color:var(--u-sub);cursor:pointer;white-space:nowrap}
+.gcolb .gl{font-family:var(--u-num);font-size:10.5px;font-weight:400}
+.gcolb .fdd-cv{width:13px;height:13px;margin-left:auto}
+.gh.r-n .gcolb{color:var(--au)}
+.gh.r-sub .gcolb{color:var(--drama)}
+.gh.r-date .gcolb{color:var(--su)}
+.sgt td input{display:block;width:100%;min-width:84px;border:0;background:transparent;color:var(--u-ink);font:inherit;padding:6px;border-radius:0}
+.sgt td input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--u-bg)}
+.sgt td.r-n input{min-width:64px}
+.sgt td.r-sub input{min-width:160px}
+.sgt td.r-date input{min-width:128px}
+.sgt td.r-x input{color:var(--u-sub)}
+.sgt td.r-n,.sgt th.r-n{background:color-mix(in srgb,var(--au) 8%,var(--u-surface))}
+.sgt td.r-sub,.sgt th.r-sub{background:color-mix(in srgb,var(--drama) 6%,var(--u-surface))}
+.sgt td.r-date,.sgt th.r-date{background:color-mix(in srgb,var(--su) 7%,var(--u-surface))}
 .sgt tr.bad td{background:var(--u-danger2)}
+.sgt td.sel{box-shadow:inset 0 0 0 2px var(--accent)}
 .sgt tr.bad td.gno{color:var(--u-danger)}
 #sheetIn,#ytIn{padding-bottom:14px}
 /* popups: no background scroll, no iOS zoom on focus。画面の端で引っ張っても余白が出ないように */

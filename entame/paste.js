@@ -312,9 +312,9 @@ function gridFrom(text, from) {
     /* 話数を含むマス（「01.PHASE-01」のような別の番号の列）もサブタイトルにしない */
     const nt = String(r[ni] || "").trim();
     const di = after.findIndex(c => !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt)));
-    return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "" };
+    return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "", raw: r, ni };
   });
-  const g = { rows, dropped };
+  const g = { rows, dropped, from };
   gSetSub(g, null);
   return Object.assign(
     g,
@@ -341,23 +341,138 @@ function gSetSub(g, si) {
     gApply(g, r);
   });
 }
-/* その行だけ、サブタイトルにするマスを選ぶ */
-function gPick(g, r, k) {
-  r.pick = k;
-  gApply(g, r);
-}
-/* 表全体の候補（番目ごとに、最初に中身がある行の文字を見本に） */
-function gSubOpts(g) {
-  const max = Math.max(0, ...g.rows.map(r => r.cells.length));
-  return [...Array(max).keys()].map(k => (g.rows.find(r => r.cells[k]) || { cells: [] }).cells[k] || "");
-}
 /* 表の放送日のマスに出す文字（手で直したものを優先） */
 const gDay = (g, r) => (r.d != null ? r.d : r.ds[g.k] || "");
+/* ---------- 整形の表（Excelの形）：元のマスを列のまま並べ、列ごとに役割（話数・サブタイトル・放送日・使わない）を選ぶ ----------
+   r.raw＝その話の元のマス（マスの中の改行はつないだあと）、r.off＝その行を右へずらしたマスの数（列＝元の位置＋off）。
+   最初は話数のマスが同じ列にそろうようにずらし、役割は自動で読み取ったものを入れる。g.cols があれば gridParse はこの役割で読む */
+const G_ROLE = { n: "話数", sub: "サブタイトル", date: "放送日", x: "使わない" };
+const gLetter = j => (j >= 26 ? gLetter(Math.floor(j / 26) - 1) : "") + String.fromCharCode(65 + (j % 26));
+const gCell = (r, j) => (j - r.off >= 0 && r.raw[j - r.off] != null ? r.raw[j - r.off] : "");
+const gColN = g => Math.max(1, ...g.rows.map(r => r.off + r.raw.length));
+function gColsInit(g) {
+  if (g.cols) return gColsFit(g);
+  const M = Math.max(0, ...g.rows.map(r => r.ni));
+  g.rows.forEach(r => {
+    r.raw = [...r.raw];
+    r.off = M - r.ni;
+  });
+  const n = gColN(g);
+  const cols = Array(n).fill("x");
+  cols[M] = "n";
+  /* サブタイトル：話数より後ろで、日付・数字でない最初のマスが一番多い列 */
+  const sc = Array(n).fill(0);
+  g.rows.forEach(r => {
+    const nt = String(gCell(r, M)).trim();
+    for (let j = M + 1; j < n; j++) {
+      const c = gCell(r, j);
+      if (c && !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt))) {
+        sc[j]++;
+        break;
+      }
+    }
+  });
+  const sj = sc.indexOf(Math.max(...sc));
+  if (sc[sj] > 0) cols[sj] = "sub";
+  /* 放送日：日付のマスが3割以上ある列。いくつかあれば、最初の日付が開始日に一番近い列（開始日がなければ左） */
+  const fy = +String(g.from || "").slice(0, 4);
+  const ft = Date.parse(g.from || "");
+  let dj = -1,
+    best = Infinity;
+  for (let j = 0; j < n; j++) {
+    if (cols[j] !== "x") continue;
+    const ds = g.rows.map(r => (isDateCell(gCell(r, j)) ? findDates(gCell(r, j))[0] : null));
+    if (ds.filter(Boolean).length < Math.max(1, g.rows.length * 0.3)) continue;
+    const first = fy ? withYears(ds, fy).find(x => x && x.date) : null;
+    const dd = first && ft ? Math.abs(Date.parse(first.date) - ft) : dj < 0 ? 1e15 : Infinity;
+    if (dd < best) (best = dd), (dj = j);
+  }
+  if (dj >= 0) cols[dj] = "date";
+  /* 縦につながったマス（脚本など）がない行は、サブタイトル・放送日が左にずれるので、空のマスを入れてそろえる */
+  g.rows.forEach(r => {
+    const at = (from, ok) => {
+      for (let j = from; j < gColN({ rows: [r] }); j++) if (ok(gCell(r, j))) return j;
+      return -1;
+    };
+    const nt = String(gCell(r, M)).trim();
+    const isSub = c => c && !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt));
+    if (sc[sj] > 0) {
+      const j = at(M + 1, isSub);
+      if (j >= 0 && j < sj) for (let k = j; k < sj; k++) gIns(r, j);
+    }
+    if (dj > M) {
+      const j = at(Math.max(M, sc[sj] > 0 ? sj : M) + 1, isDateCell);
+      if (j >= 0 && j < dj) for (let k = j; k < dj; k++) gIns(r, j);
+    }
+  });
+  g.cols = cols;
+  return gColsFit(g);
+}
+/* j列の位置に空のマスを入れる（j列から右が1つ右へ） */
+function gIns(r, j) {
+  const i = j - r.off;
+  if (i <= 0) r.off++;
+  else r.raw.splice(i, 0, "");
+}
+/* 行をずらして列が増えたら「使わない」の列を足す */
+function gColsFit(g) {
+  const n = gColN(g);
+  while (g.cols.length < n) g.cols.push("x");
+  return g;
+}
+/* 列の役割を決める。話数・サブタイトルは1列だけ（ほかの列は「使わない」に）、放送日は何列でも（左の列を優先） */
+function gSetCol(g, j, role) {
+  if (role === "n" || role === "sub") g.cols = g.cols.map(c => (c === role ? "x" : c));
+  g.cols[j] = role;
+}
+/* その行の j列から右を1つずらす（Excelの「セルの挿入・削除」）。右＝j列に空のマスを入れる、
+   左＝j列の左の空のマスを詰める（中身のあるマスは消さない。詰められないときは false） */
+function gShift(g, r, d, j = 0) {
+  if (d > 0) gIns(r, j);
+  else {
+    const i = j - r.off;
+    if (i <= 0) {
+      if (r.off > 0) r.off--;
+      else if (r.raw[0] === "" && r.raw.length > 1) r.raw.shift();
+      else return false;
+    } else if (r.raw[i - 1] === "") r.raw.splice(i - 1, 1);
+    else return false;
+  }
+  gColsFit(g);
+  return true;
+}
+/* マスを直す（元のマスの外なら空のマスを足してから） */
+function gSet(r, j, v) {
+  let i = j - r.off;
+  if (i < 0) {
+    r.raw = [...Array(-i).fill(""), ...r.raw];
+    r.off = j;
+    i = 0;
+  }
+  while (r.raw.length <= i) r.raw.push("");
+  r.raw[i] = v;
+}
+/* 行の話数・サブタイトル・放送日（放送日の列が複数なら、中身のある一番左） */
+function gVals(g, r) {
+  const v = { n: "", sub: "", day: "" };
+  g.cols.forEach((c, j) => {
+    const t = gCell(r, j);
+    if (c === "n") v.n = t;
+    else if (c === "sub") v.sub = t;
+    else if (c === "date" && !v.day && t.trim()) v.day = t;
+  });
+  return v;
+}
+const gBad = (g, r) => gNum(gVals(g, r).n) == null;
 /* 表から各話を読み取る（話数が読めない行は飛ばす・同じ話数は最初の行）。
    放送日がない行は上の行と同じ日（2話連続放送でマスが縦につながっているとき）。年がない日付は開始日の年から数える */
 function gridParse(g, from) {
   const fy = +String(from || "").slice(0, 4) || new Date().getFullYear();
   const list = g.rows.map(r => {
+    if (g.cols) {
+      const v = gVals(g, r);
+      return { r: v, x: v.day ? findDates(v.day)[0] || null : null, inherit: !v.day };
+    }
     const t = gDay(g, r);
     return { r, x: t ? findDates(t)[0] || null : null, inherit: !t && r.d == null && !r.ds.length };
   });
@@ -500,4 +615,4 @@ function wpShift(parsed, first, from) {
   return { list: parsed.slice(k).map(x => ({ ...x, n: x.n - sh })), shift: sh, from: parsed[k].n };
 }
 /* Node で読み込んだとき（読み取りの確認用） */
-if (typeof module !== "undefined") module.exports = { wpShift, gSetSub, gSubOpts, gPick, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { wpShift, gSetSub, gColsInit, gSetCol, gShift, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
