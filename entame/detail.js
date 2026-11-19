@@ -160,7 +160,7 @@ function epListHtml(it, eps) {
     const st = e.w ? " seen" : fut ? " future" : " unseen";
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why ? `<span class="tlwhy">${why}${wn.d.gap ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
+    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why ? `<span class="tlwhy">${why}${wn.d.gap || wn.d.rev ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
     return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
@@ -233,12 +233,14 @@ function epEditorHtml(it) {
   const A = it.k === "a";
   /* 日付をそろえる：1話の日付を全話にコピー（配信でまとめて公開された作品など） */
   const same = l.length > 1 ? `<button type="button" class="edsame" id="erSameDay" title="1話の日付を全話に入れます">日付をそろえる</button>` : "";
-  return `${A || same ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button><span class="hint">各話リストからサブタイトル・放送日を読み取ります</span>` : ""}${same}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
+  /* 並べ直す：話数順・日付順（1話ずつは⠿を押さえたまま上下に動かす） */
+  const sort = l.length > 1 ? `<button type="button" id="erSortN">話数順</button><button type="button" id="erSortD">日付順</button>` : "";
+  return `${A || same || sort ? `<div class="edtop">${A ? `<button type="button" id="spOpen">Wikiから貼り付け</button><span class="hint">各話リストからサブタイトル・放送日を読み取ります</span>` : ""}${same || sort ? `<span class="edr">${same}${sort}</span>` : ""}</div>` : ""}<div class="eped${A ? "" : " nosub"}">${
     l.length
       ? l
           .map((e, i) => {
             const j = jst(e.t);
-            return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}">
+            return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}
       ${epNumInput("er-n", e.n, e.sp)}
       ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
       <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
@@ -911,7 +913,7 @@ const DETAIL_ACTIONS = [
       if (n) saveEps(it, l, `${n}話の日付を1日ずらしました`);
     },
   ],
-  /* 日付のアラート：半年以上空いていても問題ない話を確認済みにする（その話の日付を変えるまで） */
+  /* 日付のアラート：日付の逆転・半年以上の空きが問題ない話を確認済みにする（その話の日付を変えるまで） */
   [
     "[data-gapok]",
     (el, it) => {
@@ -919,7 +921,7 @@ const DETAIL_ACTIONS = [
       const e = l[+el.dataset.gapok];
       if (!e || !e.t) return;
       e.go = e.t;
-      saveEps(it, l, `${epVal(e.n) ? epVal(e.n) + "話" : e.n}の空きを確認済みにしました`);
+      saveEps(it, l, `${epVal(e.n) ? epVal(e.n) + "話" : e.n}の日付を確認済みにしました`);
     },
   ],
   /* 日付のアラート：開始日を1話の日付にする（毎週の曜日も合わせる） */
@@ -1184,6 +1186,23 @@ const EPEDIT_ACTIONS = [
       refreshSheet();
     },
   ],
+  /* 話数の編集：話数順・日付順に並べ直す（数字でない話数・日付のない話は最後。同じなら今の順） */
+  [
+    "#erSortN",
+    () => {
+      const v = x => epNum(x.n) ?? Infinity;
+      epEdit.list = epEdit.list.map((x, k) => [x, k]).sort((a, b) => v(a[0]) - v(b[0]) || a[1] - b[1]).map(a => a[0]);
+      refreshEditor();
+    },
+  ],
+  [
+    "#erSortD",
+    () => {
+      const v = x => x.t || Infinity;
+      epEdit.list = epEdit.list.map((x, k) => [x, k]).sort((a, b) => v(a[0]) - v(b[0]) || a[1] - b[1]).map(a => a[0]);
+      refreshEditor();
+    },
+  ],
   [
     "#erSameDay",
     (el, it) => {
@@ -1321,3 +1340,10 @@ function maybeAskSgFix() {
     toast(`${n}曲を「全話」に戻しました`);
   });
 }
+/* 話数の編集：⠿で1話ずつ並び替え（しくみは shared/u-core.js の GRIP） */
+SORT_DONE.ep = (box, rows) => {
+  if (!epEdit) return;
+  const l = epEdit.list;
+  epEdit.list = rows.map(r => l[+r.dataset.er]).filter(Boolean);
+  refreshEditor();
+};

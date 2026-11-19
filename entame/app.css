@@ -1765,22 +1765,24 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .eps.nosub .ep .epm>:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .eps.nosub .ep .eps-sub{font-size:13.5px;font-variant-numeric:tabular-nums}
 /* 話数の編集：日付の枠は日付がちょうど入る幅に。ドラマは［話数］［日付］［✕］を1行に */
-.er{display:grid;gap:6px;align-items:center;padding:6px 8px;border-top:1px solid var(--u-line);grid-template-columns:104px 1fr 108px 30px}
+/* 話数の編集の行：⠿・話数・サブタイトル・日付・✕（スマホはサブタイトルを2段目に） */
+.er{display:grid;gap:6px;align-items:start;padding:6px 8px 6px 4px;border-top:1px solid var(--u-line);grid-template-columns:24px 104px 1fr 108px 30px}
+.er .mgrip{width:24px;height:34px;margin:0}
 .er .er-d,.e1 .e1-d{width:108px;justify-self:start}
-.eped.nosub .er{grid-template-columns:104px 108px 1fr 30px}
-.eped.nosub .er .del{grid-column:4}
+.er .del{align-self:start;height:34px}
+.eped.nosub .er{grid-template-columns:24px 104px 108px 1fr 30px}
+.eped.nosub .er .del{grid-column:5}
 .e1{gap:6px;padding:8px 10px;grid-template-columns:104px 1fr 108px}
 .e1.nosub{grid-template-columns:104px 108px 1fr}
 @media (max-width:520px){
-  .er{grid-template-columns:96px 108px 1fr 30px}
-  .er .er-s{grid-column:1/-1;grid-row:2}
-  .er .er-d{grid-column:2;grid-row:1}
+  .er,.eped.nosub .er{grid-template-columns:24px 96px 1fr 30px}
+  .er .er-s{grid-column:2/-1;grid-row:2}
+  .er .er-d{grid-column:3;grid-row:1;width:100%}
   .er .del{grid-column:4;grid-row:1;justify-self:end}
-  .eped.nosub .er{grid-template-columns:96px 108px 1fr 30px}
   .e1{grid-template-columns:96px 108px 1fr}
   .e1 .e1-s{grid-column:1/-1;grid-row:2}
 }
-.edtop .edsame{margin-left:auto}
+.edr{margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:6px}
 /* スマホの絞り込み：開いた選択肢は内側でスクロールさせず、シート全体のスクロールで最後まで見られるようにする */
 @media (max-width:899px){
   .fsh.subopen .fsh-subb{flex:1;min-height:0;padding-bottom:4px;max-height:none;overflow:visible;overscroll-behavior:auto}
@@ -1837,15 +1839,11 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .epwarn{display:flex;align-items:center;gap:4px;width:100%;margin:0 0 8px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--u-danger) 35%,transparent);border-radius:var(--u-r);background:var(--u-danger2);color:var(--u-danger);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
 .epwarn span{font-weight:500;font-size:11.5px;opacity:.85}
 /* 話数の編集（1話・まとめて）：話数欄と日付欄の高さ・上端をそろえ、日付は残りの幅いっぱいに */
-.er,.e1{align-items:start}
-.er .del{align-self:start;height:34px}
+.e1{align-items:start}
 .eps>.e1{position:relative;padding-left:50px}
 .eps>.e1::before{content:"";position:absolute;left:25px;top:0;bottom:0;width:2px;background:var(--u-line)}
 .eps>.e1.seen::before{background:var(--u-accent)}
 @media (max-width:520px){
-  .er,.eped.nosub .er{grid-template-columns:96px 1fr 30px}
-  .er .er-d{grid-column:2;grid-row:1;width:100%}
-  .er .del{grid-column:3;grid-row:1}
   .e1,.e1.nosub{grid-template-columns:96px 1fr}
   .e1 .e1-d{grid-column:2;grid-row:1;width:100%}
   .eps>.e1{padding-right:10px}
