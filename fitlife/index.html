@@ -128,6 +128,7 @@ svg.chart{width:100%;height:auto;display:block}
 .petnm{font-weight:700;color:#9a5b22;font-size:17px;margin:2px 0 8px}
 .petcard .bar{background:#f6e2cc}
 .petcard .bar i{background:#f0a860}
+.petedit{border:0;background:none;padding:0 0 0 4px;font-size:14px;cursor:pointer;vertical-align:1px}
 .petrule{text-align:left;margin-top:10px;font-size:13px;color:var(--muted)}
 .petrule summary{cursor:pointer;color:#9a5b22}
 .petrule ul{margin:6px 0 0;padding-left:18px}
@@ -535,7 +536,8 @@ async function claimGifts(){
   if(n) toast(`${FROM}からチケット＋${n} 🎟️`);
 }
 /* ===== 育成キャラ（まめしば） ===== */
-const PET_NAME = 'まめ';
+const PET_DEF = 'まめ', PET_MAX = 10;
+const petName = () => esc(String(G().petName || '').trim() || PET_DEF);
 const XP = { mission:10, all:20, gym:30, meal:10, cheer:5 };
 const MEAL_XP_MAX = 3;  // 食事のXPは1日3回まで
 const SLEEP_DAYS = 3;   // 3日記録がないと寝る（XPは減らない）
@@ -560,35 +562,42 @@ async function mealXp(){
 }
 async function petCheer(){
   const n = await updateGame(g => { const t = today(); if(g.cheerXp === t) return 0; g.cheerXp = t; gainXp(g, XP.cheer); return XP.cheer; });
-  if(n) toast(`${FROM}の応援で ${PET_NAME}がよろこんでる ♡ ${n}XP`);
+  if(n) toast(`${FROM}の応援で ${petName()}がよろこんでる ♡ ${n}XP`);
 }
 function petCard(owner = false){
   if(!S.gameReady) return '';
   const g = G(), { lv, cur, need } = petLevel(g.xp), st = stageOf(lv), sleep = petAsleep(), t = today();
   const dayXp = (g.xpDay || {})[t] || 0;
   return `<div class="card petcard">
-    ${owner ? `<h2 style="justify-content:center">彼女の${PET_NAME}</h2>` : ''}
+    ${owner ? `<h2 style="justify-content:center">彼女の${petName()}</h2>` : ''}
     ${petSVG(st, sleep, 'pet' + (sleep ? ' zzz' : ''))}
-    <div class="petnm">${PET_NAME}　Lv.${lv} ${STAGES[st][1]}</div>
+    <div class="petnm">${petName()}${owner ? '' : `<button class="petedit" data-a="petname" aria-label="名前を変える">✏️</button>`}　Lv.${lv} ${STAGES[st][1]}</div>
     <div class="bar"><i style="width:${Math.min(100, cur / need * 100)}%"></i></div>
     <div class="muted" style="margin-top:4px">次のレベルまであと ${need - cur}XP ・ 今日 +${dayXp}XP</div>
     ${sleep ? `<p class="note" style="margin:8px 0 0">すやすや…${owner ? '最近記録がないみたい' : '記録すると起きるよ'}</p>` : ''}
     ${!owner && cheerToday() && g.cheerXp !== t ? `<div class="gift"><span style="font-size:22px">💌</span><div style="flex:1;text-align:left">${FROM}の応援が届いたよ</div><button class="btn sm" data-a="petcheer">受け取る ${XP.cheer}XP</button></div>` : ''}
-    ${owner ? `<p class="muted" style="margin:8px 0 0;font-size:12px">応援メッセージを送ると、彼女が受け取ったときに${PET_NAME}に${XP.cheer}XP（1日1回）</p>`
+    ${owner ? `<p class="muted" style="margin:8px 0 0;font-size:12px">応援メッセージを送ると、彼女が受け取ったときに${petName()}に${XP.cheer}XP（1日1回）</p>`
       : `<details class="petrule"><summary>XPのもらい方</summary><ul>
         <li>ミッション1つ ${XP.mission}XP、ぜんぶクリアでさらに ${XP.all}XP</li><li>ジム ${XP.gym}XP</li>
         <li>食事の記録 ${XP.meal}XP（1日${MEAL_XP_MAX}回まで）</li><li>${FROM}の応援 ${XP.cheer}XP（1日1回）</li>
         <li>Lv5 こいぬ → Lv10 わんぱく → Lv20 おとな → Lv30 とくべつ</li><li>${SLEEP_DAYS}日記録がないと寝ちゃうけど、XPは減らないよ</li></ul></details>`}
   </div>`;
 }
+function openPetName(){
+  $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><h3>名前を変える<button class="del" data-a="close" aria-label="閉じる">×</button></h3>
+    <form data-form="petname"><input class="in" name="name" maxlength="${PET_MAX}" value="${esc(G().petName || '')}" placeholder="${PET_DEF}">
+    <p class="muted" style="margin:6px 0 0">${PET_MAX}文字まで。空にすると「${PET_DEF}」に戻ります</p>
+    <button class="btn block" style="margin-top:12px">保存する</button></form></div></div>`;
+  $sheet.querySelector('input').focus();
+}
 function showLevelUp(lv, st0){
   const st = stageOf(lv), grew = st > st0;
   setTimeout(() => {
-    if($sheet.innerHTML){ toast(`${PET_NAME}が Lv.${lv} になったよ！`); return; }
+    if($sheet.innerHTML){ toast(`${petName()}が Lv.${lv} になったよ！`); return; }
     $sheet.innerHTML = `<div class="sheet-bg" data-a="close-bg"><div class="sheet"><div class="reveal sparkle">
       <div class="pic">${petSVG(st, false, 'pet')}</div>
       <div class="nm">${grew ? `${STAGES[st][1]}に成長！` : 'レベルアップ！'}</div>
-      <span class="tag">${PET_NAME} Lv.${lv}</span></div>
+      <span class="tag">${petName()} Lv.${lv}</span></div>
       <div class="row" style="justify-content:center;margin-top:16px"><button class="btn" data-a="close">やったね ♡</button></div></div></div>`;
   }, 400);
 }
@@ -1695,6 +1704,11 @@ async function handleForm(kind, f){
       if(v.p1 !== v.p2) throw new Error('合言葉が一致しません');
       await setupPass(v.p1); await idbSet('key_' + S.user.uid, S.key).catch(()=>{}); startPrivListeners();
       break;
+    case 'petname': {
+      const name = String(v.name || '').trim().slice(0, PET_MAX);
+      await updateGame(g => { g.petName = name; });
+      break;
+    }
     case 'cheer': {
       const text = v.text.trim();
       if(!text) throw new Error('メッセージを書いてね');
@@ -1771,7 +1785,7 @@ document.addEventListener('submit', async e => {
     const wasEdit = !!EDIT && !!f.closest('.sheet');
     await handleForm(f.dataset.form, f);
     if(f.closest('.sheet')) closeSheet();
-    if(wasEdit) toast('直しました ♡'); else toast({ editchar:'保存しました', gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
+    if(wasEdit) toast('直しました ♡'); else toast({ editchar:'保存しました', gchar:'キャラを登録しました 🎁', cheer:'送りました ♡', regmail:'登録しました', sendlink:'メールを送りました', finishlink:'ログインしました', pastelink:'ログインしました', pwlogin:'ログインしました', setpw:'パスワードを設定しました 🔑', setup:'合言葉を設定しました', petname:'名前を変えました ♡', unlock:'ひらきました', profile:'保存しました' }[f.dataset.form] || '記録しました ♡');
     render();
   }catch(err){
     console.error(err);
@@ -1864,6 +1878,7 @@ document.addEventListener('click', async e => {
       case 'claim': await claim(v); break;
       case 'gifts': await claimGifts(); break;
       case 'petcheer': await petCheer(); break;
+      case 'petname': if(S.gameReady) openPetName(); break;
       case 'pull': await pullGacha(); break;
       case 'gser': S.gser = v; render(); break;
       case 'oser': S.oser = v; render(); break;
