@@ -83,12 +83,12 @@ function subPasteHtml(it) {
     miss = p.rows.filter(r => r.idx < 0).length,
     dch = p.rows.filter(r => r.dateCh).length;
   const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}(${"日月火水木金土"[new Date(d).getUTCDay()]})` : "");
-  /* 変わる所は「今の値（取り消し線）→ 更新後（太字）」。日付は年が違うときだけ年も出す */
+  /* 変わる所は「今の値（灰色）→ 更新後（太字）」。日付は年が違うときだけ年も出す */
   const yd = (d, o) => (d && o && d.slice(0, 4) !== o.slice(0, 4) ? `${d.slice(0, 4)}/` : "");
-  const subCell = r => (r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><del>${esc(r.old)}</del><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
+  const subCell = r => (r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><span class="was">今：${esc(r.old)}</span><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
   const dateCell = r =>
     r.dateCh
-      ? `<small class="dch${p.useDate ? " on" : ""}">日付 <del>${yd(r.oldDay, r.date)}${md(r.oldDay)}</del> → <b>${yd(r.date, r.oldDay)}${md(r.date)}</b></small>`
+      ? `<small class="dch${p.useDate ? " on" : ""}">日付 <span class="was">${yd(r.oldDay, r.date)}${md(r.oldDay)}</span> → <b>${yd(r.date, r.oldDay)}${md(r.date)}</b></small>`
       : r.date
         ? `<small class="dsame">日付 ${md(r.date)}</small>`
         : "";
