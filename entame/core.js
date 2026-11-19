@@ -193,15 +193,19 @@ const rangeTxt = x =>
 const exOf = x => (x.ex || []).filter(r => r && r.a != null);
 const exTxt = r => (r.b == null || r.b === r.a ? `${r.a}話` : `${r.a}〜${r.b}話`);
 /* 使われた話を、範囲ごとのラベルの配列に（話の順に並べる） */
-const rangeItems = x => {
+/* sp＝話数リストの[最初, 最後]。渡すと、最初・最後が空の曲は話数リストの最初・最後の話として出す */
+const rangeItems = (x, sp) => {
   const l = [];
-  if (x.a != null || x.b != null) l.push({ a: x.a ?? 1, b: x.b, t: rangeTxt(x) });
+  if (x.a != null || x.b != null || sp) {
+    const y = sp && !x.one ? { a: x.a ?? sp[0], b: x.b ?? sp[1] } : x;
+    if (y.a != null || y.b != null) l.push({ a: y.a ?? 1, b: y.b, t: rangeTxt(y) });
+  }
   exOf(x).forEach(r => l.push({ a: r.a, b: r.b ?? r.a, t: exTxt(r) }));
   return l.sort((p, q) => p.a - q.a);
 };
-const rangeList = x => rangeItems(x).map(r => r.t);
+const rangeList = (x, sp) => rangeItems(x, sp).map(r => r.t);
 /* n話がどの範囲に入るか（rangeList の何番目か。入らなければ -1） */
-const rangeHit = (x, n) => rangeItems(x).findIndex(r => n >= r.a && (r.b == null || n <= r.b));
+const rangeHit = (x, n, sp) => rangeItems(x, sp).findIndex(r => n >= r.a && (r.b == null || n <= r.b));
 
 /* 並び：o（Notionから取り込んだときの順番）→ あとから追加したものはidの順 */
 const byOrder = ([a, x], [b, y]) => (x.o ?? 1e9) - (y.o ?? 1e9) || (a < b ? -1 : a > b ? 1 : 0);

@@ -356,7 +356,7 @@ const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="
 function renderDetail(it) {
   const cs = coursOf(it);
   const stv = mediaLabels(it);
-  /* 使われた話を入れていない曲は「全話」と出す */
+  /* 最初・最後が空の曲は、話数リストの最初・最後の話を入れて出す（保存は空のまま。話数が増えると表示も変わる） */
   const sl = songsOf(it);
   /* 1曲1行：曲名／アーティスト・使われた話。同じ種類が複数ある作品だけ話数の列を出す */
   const byType = SONG_TYPES.map(tp => [tp, sl.map((x, k) => [x, k]).filter(([x]) => x.type === tp)]);
@@ -369,9 +369,9 @@ function renderDetail(it) {
   const hasNow = showRng && Number.isFinite(nowN) && nowN > 0;
   const songRows = byType.flatMap(([tp, l]) =>
     l.map(([x, k]) => {
-      const rl = rangeList(x);
+      const rl = rangeList(x, epSpan(it));
       const rng = showRng ? (rl.length ? rl : ["全話"]) : [];
-      const now = !hasNow || !rng.length ? -1 : rl.length ? rangeHit(x, nowN) : 0;
+      const now = !hasNow || !rng.length ? -1 : rl.length ? rangeHit(x, nowN, epSpan(it)) : 0;
       return { k: tp, x, i: k, rng, now };
     }),
   );

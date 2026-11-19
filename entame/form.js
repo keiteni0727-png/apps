@@ -239,15 +239,17 @@ function songRowsHtml() {
     const one = !!x.one;
     const { st, ar } = songTA(x);
     const open = !multi || !sgFold.has(k);
-    const va = x.a ?? "",
-      vb = x.b ?? "";
-    const rt = [rangeTxt(x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
+    /* 最初・最後が空の欄は、話数リストの最初・最後の話を入れて見せる（保存するときは、話数リストの最初・最後と同じなら空に戻す） */
+    const sp = !one && f.span;
+    const va = x.a ?? (sp ? sp[0] : ""),
+      vb = x.b ?? (sp ? sp[1] : "");
+    const rt = [rangeTxt(sp ? { a: va, b: vb } : x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
     return `<div class="sg${open ? " open" : ""}${multi ? " multi" : ""}" data-sg="${k}"${multi ? " data-sortrow" : ""}>
     ${multi ? `<div class="sg-hd">${GRIP("sg")}<button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span><span class="sg-sv">${FOLD_IC}</span></button></div>` : ""}
     <div class="sg-body">
     <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
       <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
-    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${va}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw${one ? " inv" : ""}" ${one ? 'aria-hidden="true"' : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${vb}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one ? `<span class="sg-all">全話</span>` : ""}
+    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${va}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw${one ? " inv" : ""}" ${one ? 'aria-hidden="true"' : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${vb}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one && !f.span ? `<span class="sg-all">全話</span>` : ""}
       <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label></div>
     ${(x.ex || [])
       .map(
@@ -429,8 +431,13 @@ function readForm() {
   if ($("#sgList"))
     form.songs = [...document.querySelectorAll("[data-sg]")].map(r => {
       const one = !!r.querySelector(".sg-one")?.checked;
-      const a = r.querySelector(".sg-a").value,
+      let a = r.querySelector(".sg-a").value,
         b = one ? a : r.querySelector(".sg-b").value;
+      /* 話数リストの最初・最後と同じ数字は空で持つ（話数が増えても表示が追いつくように） */
+      if (!one && form.span) {
+        if (a !== "" && +a === form.span[0]) a = "";
+        if (b !== "" && +b === form.span[1]) b = "";
+      }
       const old = form.songs[+r.dataset.sg];
       return {
         /* 主題歌メニューで付けた「DL済み」は、編集しても消さない */
