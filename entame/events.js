@@ -338,7 +338,7 @@ const updSched = () => {
   if (h) h.innerHTML = schedText();
 };
 document.addEventListener("submit", e => {
-  const f = { svF: svSubmit, ytF: ytSubmit, titleF: submitForm, wpQF: wpQSubmit }[e.target.id];
+  const f = { svF: svSubmit, ytF: ytSubmit, titleF: submitForm }[e.target.id];
   if (!f) return;
   e.preventDefault();
   f();
@@ -395,15 +395,6 @@ const CHANGE_ACTIONS = [
     t => {
       if (!subPaste) return false;
       subPaste.addMissing = t.checked;
-      refreshSheet();
-    },
-  ],
-  /* Wikipediaから取得：入力済みのサブタイトルも上書きするか（最初は空欄だけ埋める） */
-  [
-    "#spKeep",
-    t => {
-      if (!subPaste) return false;
-      subPaste.keep = !t.checked;
       refreshSheet();
     },
   ],
