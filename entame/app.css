@@ -1842,3 +1842,29 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .mp-grid.g4 .mp-l{flex:none}
 .mp-sec{margin-top:12px}
 .mp-sec h6{margin-top:4px}
+/* 絞り込みシート：全体を小さめ・コンパクトに */
+.fsh-h{padding:8px 10px 6px 16px}
+.fsh-h b{font-size:15px}
+.fsh-x{width:30px;height:30px}
+.fsh-reset{font-size:12.5px}
+.fsh .fsh-row{min-height:42px;padding:0 12px 0 16px;font-size:13.5px}
+.fsh .fsh-v{font-size:12.5px}
+.fsh-subh{padding:4px 12px 4px 4px}
+.fsh-subh b{font-size:14px}
+.fsh-hint{font-size:11px}
+.fsh-back{width:32px;height:32px}
+.fsh .dd-row{min-height:38px;padding:0 14px;font-size:13.5px}
+.fsh .dd-row .dd-l small{font-size:11.5px}
+.mpwrap{padding:8px 12px 12px}
+.mp-top,.mp-grid{gap:5px}
+.mp-sec{margin-top:10px}
+.mp-sec h6{margin:2px 2px 5px;font-size:11px}
+.mp-t{min-height:34px;padding:0 10px;border-radius:8px;font-size:12.5px}
+.mp-n{font-size:11px}
+.mp-grid.g4 .mp-t{min-height:40px;padding:2px 0}
+.mp-yr{gap:5px;margin-bottom:6px}
+.mp-yr b{min-width:56px;font-size:13.5px}
+.mp-yb{width:30px;height:30px;font-size:15px;border-radius:8px}
+.mp-ya{height:30px;padding:0 10px;font-size:12px;border-radius:8px}
+.fsh-f{padding:8px 12px 10px}
+.fsh-go{height:40px;font-size:14px;border-radius:10px}
