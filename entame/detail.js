@@ -1,6 +1,13 @@
 /* ===================== 作品の詳細：基本情報・話数（視聴チェック・各話リストの貼り付け・話数の編集・〇〇編） ===================== */
 let openId = null, // 開いている作品
   epEdit = null; // 話数の編集中の下書き
+/* 見出し「サブタイトル ▾」を押すと出る候補（話数より後ろの文字のマスの何番目か。1行目などの中身を見本に） */
+function gSubMenu(g) {
+  if (!g.subOpen) return "";
+  return `<div class="gsubm" role="listbox" aria-label="サブタイトルにするマス">${gSubOpts(g)
+    .map((v, k) => `<button type="button" role="option" data-gsub="${k}" aria-selected="${g.si === k}"><b>${k + 1}つ目</b><span>${esc(v)}</span></button>`)
+    .join("")}</div>`;
+}
 /* 整形の表（1話＝1行。話数・サブタイトル・放送日はマスを押して直せる。その他は薄く1マスに） */
 function gridHtml(g) {
   const bad = g.rows.filter(r => gNum(r.n) == null).length;
@@ -9,12 +16,12 @@ function gridHtml(g) {
     <p class="hint" style="margin:0 0 8px">話数・サブタイトル・放送日を行ごとに振り分けました。違うところはマスを押して直し、いらない行は ✕ で消してください。${g.dropped ? `見出しなど${g.dropped}行は外しています。` : ""}放送日が空の行は上の行と同じ日になります。</p>
     ${g.max > 1 ? `<div class="gpick"><span>使う日付</span><div class="segc" role="group" aria-label="使う日付">${g.names.map((nm, k) => `<button type="button" data-gslot="${k}" aria-pressed="${g.k === k}">${esc(nm)}</button>`).join("")}</div></div>` : ""}
     ${bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
-    <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th>話数</th><th>サブタイトル</th><th>放送日</th><th>その他</th></tr></thead><tbody>${g.rows
+    <div class="gwrap">${gSubMenu(g)}<div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th>話数</th><th><button type="button" class="gsubb" id="gSubBtn" aria-expanded="${!!g.subOpen}">サブタイトル ▾</button></th><th>放送日</th><th>その他</th></tr></thead><tbody>${g.rows
       .map(
         (r, i) =>
           `<tr class="${gNum(r.n) == null ? "bad" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno">${i + 1}</td>${inp(i, "n", r.n, "話数")}${inp(i, "sub", r.sub, "サブタイトル")}${inp(i, "d", gDay(g, r), "放送日")}<td class="oth"><span title="${esc(r.other)}">${esc(r.other)}</span></td></tr>`,
       )
-      .join("")}</tbody></table></div>
+      .join("")}</tbody></table></div></div>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
 }
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
@@ -1050,6 +1057,28 @@ const PASTE_ACTIONS = [
       /* 読み取った結果の画面から開く。前に整形した表があれば続きから。「戻る」で結果の画面へ */
       const p = subPaste;
       subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text, (items.find(x => x.id === openId) || {}).from), back: p };
+      refreshSheet();
+    },
+  ],
+  /* サブタイトルにするマスを選ぶ（見出しのボタンで候補を開く・閉じる） */
+  [
+    "#gSubBtn",
+    () => {
+      subPaste.grid.subOpen = !subPaste.grid.subOpen;
+      refreshSheet();
+      /* 候補はボタンのすぐ下（サブタイトルの列の位置）に出す */
+      const m = $(".gsubm"),
+        btn = $("#gSubBtn"),
+        w = $(".gwrap");
+      if (m && btn && w) m.style.left = `${Math.max(0, Math.min(btn.getBoundingClientRect().left - w.getBoundingClientRect().left - 8, w.clientWidth - m.offsetWidth))}px`;
+    },
+  ],
+  [
+    "[data-gsub]",
+    el => {
+      const g = subPaste.grid;
+      gSetSub(g, +el.dataset.gsub);
+      g.subOpen = false;
       refreshSheet();
     },
   ],

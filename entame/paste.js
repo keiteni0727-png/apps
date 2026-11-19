@@ -295,18 +295,36 @@ function gridFrom(text, from) {
   const dropped = anyHead ? raw.findIndex(isHead) : 0;
   const rows = recs.map(r => {
     const ni = Math.max(0, epAt(r));
-    /* サブタイトル：話数より後ろで、日付・数字でない最初のマス。話数より前のマス（シリーズ名など）はその他へ */
+    /* サブタイトルの候補：話数より後ろで、日付・数字でない文字のマス（ti＝その位置）。話数より前のマス（シリーズ名など）はその他へ */
     const after = r.slice(ni + 1).filter(Boolean);
-    const si = after.findIndex(c => !isDateCell(c) && !isNumCell(c) && gNum(c) == null);
-    const cells = [...r.slice(0, ni).filter(Boolean), ...after.filter((c, i) => i !== si)];
-    return { n: r[ni], sub: si >= 0 ? after[si] : "", ds: cells.filter(isDateCell), d: null, other: cells.filter(c => !isDateCell(c)).join(" / ") };
+    const ti = after.map((c, i) => (!isDateCell(c) && !isNumCell(c) && gNum(c) == null ? i : -1)).filter(i => i >= 0);
+    return { n: r[ni], pre: r.slice(0, ni).filter(Boolean), after, ti, ds: [...r.slice(0, ni).filter(Boolean), ...after].filter(isDateCell), d: null, sub: "", other: "" };
   });
   const slot = dateSlot(
     rows.map(r => r.ds.map(c => findDates(c)[0])),
     head ? dateHeads(head) : [],
     from,
   );
-  return { rows, dropped, ...slot };
+  const g = { rows, dropped, ...slot };
+  gSetSub(g, 0);
+  return g;
+}
+/* サブタイトルにする番目（話数より後ろの文字のマスの何番目か）を全部の行で切り替える。外れたマスはその他へ */
+function gSetSub(g, si) {
+  g.si = si;
+  g.rows.forEach(r => {
+    const k = r.ti[si] ?? -1;
+    r.sub = k >= 0 ? r.after[k] : "";
+    r.other = [...r.pre, ...r.after.filter((c, i) => i !== k)].filter(c => !isDateCell(c)).join(" / ");
+  });
+}
+/* サブタイトルの候補（番目ごとに、最初に中身がある行の文字を見本に） */
+function gSubOpts(g) {
+  const max = Math.max(0, ...g.rows.map(r => r.ti.length));
+  return [...Array(max).keys()].map(k => {
+    const r = g.rows.find(x => x.ti[k] != null);
+    return r ? r.after[r.ti[k]] : "";
+  });
 }
 /* 表の放送日のマスに出す文字（手で直したものを優先） */
 const gDay = (g, r) => (r.d != null ? r.d : r.ds[g.k] || "");
@@ -336,4 +354,4 @@ function gridParse(g, from) {
   return out;
 }
 /* Node で読み込んだとき（読み取りの確認用） */
-if (typeof module !== "undefined") module.exports = { EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { gSetSub, gSubOpts, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
