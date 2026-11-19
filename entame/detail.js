@@ -416,7 +416,16 @@ function refreshSheet() {
   if (!it || !el) return;
   /* 前・次へ移ったときの横スライドは1回だけ。描き直した中身にまたかからないよう外す（保存のたびに揺れて見えるため） */
   el.classList.remove("dsl-l", "dsl-r");
+  /* 描き直してもスクロール位置はそのまま（整形の表で行を消したときに一番上へ戻らないように） */
+  const sh = $("#layer .sheet");
+  const pos = [el, sh].map(x => x && [x.scrollTop, x.scrollLeft]);
+  const inner = [".gw", ".sp-list"].map(c => el.querySelector(c)).map((x, i) => x && [[".gw", ".sp-list"][i], x.scrollTop, x.scrollLeft]).filter(Boolean);
   el.innerHTML = renderDetail(it);
+  [el, sh].forEach((x, i) => x && pos[i] && ((x.scrollTop = pos[i][0]), (x.scrollLeft = pos[i][1])));
+  inner.forEach(([c, t, l]) => {
+    const x = el.querySelector(c);
+    if (x) (x.scrollTop = t), (x.scrollLeft = l);
+  });
   noTabInfo();
 }
 /* 話数タブがない詳細（話数のない映画・OVA・TV SP）は、番組情報を表示する */

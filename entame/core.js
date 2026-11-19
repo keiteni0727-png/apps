@@ -732,15 +732,23 @@ function missOk(i) {
   const l = missingOf(i);
   return state.missKey ? l.some(x => x.k === state.missKey) : l.length > 0;
 }
+/* 話数は数字だけ（5.5 など小数も可）。「1話」「第1話」「1」「第一話」「第一幕」は数字の話数（漢数字・「第◯」の後ろの単位も可。EP_NUM・EP_NOT・kanjiNum は paste.js）。
+   それ以外（OVA・総集編など）は「文字で入力」にチェック（sp）した話だけ文字で持てる。チェックなしの文字の話数は表記アラートの対象 */
+let EP_PLAIN = null;
+const epVal = n => {
+  EP_PLAIN = EP_PLAIN || new RegExp(`^(?:第\\s*(${EP_NUM})\\s*(?:${EP_NOT}\\p{L})?|(${EP_NUM})\\s*[話回幕夜]?)$`, "u");
+  const m = EP_PLAIN.exec(String(n ?? "").trim());
+  if (!m) return "";
+  const t = zen(m[1] || m[2]);
+  const k = /^[\d.]+$/.test(t) ? +t : kanjiNum(t);
+  return Number.isFinite(k) ? String(k) : "";
+};
+/* 並び順・照合用の話数（数字の話数でなければ、文字の中の最初の数字） */
 const epNum = n => {
+  const v = epVal(n);
+  if (v) return +v;
   const m = /\d+(?:\.\d+)?/.exec(n || "");
   return m ? +m[0] : null;
-};
-/* 話数は数字だけ（5.5 など小数も可）。「1話」「第1話」「1」は数字の話数。それ以外（OVA・総集編など）は「文字で入力」にチェック（sp）した話だけ文字で持てる。チェックなしの文字の話数は表記アラートの対象 */
-const EP_PLAIN = /^第?\s*(\d+(?:\.\d+)?)\s*話?$/;
-const epVal = n => {
-  const m = EP_PLAIN.exec(String(n ?? "").trim());
-  return m ? String(+m[1]) : "";
 };
 const epLab = v => `${+v}話`;
 /* 折りたたみの印（FOLD_IC）と並び替え（GRIP／SORT_DONE）は、ほかのアプリと共通で shared/u-core.js にある */

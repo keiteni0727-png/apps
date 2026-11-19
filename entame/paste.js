@@ -3,6 +3,9 @@
    parseSubtitles … 「読み取る」で使う（いろいろな書き方の行を読む）
    gridFrom / gridParse … 「整形」の表（1話＝1行。話数・サブタイトル・放送日・その他） */
 
+/* 話数の数字（算用数字・漢数字）と、「第◯」の後ろの単位にしない言葉（第1期・第1部などの区切り） */
+const EP_NUM = String.raw`[0-9０-９]+(?:\.[0-9]+)?|[〇零一二三四五六七八九十百千]+`;
+const EP_NOT = "(?!期|部|章|季|シーズン|クール|シリーズ)";
 const KN = { 〇: 0, 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
 function kanjiNum(t) {
   if (/^\d+$/.test(t)) return +t;
@@ -16,6 +19,9 @@ function kanjiNum(t) {
     } else if (c === "百") {
       total += (cur || 1) * 100;
       cur = 0;
+    } else if (c === "千") {
+      total += (cur || 1) * 1000;
+      cur = 0;
     } else return NaN;
   }
   return total + cur;
@@ -24,7 +30,7 @@ const zen = s => s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0
 /* 話数のすぐ後ろの記号（「第5話☆」の☆・★・※ など）は読み飛ばす */
 const EP_MARK = String.raw`[^\p{L}\p{N}%％\s「『"(（:：.．]*`;
 const EP_RE = new RegExp(
-  String.raw`^\s*(?:第\s*([0-9０-９〇零一二三四五六七八九十百]+)\s*[話回]|#\s*([0-9０-９]+)|([0-9０-９]+)\s*[話回]|([0-9０-９]+)(?=${EP_MARK}\t))${EP_MARK}\s*[\t:：.．\s]*(.*)$`,
+  String.raw`^\s*(?:第\s*([0-9０-９〇零一二三四五六七八九十百千]+)\s*${EP_NOT}\p{L}|#\s*([0-9０-９]+)|([0-9０-９]+)\s*[話回]|([0-9０-９]+)(?=${EP_MARK}\t))${EP_MARK}\s*[\t:：.．\s]*(.*)$`,
   "u",
 );
 /* 注釈（[注1 2]・[1]・[a] など）を消し、全体を囲むカッコだけ外す（途中の『』は残す） */
@@ -233,16 +239,17 @@ function parseSubtitles(text, opt = {}) {
    Wikiの表をコピーすると、1つのマスの中の改行でも行が分かれる。話数で始まらない行は直前の話の続きとしてつなぐ
    （続きの行の最初のマス＝直前の行の最後のマスの続き、残りは次のマス）。
    同じ人のマスが横・縦につながっていて列の数が行ごとに違うので、列の位置ではなく、行ごとにマスの中身を見て振り分ける */
-/* 話数のマス：「第1話」「#01」「1」「MISSION:1」「Episode 1」「第5話☆」「第24話（最終回）」など。
-   「Season 1」「Part 2」のような区切りは話数にしない */
+/* 話数のマス：「第1話」「第一幕」「第1夜」「#01」「1」「MISSION:1」「Episode 1」「第5話☆」「第24話（最終回）」など。
+   「第1期」「Season 1」「Part 2」のような区切りは話数にしない */
 const G_EP = new RegExp(
-  String.raw`^\s*(?:第|#|＃|(?!season|part|vol|chapter|disc|cour)[A-Za-z]{1,10}\s*[:.：]?)?\s*([0-9０-９]+(?:\.[0-9]+)?|[〇零一二三四五六七八九十百]+)\s*[話回]?[^\p{L}\p{N}%％]*$`,
+  String.raw`^\s*(?:第\s*(${EP_NUM})\s*(?:${EP_NOT}\p{L})?|(?:#|＃|(?!season|part|vol|chapter|disc|cour)[A-Za-z]{1,10}\s*[:.：]?)?\s*(${EP_NUM})\s*[話回幕夜]?)[^\p{L}\p{N}%％]*$`,
   "iu",
 );
 function gNum(v) {
   const m = G_EP.exec(zen(String(v || "")).replace(/[（(][^)）]*[)）]/g, ""));
   if (!m) return null;
-  const k = /^[\d.]+$/.test(m[1]) ? +m[1] : kanjiNum(m[1]);
+  const t = m[1] || m[2];
+  const k = /^[\d.]+$/.test(t) ? +t : kanjiNum(t);
   return Number.isFinite(k) ? k : null;
 }
 /* [名前](URL) のリンクは名前だけにする */
@@ -329,4 +336,4 @@ function gridParse(g, from) {
   return out;
 }
 /* Node で読み込んだとき（読み取りの確認用） */
-if (typeof module !== "undefined") module.exports = { parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
