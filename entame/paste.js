@@ -463,7 +463,14 @@ function gVals(g, r) {
   });
   return v;
 }
-const gBad = (g, r) => gNum(gVals(g, r).n) == null;
+/* 話数の列に選んだマスは、前後に言葉が付いていても（「バブ1」「Lv.3」など）最初の数字を話数にする */
+function gNumCol(v) {
+  const k = gNum(v);
+  if (k != null) return k;
+  const m = zen(String(v || "")).replace(/[（(][^)）]*[)）]/g, "").match(/\d+(?:\.\d+)?/);
+  return m ? +m[0] : null;
+}
+const gBad = (g, r) => gNumCol(gVals(g, r).n) == null;
 /* 表から各話を読み取る（話数が読めない行は飛ばす・同じ話数は最初の行）。
    放送日がない行は上の行と同じ日（2話連続放送でマスが縦につながっているとき）。年がない日付は開始日の年から数える */
 function gridParse(g, from) {
@@ -484,7 +491,7 @@ function gridParse(g, from) {
     out = [];
   let last = "";
   list.forEach((o, i) => {
-    const num = gNum(o.r.n);
+    const num = g.cols ? gNumCol(o.r.n) : gNum(o.r.n);
     const d = dated[i] && dated[i].date ? dated[i].date : o.inherit ? last : "";
     if (d) last = d;
     if (num == null || seen.has(num)) return;
