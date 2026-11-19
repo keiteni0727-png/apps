@@ -255,7 +255,13 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sgt td.r-n input{min-width:60px}
 .sgt td.r-sub input{min-width:150px}
 .sgt td.r-d input{min-width:104px}
-.sgt td.oth span{display:block;width:72px;padding:5px 6px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--u-sub);opacity:.7}
+.sgt td.oth button{display:block;width:96px;padding:5px 6px;border:0;background:none;font:inherit;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--u-sub);cursor:pointer}
+.sgt td.gno button{border:0;background:none;padding:6px 2px;font:inherit;color:inherit;cursor:pointer;text-decoration:underline dotted}
+.sgt tr.gpkrow td{background:var(--u-chip)}
+.gpk{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px;max-width:min(560px,calc(100vw - 80px))}
+.gpk span{flex-basis:100%;font-size:11px;font-weight:700;color:var(--u-sub)}
+.gpk button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:999px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer;max-width:240px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.gpk button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700}
 .sgt td.gno,.sgt th.gno{width:24px;text-align:right;color:var(--u-sub);font-family:var(--u-num);font-size:10.5px;padding:0 6px}
 .sgt td.gx,.sgt th.gx{width:28px;text-align:center}
 .sgt td.gx button{border:0;background:none;color:var(--u-sub);font-size:13px;padding:6px 8px;cursor:pointer}

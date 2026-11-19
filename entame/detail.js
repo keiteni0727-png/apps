@@ -4,22 +4,28 @@ let openId = null, // 開いている作品
 /* 見出し「サブタイトル ▾」を押すと出る候補（話数より後ろの文字のマスの何番目か。1行目などの中身を見本に） */
 function gSubMenu(g) {
   if (!g.subOpen) return "";
-  return `<div class="gsubm" role="listbox" aria-label="サブタイトルにするマス">${gSubOpts(g)
+  return `<div class="gsubm" role="listbox" aria-label="サブタイトルにするマス"><button type="button" role="option" data-gsub="-1" aria-selected="${g.si == null}"><b>自動</b><span>話数の次の文字</span></button>${gSubOpts(g)
     .map((v, k) => `<button type="button" role="option" data-gsub="${k}" aria-selected="${g.si === k}"><b>${k + 1}つ目</b><span>${esc(v)}</span></button>`)
     .join("")}</div>`;
+}
+/* 行番号か「その他」を押すと、その行の下に出る：話数以外のマスを1つずつ。押したものがその行のサブタイトルになる */
+function gPickRow(r, i) {
+  return `<tr class="gpkrow"><td colspan="6"><div class="gpk"><span>${i + 1}行目のサブタイトルにするマス</span>${r.cells
+    .map((c, k) => `<button type="button" data-gpick="${i}:${k}" aria-pressed="${r.k === k}">${esc(c)}</button>`)
+    .join("")}</div></td></tr>`;
 }
 /* 整形の表（1話＝1行。話数・サブタイトル・放送日はマスを押して直せる。その他は薄く1マスに） */
 function gridHtml(g) {
   const bad = g.rows.filter(r => gNum(r.n) == null).length;
   const inp = (i, k, v, lab) => `<td class="on r-${k}"><input class="gc" data-g="${i}:${k}" value="${esc(v)}" autocomplete="off" aria-label="${i + 1}行目 ${lab}"></td>`;
   return `<div class="spaste spgrid">
-    <p class="hint" style="margin:0 0 8px">話数・サブタイトル・放送日を行ごとに振り分けました。違うところはマスを押して直し、いらない行は ✕ で消してください。${g.dropped ? `見出しなど${g.dropped}行は外しています。` : ""}放送日が空の行は上の行と同じ日になります。</p>
+    <p class="hint" style="margin:0 0 8px">話数・サブタイトル・放送日を行ごとに振り分けました。違うところはマスを押して直し、いらない行は ✕ で消してください。サブタイトルは見出しの「▾」で全部の行を、行番号か「その他」を押すとその行だけを選び直せます。${g.dropped ? `見出しなど${g.dropped}行は外しています。` : ""}放送日が空の行は上の行と同じ日になります。</p>
     ${g.max > 1 ? `<div class="gpick"><span>使う日付</span><div class="segc" role="group" aria-label="使う日付">${g.names.map((nm, k) => `<button type="button" data-gslot="${k}" aria-pressed="${g.k === k}">${esc(nm)}</button>`).join("")}</div></div>` : ""}
     ${bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
     <div class="gwrap">${gSubMenu(g)}<div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th>話数</th><th><button type="button" class="gsubb" id="gSubBtn" aria-expanded="${!!g.subOpen}">サブタイトル ▾</button></th><th>放送日</th><th>その他</th></tr></thead><tbody>${g.rows
       .map(
         (r, i) =>
-          `<tr class="${gNum(r.n) == null ? "bad" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno">${i + 1}</td>${inp(i, "n", r.n, "話数")}${inp(i, "sub", r.sub, "サブタイトル")}${inp(i, "d", gDay(g, r), "放送日")}<td class="oth"><span title="${esc(r.other)}">${esc(r.other)}</span></td></tr>`,
+          `<tr class="${gNum(r.n) == null ? "bad" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno"><button type="button" data-goth="${i}" aria-expanded="${g.oth === i}" aria-label="${i + 1}行目のサブタイトルを選ぶ">${i + 1}</button></td>${inp(i, "n", r.n, "話数")}${inp(i, "sub", r.sub, "サブタイトル")}${inp(i, "d", gDay(g, r), "放送日")}<td class="oth"><button type="button" data-goth="${i}" title="${esc(r.other)}">${esc(r.other) || "—"}</button></td></tr>${g.oth === i ? gPickRow(r, i) : ""}`,
       )
       .join("")}</tbody></table></div></div>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
@@ -1077,8 +1083,30 @@ const PASTE_ACTIONS = [
     "[data-gsub]",
     el => {
       const g = subPaste.grid;
-      gSetSub(g, +el.dataset.gsub);
+      const v = +el.dataset.gsub;
+      gSetSub(g, v < 0 ? null : v);
       g.subOpen = false;
+      refreshSheet();
+    },
+  ],
+  /* その行だけサブタイトルを選び直す（行番号か「その他」で開く・閉じる） */
+  [
+    "[data-goth]",
+    el => {
+      const g = subPaste.grid;
+      g.oth = g.oth === +el.dataset.goth ? null : +el.dataset.goth;
+      refreshSheet();
+      /* 候補が見えるよう、表を左端まで戻す */
+      if (g.oth != null && $(".gw")) $(".gw").scrollLeft = 0;
+    },
+  ],
+  [
+    "[data-gpick]",
+    el => {
+      const g = subPaste.grid;
+      const [i, k] = el.dataset.gpick.split(":").map(Number);
+      if (g.rows[i]) gPick(g, g.rows[i], k);
+      g.oth = null;
       refreshSheet();
     },
   ],
@@ -1096,6 +1124,7 @@ const PASTE_ACTIONS = [
     "[data-gdel]",
     el => {
       subPaste.grid.rows.splice(+el.dataset.gdel, 1);
+      subPaste.grid.oth = null;
       refreshSheet();
     },
   ],
