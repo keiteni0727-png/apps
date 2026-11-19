@@ -39,7 +39,8 @@ function wpBarHtml(w) {
     w.picking || !w.tables
       ? `<div class="wppick">${(w.cands || []).map((c, k) => `<button type="button" data-wpp="${k}" aria-pressed="${c === w.title}">${esc(c)}</button>`).join("")}<form class="wpq" id="wpQF" autocomplete="off"><input id="wpQ" placeholder="ページを検索" value="${esc(w.q || "")}" aria-label="Wikipediaのページを検索"><button type="submit" class="u-btn sm">検索</button></form></div>`
       : "";
-  return `<div class="wpbar"><div class="wpt"><span>Wikipedia${link ? "：" : ""}${link}</span>${w.tables ? `<button type="button" class="wplink" id="wpPick" aria-expanded="${!!w.picking}">ページを選び直す</button>` : ""}</div>${err}${tabs}${pick}</div>`;
+  const shift = w.shift || w.noShift ? `<p class="wpsh">${w.shift ? `Wikipediaの${w.shift.from}話〜を${w.shift.to}話〜として読み取りました` : "Wikipediaの話数のまま読み取りました"}<button type="button" class="wplink" id="wpShift">${w.shift ? "番号をそのまま使う" : "数え直す"}</button></p>` : "";
+  return `<div class="wpbar"><div class="wpt"><span>Wikipedia${link ? "：" : ""}${link}</span>${w.tables ? `<button type="button" class="wplink" id="wpPick" aria-expanded="${!!w.picking}">ページを選び直す</button>` : ""}</div>${err}${tabs}${shift}${pick}</div>`;
 }
 /* page＝選んだページ（なければ前に使ったページ、それもなければ作品名で探す） */
 async function wikiOpen(it, page, cands) {
@@ -75,7 +76,12 @@ function wikiShow(it, w) {
   }
   const t = w.tables[w.ti];
   const g = gridFrom(t.text, it.from);
-  const parsed = gridParse(g, it.from).filter(x => x.sub);
+  let parsed = gridParse(g, it.from).filter(x => x.sub);
+  /* 第2期などが続き番号で載っているときは、登録済みの最初の話数から数え直す（「番号をそのまま使う」で戻せる） */
+  const nums = (epEdit ? epEdit.list : episodes(it)).map(e => epNum(e.n)).filter(n => n != null);
+  const sh = wpShift(parsed, nums.length ? Math.min(...nums) : 1, it.from);
+  w.shift = w.noShift || !sh.shift ? null : { from: sh.from, to: sh.from - sh.shift };
+  if (w.shift) parsed = sh.list;
   subPaste = { wiki: w, keep: subPaste && subPaste.keep === false ? false : true };
   if (!parsed.length) {
     subPaste = { ...subPaste, text: t.text, grid: g };
@@ -1157,6 +1163,14 @@ const PASTE_ACTIONS = [
     (el, it) => {
       const w = subPaste.wiki;
       wikiOpen(it, w.cands[+el.dataset.wpp], w.cands);
+    },
+  ],
+  [
+    "#wpShift",
+    (el, it) => {
+      const w = subPaste.wiki;
+      w.noShift = !w.noShift;
+      wikiShow(it, w);
     },
   ],
   [

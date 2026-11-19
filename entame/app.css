@@ -237,6 +237,8 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .wpt a{color:var(--accent)}
 .wplink{margin-left:auto;border:0;background:none;padding:0;font:inherit;font-size:12px;color:var(--u-sub);text-decoration:underline;cursor:pointer}
 .wperr{margin:0;font-size:12.5px;color:var(--u-danger)}
+.wpsh{margin:0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--u-sub)}
+.wpsh .wplink{margin-left:0}
 .wptabs{flex-wrap:wrap;gap:4px}
 .wptabs button{flex:0 0 auto;padding:4px 10px;font-size:12px}
 .wppick{display:flex;flex-wrap:wrap;gap:6px}

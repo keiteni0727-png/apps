@@ -164,8 +164,10 @@ async function wpBulkRun() {
       else {
         r.page = f.title;
         const t = f.tables[wpBest(f.tables, it.from)];
-        const parsed = gridParse(gridFrom(t.text, it.from), it.from).filter(x => x.sub);
-        episodes(it).forEach((e, i) => {
+        const eps = episodes(it);
+        const nums = eps.map(e => epNum(e.n)).filter(n => n != null);
+        const parsed = wpShift(gridParse(gridFrom(t.text, it.from), it.from).filter(x => x.sub), nums.length ? Math.min(...nums) : 1, it.from).list;
+        eps.forEach((e, i) => {
           if ((e.sub || "").trim()) return;
           const x = parsed.find(p => p.n === epNum(e.n));
           if (x) r.fills.push({ i, sub: x.sub });

@@ -239,10 +239,10 @@ function parseSubtitles(text, opt = {}) {
    Wikiの表をコピーすると、1つのマスの中の改行でも行が分かれる。話数で始まらない行は直前の話の続きとしてつなぐ
    （続きの行の最初のマス＝直前の行の最後のマスの続き、残りは次のマス）。
    同じ人のマスが横・縦につながっていて列の数が行ごとに違うので、列の位置ではなく、行ごとにマスの中身を見て振り分ける */
-/* 話数のマス：「第1話」「第一幕」「第1夜」「#01」「1」「MISSION:1」「Episode 1」「第5話☆」「第24話（最終回）」など。
+/* 話数のマス：「第1話」「第一幕」「第1夜」「#01」「1」「MISSION:1」「PHASE-01」「Episode 1」「第5話☆」「第24話（最終回）」など。
    「第1期」「Season 1」「Part 2」のような区切りは話数にしない */
 const G_EP = new RegExp(
-  String.raw`^\s*(?:第\s*(${EP_NUM})\s*(?:${EP_NOT}\p{L})?|(?:#|＃|(?!season|part|vol|chapter|disc|cour)[A-Za-z]{1,10}\s*[:.：]?)?\s*(${EP_NUM})\s*[話回幕夜]?)[^\p{L}\p{N}%％]*$`,
+  String.raw`^\s*(?:第\s*(${EP_NUM})\s*(?:${EP_NOT}\p{L})?|(?:#|＃|(?!season|part|vol|chapter|disc|cour)[A-Za-z]{1,10}\s*[:.：\-－_]?)?\s*(${EP_NUM})\s*[話回幕夜]?)[^\p{L}\p{N}%％]*$`,
   "iu",
 );
 function gNum(v) {
@@ -309,7 +309,9 @@ function gridFrom(text, from) {
     /* cells＝話数以外のマス（並び順のまま）。def＝最初にサブタイトルにするマス（話数より後ろで、日付・数字でない最初のマス） */
     const pre = r.slice(0, ni).filter(Boolean),
       after = r.slice(ni + 1).filter(Boolean);
-    const di = after.findIndex(c => !isDateCell(c) && !isNumCell(c) && gNum(c) == null);
+    /* 話数を含むマス（「01.PHASE-01」のような別の番号の列）もサブタイトルにしない */
+    const nt = String(r[ni] || "").trim();
+    const di = after.findIndex(c => !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt)));
     return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "" };
   });
   const g = { rows, dropped };
@@ -459,13 +461,15 @@ async function wpTables(page) {
 async function wpFind(title, page) {
   if (page) return { ...(await wpTables(page)), cands: null };
   const cands = await wpSearch(title);
-  for (const c of cands.slice(0, 3)) {
-    const w = await wpTables(c);
-    if (w.tables.length) return { ...w, cands };
+  /* 検索に出てこないこともあるので「〇〇 (アニメ)」のページも先に試す（ないページはとばす） */
+  const tries = [...new Set([`${wpQuery(title)} (アニメ)`, ...cands.slice(0, 3)])];
+  for (const c of tries) {
+    const w = await wpTables(c).catch(() => null);
+    if (w && w.tables.length) return { ...w, cands: cands.includes(w.title) ? cands : [w.title, ...cands] };
   }
   return { title: cands[0] || "", tables: [], cands };
 }
-/* 開始日に一番近い最初の放送日の表（サブタイトルを読めた表の中で） */
+/* 開始日に一番近い放送日がある表（サブタイトルを読めた表の中で） */
 function wpBest(tables, from) {
   const ft = Date.parse(from || "");
   let best = 0,
@@ -473,11 +477,27 @@ function wpBest(tables, from) {
   tables.forEach((t, i) => {
     const p = gridParse(gridFrom(t.text, from), from).filter(x => x.sub);
     if (!p.length) return;
-    const d = p.find(x => x.date);
-    const v = d && ft ? Math.abs(Date.parse(d.date) - ft) : 1e15 - p.length;
+    /* 表の中で開始日に一番近い放送日（第2期が同じ表に続いている場合もあるので、最初の話だけでなく全部の話で見る） */
+    const ds = p.filter(x => x.date).map(x => Math.abs(Date.parse(x.date) - ft));
+    const v = ds.length && ft ? Math.min(...ds) : 1e15 - p.length;
     if (v < bv) (bv = v), (best = i);
   });
   return best;
 }
+/* 第2期などが前の期と同じ表に続き番号で載っているとき（例：第2期の1話が表では25話）、
+   作品の開始日に一番近い話（10日以内）から first 話として数え直す。数え直さないときは shift 0 */
+function wpShift(parsed, first, from) {
+  const ft = Date.parse(from || "");
+  if (!ft) return { list: parsed, shift: 0 };
+  let k = -1,
+    bv = Infinity;
+  parsed.forEach((x, i) => {
+    const d = x.date ? Math.abs(Date.parse(x.date) - ft) : Infinity;
+    if (d < bv) (bv = d), (k = i);
+  });
+  if (k < 0 || bv > 10 * 864e5 || parsed[k].n <= first) return { list: parsed, shift: 0 };
+  const sh = parsed[k].n - first;
+  return { list: parsed.slice(k).map(x => ({ ...x, n: x.n - sh })), shift: sh, from: parsed[k].n };
+}
 /* Node で読み込んだとき（読み取りの確認用） */
-if (typeof module !== "undefined") module.exports = { gSetSub, gSubOpts, gPick, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { wpShift, gSetSub, gSubOpts, gPick, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
