@@ -176,7 +176,7 @@ html.pkopen,html.pkopen body{overflow:hidden}
 .dd-h span{font-size:12px;color:var(--u-sub)}
 .dd-q{display:flex;align-items:center;gap:8px;margin:10px 10px 8px;height:40px;padding:0 10px;border:1px solid var(--u-line);border-radius:10px;color:var(--u-sub);background:var(--u-bg);flex:none}
 .sheetmode .dd-q{margin-top:0}
-.dd-q input{flex:1;min-width:0;border:0;background:transparent;color:var(--u-ink);font:inherit;font-size:16px;outline:none;padding:0}
+.dd-q input{flex:1;min-width:0;border:0;background:transparent;color:var(--u-ink);font:inherit;font-size:var(--fs-base);outline:none;padding:0}
 .dd-q input:focus,.dd-q input:focus-visible{outline:none;box-shadow:none}
 .dd-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .popmode .dd-box:not(:has(.dd-q)) .dd-list{padding-top:4px}

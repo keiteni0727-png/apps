@@ -400,7 +400,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop .fgroup .chips{gap:4px;flex-wrap:wrap;min-width:0}
 .fsdrop .fgroup .chips button small{font-size:var(--fs-xs)}
 .fsdrop .fgroup:last-child{display:block;margin-top:6px}
-.fsdrop #seriesQ{width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:6px 9px;font:inherit;font-size:var(--fs-m)}
 .fsdrop .fgroup>input,.fsdrop .fgroup>#serSug,.fsdrop .fgroup>.chips{grid-column:2}
 .fsdrop .fgroup>h5{grid-column:1;grid-row:1}
 .fsdrop .fgroup .chips button,.fsdrop .fgroup .chips select{flex:none;white-space:nowrap}
@@ -425,7 +424,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .bkrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .fsdrop select#courY{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-full);padding:3px 8px;font:inherit;font-size:var(--fs-s)}
 @media (hover:none) and (pointer:coarse){
-  .fsdrop #seriesQ{font-size:var(--fs-base)}
 }
 .nosong{color:var(--u-sub);font-size:var(--fs-m)}
 /* 「○○なし」は項目名の行の右端に置く（入力欄の下にはみ出さない） */
@@ -438,8 +436,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   :root{--tbh:58px}
     /* 下部メニュー（共通部品）：このアプリではシートを手前に出す。2項目のときは狭く */
   .ftools input{padding:5px 10px}
-  .fsdrop #seriesQ{padding:3px 8px}
-  .ftools input::placeholder,.fsdrop #seriesQ::placeholder{font-size:var(--fs-s)}
+  .ftools input::placeholder{font-size:var(--fs-s)}
 }
 /* 基本情報カード */
 .icard{border:1px solid var(--u-line);border-radius:var(--r-l);padding:12px 14px;margin-bottom:10px}
@@ -612,7 +609,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop.fpop .fgroup .chips{gap:6px}
 .fsdrop.fpop .fgroup .chips button,.fsdrop.fpop .fgroup .chips select,.fsdrop.fpop .fgroup .chips button[data-couryear]{padding:6px 12px;font-size:var(--fs-base)}
 .fsdrop.fpop .fgroup .chips button small{font-size:var(--fs-xs)}
-.fsdrop.fpop #seriesQ{font-size:var(--fs-l);padding:8px 10px}
 .fsdrop.fpop .sortlist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 @media (min-width:900px){
   .frow{grid-template-columns:repeat(var(--fc,4),minmax(0,150px)) 42px}
@@ -1274,7 +1270,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fsh-subb.chipsmode{padding:4px 16px 14px}
 .fsh-subb.chipsmode .fgroup{margin-top:12px}
 .fsh-subb.chipsmode .fgroup h5 .hint{font-weight:400}
-.fsh-subb.chipsmode #seriesQ{width:100%;box-sizing:border-box;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:9px 11px;font:inherit;font-size:var(--fs-l)}
 .fsh-subb.chipsmode #serSug{display:block;margin-top:8px}
 .fsh-subb.chipsmode .sershd{display:block;margin:2px 0 6px}
 .fsh-subb.chipsmode .serbox{display:flex;flex-wrap:wrap;gap:6px}
@@ -1799,3 +1794,6 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .u-chip.mudl.on{background:var(--u-ok2);border-color:color-mix(in srgb,var(--u-ok) 55%,transparent);color:var(--u-ok)}
 /* 挿入歌がまだないときの「＋ 挿入歌を追加」（OP・EDなどの「＋追加」と同じ札） */
 .sgins{margin-top:2px}
+/* 絞り込みの「シリーズ」の検索窓：ほかの検索窓（一覧の検索など）と同じ大きさ */
+#seriesQ{display:block;width:100%;height:var(--h-m);box-sizing:border-box;padding:0 12px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-bg);color:var(--u-ink);font:400 var(--fs-base)/1.2 var(--u-f)}
+#seriesQ::placeholder{color:var(--u-sub)}
