@@ -563,7 +563,7 @@ function episodes(it) {
   const ks = m ? epKeys(p.eps) : null;
   return p.eps.map((e, i) => {
     const v = m ? +m[ks[i]] || 0 : e.w ? +e.wt || 1 : 0;
-    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp, go: e.go || 0 };
+    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp, x: !!e.x, go: e.go || 0 };
   });
 }
 /* 話数リストまるごとの保存用の中身（eps の w・wt は前の版の画面が開いたままの端末のための控え。読むときは w の印を使う） */
@@ -574,7 +574,7 @@ function progDoc(list) {
     if (e.w) w[ks[i]] = e.wt || 1;
   });
   return {
-    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.go && e.go === e.t ? { go: e.go } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.x ? { x: 1 } : {}), ...(e.go && e.go === e.t ? { go: e.go } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
     w,
   };
 }
@@ -599,9 +599,32 @@ async function migrateProg() {
   }
 }
 const aired = e => !e.t || e.t <= NOWMIN();
+/* 見ない話（配信にない総集編など）：視聴チェックの対象にしない。done＝見た話か見ない話 */
+const done = e => e.w || e.x;
+const watchable = l => l.filter(e => !e.x);
+/* 話数の抜け・重複の場所。gap＝その話の直前に抜けている話数（[最初, 最後]）、dup＝同じ話数がほかにもある話。
+   ok＝「問題なし」にした抜け（"41-41" の形）。数字の話数だけ見る */
+function epGapDup(eps, ok) {
+  const gap = new Map(),
+    dup = new Set();
+  const nums = eps.map(e => (e.sp ? null : epNum(e.n)));
+  const cnt = {};
+  nums.forEach(n => n != null && (cnt[n] = (cnt[n] || 0) + 1));
+  nums.forEach((n, i) => n != null && cnt[n] > 1 && dup.add(i));
+  /* 整数の話数を小さい順に見て、間が空いていたら、空いた後の話（並びで最初に出てくる行）に印を付ける */
+  const ints = [...new Set(nums.filter(n => n != null && Number.isInteger(n)))].sort((a, b) => a - b);
+  for (let k = 1; k < ints.length; k++)
+    if (ints[k] - ints[k - 1] > 1) {
+      const g = [ints[k - 1] + 1, ints[k] - 1];
+      if ((ok || []).includes(`${g[0]}-${g[1]}`)) continue;
+      const i = nums.indexOf(ints[k]);
+      if (i >= 0) gap.set(i, g);
+    }
+  return { gap, dup };
+}
 function nextInfo(it) {
   const l = episodes(it);
-  const un = l.filter(e => !e.w);
+  const un = l.filter(e => !done(e));
   return { all: l, back: un.filter(aired), up: un.find(e => !aired(e)) };
 }
 function jst(t) {
@@ -756,15 +779,15 @@ function missingOf(i) {
   if (episodes(i).some(e => !epVal(e.n) && !e.sp)) add("話数の表記");
   if (epDateCheck(i).n) add("日付の確認");
   /* 「視聴済み」なのにチェックが付いていない話がある（勝手には付けない。話数タブで自分で付ける） */
-  if (i.s === "視聴済み" && episodes(i).some(e => !e.w)) add("未チェックの話");
+  if (i.s === "視聴済み" && episodes(i).some(e => !done(e))) add("未チェックの話");
   /* 話数の抜け（1・2・4話…）・重複（同じ話数が2つ）。数字の話数だけ見る（5.5話などは抜けに数えない） */
   const nums = episodes(i).filter(e => !e.sp).map(e => epNum(e.n)).filter(n => n != null);
-  const ints = [...new Set(nums.filter(n => Number.isInteger(n)))].sort((a, b) => a - b);
-  if (ints.length > 1 && ints[ints.length - 1] - ints[0] + 1 > ints.length) add("話数の抜け");
-  if (new Set(nums).size < nums.length) add("話数の重複");
+  const gd = epGapDup(episodes(i), i.gapOk);
+  if (gd.gap.size) add("話数の抜け");
+  if (gd.dup.size) add("話数の重複");
   /* ステータスのずれ：視聴中なのにチェック0話／未視聴なのにチェックあり／放送前なのに視聴済み */
   const eps = episodes(i);
-  if ((i.s === "視聴中" && eps.length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)) || (i.s === "視聴済み" && i.from && i.from.slice(0, 10) > todayStr())) add("ステータスのずれ");
+  if ((i.s === "視聴中" && watchable(eps).length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)) || (i.s === "視聴済み" && i.from && i.from.slice(0, 10) > todayStr())) add("ステータスのずれ");
   if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
   if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
   if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");

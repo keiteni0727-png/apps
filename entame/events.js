@@ -119,7 +119,7 @@ const ROW_ACTIONS = [
       const it = items.find(x => x.id === el.dataset.tick);
       if (!it) return;
       const l = episodes(it);
-      const i = l.findIndex(x => !x.w && aired(x));
+      const i = l.findIndex(x => !done(x) && aired(x));
       if (i < 0) return;
       l[i].w = true;
       l[i].wt = Date.now();

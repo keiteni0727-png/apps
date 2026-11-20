@@ -96,34 +96,17 @@ function subPasteHtml(it) {
 }
 /* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
 function nextIdx(eps) {
-  const a = eps.findIndex(e => !e.w && aired(e));
-  return a >= 0 ? a : eps.findIndex(e => !e.w);
+  const a = eps.findIndex(e => !done(e) && aired(e));
+  return a >= 0 ? a : eps.findIndex(e => !done(e));
 }
 /* 話数リストでアラートの対象になっている話：数字以外の話数で「文字で入力」なし／サブタイトルのアラートが出ている作品の空のサブタイトル */
 function epWarn(it) {
   const subA = it.k === "a" && missingOf(it).some(x => x.k === "サブタイトル");
   const dc = epDateCheck(it);
-  const gd = epGapDup(episodes(it));
+  const gd = epGapDup(episodes(it), it.gapOk);
   return (e, i) => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim(), d: dc.eps[i] || null, gap: gd.gap.get(i) || null, dup: gd.dup.has(i) });
 }
 const warnAny = x => x.n || x.s || x.d || x.gap || x.dup;
-/* 話数の抜け・重複の場所。gap＝その話の直前に抜けている話数（[最初, 最後]）、dup＝同じ話数がほかにもある話。数字の話数だけ見る */
-function epGapDup(eps) {
-  const gap = new Map(),
-    dup = new Set();
-  const nums = eps.map(e => (e.sp ? null : epNum(e.n)));
-  const cnt = {};
-  nums.forEach(n => n != null && (cnt[n] = (cnt[n] || 0) + 1));
-  nums.forEach((n, i) => n != null && cnt[n] > 1 && dup.add(i));
-  /* 整数の話数を小さい順に見て、間が空いていたら、空いた後の話（並びで最初に出てくる行）に印を付ける */
-  const ints = [...new Set(nums.filter(n => n != null && Number.isInteger(n)))].sort((a, b) => a - b);
-  for (let k = 1; k < ints.length; k++)
-    if (ints[k] - ints[k - 1] > 1) {
-      const i = nums.indexOf(ints[k]);
-      if (i >= 0) gap.set(i, [ints[k - 1] + 1, ints[k] - 1]);
-    }
-  return { gap, dup };
-}
 function epListHtml(it, eps) {
   if (arcEdit) return arcEditHtml();
   const A = it.k === "a";
@@ -133,7 +116,9 @@ function epListHtml(it, eps) {
         ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加してください（その中の「Wikiから貼り付け」で各話リストも取り込めます）。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`
         : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を編集」から追加できます。</p><div class="epset"><button type="button" id="epEditBtn">話数を編集</button></div>`)
     );
-  const w = eps.filter(e => e.w).length;
+  /* 進み具合は見ない話を除いて数える */
+  const w = watchable(eps).filter(e => e.w).length,
+    wt = watchable(eps).length || 1;
   const nx = nextIdx(eps);
   const arcs = arcsOf(it);
   const warnOf = epWarn(it);
@@ -169,14 +154,14 @@ function epListHtml(it, eps) {
     const nlab = v ? `${v}話` : e.n;
     const when = epWhen(e, it, true);
     const whenTx = when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
-    const st = e.w ? " seen" : fut ? " future" : " unseen";
+    const st = e.x ? " skip" : e.w ? " seen" : fut ? " future" : " unseen";
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
     const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
-    const gapRow = wn.gap ? `<div class="tlgap" role="listitem">⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</div>` : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
+    const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
+    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
-    return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
+    return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}"${e.x ? " disabled" : ""} aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
 
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
@@ -192,7 +177,7 @@ function epListHtml(it, eps) {
     });
     const stat = arcs.map((r, k) => {
       const l = eps.filter(e => arcIdx(e) === k);
-      return { w: l.filter(e => e.w).length, n: l.length };
+      return { w: watchable(l).filter(e => e.w).length, n: watchable(l).length };
     });
     const curK = nx >= 0 ? arcIdx(eps[nx]) : -1;
     rowsHtml = groups
@@ -210,7 +195,7 @@ function epListHtml(it, eps) {
     arcBar = `<div class="arcbar"><select id="arcJump" aria-label="編へ移動">${arcs.map((r, k) => `<option value="${k}" ${k === curK ? "selected" : ""}>${esc(r.name)}（${arcRange(r)}）${stat[k].w}/${stat[k].n}</option>`).join("")}</select></div>`;
   } else rowsHtml = eps.map(epRow).join("");
   return `<div class="epset"><button type="button" id="allAired">放送済み<span class="epx">を全部</span> ✓</button>${w ? `<button type="button" id="clearAll">全部外す</button>` : ""}<button type="button" id="epEditBtn">話数を編集</button><button type="button" id="arcOpenEd">編を登録</button></div>
-    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>（押すと最初の話へ）</span></button>` : ""}${fixBar}${arcBar}<div class="prog"><i style="width:${(w / eps.length) * 100}%"></i></div><div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
+    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>（押すと最初の話へ）</span></button>` : ""}${fixBar}${arcBar}<div class="prog"><i style="width:${(w / wt) * 100}%"></i></div><div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */
 function epRef(it, list, i) {
@@ -228,6 +213,7 @@ function epOneHtml(it, e, i) {
     ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
+    <label class="e1-x"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話（配信にない総集編など）</span></label>
     <div class="e1-b"><button type="button" class="e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
 }
 const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
@@ -400,7 +386,7 @@ function renderDetail(it) {
     mv = md === "movie",
     ns = noSched(md);
   const eps = episodes(it);
-  const w = eps.filter(e => e.w).length;
+  const w = watchable(eps).filter(e => e.w).length;
   const nx = eps[nextIdx(eps)];
   /* 映画・OVA・TV SPで話数が1話以下のときは話数タブを出さず、番組情報の下に目立たない「＋ 話数を追加」だけ置く */
   const noEp = ns && eps.length < 2 && !epEdit;
@@ -412,10 +398,10 @@ function renderDetail(it) {
   return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${(l => (l ? `<button type="button" class="dmt mtag m-${l[1]}" data-jump="fMedia" title="放送形態を変える">${l[0]}</button>` : ""))(mediaLabOf(it))}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", CHEV(-1))}${navB(1, "次の作品", CHEV(1))}<button type="button" class="editbtn" id="editItem" aria-label="作品を編集">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
     ${missDetail(it)}
-    ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${eps.length}</small>` : ""}</button></div>`}</div>
+    ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links">${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="delsm" id="delItem">削除</button></div></div>
-    <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${eps.length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
+    <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
 /* 詳細のアラート：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */
@@ -542,7 +528,7 @@ const setStatus = (it, s) => {
 /* 視聴チェックからステータスを自動で決める：全話✓→視聴済み、1話でも✓→視聴中（「見ない」はそのまま） */
 function autoStatus(it, list) {
   if (it.s === "見ない" || !list.length) return null;
-  const all = list.every(e => e.w),
+  const all = list.every(done),
     any = list.some(e => e.w);
   if (all) return it.s !== "視聴済み" ? "視聴済み" : null;
   if (any && it.s !== "視聴中") return "視聴中";
@@ -818,6 +804,15 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["#e1Save", (el, it) => saveEpOne(it)],
+  /* 話数の抜けを「問題なし」に（配信にない総集編など。その作品のその抜けは数えない） */
+  [
+    "[data-gapnok]",
+    (el, it) => {
+      const k = el.dataset.gapnok;
+      const ok = [...new Set([...(it.gapOk || []), k])];
+      saveTitle(it.id, { gapOk: ok }, `${k.split("-")[0] === k.split("-")[1] ? k.split("-")[0] : k.replace("-", "〜")}話の抜けを問題なしにしました`);
+    },
+  ],
   /* 1話だけ削除：誤タップ防止のため、1回目で「本当に削除」に変わり、2回目で削除 */
   [
     "#e1Del",
@@ -878,7 +873,7 @@ const DETAIL_ACTIONS = [
       const l = episodes(it),
         ch = [];
       l.forEach((x, i) => {
-        if (aired(x) && !x.w) {
+        if (aired(x) && !done(x)) {
           x.w = true;
           /* まとめて付けた印：押した日時に0.5を足して区別する（視聴記録には出すが、見る時間帯の集計には入れない） */
           x.wt = Date.now() + 0.5;
@@ -1245,6 +1240,7 @@ function saveEpOne(it) {
   x.sp = sp;
   const s = r.querySelector(".e1-s");
   if (s) x.sub = s.value.trim();
+  x.x = !!r.querySelector(".e1-xc")?.checked;
   const j = jst(x.t);
   if (!day) x.t = 0;
   else if (!j || j.day !== day) {

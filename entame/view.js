@@ -321,7 +321,9 @@ function weekEpLine(i, e, onAir) {
 function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   const eps = episodes(i);
   const { back } = nextInfo(i);
-  const w = eps.filter(e => e.w).length;
+  /* 進み具合は見ない話（配信にない総集編など）を除いて数える */
+  const w = watchable(eps).filter(e => e.w).length,
+    wn = watchable(eps).length;
   const e = weekEp(i, dayKey, preferBack);
   const m = mediaOf(i);
   const st = i.dow < 0 ? "" : stationTxt(i);
@@ -346,7 +348,7 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   if (v === "col") {
     const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
     const more = sites.length - 1;
-    const okMsg = !eps.length ? (isSp(i) ? "放送前" : "話数未登録") : w === eps.length ? "全話視聴済" : "放送済みは視聴済";
+    const okMsg = !eps.length ? (isSp(i) ? "放送前" : "話数未登録") : w === wn ? "全話視聴済" : "放送済みは視聴済";
     return `<div class="wcard v-col${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
       <button type="button" class="wc-main" data-id="${i.id}">
         <span class="wc-row1"><span class="wc-time">${time}</span>${st ? `<span class="wc-st">${esc(st)}</span>` : ""}${badge}</span>
@@ -369,7 +371,7 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
         <span class="wc-ttl">${esc(i.t)}</span>
         ${weekEpLine(i, e, onAir)}
         ${pips}
-        ${eps.length ? `<span class="wc-prog"><span class="wc-bar"><i style="width:${Math.round((w / eps.length) * 100)}%"></i></span><span class="wc-cnt">${w}/${eps.length}話 視聴済</span></span>` : ""}
+        ${eps.length ? `<span class="wc-prog"><span class="wc-bar"><i style="width:${Math.round((w / (wn || 1)) * 100)}%"></i></span><span class="wc-cnt">${w}/${wn}話 視聴済</span></span>` : ""}
         ${foot || (v === "hero" && missingOf(i).length) ? `<span class="wc-foot pconly">${foot}${missBadge(i)}</span>` : ""}
       </button>
       ${tick}
