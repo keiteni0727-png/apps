@@ -81,14 +81,18 @@ function arcSync() {
     r.b = num(el.querySelector(".ar-b").value);
   });
 }
-/* 番組詳細の下の小さなリンク：しょぼいカレンダー（アニメだけ）。各話・放送日を見ながら直すとき用 */
-const syoboiUrl = it => `https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t || "")}`;
-const extLinks = it => (it.k === "a" ? `<span class="xlinks"><a href="${esc(syoboiUrl(it))}" target="_blank" rel="noopener">しょぼいカレンダー ↗</a></span>` : "");
+/* しょぼいカレンダーへのリンク（アニメだけ）：作品のページのURLを登録していればそこ、なければ作品名で検索。
+   番組詳細の下と、各話リストの貼り付け画面の両方に出す（登録したURLはどちらにも使う） */
+const syoboiUrl = it => it.syoboi || `https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t || "")}`;
+const syoboiLab = it => (it.syoboi ? "しょぼいカレンダーを開く ↗" : "しょぼいカレンダーで探す ↗");
+const syoboiA = (it, cls) => `<a class="${cls}" href="${esc(syoboiUrl(it))}" target="_blank" rel="noopener">${syoboiLab(it)}</a>`;
+const extLinks = it => (it.k === "a" ? `<span class="xlinks">${syoboiA(it, "syb")}</span>` : "");
 function subPasteHtml(it) {
   const p = subPaste;
   if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
+    ${it.k === "a" ? `<div class="sylink">${syoboiA(it, "syb")}<input id="spSyoboi" type="url" inputmode="url" autocomplete="off" placeholder="作品のページのURLを貼ると、次からそこを開きます" value="${esc(it.syoboi || "")}" aria-label="しょぼいカレンダーのURL"></div>` : ""}
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,
