@@ -686,14 +686,12 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .epw>.ep.ep{border-top:0;background:transparent;padding-right:4px}
 .epe{border:0;background:transparent;color:var(--u-sub);font-size:var(--fs-base);padding:0 12px;min-width:38px}
 .epe:active{color:var(--u-ink)}
-.e1 input{min-width:0;width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-s);padding:6px 7px;font:inherit;font-size:var(--fs-base)}
-.e1-b{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
-.e1-b button{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:7px 14px;font-size:var(--fs-m);font-weight:700}
-.e1-b .pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+/* 1話だけの編集：入力欄はほかの入力欄（.u-input）と同じ高さ・角の丸み */
+.e1 input:not([type=checkbox]){min-width:0;width:100%;height:var(--h-in);box-sizing:border-box;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:0 10px;font:inherit;font-size:var(--fs-base)}
+/* 下のボタン：削除は左端、キャンセル・保存は右（押し間違えないように離す） */
+.e1-b{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.e1-b .e1-del{margin-right:auto;padding-left:0}
 .e1{background:var(--u-chip)}
-@media (max-width:560px){
-  .e1 input{font-size:var(--fs-m)}
-}
 @media (max-width:360px){
   .epe{padding:0 8px;min-width:30px}
 }
