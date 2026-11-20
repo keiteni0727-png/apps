@@ -1,14 +1,31 @@
 /* ===================== 作品の詳細：各話リストの貼り付けの画面（読み取り自体は paste.js） =====================
    しょぼいカレンダーのサブタイトルの一覧・放送時間の表を貼る → 読み取った結果を確かめる → 反映。
    話数で合わせて、サブタイトルと放送日・時刻（放送時間の表のときだけ）を入れ、登録されていない話は追加する */
-let subPaste = null; // {text}（貼り付け中）／{text, rows}（読み取った結果）。話数の編集の中で開き、編集中の話数に反映する
+let subPaste = null; // {text}（貼り付け中）／{text, rows}（読み取った結果）。話数タブ・話数の編集のどちらからも開く
+const PASTE_IC = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>`;
+/* 「貼り付け」：コピーした文字をそのまま読み取り、確認画面へ（読めないとき・許可されないときは貼り付け欄を出す） */
+async function openPaste(it) {
+  epOne = null;
+  epMenu = false;
+  subPaste = { text: "" };
+  let t = "";
+  try {
+    t = (navigator.clipboard && navigator.clipboard.readText && (await navigator.clipboard.readText())) || "";
+  } catch (e) {}
+  if (!subPaste || openId !== it.id) return;
+  if (t.trim() && parseSubtitles(t).length) return readPaste(it, t);
+  subPaste = { text: "" };
+  refreshSheet();
+  if (t.trim()) toast("コピーした内容を読み取れませんでした。ここに貼り付けてください");
+  if (!TOUCH) $("#spText")?.focus({ preventScroll: true });
+}
 function subPasteHtml(it) {
   const p = subPaste;
   if (!p.rows)
     return `<div class="spaste">
-    <p class="hint sp-how">しょぼいカレンダーの「サブタイトル」の一覧、または「放送時間」の表をコピーして貼り付けてください</p>
+    <p class="hint sp-how">しょぼいカレンダーの「サブタイトル」の一覧、または「放送時間」の表を貼り付けると、すぐ読み取ります</p>
     <textarea id="spText" rows="8" placeholder="1　サブタイトル&#10;2　サブタイトル">${esc(p.text || "")}</textarea>
-    <div class="ffoot"><button type="button" class="u-btn" id="spCancel">キャンセル</button><button type="button" class="u-btn pri" id="spRead">読み取る</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const subN = p.rows.filter(r => r.subCh).length,
     dateN = p.rows.filter(r => r.dateCh).length,
     addN = p.rows.filter(r => r.idx < 0).length;
@@ -30,13 +47,12 @@ function subPasteHtml(it) {
   return `<div class="spaste">
     <p class="sp-sum">${p.rows.length}話分を読み取りました。${any ? `${sum ? `<b>${sum}</b>を更新${addN ? "、" : ""}` : ""}${addN ? `<b>${addN}話</b>を追加` : ""}します。` : "登録済みの内容と同じです。"}</p>
     <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : !r.subCh && !r.dateCh ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${tag(r)}</span></div>`).join("")}</div>
-    <div class="ffoot"><button type="button" class="u-btn" id="spBack">貼り直す</button><button type="button" class="u-btn pri" id="spApply" ${any ? "" : "disabled"}>${epEdit ? "話数に反映" : "反映する"}</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn" id="spCancel">キャンセル</button><button type="button" class="u-btn" id="spBack">貼り直す</button><button type="button" class="u-btn pri primary" id="spApply" ${any ? "" : "disabled"}>反映して保存</button></div></div>`;
 }
 /* 「24:30」「09:00」→「24:30」「9:00」（jst の hm と同じ書き方） */
 const hmOf = t => t.replace(/^0(\d)/, "$1");
 /* 貼り付けた文字を読み取り、登録済みの話と比べた一覧を出す */
-function readPaste(it) {
-  const text = $("#spText").value;
+function readPaste(it, text = ($("#spText") || {}).value || "") {
   const parsed = parseSubtitles(text);
   if (!parsed.length) return toast("読み取れませんでした。しょぼいカレンダーのサブタイトルの一覧か、放送時間の表をコピーしてください");
   const eps = epEdit ? epEdit.list : episodes(it);
@@ -94,13 +110,10 @@ function applyPaste(it) {
   if (an) l.sort((a, b) => (epNum(a.n) ?? 0) - (epNum(b.n) ?? 0));
   subPaste = null;
   const msg = [sn ? `サブタイトル${sn}話` : "", dn ? `放送日${dn}話` : "", an ? `${an}話の追加` : ""].filter(Boolean).join("・") || "変更なし";
-  /* 話数の編集の中から開いたときは、編集中の話数に入れて編集画面に戻る（保存は「話数を保存」で） */
-  if (epEdit) {
-    refreshSheet();
-    toast(`${msg}を反映しました。「話数を保存」で保存されます`);
-    return;
-  }
-  saveEps(it, l, msg + "を反映しました");
+  /* 話数の編集の中から開いたときも、編集中の内容ごとそのまま保存して編集を閉じる */
+  const out = epEdit ? l.map(({ moved, ...x }) => x) : l;
+  epEdit = null;
+  saveEps(it, out, msg + "を反映して保存しました");
   refreshSheet();
 }
 /* 各話リストの貼り付け中 */
@@ -122,3 +135,12 @@ const PASTE_ACTIONS = [
   ["#spRead", (el, it) => readPaste(it)],
   ["#spApply", (el, it) => applyPaste(it)],
 ];
+/* 貼り付け欄に貼ったら、すぐ読み取る（「読み取る」を押さなくてよい） */
+document.addEventListener("paste", e => {
+  if (!subPaste || e.target.id !== "spText") return;
+  setTimeout(() => {
+    const it = openId && items.find(x => x.id === openId);
+    const t = $("#spText");
+    if (it && t && subPaste && !subPaste.rows && parseSubtitles(t.value).length) readPaste(it, t.value);
+  }, 0);
+});

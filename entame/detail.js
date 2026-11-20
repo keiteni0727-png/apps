@@ -162,7 +162,7 @@ function renderDetail(it) {
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links">${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
-    <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
+    <div id="epArea">${subPaste ? subPasteHtml(it) : epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
 }
 /* 詳細のアラート：ふだんは1行に畳み、開くと項目ボタン。ボタンを押すとその項目だけの編集画面へ */
 let dmissKeep = false;
@@ -595,14 +595,7 @@ const DETAIL_ACTIONS = [
     },
   ],
   /* 各話リスト（サブタイトル）の貼り付け */
-  [
-    "#spOpen",
-    () => {
-      subPaste = { text: "" };
-      refreshSheet();
-      if (!TOUCH) $("#spText")?.focus({ preventScroll: true });
-    },
-  ],
+  ["#spOpen", (el, it) => openPaste(it)],
   [null, (el, it, e) => !!subPaste && runActions(PASTE_ACTIONS, e, it)],
   /* 話数の編集 */
   [

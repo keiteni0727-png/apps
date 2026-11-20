@@ -48,7 +48,7 @@ function epListHtml(it, eps) {
   if (!eps.length)
     return (
       (A
-        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から、各話リストを貼り付けるか、1話ずつ追加できます。</p><div class="ephead"><button type="button" class="u-btn sm pri ephb" id="epEditBtn">話数を登録</button></div>`
+        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。各話リストをコピーして「貼り付け」を押すか、「話数を登録」から1話ずつ追加できます。</p><div class="ephead"><button type="button" class="u-btn sm pri ephb ephp" id="spOpen">${PASTE_IC}貼り付け</button><button type="button" class="u-btn sm ephb" id="epEditBtn">話数を登録</button></div>`
         : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から追加できます。</p><div class="ephead"><button type="button" class="u-btn sm pri ephb" id="epEditBtn">話数を登録</button></div>`)
     );
   /* 進み具合は見ない話を除いて数える */
@@ -133,7 +133,7 @@ function epListHtml(it, eps) {
   const menu = epMenu
     ? `<div class="epmenu" role="menu"><button type="button" role="menuitem" id="allAired">放送済みの話を全部チェック</button>${w ? `<button type="button" role="menuitem" id="clearAll">チェックを全部外す</button>` : ""}<button type="button" role="menuitem" id="arcOpenEd">${arcs.length ? "編（〇〇編）を編集" : "編（〇〇編）を登録"}</button></div>`
     : "";
-  return `<div class="ephead"><div class="prog"><i style="width:${(w / wt) * 100}%"></i></div><button type="button" class="u-btn sm ephb" id="epEditBtn">話数を編集</button><button type="button" class="u-btn icon sm ephb ephm" id="epMenuBtn" aria-haspopup="menu" aria-expanded="${epMenu}" aria-label="そのほかの操作">…</button>${menu}</div>
+  return `<div class="ephead"><div class="prog"><i style="width:${(w / wt) * 100}%"></i></div>${A ? `<button type="button" class="u-btn sm ephb ephp" id="spOpen" aria-label="各話リストを貼り付け">${PASTE_IC}貼り付け</button>` : ""}<button type="button" class="u-btn sm ephb" id="epEditBtn">話数を編集</button><button type="button" class="u-btn icon sm ephb ephm" id="epMenuBtn" aria-haspopup="menu" aria-expanded="${epMenu}" aria-label="そのほかの操作">…</button>${menu}</div>
     ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>押すと最初の話へ</span></button>` : ""}${fixBar}${arcBar}<div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */

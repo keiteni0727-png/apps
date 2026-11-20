@@ -1752,3 +1752,15 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .u-chip.add.epadd{color:var(--u-sub);border-color:var(--u-strong)}
 /* 貼り付け：上の説明 */
 .sp-how{margin:0 0 8px;font-size:var(--fs-s)}
+/* ===== 各話リストの貼り付け：話数タブの「貼り付け」ボタンと、スマホの確認画面 ===== */
+.ephp{display:inline-flex;align-items:center;gap:4px}
+.ephp svg{flex:none}
+@media (max-width:699px){
+  /* スマホ：枠をなくして画面いっぱいに使い、一覧はシートごとスクロール。下のボタンは常に画面の下に固定（親指で押せる位置） */
+  .spaste{border:0;padding:0;background:none}
+  .sp-list{max-height:none;overflow:visible}
+  .sp-sum{margin:0 0 8px}
+  .spaste .ffoot{position:sticky;bottom:0;margin-top:10px;padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));gap:8px}
+  .spaste .ffoot .u-btn:not(.primary){flex:none;padding-inline:12px}
+  .spaste textarea{min-height:42vh}
+}
