@@ -226,7 +226,8 @@ const SONG_MAIN = ["OP", "ED", "主題歌"];
 const sgNoneBox = () =>
   form.songs.length ? "" : `<label class="nofl sgno sghno"><input type="checkbox" class="nos" ${(form.noSongs || []).length ? "checked" : ""} aria-label="OP・ED・主題歌 なし"><span>なし</span></label>`;
 /* 編集画面でたたんでいる曲（番号）。たためるのは同じ種類に2曲以上あるときだけ。ふだんは全部開いている */
-let sgFold = new Set();
+/* 開いている曲（同じ種類に2曲以上のときは、最初はすべてたたむ） */
+let sgOpen = new Set();
 let sgAddK = -1;
 function songRowsHtml() {
   const f = form;
@@ -238,26 +239,25 @@ function songRowsHtml() {
     /* 1話だけ：「最後」の欄を隠して、最初の話だけ入れる */
     const one = !!x.one;
     const { st, ar } = songTA(x);
-    const open = !multi || !sgFold.has(k);
+    const open = !multi || sgOpen.has(k);
     /* 最初・最後が空の欄は、話数リストの最初・最後の話を入れて見せる（保存するときは、話数リストの最初・最後と同じなら空に戻す） */
     const sp = !one && f.span;
     const va = x.a ?? (sp ? sp[0] : ""),
       vb = x.b ?? (sp ? sp[1] : "");
     const rt = [rangeTxt(sp ? { a: va, b: vb } : x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
     return `<div class="sg${open ? " open" : ""}${multi ? " multi" : ""}" data-sg="${k}"${multi ? " data-sortrow" : ""}>
-    ${multi ? `<div class="sg-hd">${GRIP("sg")}<button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span><span class="sg-sv">${FOLD_IC}</span></button></div>` : ""}
+    ${multi ? `<div class="sg-hd">${GRIP("sg")}<button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn"><span class="sg-st1">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span><span class="sg-sv">${FOLD_IC}</span></button></div>` : ""}
     <div class="sg-body">
-    <div class="sg-f"><label><span>曲名</span><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="例：エスコート" autocomplete="off"></label>
-      <label><span>アーティスト</span><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="例：THE BEAT GARDEN" autocomplete="off"></label></div>
-    <div class="sg-r"><span class="sg-rl">使われた話</span><input class="sg-a" type="number" min="0" inputmode="numeric" value="${va}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw${one ? " inv" : ""}" ${one ? 'aria-hidden="true"' : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${vb}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one && !f.span ? `<span class="sg-all">全話</span>` : ""}
+    <div class="sg-f2"><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="曲名" aria-label="曲名" autocomplete="off"><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="アーティスト" aria-label="アーティスト" autocomplete="off"></div>
+    <div class="sg-r"><input class="sg-a" type="number" min="0" inputmode="numeric" value="${va}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw${one ? " inv" : ""}" ${one ? 'aria-hidden="true"' : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${vb}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one && !f.span ? `<span class="sg-all">全話</span>` : ""}
       <label class="sg-onew"><input type="checkbox" class="sg-one" data-sgone="${k}" ${one ? "checked" : ""}>1話だけ</label></div>
     ${(x.ex || [])
       .map(
         (r, j) =>
-          `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほかの話</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-xh">1話だけなら「最後」は空</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
+          `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほか</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
       )
-      .join("")}<button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button>
-    <div class="sg-ft"><span class="sg-rl">種類</span><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
+      .join("")}
+    <div class="sg-ft"><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button><button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
   };
   const secs = types
     .map(t => {
@@ -265,7 +265,7 @@ function songRowsHtml() {
       if (!l.length && !main.includes(t)) return "";
       return `<div class="sgsec ${SG_CLS[t]}">
         <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
-          ${l.length > 1 ? `<button type="button" class="sgfoldall" data-sgfoldall="${t}">${l.some(([, k]) => !sgFold.has(k)) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
+          ${l.length > 1 ? `<button type="button" class="sgfoldall" data-sgfoldall="${t}">${l.some(([, k]) => sgOpen.has(k)) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
           ${l.length ? "" : `<button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button>`}</div>
         ${l.length ? l.map(([x, k]) => card(x, k, l.length > 1)).join("") + `<button type="button" class="sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : ""}</div>`;
     })
@@ -535,7 +535,7 @@ function openForm(it, target, el) {
     const r = k === "new" ? {} : (it.relb || [])[+k] || {};
     Object.assign(form, { rbK: k, rbT: r.t || "", rbF: r.from || "", rbTo: r.to || "", songs: (r.songs || []).map(x => ({ ...x })) });
   }
-  sgFold = new Set();
+  sgOpen = new Set();
   /* 1話だけの曲（最初＝最後）は「1話だけ」にチェックを入れて開く */
   form.songs.forEach(x => {
     if (x.a != null && x.b === x.a) x.one = 1;
@@ -808,7 +808,7 @@ const FORM_ACTIONS = [
         /* 同じ種類の最後の曲のすぐ後ろに入れる（種類ごとの並びを保つ） */
         const at = last ? form.songs.lastIndexOf(last) + 1 : form.songs.length;
         form.songs.splice(at, 0, { type: tp, s: "", st: "", ar: "", ...nu });
-        sgFold = new Set([...sgFold].map(k => (k >= at ? k + 1 : k)));
+        sgOpen = new Set([...[...sgOpen].map(k => (k >= at ? k + 1 : k)), at]);
         sgAddK = at;
       },
       () => {
@@ -824,7 +824,7 @@ const FORM_ACTIONS = [
     formEdit(el => {
       const d = +el.dataset.sgdel;
       form.songs.splice(d, 1);
-      sgFold = new Set([...sgFold].filter(k => k !== d).map(k => (k > d ? k - 1 : k)));
+      sgOpen = new Set([...sgOpen].filter(k => k !== d).map(k => (k > d ? k - 1 : k)));
     }),
   ],
   /* 1話だけ：チェックで「最後」の欄を出したり隠したり */
@@ -834,16 +834,16 @@ const FORM_ACTIONS = [
     "[data-sgfold]",
     formEdit(el => {
       const k = +el.dataset.sgfold;
-      if (sgFold.has(k)) sgFold.delete(k);
-      else sgFold.add(k);
+      if (sgOpen.has(k)) sgOpen.delete(k);
+      else sgOpen.add(k);
     }),
   ],
   [
     "[data-sgfoldall]",
     formEdit(el => {
       const ks = form.songs.map((x, k) => [x, k]).filter(([x]) => x.type === el.dataset.sgfoldall);
-      const anyOpen = ks.some(([, k]) => !sgFold.has(k));
-      ks.forEach(([, k]) => (anyOpen ? sgFold.add(k) : sgFold.delete(k)));
+      const anyOpen = ks.some(([, k]) => sgOpen.has(k));
+      ks.forEach(([, k]) => (anyOpen ? sgOpen.delete(k) : sgOpen.add(k)));
     }),
   ],
   /* 飛び飛びの話：行を足す／消す */
@@ -928,6 +928,6 @@ SORT_DONE.sg = () => {
   if (!form) return;
   const old = [...document.querySelectorAll("#sgList [data-sg]")].map(c => +c.dataset.sg);
   readForm();
-  sgFold = new Set(old.map((k, i) => (sgFold.has(k) ? i : -1)).filter(i => i >= 0));
+  sgOpen = new Set(old.map((k, i) => (sgOpen.has(k) ? i : -1)).filter(i => i >= 0));
   redrawForm();
 };

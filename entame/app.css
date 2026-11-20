@@ -1872,3 +1872,28 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .ergap button,.tlgap .tlok{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:3px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .er.dup{box-shadow:inset 0 0 0 1.5px var(--u-danger);border-radius:8px}
 .er .erwhy{grid-column:1/-1;flex-basis:100%;font-size:11.5px;color:var(--u-danger);padding:0 6px 4px}
+/* 曲の編集：コンパクトに（曲名・アーティストは横に並べ、見出しの文字はなし。話数は1行、種類・範囲の追加・削除も1行） */
+.sg .sg-body{padding:8px 10px;display:grid;gap:6px}
+.sg-f2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sg-f2 input{min-width:0;width:100%;height:34px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:8px;padding:0 9px;font:inherit;font-size:13.5px}
+.sg .sg-r{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;font-size:13px;margin:0}
+.sg .sg-r input{width:58px;height:32px;padding:0 6px;font-size:13.5px}
+.sg .sg-onew{margin-left:auto;font-size:12px;white-space:nowrap}
+.sg .sg-ft{display:flex;align-items:center;gap:8px;margin:0;padding:6px 0 0;border-top:1px solid var(--u-soft)}
+.sg .sg-ft select{height:30px;font-size:12.5px;padding:0 24px 0 8px}
+.sg .sg-ft .sg-exadd{margin:0;padding:0;font-size:12px}
+.sg .sg-ft .del{margin-left:auto;font-size:12.5px}
+.sg.multi .sg-hd{padding:6px 8px}
+.sg .sg-sum{min-height:0}
+.sg .sg-rl{font-size:11.5px}
+/* たたんだ曲は1行（曲名・アーティストは省略して、使われた話は右） */
+.sg .sg-sum{grid-template-columns:minmax(0,1fr) auto!important;align-items:center;column-gap:8px}
+.sg-sum .sg-sn{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sg-sum .sg-se{justify-self:end!important}
+.sg.multi:not(.open) .sg-hd{padding:4px 8px}
+/* たたんだ曲：1行目に曲名、2行目にアーティスト（長いときはそれぞれ…で省略） */
+.sg-sum .sg-sn{display:flex;flex-direction:column;white-space:normal}
+.sg-sum .sg-st1,.sg-sum .sg-sa{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin:0}
+.sg-sum .sg-sa{font-size:11.5px;font-weight:500;color:var(--u-sub)}
+/* スマホは曲名・アーティストを縦に並べる（長い名前も見えるように）。PCは横に並べる */
+@media (max-width:899px){.sg-f2{grid-template-columns:1fr}}
