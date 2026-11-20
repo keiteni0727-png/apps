@@ -50,7 +50,7 @@ function seriesPanelHtml() {
   const cnt = seriesCounts();
   return `<div class="fgroup"><h5>シリーズ</h5>
       ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
-      <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索（例：ガンダム、こなん）" aria-label="シリーズを検索">
+      <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索" aria-label="シリーズを検索">
       <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
 }
 /* 絞り込みの中身：時期（放送クール・放送年） */

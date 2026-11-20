@@ -437,7 +437,7 @@ function ytFormHtml() {
   const subChips = (lab, list, attr, cur) =>
     `<div class="chips" style="margin-top:8px" role="group" aria-label="${lab}">${list.map(g => `<button type="button" ${attr}="${esc(g)}" aria-pressed="${cur === g}">${esc(g)}</button>`).join("")}</div>`;
   const P = {
-    title: `<label class="field full"><span>動画タイトル</span><input id="y-t" autocomplete="off" placeholder="例：ゼルダの伝説 ティアーズ オブ ザ キングダム" value="${esc(f.t)}"></label>`,
+    title: `<label class="field full"><span>動画タイトル</span><input id="y-t" autocomplete="off" placeholder="動画タイトル" value="${esc(f.t)}"></label>`,
     author: `<div class="field full" id="yfAuthor"><span>投稿者</span><div class="chips">${authors.map(a => `<button type="button" data-yfa="${esc(a)}" aria-pressed="${f.a === a}">${esc(a)}</button>`).join("")}<input id="y-anew" class="chipin" autocomplete="off" placeholder="＋ ほかの投稿者" value="${esc(authors.includes(f.a) ? "" : f.a)}"></div></div>`,
     genre: `<div class="field full" id="yfGenre"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${[SOLO, COLLAB].map(g => `<button type="button" data-yfg="${g}" aria-pressed="${ytCat(f) === g}">${g}</button>`).join("")}</div>${
       ytCat(f) === COLLAB ? subChips("コラボのグループ", ytSubs(), "data-yfsub", ytSub(f)) : ytCat(f) === SOLO ? subChips("一人実況のグループ", M("soloGroups"), "data-yfsg", ytSolo(f)) : ""

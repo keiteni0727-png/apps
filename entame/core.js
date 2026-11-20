@@ -832,7 +832,7 @@ function missOk(i) {
   return state.missKey ? l.some(x => x.k === state.missKey) : l.length > 0;
 }
 /* 話数は数字だけ（5.5 など小数も可）。「1話」「第1話」「1」「第一話」「第一幕」は数字の話数（漢数字・「第◯」の後ろの単位も可。EP_NUM・EP_NOT・kanjiNum は paste.js）。
-   それ以外（OVA・総集編など）は「文字で入力」にチェック（sp）した話だけ文字で持てる。チェックなしの文字の話数は表記アラートの対象 */
+   それ以外（OVA・総集編など）は名前の話（sp）。話数の欄に名前を入れると sp になる（parseEpIn）。sp でない古い書き方の話数は表記アラートの対象 */
 let EP_PLAIN = null;
 const epVal = n => {
   EP_PLAIN = EP_PLAIN || new RegExp(`^(?:第\\s*(${EP_NUM})\\s*(?:${EP_NOT}\\p{L})?|(${EP_NUM})\\s*[話回幕夜]?)$`, "u");

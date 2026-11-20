@@ -325,7 +325,7 @@ function formHtml() {
   const sec = (title, body, note = "", side = "", cls = "") =>
     `<section class="fsec${cls ? " " + cls : ""}"><h4>${title}${side}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
-    title: `<label class="field full"><span>タイトル</span><input id="f-t" autocomplete="off" placeholder="例：薬屋のひとりごと 第3期" value="${esc(f.t)}"></label>`,
+    title: `<label class="field full"><span>タイトル</span><input id="f-t" autocomplete="off" placeholder="タイトル" value="${esc(f.t)}"></label>`,
     kind: `<div class="field"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${seg(
       "data-fk",
       [
@@ -377,7 +377,7 @@ function formHtml() {
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
 </div>`,
     /* 関連放送（旧作・再放送など）：タイトル・放送開始と終了・主題歌。主題歌の行は作品の主題歌と同じ作り */
-    relb: `<label class="field full"><span>タイトル</span><input id="f-rbt" type="text" autocomplete="off" placeholder="HUNTER×HUNTER（1999年版）・再放送 など" value="${esc(f.rbT || "")}"></label>
+    relb: `<label class="field full"><span>タイトル</span><input id="f-rbt" type="text" autocomplete="off" placeholder="旧作・再放送などのタイトル" value="${esc(f.rbT || "")}"></label>
         ${dtField("f-rbf", "放送開始", f.rbF)}${dtField("f-rbto", "放送終了", f.rbTo)}
         <div class="field full"><span>主題歌</span><div class="sglist" id="sgList">${songRowsHtml()}</div></div>`,
     url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
@@ -385,7 +385,7 @@ function formHtml() {
     vurl: (() => {
       const sites = f.media === "stream" ? f.plat : f.vods;
       if (!sites.length && f.only !== "f-vurl") return "";
-      return `<div class="field full"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
+      return `<div class="field full"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
     })(),
     /* しょぼいカレンダーの作品ページ（アニメだけ。各話リストの貼り付け画面の欄と同じ） */
     syoboi: f.k === "a" ? `<div class="field full"><label class="field" for="f-syoboi"><span>しょぼいカレンダー</span></label><input id="f-syoboi" type="url" inputmode="url" autocomplete="off" placeholder="https://cal.syoboi.jp/tid/…" value="${esc(f.syoboi || "")}"></div>` : "",
@@ -406,7 +406,7 @@ function formHtml() {
     ["r", "バラエティ", "kr"],
   ];
   const ck = KINDS.find(x => x[0] === f.k) || KINDS[0];
-  const head = `<div class="fhead"><input id="f-t" class="ftitle" autocomplete="off" placeholder="タイトル（例：薬屋のひとりごと 第3期）" aria-label="タイトル" value="${esc(f.t)}">
+  const head = `<div class="fhead"><input id="f-t" class="ftitle" autocomplete="off" placeholder="タイトル" aria-label="タイトル" value="${esc(f.t)}">
     <div class="fchips"><button type="button" class="fchip ${ck[2]}" data-fx="kind" aria-expanded="${f.fx === "kind"}" aria-label="ジャンル：${ck[1]}">${ck[1]}${DD_CHEV}</button><button type="button" class="fchip s-${esc(f.s)}" data-fx="status" aria-expanded="${f.fx === "status"}" aria-label="ステータス：${esc(stLabel(f.s))}">${esc(stLabel(f.s))}${DD_CHEV}</button></div>
     ${f.fx === "kind" ? `<div class="segc fxopt" role="group" aria-label="ジャンル">${seg("data-fk", KINDS, f.k)}</div>` : ""}${f.fx === "status" ? `<div class="segc fxopt fxst" role="group" aria-label="ステータス">${seg("data-fs", STATUSES.map(x => [x, stLabel(x), "s-" + x]), f.s)}</div>` : ""}</div>`;
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>

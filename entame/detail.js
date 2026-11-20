@@ -61,7 +61,7 @@ const arcKey = r => `${r.name}#${r.a}`;
 const arcRange = r => `#${r.a}–${r.b ?? ""}`;
 function arcEditHtml() {
   const row = (r, i) => `<div class="ar" data-ar="${i}">
-      <input class="ar-nm" value="${esc(r.name || "")}" placeholder="例：サイヤ人編" aria-label="編の名前" autocomplete="off">
+      <input class="ar-nm" value="${esc(r.name || "")}" placeholder="編の名前" aria-label="編の名前" autocomplete="off">
       <input class="ar-a" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="最初の話"><span>〜</span><input class="ar-b" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="最後の話"><span>話</span>
       <button type="button" class="del" data-ardel="${i}" aria-label="この編を削除">✕</button></div>`;
   return `<div class="spaste arced">
@@ -93,7 +93,7 @@ function subPasteHtml(it) {
   if (!p.rows)
     return `<div class="spaste">
     ${it.k === "a" ? `<div class="sylink">${syoboiA(it, "syb")}<input id="spSyoboi" type="url" inputmode="url" autocomplete="off" placeholder="作品のページのURLを貼ると、次からそこを開きます" value="${esc(it.syoboi || "")}" aria-label="しょぼいカレンダーのURL"></div>` : ""}
-    <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
+    <textarea id="spText" rows="8" placeholder="各話リストの表をコピーして、ここに貼り付けてください">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,
     nch = p.match === "order" ? p.rows.filter(r => r.numCh).length : 0,
