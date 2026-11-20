@@ -152,7 +152,7 @@ function epOneHtml(it, e, i) {
     ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <span class="e1-dt"><input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><input class="e1-tm" type="text" inputmode="numeric" autocomplete="off" placeholder="24:30" value="${j && !e.nt ? j.hm : ""}" aria-label="放送時刻（例：24:30）"></span>
-    <div class="e1-xr"><label class="e1-x"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話（配信にない総集編など）</span></label>${i === 0 && episodes(it).length > 1 ? `<small class="e1-note">時刻は全話に反映</small>` : ""}</div>
+    <label class="e1-x"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話（配信にない総集編など）</span></label>
     <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
 }
 const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
