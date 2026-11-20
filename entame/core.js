@@ -105,6 +105,7 @@ const state = Object.assign(
     sort: "new",
     grp: "cour",
     vod: "",
+    slot: "",
     unOnly: false,
     missOnly: false,
     missKey: "",
@@ -123,6 +124,7 @@ if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
 if (!MODE_KEYS.includes(state.mode) && state.mode !== "o") state.mode = "w";
 if (!(SUBS[state.mode] || ["all"]).includes(state.sub)) state.sub = "all";
 if (typeof state.vod !== "string") state.vod = "";
+if (typeof state.slot !== "string") state.slot = "";
 state.unOnly = !!state.unOnly;
 state.missOnly = !!state.missOnly;
 if (typeof state.missKey !== "string") state.missKey = "";
@@ -133,6 +135,7 @@ const saveUI = () =>
     mode: state.mode,
     sub: state.sub,
     vod: state.vod,
+    slot: state.slot,
     unOnly: state.unOnly,
     missOnly: state.missOnly,
     missKey: state.missKey,
@@ -334,6 +337,7 @@ let master = {};
 const MKEYS = [
   ["series", "シリーズ"],
   ["stations", "放送局"],
+  ["slots", "放送枠（ドラマ）"],
   ["vods", "配信サイト"],
   ["authors", "YouTube投稿者"],
   ["soloGroups", "一人実況のグループ"],
@@ -347,6 +351,7 @@ function usedNames(key) {
   /* シリーズはアニメ・ドラマ・映画・バラエティで共通の1つ（実写化などをまたいで同じ名前を使う） */
   if (key === "series") items.forEach(i => add(i.series));
   else if (key === "stations") items.forEach(i => mediaOf(i).stations.forEach(add));
+  else if (key === "slots") items.forEach(i => add(i.slot));
   else if (key === "vods")
     items.forEach(i => {
       const m = mediaOf(i);

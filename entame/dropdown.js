@@ -2,9 +2,9 @@
 /* ===== 編集画面のプルダウン（1つだけ選ぶ。選んだらすぐ閉じる）=====
    一覧は詳細・編集のシートの外（body直下の #ddPop）に出す：シートの中だとはみ出して切れるため。
    スマホは下から出る一覧、PCはボタンのすぐ下（下に場所がなければ上）に小さく出す */
-const DD_NOF = { st: "st", plat: "plat", vods: "vods", ser: "ser" };
-const DD_TITLE = { cour: "ほかのクール", media: "放送形態", st: "放送局", plat: "配信サイト", vods: "配信サイト", ser: "シリーズ" };
-const DD_NONE = { st: "なし（放送局なし）", plat: "なし（配信なし）", vods: "なし（配信なし）", ser: "なし（シリーズなし）" };
+const DD_NOF = { st: "st", plat: "plat", vods: "vods", ser: "ser", slot: "slot" };
+const DD_TITLE = { cour: "ほかのクール", media: "放送形態", st: "放送局", plat: "配信サイト", vods: "配信サイト", ser: "シリーズ", slot: "放送枠" };
+const DD_NONE = { st: "なし（放送局なし）", plat: "なし（配信なし）", vods: "なし（配信なし）", ser: "なし（シリーズなし）", slot: "なし（放送枠なし）" };
 const DD_CHEV = `<svg class="fdd-cv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
 const DD_CHECK = U.IC.check;
 let ddOpen = null; // 開いているプルダウン（media・st・plat・vods・ser）
@@ -18,6 +18,7 @@ function ddValue(k) {
   if (k === "media") return (MEDIA.find(([m]) => m === form.media) || [])[1] ? esc(MEDIA.find(([m]) => m === form.media)[1]) : ph;
   if ((form.noF || []).includes(DD_NOF[k])) return "なし";
   if (k === "ser") return form.series ? esc(form.series) : ph;
+  if (k === "slot") return form.slot ? esc(form.slot) : ph;
   const a = ddArr(k);
   if (!a.length) return ph;
   return ddChip(a[0], k !== "st") + (a.length > 1 ? `<span class="fdd-more">ほか${a.length - 1}</span>` : "");
@@ -54,6 +55,19 @@ function ddRows(k, q = "") {
       (!nq ? `<p class="dd-hint">名前を入れると、なければ新しく作れます</p>` : "")
     );
   }
+  /* 放送枠（ドラマだけ）：設定の並び順。名前を入れて探し、なければ新しく作れる（シリーズと同じ） */
+  if (k === "slot") {
+    const nq = norm(q);
+    const cnt = usedNames("slots");
+    const names = M("slots").filter(n => !nq || norm(n).includes(nq));
+    const exact = names.some(n => norm(n) === nq);
+    return (
+      (nq ? "" : none((form.noF || []).includes("slot"))) +
+      names.map(n => row(n, `${esc(n)}<small>${cnt[n] || 0}</small>`, form.slot === n)).join("") +
+      (nq && !exact ? `<button type="button" class="dd-row add" data-ddslotnew="${esc(q.trim())}"><span class="dd-l">＋「${esc(q.trim())}」を新しく作る</span></button>` : "") +
+      (!nq ? `<p class="dd-hint">名前を入れると、なければ新しく作れます（月9・日曜劇場など）</p>` : "")
+    );
+  }
   const a = ddArr(k),
     nof = (form.noF || []).includes(DD_NOF[k]);
   const opts = [...new Set([...(k === "st" ? M("stations") : M("vods")), ...a])];
@@ -73,7 +87,7 @@ function openDD(k, btn) {
   box.className = sheet ? "sheetmode" : "popmode";
   box.innerHTML = `<div class="dd-scrim" data-ddclose="1"></div><div class="dd-box" role="dialog" aria-label="${ddTitle(k)}">
     ${sheet ? `<div class="dd-h"><b>${ddTitle(k)}</b><span>${k === "cour" ? "選ぶと追加・外す" : "選ぶと閉じます"}</span><button type="button" class="dd-x" data-ddclose="1" aria-label="閉じる">✕</button></div>` : ""}
-    ${k === "ser" ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ddq" type="search" autocomplete="off" placeholder="シリーズ名で探す・新しく作る" aria-label="シリーズを探す"></label>` : ""}
+    ${k === "ser" || k === "slot" ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ddq" type="search" autocomplete="off" placeholder="${k === "ser" ? "シリーズ名" : "放送枠"}で探す・新しく作る" aria-label="${ddTitle(k)}を探す"></label>` : ""}
     <div class="dd-list" role="listbox" id="ddList">${ddRows(k)}</div></div>`;
   document.body.appendChild(box);
   ddAt = Date.now();
@@ -119,11 +133,12 @@ function ddPick(v, none) {
   else if (k === "cour") {
     const key = `${form.cy}${v}`;
     form.cours = form.cours.includes(key) ? form.cours.filter(c => c !== key) : [...form.cours.filter(c => c !== ALLYEAR), key].sort();
-  } else if (k === "ser") {
-    /* シリーズの「なし」も印（noF の ser）を付けて、未選択と分ける */
-    form.series = none ? "" : v;
-    const l = (form.noF || []).filter(x => x !== "ser");
-    form.noF = none ? [...l, "ser"] : l;
+  } else if (k === "ser" || k === "slot") {
+    /* シリーズ・放送枠の「なし」も印（noF の ser / slot）を付けて、未選択と分ける */
+    if (k === "ser") form.series = none ? "" : v;
+    else form.slot = none ? "" : v;
+    const l = (form.noF || []).filter(x => x !== k);
+    form.noF = none ? [...l, k] : l;
   } else {
     const nk = DD_NOF[k];
     const l = (form.noF || []).filter(x => x !== nk);
@@ -155,6 +170,15 @@ function onDDClick(e) {
       master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: serGroup(form.k) } };
       saveMaster();
       toast(`シリーズ「${n}」を作りました`);
+    }
+    ddPick(n, false);
+  } else if (e.target.closest("[data-ddslotnew]")) {
+    /* 放送枠の検索欄に入れた名前で、新しい放送枠を作って選ぶ（設定の放送枠の一覧の最後に足す） */
+    const n = e.target.closest("[data-ddslotnew]").dataset.ddslotnew;
+    if (n && !M("slots").includes(n)) {
+      master = { ...master, slots: [...M("slots"), n] };
+      saveMaster();
+      toast(`放送枠「${n}」を作りました`);
     }
     ddPick(n, false);
   } else if (e.target.closest("[data-ddclose]")) closeDD(true);

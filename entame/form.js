@@ -142,6 +142,7 @@ function formHtml() {
     media: `<div class="frow3 full">${f.k === "f" ? "" : `<div class="field" id="fMedia"><span>放送形態</span>${ddBtn("media")}</div>`}
       ${f.media === "movie" ? `<div class="field"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="u-seg segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}
       ${hasSt(f.media) ? `<div class="field"><span>放送局</span>${ddBtn("st")}</div>` : ""}
+      ${f.k === "d" ? `<div class="field" id="fSlot"><span>放送枠</span>${ddBtn("slot")}</div>` : ""}
       ${f.media === "stream" ? `<div class="field"><span>配信サイト</span>${ddBtn("plat")}</div>` : ""}
       ${f.media !== "stream" ? `<div class="field"><span>配信サイト</span>${ddBtn("vods")}</div>` : ""}</div>`,
     from: `<label class="field"><span>${{ movie: "公開日", ova: "発売日（第1話）", sp: "放送日" }[f.media] || "開始日（第1話）"}</span><span class="dtw"><input id="f-from" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${esc(dtShow(f.from))}"><button type="button" class="dtcal" data-dtcal="f-from" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="f-from"></span></label>`,
@@ -317,6 +318,7 @@ function openForm(it, target, el) {
       noSongs: [...(it.noSongs || [])],
       noF: [...(it.noF || [])],
       series: it.series || "",
+      slot: it.slot || "",
       url: it.url || "",
       vurl: it.vurl || "",
       cours: [...coursOf(it)],
@@ -338,6 +340,7 @@ function openForm(it, target, el) {
       songs: [],
       noF: [],
       series: state.series.length === 1 ? state.series[0] : "",
+      slot: "",
       url: "",
       vurl: "",
       cours: [],
@@ -451,6 +454,8 @@ function buildPatch(f) {
     noSongs: songs.length ? [] : f.noSongs || [],
     noF: [],
     series: (f.series || "").trim(),
+    /* 放送枠はドラマだけ（ほかのジャンルにしたら外す） */
+    slot: f.k === "d" ? (f.slot || "").trim() : "",
     url: (f.url || "").trim(),
     vurl: normVurl(f.vurl),
   };
@@ -465,6 +470,7 @@ function buildPatch(f) {
     url: () => (patch.url = ""),
     vurl: () => (patch.vurl = ""),
     ser: () => (patch.series = ""),
+    slot: () => (patch.slot = ""),
   };
   patch.noF = [...new Set(f.noF || [])].filter(k => k in clr);
   patch.noF.forEach(k => clr[k]());

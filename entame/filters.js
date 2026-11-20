@@ -338,7 +338,7 @@ const FILTER_ACTIONS = [
   [
     "[data-unset]",
     () => {
-      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], vod: "", missOnly: false, missKey: "", fSub: "", limit: 200 });
+      Object.assign(state, { sf: [], era: [], cour: [], series: [], type: [], vod: "", slot: "", missOnly: false, missKey: "", fSub: "", limit: 200 });
       if (state.mode === "m") state.sub = "all";
       saveUI();
       render();
@@ -457,6 +457,7 @@ function fConds() {
   state.sf.forEach(v => c.push(stLabel(v)));
   state.series.forEach(v => c.push(v));
   if (state.vod) c.push(state.vod);
+  if (state.slot) c.push(state.slot);
   if (state.mode === "m" && state.sub !== "all") c.push(state.sub === "a" ? "アニメ映画" : "実写映画");
   state.type.forEach(v => c.push(MEDIA_LAB[v] || v));
   state.cour.forEach(v => c.push(courTxt(v)));
@@ -503,6 +504,12 @@ function fSubBody(k) {
     const l = [...new Set([...VOD_TOP, ...M("vods"), ...used])].filter(v => used.has(v) || v === state.vod);
     return fOpt("data-fvod", "", "すべて", !state.vod, fCountWithout(["vod"])) + l.map(v => fOpt("data-fvod", v, `<i class="dd-dot"${vcStyle(v)}></i>${esc(v)}`, state.vod === v, fCountWithout(["vod"], i => vodsOf(i).includes(v)))).join("");
   }
+  /* 放送枠（ドラマだけ）：使われている枠と設定の枠 */
+  if (k === "slot") {
+    const used = new Set(items.filter(ofKind).map(i => i.slot).filter(Boolean));
+    const l = M("slots").filter(v => used.has(v) || v === state.slot);
+    return fOpt("data-fslot", "", "すべて", !state.slot, fCountWithout(["slot"])) + l.map(v => fOpt("data-fslot", v, esc(v), state.slot === v, fCountWithout(["slot"], i => i.slot === v))).join("");
+  }
   if (k === "cour") return courPanelHtml();
   if (k === "era") return eraPanelHtml();
   if (k === "series") return seriesPanelHtml();
@@ -524,6 +531,7 @@ function fSheetHtml() {
   if (state.mode === "a" || state.mode === "d") rows.push(["type", "放送形態", one(state.type.map(v => MEDIA_LAB[v] || v))]);
   if (state.mode === "m") rows.push(["type", "アニメ／実写", { a: "アニメ映画", d: "実写映画" }[state.sub] || "すべて"]);
   rows.push(["vod", "配信サイト", state.vod || "すべて"]);
+  if (state.mode === "d") rows.push(["slot", "放送枠", state.slot || "すべて"]);
   rows.push(["cour", "放送クール", one(state.cour.map(courTxt)), , "grid"]);
   rows.push(["era", "放送年", one(state.era), , "grid"]);
   rows.push(["series", "シリーズ", one(state.series), , true]);
@@ -597,6 +605,7 @@ const SHEET_ACTIONS = [
   ["[data-ftype]", el => fPicked(() => (state.type = el.dataset.ftype ? [el.dataset.ftype] : []))],
   ["[data-fmk]", el => fPicked(() => (state.sub = el.dataset.fmk))],
   ["[data-fvod]", el => fPicked(() => (state.vod = el.dataset.fvod))],
+  ["[data-fslot]", el => fPicked(() => (state.slot = el.dataset.fslot))],
   ["[data-fmiss]", el => fPicked(() => missSet(state, el.dataset.fmiss))],
   /* クールの年：登録のある年だけを順に（‹ 前の年・› 次の年） */
   [

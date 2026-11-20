@@ -1763,3 +1763,6 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 }
 /* 1話だけ編集：放送日と時刻を1つのまとまりに（時刻は右に短く） */
 .e1-dt{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:6px;min-width:0}
+/* 放送枠（ドラマ）の札：シリーズの札と並べる */
+.lab.sl{border-color:var(--drama);color:var(--drama);font-weight:700}
+.toslot{color:var(--drama)}

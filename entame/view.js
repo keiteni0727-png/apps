@@ -65,6 +65,8 @@ const ofKind = i =>
 /* 絞り込みの「配信」（Netflix など）。配信オリジナルの配信元と、見られるサイトの両方を見る */
 const vodsOf = i => [...new Set([...(i.plat || []), ...(i.vods || [])])];
 const vodOk = i => !state.vod || vodsOf(i).includes(state.vod);
+/* 放送枠（ドラマだけ）：月9・日曜劇場など */
+const slotOk = i => !state.slot || i.slot === state.slot;
 /* ジャンル：a=アニメ d=ドラマ f=映画（ドラマと関係ない実写映画） r=バラエティ（恋愛リアリティなど、アニメでもドラマでもない配信番組） */
 const KIND_LAB = { a: "アニメ", d: "ドラマ", f: "映画", r: "バラエティ" };
 const kindTag = i => `<span class="kind ${i.k}">${KIND_LAB[i.k] || "ドラマ"}</span>`;
@@ -123,11 +125,12 @@ setInterval(() => {
 }, 30000);
 
 /* ---------- ライブラリの一覧と、画面全体の描画 ---------- */
-/* ライブラリ一覧のラベル：見られる配信サイト名、そのあとにシリーズ（PCのみ） */
+/* ライブラリ一覧のラベル：見られる配信サイト名、そのあとに放送枠（ドラマ）・シリーズ（PCのみ） */
 function libLabels(i) {
   const m = mediaOf(i);
   const cc = contCours(i);
   const pc =
+    (i.k === "d" && i.slot ? `<span class="lab sl">${esc(i.slot)}</span>` : "") +
     (i.series ? `<span class="lab s pconly">${esc(i.series)}</span>` : "") +
     (cc >= 2 ? `<span class="lab cc pconly">${cc}クール連続</span>` : "");
   const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
@@ -460,7 +463,7 @@ function renderWeek() {
   return h;
 }
 function filtered() {
-  let list = items.filter(i => ofKind(i) && vodOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
+  let list = items.filter(i => ofKind(i) && vodOk(i) && slotOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
   if (state.q) {
     /* 全角・半角、ひらがな・カタカナ、大文字・小文字、記号のゆれをそろえて探す。空白で区切ると「どれも含む」 */
     const qs = state.q.split(/[\s　]+/).map(norm).filter(Boolean);
@@ -733,8 +736,8 @@ function render() {
 }
 /* 画面の切り替え：左メニュー（番組表・アニメ…）を選ぶ。絞り込みとシリーズは外す */
 /* 絞り込みはメニューごとに別々に覚える（アニメの条件はアニメだけ。メニューを移っても引き継がない） */
-const FKEEP = ["sf", "era", "cour", "series", "type", "vod", "missOnly", "missKey", "sub"];
-const FEMPTY = { sf: [], era: [], cour: [], series: [], type: [], vod: "", missOnly: false, missKey: "", sub: "all" };
+const FKEEP = ["sf", "era", "cour", "series", "type", "vod", "slot", "missOnly", "missKey", "sub"];
+const FEMPTY = { sf: [], era: [], cour: [], series: [], type: [], vod: "", slot: "", missOnly: false, missKey: "", sub: "all" };
 function setMode(m) {
   if (state.mode === m) return;
   Object.assign(lui, { q: "", qOpen: false, fp: "", fSub: "" });

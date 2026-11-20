@@ -78,10 +78,11 @@
   /* とても長いシリーズ名（絞り込みのシリーズの札が折り返すかを見る） */
   add("a13", { k: "a", t: "長い名前のシリーズの作品", s: "視聴済み", from: "2023-04-06", media: "tv", stations: ["TOKYO MX"], cours: ["2023春"], series: "とても長い名前のシリーズ ～はじまりの星と終わりの海と、もうひとつの物語～" });
   /* ---- ドラマ ---- */
-  add("d1", { k: "d", t: "月曜九時の約束", s: "視聴中", dow: 0, time: "21:00", from: "2026-10-12", media: "tv", stations: ["フジテレビ"], vods: ["TVer"], cours: ["2026秋"], songs: [song("主題歌", "約束の場所", "Hana")] }, weekly("2026-10-12", "21:00", 10, 5));
+  add("d1", { k: "d", t: "月曜九時の約束", s: "視聴中", dow: 0, time: "21:00", from: "2026-10-12", media: "tv", stations: ["フジテレビ"], slot: "月9", vods: ["TVer"], cours: ["2026秋"], songs: [song("主題歌", "約束の場所", "Hana")] }, weekly("2026-10-12", "21:00", 10, 5));
   add("d2", { k: "d", t: "刑事・朝倉の推理", s: "未視聴", dow: 3, time: "22:00", from: "2026-10-15", media: "tv", stations: ["テレビ朝日"], vods: ["Prime Video"], cours: ["2026秋"] }, weekly("2026-10-15", "22:00", 9, 0));
   add("d3", { k: "d", t: "東京ルームシェア", s: "視聴済み", from: "2026-04-01", media: "stream", plat: ["Netflix"], cours: ["2026春"] }, weekly("2026-04-01", "17:00", 8, 8));
-  add("d4", { k: "d", t: "失われた夏の日記", s: "見ない", dow: 1, time: "22:00", from: "2026-07-07", media: "tv", stations: ["TBS"], cours: ["2026夏"] });
+  /* シリーズに放送枠を入れてしまっている作品（設定 → シリーズ の「放送枠へ」を試す） */
+  add("d4", { k: "d", t: "失われた夏の日記", s: "見ない", dow: 1, time: "22:00", from: "2026-07-07", media: "tv", stations: ["TBS"], cours: ["2026夏"], series: "火曜ドラマ" });
   /* ---- 映画 ---- */
   add("m1", { k: "a", t: "劇場版 星降る街のアトリエ", s: "未視聴", from: "2026-12-11", media: "movie", series: "アトリエ", songs: [song("主題歌", "星の降る夜に", "架空バンド")] });
   add("m2", { k: "f", t: "海辺のカフェで逢いましょう", s: "視聴済み", from: "2026-06-05", media: "movie" });
@@ -101,6 +102,6 @@
   y("y4", { t: "まったり農場づくり", a: "ゆうなぎ", g: "一人実況", sg: "単発", s: "見ない", up: "2026-05-02", n: 1, dur: "58:12" });
   y("y5", { t: "パズル100問チャレンジ", a: "P-P", g: "P-P", s: "", up: "2026-11-10", n: 3 });
 
-  const master = { all: { series: ["アトリエ", "受付係"], _at: AT } };
+  const master = { all: { series: ["アトリエ", "受付係", "火曜ドラマ"], seriesMain: { 火曜ドラマ: "d" }, slots: ["月9", "日曜劇場"], _at: AT } };
   window.PREVIEW_DATA = { titles, progress, master, yt };
 })();
