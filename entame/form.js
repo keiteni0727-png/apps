@@ -464,6 +464,7 @@ function buildPatch(f) {
     cours: () => (patch.cours = []),
     url: () => (patch.url = ""),
     vurl: () => (patch.vurl = ""),
+    ser: () => (patch.series = ""),
   };
   patch.noF = [...new Set(f.noF || [])].filter(k => k in clr);
   patch.noF.forEach(k => clr[k]());

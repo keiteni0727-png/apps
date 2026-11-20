@@ -2,7 +2,7 @@
 /* ===== 編集画面のプルダウン（1つだけ選ぶ。選んだらすぐ閉じる）=====
    一覧は詳細・編集のシートの外（body直下の #ddPop）に出す：シートの中だとはみ出して切れるため。
    スマホは下から出る一覧、PCはボタンのすぐ下（下に場所がなければ上）に小さく出す */
-const DD_NOF = { st: "st", plat: "plat", vods: "vods" };
+const DD_NOF = { st: "st", plat: "plat", vods: "vods", ser: "ser" };
 const DD_TITLE = { cour: "ほかのクール", media: "放送形態", st: "放送局", plat: "配信サイト", vods: "配信サイト", ser: "シリーズ" };
 const DD_NONE = { st: "なし（放送局なし）", plat: "なし（配信なし）", vods: "なし（配信なし）", ser: "なし（シリーズなし）" };
 const DD_CHEV = `<svg class="fdd-cv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
@@ -11,13 +11,13 @@ let ddOpen = null; // 開いているプルダウン（media・st・plat・vods�
 const ddArr = k => (k === "st" ? form.stations : k === "plat" ? form.plat : form.vods);
 const ddMedia = () => (form.k === "r" ? MEDIA.filter(([m]) => m === "tv" || m === "stream") : MEDIA);
 const ddChip = (v, vod) => (vod && VOD_COLOR[v] ? `<span class="fdd-c vc"${vcStyle(v)}>${esc(v)}</span>` : `<span class="fdd-c">${esc(v)}</span>`);
-/* 閉じているときの中身：選んだもの（前に2つ以上入れた作品は「ほか○」）か、薄い文字の「なし」
-   まだ選んでいないときも、「なし」を選んだときも、どの欄も同じ「なし」と出す（要確認に出るかどうかは別） */
+/* 閉じているときの中身：選んだもの（前に2つ以上入れた作品は「ほか○」）・なし・未選択
+   まだ何も選んでいない欄は薄い文字の「未設定」（詳細画面・放送クールと同じ言葉）。一覧の「なし」を選んだ欄は、ほかの値と同じ濃い文字の「なし」 */
 function ddValue(k) {
-  const ph = `<span class="fdd-ph">なし</span>`;
+  const ph = `<span class="fdd-ph">未設定</span>`;
   if (k === "media") return (MEDIA.find(([m]) => m === form.media) || [])[1] ? esc(MEDIA.find(([m]) => m === form.media)[1]) : ph;
+  if ((form.noF || []).includes(DD_NOF[k])) return "なし";
   if (k === "ser") return form.series ? esc(form.series) : ph;
-  if ((form.noF || []).includes(DD_NOF[k])) return ph;
   const a = ddArr(k);
   if (!a.length) return ph;
   return ddChip(a[0], k !== "st") + (a.length > 1 ? `<span class="fdd-more">ほか${a.length - 1}</span>` : "");
@@ -48,7 +48,7 @@ function ddRows(k, q = "") {
     const r = n => row(n, `${esc(n)}<small>${n0(n)}</small>${map[n] !== grp ? `<em>${SER_GL[map[n]]}</em>` : ""}`, form.series === n);
     const exact = names.some(n => norm(n) === nq);
     return (
-      (nq ? "" : none(!form.series)) +
+      (nq ? "" : none((form.noF || []).includes("ser"))) +
       [...mine, ...other].slice(0, 60).map(r).join("") +
       (nq && !exact ? `<button type="button" class="dd-row add" data-ddsernew="${esc(q.trim())}"><span class="dd-l">＋「${esc(q.trim())}」を新しく作る</span></button>` : "") +
       (!nq ? `<p class="dd-hint">名前を入れると、なければ新しく作れます</p>` : "")
@@ -119,8 +119,12 @@ function ddPick(v, none) {
   else if (k === "cour") {
     const key = `${form.cy}${v}`;
     form.cours = form.cours.includes(key) ? form.cours.filter(c => c !== key) : [...form.cours.filter(c => c !== ALLYEAR), key].sort();
-  } else if (k === "ser") form.series = none ? "" : v;
-  else {
+  } else if (k === "ser") {
+    /* シリーズの「なし」も印（noF の ser）を付けて、未選択と分ける */
+    form.series = none ? "" : v;
+    const l = (form.noF || []).filter(x => x !== "ser");
+    form.noF = none ? [...l, "ser"] : l;
+  } else {
     const nk = DD_NOF[k];
     const l = (form.noF || []).filter(x => x !== nk);
     form.noF = none ? [...l, nk] : l;
