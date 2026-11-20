@@ -1,6 +1,6 @@
 /* ===================== 作品の詳細：各話リストの貼り付けの画面（読み取り自体は paste.js） =====================
    しょぼいカレンダーのサブタイトルの一覧・放送時間の表を貼る → 読み取った結果を確かめる → 反映。
-   話数で合わせて、サブタイトルと放送日（読み取れたときだけ）を入れ、登録されていない話は追加する */
+   話数で合わせて、サブタイトルと放送日・時刻（放送時間の表のときだけ）を入れ、登録されていない話は追加する */
 let subPaste = null; // {text}（貼り付け中）／{text, rows}（読み取った結果）。話数の編集の中で開き、編集中の話数に反映する
 function subPasteHtml(it) {
   const p = subPaste;
@@ -17,11 +17,12 @@ function subPasteHtml(it) {
   const yd = (d, o) => (d && o && d.slice(0, 4) !== o.slice(0, 4) ? `${d.slice(0, 4)}/` : "");
   /* 変わる所は「今の値（灰色）→ 反映後（太字）」 */
   const subCell = r => (r.subCh && r.old ? `<span class="spv"><span class="was">今：${esc(r.old)}</span><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
+  const tm = t => (t ? ` ${hmOf(t)}` : "");
   const dateCell = r =>
     r.dateCh && r.oldDay
-      ? `<small class="dch on">日付 <span class="was">${yd(r.oldDay, r.date)}${md(r.oldDay)}</span> → <b>${yd(r.date, r.oldDay)}${md(r.date)}</b></small>`
+      ? `<small class="dch on">日付 <span class="was">${yd(r.oldDay, r.date)}${md(r.oldDay)}${tm(r.oldHm)}</span> → <b>${yd(r.date, r.oldDay)}${md(r.date)}${tm(r.time)}</b></small>`
       : r.date
-        ? `<small class="dsame">日付 ${md(r.date)}</small>`
+        ? `<small class="dsame">日付 ${md(r.date)}${tm(r.time)}</small>`
         : "";
   const tag = r => (r.idx < 0 ? "追加" : r.subCh || r.dateCh ? "更新" : "同じ");
   const sum = [subN ? `サブタイトル${subN}話` : "", dateN ? `放送日${dateN}話` : ""].filter(Boolean).join("・");
@@ -31,6 +32,8 @@ function subPasteHtml(it) {
     <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : !r.subCh && !r.dateCh ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${tag(r)}</span></div>`).join("")}</div>
     <div class="ffoot"><button type="button" class="u-btn" id="spBack">貼り直す</button><button type="button" class="u-btn pri" id="spApply" ${any ? "" : "disabled"}>${epEdit ? "話数に反映" : "反映する"}</button></div></div>`;
 }
+/* 「24:30」「09:00」→「24:30」「9:00」（jst の hm と同じ書き方） */
+const hmOf = t => t.replace(/^0(\d)/, "$1");
 /* 貼り付けた文字を読み取り、登録済みの話と比べた一覧を出す */
 function readPaste(it) {
   const text = $("#spText").value;
@@ -42,8 +45,12 @@ function readPaste(it) {
     const idx = eps.findIndex(x => epNum(x.n) === r.n);
     const cur = idx >= 0 ? eps[idx] : null;
     const old = cur ? cur.sub || "" : "",
-      oldDay = cur && cur.t ? jst(cur.t).day : "";
-    return { ...r, sub: r.sub || old, idx, old, oldDay, subCh: !!(cur && r.sub && r.sub !== old), dateCh: !!(cur && r.date && r.date !== oldDay) };
+      j = cur && cur.t ? jst(cur.t) : null,
+      oldDay = j ? j.day : "",
+      oldHm = j && !cur.nt ? j.hm : "";
+    /* 放送日か放送時刻（読み取れたとき）が今と違えば直す */
+    const dateCh = !!(cur && r.date && (r.date !== oldDay || (r.time && hmOf(r.time) !== oldHm)));
+    return { ...r, sub: r.sub || old, idx, old, oldDay, oldHm, subCh: !!(cur && r.sub && r.sub !== old), dateCh };
   });
   subPaste = { text, rows };
   refreshSheet();
@@ -52,8 +59,9 @@ function readPaste(it) {
 function applyPaste(it) {
   const l = epEdit ? epEdit.list : episodes(it);
   const p = subPaste;
-  /* 放送日の時刻：その話の今の時刻、なければ作品の放送時間 */
-  const at = (day, old) => dayTimeToT(day, old && old.t ? jst(old.t).hm : hasTime(it) ? it.time : "9:00");
+  /* 放送日の時刻：読み取った時刻、なければその話の今の時刻、それもなければ作品の放送時間 */
+  const at = (r, old) => dayTimeToT(r.date, r.time ? hmOf(r.time) : old && old.t && !old.nt ? jst(old.t).hm : hasTime(it) ? it.time : "9:00");
+  const noTm = r => !r.time && !hasTime(it);
   let sn = 0,
     dn = 0,
     an = 0;
@@ -65,8 +73,8 @@ function applyPaste(it) {
       sn++;
     }
     if (r.dateCh) {
-      x.t = at(r.date, x);
-      if (!hasTime(it)) x.nt = true;
+      x.t = at(r, x);
+      x.nt = noTm(r);
       dn++;
     }
   });
@@ -77,8 +85,8 @@ function applyPaste(it) {
       x.n = `${r.n}話`;
       x.sub = r.sub;
       if (r.date) {
-        x.t = at(r.date, null);
-        x.nt = !hasTime(it);
+        x.t = at(r, null);
+        x.nt = noTm(r);
       }
       l.push(x);
       an++;
