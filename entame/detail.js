@@ -743,7 +743,7 @@ function applyPaste(it) {
       .forEach(r => {
         const x = nextEp(it, l);
         x.n = `${r.n}話`;
-        x.sub = r.sub;
+        x.sub = p.useSub ? r.sub : "";
         if (r.date) {
           x.t = at(r.date, null);
           x.nt = !hasTime(it);

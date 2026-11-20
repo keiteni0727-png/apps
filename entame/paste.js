@@ -267,7 +267,17 @@ function gridFrom(text, from) {
     .map(l => l.split("\t").map(c => cleanSub(gLink(c.replace(/ /g, " ")))));
   /* 1話の始まりの行：話数のマスの位置（前から3つ目まで。前に放送日・シリーズ名などがある表もある）。
      「特別編」「総集編」など数字でない話も、ほかのマスがあれば1話の始まりにする（話数が読めない行として赤く出る） */
+  /* 話数の目印の言葉（「LETTER01」「Episode 1」なら LETTER・EPISODE）。番号のない「LAST LETTER」のような行も1話の始まりにする */
+  const mkOf = c => zen(String(c || "")).toUpperCase().replace(/[\d\s.#:：\-－_]+/g, "");
+  const mkCnt = {};
+  raw.forEach(r => {
+    const k = gNum(r[0]) != null ? mkOf(r[0]) : "";
+    if (/^[A-Z]{2,}$/.test(k)) mkCnt[k] = (mkCnt[k] || 0) + 1;
+  });
+  const marker = Object.keys(mkCnt).sort((a, b) => mkCnt[b] - mkCnt[a])[0] || "";
+  const isMk = r => !!marker && r.length > 1 && gNum(r[0]) == null && String(r[0]).length <= 20 && zen(String(r[0])).toUpperCase().includes(marker);
   const epAt0 = r => {
+    if (isMk(r)) return 0;
     for (let i = 0; i < Math.min(3, r.length); i++) {
       if (gNum(r[i]) != null) return i === 0 || r.slice(0, i).every(c => c.length <= 20) ? i : -1;
       if (!r[i]) return -1;
@@ -312,7 +322,7 @@ function gridFrom(text, from) {
     /* 話数を含むマス（「01.PHASE-01」のような別の番号の列）もサブタイトルにしない */
     const nt = String(r[ni] || "").trim();
     const di = after.findIndex(c => !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt)));
-    return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "", raw: r, ni };
+    return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "", raw: r, ni, mk: ni === 0 && isMk(r) };
   });
   const g = { rows, dropped, from };
   gSetSub(g, null);
@@ -454,7 +464,7 @@ function gSet(r, j, v) {
 }
 /* 行の話数・サブタイトル・放送日（放送日の列が複数なら、中身のある一番左） */
 function gVals(g, r) {
-  const v = { n: "", sub: "", day: "" };
+  const v = { n: "", sub: "", day: "", mk: !!r.mk };
   g.cols.forEach((c, j) => {
     const t = gCell(r, j);
     if (c === "n") v.n = t;
@@ -470,7 +480,7 @@ function gNumCol(v) {
   const m = zen(String(v || "")).replace(/[（(][^)）]*[)）]/g, "").match(/\d+(?:\.\d+)?/);
   return m ? +m[0] : null;
 }
-const gBad = (g, r) => gNumCol(gVals(g, r).n) == null;
+const gBad = (g, r) => !r.mk && gNumCol(gVals(g, r).n) == null;
 /* 表から各話を読み取る（話数が読めない行は飛ばす・同じ話数は最初の行）。
    放送日がない行は上の行と同じ日（2話連続放送でマスが縦につながっているとき）。年がない日付は開始日の年から数える */
 function gridParse(g, from) {
@@ -489,9 +499,13 @@ function gridParse(g, from) {
   );
   const seen = new Set(),
     out = [];
-  let last = "";
+  let last = "",
+    prevN = 0;
   list.forEach((o, i) => {
-    const num = g.cols ? gNumCol(o.r.n) : gNum(o.r.n);
+    let num = g.cols ? gNumCol(o.r.n) : gNum(o.r.n);
+    /* 番号のない目印の行（「LAST LETTER」など）は、前の話の次の番号にする */
+    if (num == null && o.r.mk) num = Math.floor(prevN) + 1;
+    if (num != null) prevN = num;
     const d = dated[i] && dated[i].date ? dated[i].date : o.inherit ? last : "";
     if (d) last = d;
     if (num == null || seen.has(num)) return;
