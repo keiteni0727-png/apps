@@ -128,7 +128,7 @@ function epListHtml(it, eps) {
   const dc = epDateCheck(it);
   /* 日付のアラートを直すボタン：曜日のずれ（まとめて1日ずらす）・開始日を1話の日付に合わせる */
   const fixDow = dc.dowN ? `<button type="button" id="epFixDow">曜日を放送日に合わせる（${dc.dowN}話を1日ずらす）</button><button type="button" id="epDowOk">曜日のずれ${dc.dowN}話を全部問題なしにする</button>` : "";
-  const fixStart = dc.start && !dc.eps[0]?.dow ? `<button type="button" id="epFixStart">開始日を1話の日付（${fmtD(dc.start)}）に合わせる</button>` : "";
+  const fixStart = dc.start && !dc.eps[0]?.dow ? `<button type="button" id="epFixStart">開始日を1話の日付（${fmtD(dc.start)}）に合わせる</button><button type="button" id="epShiftStart">話数リストを開始日（${fmtD(normDate(it.from || ""))}）に合わせる</button>` : "";
   const fixBar = fixDow || fixStart ? `<div class="epfix">${fixDow}${fixStart}</div>` : "";
   const arcOfNum = e => {
     const n = epNum(e.n);
@@ -1007,6 +1007,26 @@ const DETAIL_ACTIONS = [
       if (!d) return;
       const o = over[it.id] || {};
       saveTitle(it.id, { from: d, ...((o.dow ?? -1) >= 0 ? { dow: dowOfDate(d) } : {}) }, `開始日を${fmtD(d)}にしました`);
+    },
+  ],
+  /* 日付のアラート：話数リストを開始日に合わせる（1話を開始日にして、ほかの話も同じ日数ずらす。日付のない話はそのまま） */
+  [
+    "#epShiftStart",
+    (el, it) => {
+      const d = epDateCheck(it).start,
+        f = normDate(it.from || "");
+      if (!d || !f) return;
+      const g = dayNo(f) - dayNo(d);
+      if (!g) return;
+      const l = episodes(it);
+      let n = 0;
+      l.forEach(e => {
+        if (!e.t) return;
+        if (e.go && e.go === e.t) e.go += g * 1440;
+        e.t += g * 1440;
+        n++;
+      });
+      if (n) saveEps(it, l, `${n}話の日付を${Math.abs(g)}日${g > 0 ? "後" : "前"}にずらしました`);
     },
   ],
   /* 要確認の最初の話へ（たたんだ編の中なら開いてから） */
