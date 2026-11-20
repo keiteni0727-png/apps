@@ -338,6 +338,14 @@ const INPUT_ACTIONS = [
       updSched();
     },
   ],
+  /* シリーズのプルダウンの検索欄：入れた文字で一覧を絞る */
+  [
+    "#ddq",
+    t => {
+      const l = $("#ddList");
+      if (l && ddOpen) l.innerHTML = ddRows(ddOpen, t.value);
+    },
+  ],
   [
     "#spText",
     t => {
@@ -464,6 +472,7 @@ const enterClick = sel => (t, e) => {
 const KEY_ACTIONS = [
   /* プルダウンを開いているとき：Escで閉じる・検索欄でEnterなら一番上の候補を選ぶ */
   [null, (t, e) => (e.key === "Escape" && ddOpen ? (e.preventDefault(), closeDD(true), true) : false)],
+  ["#ddq", enterClick("#ddList [data-ddpick],#ddList [data-ddsernew]")],
   [
     "[data-svren]",
     (t, e) => {
