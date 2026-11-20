@@ -99,7 +99,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 
 /* ライブラリ：検索・絞り込み */
 .ftools{display:flex;gap:8px;padding-block:14px 10px}
-.ftools input{flex:1;min-width:0;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);padding:9px 10px;font:inherit}
+.ftools input{flex:1}
 .fgroup{margin-top:16px}
 .fgroup h5{font-size:var(--fs-s);color:var(--u-sub);margin:0 0 8px;font-weight:700;letter-spacing:.04em}
 .fgroup .chips{padding-top:0}
@@ -199,7 +199,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .sp-r{display:grid;grid-template-columns:52px 1fr auto;gap:8px;padding:7px 10px;border-top:1px solid var(--u-line);font-size:var(--fs-m);align-items:baseline}
 .sp-r:first-child{border-top:0}
 .sp-r small{display:block;color:var(--u-sub);font-size:var(--fs-xs)}
-/* 読み取り結果：今の値は灰色（取り消し線なし）、更新後は太字。日付は「日付も反映」がオフのとき更新後だけ薄く */
+/* 読み取り結果：今の値は灰色（取り消し線なし）、更新後は太字。右に「追加／更新／同じ」 */
 .sp-r .was{color:var(--u-sub)}
 .spc{min-width:0}
 .spv{display:block}
@@ -207,47 +207,18 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .spv b{display:block;font-weight:700}
 .sp-r .dch{margin-top:2px}
 .sp-r .dch b{color:var(--accent);font-weight:700}
-.sp-r .dch:not(.on) b{opacity:.45}
 .sp-r .dsame{margin-top:2px}
 .sp-st{font-size:var(--fs-xs);font-weight:700;color:var(--accent);white-space:nowrap}
+.sp-r.same .sp-st{color:var(--u-sub)}
 .sp-r.nomatch .sp-st{color:var(--u-acct)}
 .spaste .ffoot{position:static;margin-top:12px;padding-bottom:0}
-.spgrid .hint{font-size:var(--fs-s)}
-.gdelbad{margin:0 0 8px;color:var(--u-danger)}
-/* 整形の表：Excelの形（列の見出しA・B…で役割を選ぶ。左の ✕・行番号・‹› は横に動かしても残す） */
-.gw{max-height:min(420px,55vh);overflow:auto;overscroll-behavior:none;border:1px solid var(--u-line);border-radius:var(--r-m)}
-.sgt{border-collapse:separate;border-spacing:0;font-size:var(--fs-m);min-width:100%}
-.sgt th,.sgt td{border-right:1px solid var(--u-line);border-bottom:1px solid var(--u-line);padding:0;vertical-align:middle;background:var(--u-surface)}
-.sgt thead th{position:sticky;top:0;z-index:2;background:var(--u-chip)}
-.sgt .gx,.sgt .gno{position:sticky;z-index:1;background:var(--u-chip);text-align:center}
-.sgt thead .gx,.sgt thead .gno{z-index:3}
-.sgt .gx{left:0;width:26px;min-width:26px}
-.sgt .gno{left:26px;width:22px;min-width:22px;color:var(--u-sub);font-family:var(--u-num);font-size:var(--fs-xs)}
-.sgt td.gx button{border:0;background:none;color:var(--u-sub);font-size:var(--fs-m);padding:6px 7px;cursor:pointer}
-.gcolb{display:flex;align-items:center;gap:5px;width:100%;border:0;background:none;padding:5px 6px;font:inherit;font-size:var(--fs-s);font-weight:700;color:var(--u-sub);cursor:pointer;white-space:nowrap}
-.gcolb .gl{font-family:var(--u-num);font-size:var(--fs-xs);font-weight:400}
-.gcolb .fdd-cv{width:13px;height:13px;margin-left:auto}
-.gh.r-n .gcolb{color:var(--au)}
-.gh.r-sub .gcolb{color:var(--drama)}
-.gh.r-date .gcolb{color:var(--su)}
-.sgt td input{display:block;width:100%;min-width:84px;border:0;background:transparent;color:var(--u-ink);font:inherit;padding:6px;border-radius:0}
-.sgt td input:focus{outline:2px solid var(--accent);outline-offset:-2px;background:var(--u-bg)}
-.sgt td.r-n input{min-width:64px}
-.sgt td.r-sub input{min-width:160px}
-.sgt td.r-date input{min-width:128px}
-.sgt td.r-x input{color:var(--u-sub)}
-.sgt td.r-n,.sgt th.r-n{background:color-mix(in srgb,var(--au) 8%,var(--u-surface))}
-.sgt td.r-sub,.sgt th.r-sub{background:color-mix(in srgb,var(--drama) 6%,var(--u-surface))}
-.sgt td.r-date,.sgt th.r-date{background:color-mix(in srgb,var(--su) 7%,var(--u-surface))}
-.sgt tr.bad td{background:var(--u-danger2)}
-.sgt tr.bad td.gno{color:var(--u-danger)}
 #sheetIn,#ytIn{padding-bottom:14px}
 /* popups: no background scroll, no iOS zoom on focus。画面の端で引っ張っても余白が出ないように */
 html{scrollbar-gutter:stable}
 html,body{overscroll-behavior:none}
 @media (hover:none) and (pointer:coarse){
   /* 入力中に画面が拡大されないよう、拡大の上限は表示の設定（maximum-scale）で止める */
-  .sheet input,.sheet select,.sheet textarea,.ftools input{font-size:var(--fs-base)!important}
+  .sheet input:not(.u-input),.sheet select,.sheet textarea{font-size:var(--fs-base)!important}
   .sheet input::placeholder,.sheet textarea::placeholder{font-size:var(--fs-m)}
 }
 /* YouTube */
@@ -365,7 +336,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 :focus-visible{outline:2px solid var(--u-accent);outline-offset:2px}
 /* 枠の角丸をそろえる */
 .slots,.banner,.fsdrop,.fsec,.spaste,.eps,.eped{border-radius:var(--r-l)}
-.ftools input,.field input,.field select{border-radius:var(--r-m)}
+.field input,.field select{border-radius:var(--r-m)}
 /* ボタンの角丸をそろえる */
 .sernew button{border-radius:var(--r-m)}
 /* サブタイトル入力の小さな画面 */
@@ -400,7 +371,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop .fgroup .chips{gap:4px;flex-wrap:wrap;min-width:0}
 .fsdrop .fgroup .chips button small{font-size:var(--fs-xs)}
 .fsdrop .fgroup:last-child{display:block;margin-top:6px}
-.fsdrop #seriesQ{width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:6px 9px;font:inherit;font-size:var(--fs-m)}
 .fsdrop .fgroup>input,.fsdrop .fgroup>#serSug,.fsdrop .fgroup>.chips{grid-column:2}
 .fsdrop .fgroup>h5{grid-column:1;grid-row:1}
 .fsdrop .fgroup .chips button,.fsdrop .fgroup .chips select{flex:none;white-space:nowrap}
@@ -424,9 +394,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .bkbox{border-top:1px solid var(--u-line);margin-top:14px;padding-top:12px;flex:none}
 .bkrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .fsdrop select#courY{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-full);padding:3px 8px;font:inherit;font-size:var(--fs-s)}
-@media (hover:none) and (pointer:coarse){
-  .fsdrop #seriesQ{font-size:var(--fs-base)}
-}
 .nosong{color:var(--u-sub);font-size:var(--fs-m)}
 /* 「○○なし」は項目名の行の右端に置く（入力欄の下にはみ出さない） */
 /* 「なし」にした項目は入力欄ごと隠す */
@@ -437,9 +404,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @media (max-width:899px){
   :root{--tbh:58px}
     /* 下部メニュー（共通部品）：このアプリではシートを手前に出す。2項目のときは狭く */
-  .ftools input{padding:5px 10px}
-  .fsdrop #seriesQ{padding:3px 8px}
-  .ftools input::placeholder,.fsdrop #seriesQ::placeholder{font-size:var(--fs-s)}
 }
 /* 基本情報カード */
 .icard{border:1px solid var(--u-line);border-radius:var(--r-l);padding:12px 14px;margin-bottom:10px}
@@ -544,7 +508,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 /* 設定（マスタ） */
 .sheet.setsheet{max-width:640px;height:min(640px,calc(100% - 48px));display:flex;flex-direction:column;overflow:hidden}
 
-.mq{width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:8px 10px;font:inherit;font-size:var(--fs-base);margin-bottom:8px}
+.mq{margin-bottom:8px}
 .mlist{border:1px solid var(--u-line);border-radius:var(--r-l);overflow:hidden;max-height:52vh;overflow-y:auto;overscroll-behavior:none}
 .mrow2{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;background:var(--u-surface);gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--u-line)}
 .mrow2:first-child{border-top:0}
@@ -612,7 +576,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .fsdrop.fpop .fgroup .chips{gap:6px}
 .fsdrop.fpop .fgroup .chips button,.fsdrop.fpop .fgroup .chips select,.fsdrop.fpop .fgroup .chips button[data-couryear]{padding:6px 12px;font-size:var(--fs-base)}
 .fsdrop.fpop .fgroup .chips button small{font-size:var(--fs-xs)}
-.fsdrop.fpop #seriesQ{font-size:var(--fs-l);padding:8px 10px}
 .fsdrop.fpop .sortlist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 @media (min-width:900px){
   .frow{grid-template-columns:repeat(var(--fc,4),minmax(0,150px)) 42px}
@@ -670,8 +633,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wtabs button{flex:1;display:grid;justify-items:center;gap:1px;border:0;background:none;color:var(--u-sub);border-radius:var(--r-m);padding:7px 4px;position:relative;font:inherit;line-height:1.2}
 .wtabs button b{font-size:var(--fs-l)}
 .wtabs button small{font-family:var(--u-num);font-size:var(--fs-xs);font-weight:600}
-.ser-oh{width:100%;margin-top:4px}
-.ser-o em{font-style:normal;font-size:var(--fs-xs);color:var(--u-sub);margin-left:5px}
 
 .xser{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 9%,var(--u-surface));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:var(--r-m);padding:8px 12px;margin:0 0 8px;font-size:var(--fs-m)}
 .xser span{flex:1;min-width:0}
@@ -1237,7 +1198,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fsh-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:var(--r-full);background:var(--u-surface);color:var(--u-ink);font-family:var(--u-num);font-size:var(--fs-xs);margin-left:2px}
 /* 検索欄（虫めがねを押したとき） */
 .ftools .fq-x{flex:none}
-.ftools input{font-size:var(--fs-l)}
 /* 条件のラベル（2つまで＋他○件）・解除・件数。高さは1行のまま */
 .fsum{display:flex;align-items:center;gap:8px;margin:10px 0 2px;min-height:28px;font-size:var(--fs-s);color:var(--u-sub)}
 .fsum-l{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
@@ -1274,7 +1234,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fsh-subb.chipsmode{padding:4px 16px 14px}
 .fsh-subb.chipsmode .fgroup{margin-top:12px}
 .fsh-subb.chipsmode .fgroup h5 .hint{font-weight:400}
-.fsh-subb.chipsmode #seriesQ{width:100%;box-sizing:border-box;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:9px 11px;font:inherit;font-size:var(--fs-l)}
 .fsh-subb.chipsmode #serSug{display:block;margin-top:8px}
 .fsh-subb.chipsmode .sershd{display:block;margin:2px 0 6px}
 .fsh-subb.chipsmode .serbox{display:flex;flex-wrap:wrap;gap:6px}
@@ -1659,17 +1618,7 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 
 /* スマホは曲名・アーティストを縦に並べる（長い名前も見えるように）。PCは横に並べる */
 
-/* Wiki貼り付けの比較画面：合わせ方・更新する項目 */
-.sp-opt{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:0 0 8px}
-.sp-ol{font-size:var(--fs-s);font-weight:700;color:var(--u-sub);min-width:52px}
-#spFrom{height:30px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);font:inherit;font-size:var(--fs-m);padding:0 6px}
-.sp-oh{font-size:var(--fs-s);color:var(--u-sub)}
-.sp-ck{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-m);font-weight:700;border:1px solid var(--u-line);border-radius:var(--r-m);padding:4px 8px;cursor:pointer}
-.sp-ck input{margin:0;width:15px;height:15px;accent-color:var(--u-accent)}
-.sp-ck small{font-weight:500;color:var(--u-sub);margin-left:2px}
-.sp-r .epn .was{margin-right:4px}
 
-/* 整形の表：上の操作の並び */
 
 /* ===== 話数タブ：上の段（進み具合のバー・話数を編集・…） ===== */
 .ephead{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 10px}
@@ -1680,7 +1629,7 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 @media (hover:hover){.epmenu button:hover{background:var(--u-soft)}}
 .epwarn{padding:6px 10px;font-size:var(--fs-m);gap:8px}
 /* ===== 話数の編集：上の操作（貼り付け・1話追加・その他）と、1話1行の表 ===== */
-.edtop{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.edtop{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
 .edtop .edmb{margin-left:auto}
 .edmore{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px;padding:10px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-soft);font-size:var(--fs-m)}
 .edmore button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);padding:6px 10px;font:inherit;font-size:var(--fs-m);text-align:left;cursor:pointer}
@@ -1799,3 +1748,7 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .u-chip.mudl.on{background:var(--u-ok2);border-color:color-mix(in srgb,var(--u-ok) 55%,transparent);color:var(--u-ok)}
 /* 挿入歌がまだないときの「＋ 挿入歌を追加」（OP・EDなどの「＋追加」と同じ札） */
 .sgins{margin-top:2px}
+/* 作品の詳細の下の「＋ 関連放送を追加」「＋ 話数を追加」：目立たないグレーの点線 */
+.u-chip.add.epadd{color:var(--u-sub);border-color:var(--u-strong)}
+/* 貼り付け：上の説明 */
+.sp-how{margin:0 0 8px;font-size:var(--fs-s)}

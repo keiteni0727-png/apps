@@ -1,4 +1,4 @@
-/* ===================== 編集画面のプルダウン（放送形態・放送局・配信サイト・シリーズ・ほかのクール・整形の表の列） ===================== */
+/* ===================== 編集画面のプルダウン（放送形態・放送局・配信サイト・シリーズ・ほかのクール） ===================== */
 /* ===== 編集画面のプルダウン（1つだけ選ぶ。選んだらすぐ閉じる）=====
    一覧は詳細・編集のシートの外（body直下の #ddPop）に出す：シートの中だとはみ出して切れるため。
    スマホは下から出る一覧、PCはボタンのすぐ下（下に場所がなければ上）に小さく出す */
@@ -24,20 +24,11 @@ function ddValue(k) {
 const ddBtn = k =>
   `<button type="button" class="fdd" data-fdd="${k}" aria-haspopup="listbox" aria-expanded="${ddOpen === k}" aria-label="${DD_TITLE[k]}を選ぶ"><span class="fdd-v">${ddValue(k)}</span>${DD_CHEV}</button>`;
 /* 一覧の行 */
-function ddRows(k, q) {
-  /* 整形の表：列の役割 */
-  if (k.startsWith("gcol:")) {
-    const g = subPaste && subPaste.grid,
-      cur = g ? g.cols[+k.slice(5)] : "";
-    return Object.entries(G_ROLE)
-      .map(([v, l]) => `<button type="button" class="dd-row${cur === v ? " on" : ""}" role="option" aria-selected="${cur === v}" data-ddpick="${v}"><span class="dd-l">${l}</span>${cur === v ? DD_CHECK : ""}</button>`)
-      .join("") + `<button type="button" class="dd-row dd-del" role="option" aria-selected="false" data-ddpick="__del"><span class="dd-l">この列を消す</span></button>`;
-  }
-  const nq = norm(q || "");
-  const hit = t => !nq || norm(t).includes(nq);
+/* q＝シリーズの検索欄に入れた文字（シリーズのプルダウンだけ） */
+function ddRows(k, q = "") {
   const row = (v, lab, on, extra = "") =>
     `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddpick="${esc(v)}">${extra}<span class="dd-l">${lab}</span>${on ? DD_CHECK : ""}</button>`;
-  const none = on => (nq ? "" : `<button type="button" class="dd-row none${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddnone="1"><span class="dd-l">${DD_NONE[k]}</span>${on ? DD_CHECK : ""}</button>`);
+  const none = on => `<button type="button" class="dd-row none${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddnone="1"><span class="dd-l">${DD_NONE[k]}</span>${on ? DD_CHECK : ""}</button>`;
   if (k === "media") return ddMedia().map(([v, l]) => row(v, esc(l), form.media === v)).join("");
   /* ほかのクール：上で年を切り替え、季節を選ぶと追加（付いているものを選ぶと外す） */
   if (k === "cour") {
@@ -48,14 +39,15 @@ function ddRows(k, q) {
     const grp = serGroup(form.k);
     const { map, cnt } = seriesMainMap();
     const n0 = n => (cnt[n] ? cnt[n].a + cnt[n].d : 0);
-    const names = Object.keys(map).filter(hit);
+    const nq = norm(q);
+    const names = Object.keys(map).filter(n => !nq || norm(n).includes(nq));
     const sort = l => l.sort((x, y) => (nq ? norm(x).indexOf(nq) - norm(y).indexOf(nq) : 0) || n0(y) - n0(x));
     const mine = sort(names.filter(n => map[n] === grp)),
       other = sort(names.filter(n => map[n] !== grp));
     const r = n => row(n, `${esc(n)}<small>${n0(n)}</small>${map[n] !== grp ? `<em>${SER_GL[map[n]]}</em>` : ""}`, form.series === n);
     const exact = names.some(n => norm(n) === nq);
     return (
-      none(!form.series) +
+      (nq ? "" : none(!form.series)) +
       [...mine, ...other].slice(0, 60).map(r).join("") +
       (nq && !exact ? `<button type="button" class="dd-row add" data-ddsernew="${esc(q.trim())}"><span class="dd-l">＋「${esc(q.trim())}」を新しく作る</span></button>` : "") +
       (!nq ? `<p class="dd-hint">名前を入れると、なければ新しく作れます</p>` : "")
@@ -63,26 +55,25 @@ function ddRows(k, q) {
   }
   const a = ddArr(k),
     nof = (form.noF || []).includes(DD_NOF[k]);
-  const opts = [...new Set([...(k === "st" ? M("stations") : M("vods")), ...a])].filter(hit);
+  const opts = [...new Set([...(k === "st" ? M("stations") : M("vods")), ...a])];
   const dot = v => (k !== "st" ? `<i class="dd-dot"${vcStyle(v)}></i>` : "");
-  return none(nof) + (opts.length ? opts.map(v => row(v, esc(v), !nof && a[0] === v && a.length === 1 ? true : !nof && a.includes(v), dot(v))).join("") : `<p class="dd-hint">「${esc(q)}」は見つかりません</p>`);
+  return none(nof) + (opts.length ? opts.map(v => row(v, esc(v), !nof && a[0] === v && a.length === 1 ? true : !nof && a.includes(v), dot(v))).join("") : "");
 }
 const ddSheetMode = U.sheetMode;
-const ddTitle = k => (k.startsWith("gcol:") ? `${gLetter(+k.slice(5))}列` : DD_TITLE[k]);
-const ddBtnOf = k => document.querySelector(k.startsWith("gcol:") ? `[data-gcol="${k.slice(5)}"]` : `[data-fdd="${k}"]`);
+const ddTitle = k => DD_TITLE[k];
+const ddBtnOf = k => document.querySelector(`[data-fdd="${k}"]`);
 function openDD(k, btn) {
   closeDD();
   ddOpen = k;
   btn.setAttribute("aria-expanded", "true");
-  const search = k !== "media" && k !== "cour" && !k.startsWith("gcol:");
   const box = document.createElement("div");
   box.id = "ddPop";
   const sheet = ddSheetMode();
   box.className = sheet ? "sheetmode" : "popmode";
   box.innerHTML = `<div class="dd-scrim" data-ddclose="1"></div><div class="dd-box" role="dialog" aria-label="${ddTitle(k)}">
     ${sheet ? `<div class="dd-h"><b>${ddTitle(k)}</b><span>${k === "cour" ? "選ぶと追加・外す" : "選ぶと閉じます"}</span><button type="button" class="dd-x" data-ddclose="1" aria-label="閉じる">✕</button></div>` : ""}
-    ${search ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ddq" type="search" autocomplete="off" placeholder="${DD_TITLE[k]}を探す${k === "ser" ? "・新しく作る" : ""}" aria-label="${DD_TITLE[k]}を探す"></label>` : ""}
-    <div class="dd-list" role="listbox" id="ddList">${ddRows(k, "")}</div></div>`;
+    ${k === "ser" ? `<label class="dd-q"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="ddq" type="search" autocomplete="off" placeholder="シリーズ名で探す・新しく作る" aria-label="シリーズを探す"></label>` : ""}
+    <div class="dd-list" role="listbox" id="ddList">${ddRows(k)}</div></div>`;
   document.body.appendChild(box);
   ddAt = Date.now();
   if (sheet) document.documentElement.classList.add("pkopen");
@@ -121,16 +112,6 @@ function closeDD(refocus) {
 /* 選んだ：入力中の内容を読み取ってから値を入れ、閉じて描き直す */
 function ddPick(v, none) {
   const k = ddOpen;
-  if (k && k.startsWith("gcol:")) {
-    if (subPaste && subPaste.grid) {
-      if (v === "__del") gDelCol(subPaste.grid, +k.slice(5)) || toast("最後の列は消せません");
-      else gSetCol(subPaste.grid, +k.slice(5), v);
-    }
-    closeDD();
-    refreshSheet();
-    if (!TOUCH) ddBtnOf(k)?.focus();
-    return;
-  }
   if (!k || !form) return closeDD();
   readForm();
   if (k === "media") form.media = v;
@@ -160,9 +141,10 @@ function onDDClick(e) {
   else if (e.target.closest("[data-ddnone]")) ddPick("", true);
   else if (e.target.closest("[data-ddcy]")) {
     form.cy = (+form.cy || new Date().getFullYear()) + +e.target.closest("[data-ddcy]").dataset.ddcy;
-    $("#ddList").innerHTML = ddRows("cour", "");
+    $("#ddList").innerHTML = ddRows("cour");
   }
   else if (e.target.closest("[data-ddsernew]")) {
+    /* シリーズの検索欄に入れた名前で、新しいシリーズを作って選ぶ（メインのジャンルは作った作品のジャンル） */
     const n = e.target.closest("[data-ddsernew]").dataset.ddsernew;
     if (n && !M("series").includes(n)) {
       master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: serGroup(form.k) } };

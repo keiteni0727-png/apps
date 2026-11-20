@@ -256,35 +256,6 @@ const CHANGE_ACTIONS = [
       toast("名前を変更しました");
     },
   ],
-  /* 各話リストの貼り付け：日付も更新・ない話も追加 */
-  /* 更新する項目（サブタイトル・放送日・話数） */
-  [
-    "[data-spu]",
-    t => {
-      if (!subPaste) return false;
-      subPaste[t.dataset.spu] = t.checked;
-      refreshSheet();
-    },
-  ],
-  /* 上から順に合わせるとき、最初に合わせる話 */
-  [
-    "#spFrom",
-    t => {
-      if (!subPaste || !subPaste.parsed) return false;
-      subPaste.from = +t.value;
-      const it = items.find(x => x.id === openId);
-      if (it) pasteRows(it);
-      refreshSheet();
-    },
-  ],
-  [
-    "#spAdd",
-    t => {
-      if (!subPaste) return false;
-      subPaste.addMissing = t.checked;
-      refreshSheet();
-    },
-  ],
   /* 編集画面：開始日（放送クールの候補が変わる）・「なし」・曲の種類（その種類の区切りへ移す）・クールの年 */
   /* 開始日：入力中の欄を消さないよう、日付で変わる所（放送曜日の案内・放送クールの候補）だけ描き直す
      （全体を作り直すと、iPhoneでキーボードが閉じて画面が上に戻ってしまうため） */
@@ -367,6 +338,7 @@ const INPUT_ACTIONS = [
       updSched();
     },
   ],
+  /* シリーズのプルダウンの検索欄：入れた文字で一覧を絞る */
   [
     "#ddq",
     t => {
@@ -375,31 +347,10 @@ const INPUT_ACTIONS = [
     },
   ],
   [
-    "#f-serq",
-    t => {
-      if (!form) return false;
-      const b = $("#fSerSug");
-      if (b) b.innerHTML = serSugForm(t.value);
-    },
-  ],
-  [
     "#spText",
     t => {
       if (!subPaste) return false;
       subPaste.text = t.value;
-    },
-  ],
-  /* 整形の表：マスを直す（描き直さず、話数が読めるかの色だけ変える） */
-  [
-    "[data-g]",
-    t => {
-      const g = subPaste && subPaste.grid;
-      if (!g) return false;
-      const [i, j] = t.dataset.g.split(":").map(Number);
-      const r = g.rows[i];
-      if (!r || !g.cols) return;
-      gSet(r, j, t.value);
-      if (g.cols[j] === "n") t.closest("tr").classList.toggle("bad", gBad(g, r));
     },
   ],
   [
@@ -552,8 +503,6 @@ const KEY_ACTIONS = [
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
   [null, (t, e) => (e.key === "Escape" && yform && yform.inline ? ytCloseInline() || true : false)],
   [null, (t, e) => (e.key === "Escape" ? close() : false)],
-  ["#f-serq", enterClick("#fSerSug [data-fser]")],
-  ["#f-sernew", enterClick("[data-fsercreate]")],
   ["#seriesQ", enterClick("#serSug [data-seradd]")],
 ];
 document.addEventListener("keydown", e => runInputs(KEY_ACTIONS, e));

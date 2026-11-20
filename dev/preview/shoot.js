@@ -24,11 +24,11 @@ const click = sel => async p => {
 };
 const openDetail = id => click(`#main [data-id="${id}"]`);
 /* 各話リストの貼り付け：話数タブ →「話数を編集」→「各話リストを貼り付け」→ 架空の各話リストを入れる → steps の順に押す */
-const PASTE_TEXT = ["話数\tサブタイトル\t放送日", "第1話\tはじまりの絵の具\t2026年10月2日", "第2話\t青い屋根の店\t10月9日", "第3話\t小さな依頼人\t10月16日", "第4話\t雨の日の約束\t10月23日", "第5話\t星を描く少女\t10月30日", "第6話\t秋祭りの夜\t11月6日", "第7話\t消えた絵筆\t11月13日"].join("\n");
+const PASTE_TEXT = ["#1\tはじまりの絵の具", "#2\t青い屋根の店", "#3\t小さな依頼人", "#4\t雨の日の約束", "#5\t星を描く少女", "#6\t秋祭りの夜", "#7\t消えた絵筆", "#13\t特別編 アトリエの休日"].join("\n");
 const pasteTo = (...steps) => pasteWith(PASTE_TEXT, steps);
-/* 話数が読めない行が途中にある表（自動で読めないので整形の表が開く） */
-const PASTE_MESSY = ["話数\tサブタイトル\t放送日", "第1話\tはじまりの絵の具\t2026年10月2日", "総集編\tこれまでのアトリエ\t10月9日", "第2話\t青い屋根の店\t10月16日"].join("\n");
-pasteTo.messy = (...steps) => pasteWith(PASTE_MESSY, steps);
+/* しょぼいカレンダーの放送時間の表（チャンネル｜開始日時｜分｜回数｜サブタイトル。次の行にフラグ・更新日） */
+const PASTE_TABLE = ["チャンネル\t開始日時\t分\t回数\tサブタイトル/コメント\tフラグ\t更新日", "TOKYO MX\t2026-10-02(金) 23:00\t30\t#1\tはじまりの絵の具\t\t", "\t\t\t\t\t新\t2026-09-20", "BS11\t2026-10-04(日) 24:00\t30\t#1\tはじまりの絵の具\t\t", "TOKYO MX\t2026-10-09(金) 23:30\t30\t#2\t青い屋根の店\t\t"].join("\n");
+pasteTo.table = (...steps) => pasteWith(PASTE_TABLE, steps);
 const pasteWith = (text, steps) => async p => {
   await openDetail("a1")(p);
   await click('[data-dtab="ep"]')(p);
@@ -51,10 +51,10 @@ const SCENES = [
   { name: "detail-yt", mode: "yt", act: click('#main [data-yt="y1"]'), sheet: true },
   { name: "detail-eps", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p)), sheet: true },
   { name: "detail-eps-menu", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p), await click("#epMenuBtn")(p)) },
+  { name: "eps-edit", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p), await click("#epEditBtn")(p)), sheet: true },
   { name: "paste-input", mode: "a", act: pasteTo(), sheet: true },
   { name: "paste-result", mode: "a", act: pasteTo("#spRead"), sheet: true },
-  { name: "paste-grid", mode: "a", act: pasteTo("#spRead", "#spFmt"), sheet: true },
-  { name: "paste-grid-auto", mode: "a", act: pasteTo.messy("#spRead"), sheet: true },
+  { name: "paste-table", mode: "a", act: pasteTo.table("#spRead"), sheet: true },
   { name: "form-add", mode: "a", act: click("#hAdd, #sbAdd"), sheet: true },
   { name: "form-add-yt", mode: "yt", act: click("#hAdd, #sbAdd"), sheet: true },
   {
@@ -102,7 +102,7 @@ async function shotSheet(p, file) {
         if (dev.key === "pc" && sc.mode === "o") continue;
         const name = `${dev.key}-${theme}-${sc.name}`;
         if (ONLY && !name.includes(ONLY)) continue;
-        if (theme === "dark" && !/^(list-(w|a)|detail-anime|form-edit|settings|filter-sheet)$/.test(sc.name)) continue;
+        if (theme === "dark" && !/^(list-(w|a)|detail-anime|form-edit|settings|filter-sheet|eps-edit)$/.test(sc.name)) continue;
         const ctx = await browser.newContext({ ...dev, deviceScaleFactor: 2, timezoneId: "Asia/Tokyo", locale: "ja-JP", colorScheme: theme });
         const p = await ctx.newPage();
         await p.clock.install({ time: NOW });

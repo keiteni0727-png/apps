@@ -176,7 +176,7 @@ function epEditorHtml(it) {
       ${n ? `<button type="button" id="erWeekly" title="日付が空いている話に、前の話の1週間後の日付を入れます">空いた日付を1週間おきに埋める</button>` : ""}
     </div>`
     : "";
-  const top = `<div class="edtop">${A ? `<button type="button" class="u-btn pri edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" class="u-btn" id="erAdd">＋ 1話追加</button><button type="button" class="u-btn edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
+  const top = `<div class="edtop">${A ? `<button type="button" class="u-btn sm pri edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" class="u-btn sm" id="erAdd">＋ 1話追加</button><button type="button" class="u-btn sm edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
   const head = n ? `<div class="erh${A ? "" : " nosub"}" aria-hidden="true"><span></span><span>話数</span>${A ? "<span>サブタイトル</span>" : ""}<span>放送日</span><span></span></div>` : "";
   const rows = n
     ? l

@@ -50,7 +50,7 @@ function seriesPanelHtml() {
   const cnt = seriesCounts();
   return `<div class="fgroup"><h5>シリーズ</h5>
       ${state.series.length ? `<div class="chips" style="margin-bottom:8px">${state.series.map(n => `<button type="button" aria-pressed="true" data-serdel="${esc(n)}">${esc(n)}<small>${cnt[n] || 0}</small> ✕</button>`).join("")}</div>` : ""}
-      <input id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索" aria-label="シリーズを検索">
+      <input class="u-input" id="seriesQ" type="search" autocomplete="off" placeholder="シリーズ名で検索" aria-label="シリーズを検索">
       <div class="chips" id="serSug">${seriesSugHtml("")}</div></div>`;
 }
 /* 絞り込みの中身：時期（放送クール・放送年） */
@@ -376,7 +376,7 @@ const fshBar = o =>
     <button type="button" class="u-btn fb fq" ${o.a.q}="1" aria-label="検索">${FQ_IC}</button>
   </div>`;
 const fshSearch = o =>
-  `<div class="ftools"><input id="${o.id}" type="search" enterkeyhint="search" autocomplete="off" placeholder="${o.ph}" value="${esc(o.q)}" aria-label="検索"><button type="button" class="u-btn txt fq-x" ${o.a}="0">キャンセル</button></div>`;
+  `<div class="ftools"><input class="u-input" id="${o.id}" type="search" enterkeyhint="search" autocomplete="off" placeholder="${o.ph}" value="${esc(o.q)}" aria-label="検索"><button type="button" class="u-btn txt fq-x" ${o.a}="0">キャンセル</button></div>`;
 /* 条件のラベル：2つまで出して、残りは「他○件」。押すと絞り込みシート */
 const fshSum = (conds, a) =>
   conds.length

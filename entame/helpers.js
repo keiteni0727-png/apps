@@ -95,26 +95,6 @@ function navScroll(el) {
   if (r.top < top + pad) sc.scrollTop -= top + pad - r.top;
   else if (r.bottom > bot - pad) sc.scrollTop += r.bottom - (bot - pad);
 }
-/* 整形の表で i行目 j列目のマスへ移る（表の中だけスクロール。カーソルは文字の頭） */
-function gridGo(e, i, j) {
-  const el = document.querySelector(`input[data-g="${i}:${j}"]`);
-  if (!el) return e.preventDefault();
-  e.preventDefault();
-  el.focus({ preventScroll: true });
-  el.scrollIntoView({ block: "nearest", inline: "nearest" });
-  /* カーソルは文字の頭に置く（そのまま打つと頭に入る。全部消したいときは Ctrl+A／⌘A） */
-  try {
-    el.setSelectionRange(0, 0);
-  } catch (_) {}
-}
-/* 整形の表：Enter で下のマス（Shift+Enter で上） */
-document.addEventListener("keydown", e => {
-  if (e.key !== "Enter" || e.altKey || e.ctrlKey || e.metaKey || imeEnter(e)) return;
-  const t = e.target;
-  if (!t || !t.matches || !t.matches("input[data-g]")) return;
-  const [i, j] = t.dataset.g.split(":").map(Number);
-  gridGo(e, e.shiftKey ? i - 1 : i + 1, j);
-});
 /* カーソルが文字の左端・右端にあるか（数字の欄など、カーソル位置が取れない欄は端とみなす） */
 const atEdge = (t, left) => {
   let s;
@@ -135,15 +115,6 @@ document.addEventListener("keydown", e => {
   const up = e.key === "ArrowUp",
     down = e.key === "ArrowDown",
     left = e.key === "ArrowLeft";
-  /* 整形の表（Excelの形）：↑↓＝上下のマス、←→＝カーソルが文字の端にあるときだけ左右のマス */
-  if (t.matches("input[data-g]")) {
-    const [i, j] = t.dataset.g.split(":").map(Number);
-    if (!(up || down) && !atEdge(t, left)) return;
-    const ni = up ? i - 1 : down ? i + 1 : i,
-      nj = up || down ? j : left ? j - 1 : j + 1;
-    gridGo(e, ni, nj);
-    return;
-  }
   /* 表の形：話数の編集の行・編の行 */
   const row = t.closest("[data-er],[data-ar]");
   if (row) {

@@ -191,7 +191,7 @@ function refreshSheet() {
   if (!it || !el) return;
   /* 前・次へ移ったときの横スライドは1回だけ。描き直した中身にまたかからないよう外す（保存のたびに揺れて見えるため） */
   el.classList.remove("dsl-l", "dsl-r");
-  /* 描き直してもスクロール位置はそのまま（整形の表で行を消したときに一番上へ戻らないように） */
+  /* 描き直してもスクロール位置はそのまま */
   const sh = $("#layer .sheet");
   const pos = [el, sh].map(x => x && [x.scrollTop, x.scrollLeft]);
   const inner = [".gw", ".sp-list"].map(c => el.querySelector(c)).map((x, i) => x && [[".gw", ".sp-list"][i], x.scrollTop, x.scrollLeft]).filter(Boolean);
@@ -372,17 +372,6 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["#e1Save", (el, it) => saveEpOne(it)],
-  /* 各話リストの貼り付けの合わせ方：話数で／上から順に */
-  [
-    "[data-spm]",
-    (el, it) => {
-      if (!subPaste || !subPaste.parsed) return;
-      subPaste.match = el.dataset.spm;
-      if (subPaste.match === "num") subPaste.useNum = false;
-      pasteRows(it);
-      refreshSheet();
-    },
-  ],
   /* 話数の抜けをそのまま登録（抜けた場所に足す） */
   [
     "[data-gapadd]",
