@@ -190,7 +190,6 @@ const CLICK_HANDLERS = [
   e => state.mode !== "yt" && runActions(SHEET_ACTIONS, e),
   onSubPopClick,
   e => state.mode === "yt" && runActions(YT_ACTIONS, e),
-  e => state.mode === "h" && runActions(HIST_ACTIONS, e),
   e => (state.mode === "sr" || state.mode === "mu") && runActions(LIST_ACTIONS, e),
   e => runActions(ROW_ACTIONS, e),
   e => state.mode !== "yt" && runActions(SAVED_FILTER_ACTIONS, e),

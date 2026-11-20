@@ -44,7 +44,7 @@ let epOne = null; // 1話だけ編集中の話の番号
 let epMenu = false; // 話数タブの「…」を開いているか
 let stMenu = false; // 視聴ステータスの選択肢を開いているか
 let navIds = []; // 詳細を開いた画面に出ていた作品の並び（前・次の作品へ移る順）
-/* 一覧・番組表・視聴記録に出ている作品を、画面の上から順に（同じ作品は1回） */
+/* 一覧・番組表に出ている作品を、画面の上から順に（同じ作品は1回） */
 function screenIds() {
   const seen = new Set();
   return [...document.querySelectorAll("#main [data-id]")].map(el => el.dataset.id).filter(id => !seen.has(id) && seen.add(id) && items.some(x => x.id === id));
@@ -961,7 +961,7 @@ const DETAIL_ACTIONS = [
       l.forEach((x, i) => {
         if (aired(x) && !done(x)) {
           x.w = true;
-          /* まとめて付けた印：押した日時に0.5を足して区別する（視聴記録には出すが、見る時間帯の集計には入れない） */
+          /* まとめて付けた印：押した日時に0.5を足して区別する（1話ずつ見た印と見分けられるように、データの形はこのまま残す） */
           x.wt = Date.now() + 0.5;
           ch.push(i);
         }

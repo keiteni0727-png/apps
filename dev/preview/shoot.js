@@ -15,7 +15,7 @@ const DEVICES = [
   { key: "sp", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
   { key: "pc", viewport: { width: 1280, height: 860 } },
 ];
-const MODES = ["w", "a", "d", "m", "s", "yt", "sr", "mu", "h", "o"];
+const MODES = ["w", "a", "d", "m", "s", "yt", "sr", "mu", "o"];
 
 /* 画面ごとの手順。mode＝開くメニュー、act＝開いたあとにする操作、sheet＝重なって出る画面（全体が入るように縦に伸ばして撮る） */
 const click = sel => async p => {

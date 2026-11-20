@@ -4,8 +4,8 @@
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
-const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", sr: "シリーズ", mu: "主題歌", h: "視聴記録", o: "その他" };
-/* o＝スマホの下メニュー「その他」（映画・バラエティ・YouTube・視聴記録のタイル）。左メニューには出さない */
+const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", sr: "シリーズ", mu: "主題歌", o: "その他" };
+/* o＝スマホの下メニュー「その他」（映画・バラエティ・YouTube・シリーズ・主題歌のタイル）。左メニューには出さない */
 const MODE_KEYS = Object.keys(MODE_NAME).filter(k => k !== "o");
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 /* 表示の言い回し：保存データの値は「視聴済み」のまま、画面では「視聴済」と出す */
@@ -88,7 +88,7 @@ let over = {}, // titles：作品（1作品1件）
   prog = {}; // progress：話数リストと視聴チェック
 let items = [],
   eras = [];
-/* 画面の状態。mode＝メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s バラエティ・yt YouTube・sr シリーズ・mu 主題歌・h 視聴記録・o その他）、
+/* 画面の状態。mode＝メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s バラエティ・yt YouTube・sr シリーズ・mu 主題歌・o その他）、
    sub＝映画の絞り込み「種類」（all/a アニメ映画/d 実写）。
    そのほかは絞り込み（sf 視聴・era 放送年・type 種別・cour 放送クール・series シリーズ・vod 配信サイト）と並び順 */
 const SUBS = { m: ["all", "a", "d"] };
@@ -444,7 +444,7 @@ function purgeTrash(col) {
     if (o && o.deleted && +o.deleted < lim) trashGone(col, id);
   });
 }
-/* 保存先につないで、作品・視聴記録・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
+/* 保存先につないで、作品・話数と視聴チェック・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
 async function initStore() {
   const conn = await U.store();
   if (!conn.db) {

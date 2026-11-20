@@ -11,7 +11,6 @@ const SHELL = [
   "form.js",
   "settings.js",
   "yt.js",
-  "hist.js",
   "lists.js",
   "events.js",
   "../shared/u-base.css",
