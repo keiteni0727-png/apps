@@ -24,8 +24,7 @@ function gridHtml(g) {
   const md = g.mode || "join";
   const seg = [["join", "同じマスにまとめる"], ["col", "右のマスに分ける"], ["row", "下の行に分ける"]].map(([v, l]) => `<button type="button" data-gmode="${v}" class="${md === v ? "on" : ""}">${l}</button>`).join("");
   const ex = { join: "「前編⏎後編」→「前編 後編」の1マス", col: "「前編⏎後編」→「前編」「後編」の2マス（横に並ぶ）", row: "「前編⏎後編」→「前編」「後編」の2行（縦に並ぶ）" }[md];
-  const tool = `${it ? `<div class="gtool">${wikiLink(it)}</div>` : ""}
-    <div class="gtool gmode"><span class="gtl">1つのマスに改行があるとき</span><span class="gseg">${seg}</span><span class="gex">例：${ex}</span></div>
+  const tool = `    <div class="gtool gmode"><span class="gtl">1つのマスに改行があるとき</span><span class="gseg">${seg}</span><span class="gex">例：${ex}</span></div>
     <div class="gtool"><span class="gtl">色の付いた行に対して</span><button type="button" id="gMerge">選んだ行を上の行に合体</button><button type="button" id="gAdd">選んだ行の下に空の行を追加</button><button type="button" id="gUndo"${(p.hist || []).length ? "" : ' class="off"'}>1つ前の操作を取り消す</button></div>`;
   return `<div class="spaste spgrid">
     ${tool}
@@ -82,20 +81,14 @@ function arcSync() {
     r.b = num(el.querySelector(".ar-b").value);
   });
 }
-/* Wikipediaの記事へ（URLを登録していればそこ、なければ作品名で検索。名前がぴったりなら記事に直接飛ぶ） */
-const wikiUrl = it => it.wiki || `https://ja.wikipedia.org/w/index.php?search=${encodeURIComponent(it.t || "")}`;
-/* 番組詳細の下の小さなリンク：Wikipedia・しょぼいカレンダー（アニメだけ）。各話・放送日を見ながら直すとき用 */
+/* 番組詳細の下の小さなリンク：しょぼいカレンダー（アニメだけ）。各話・放送日を見ながら直すとき用 */
 const syoboiUrl = it => `https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t || "")}`;
-const extLinks = it =>
-  `<span class="xlinks"><a href="${esc(wikiUrl(it))}" target="_blank" rel="noopener">Wikipedia ↗</a>${it.k === "a" ? `<a href="${esc(syoboiUrl(it))}" target="_blank" rel="noopener">しょぼいカレンダー ↗</a>` : ""}</span>`;
-const wikiLabel = it => (it.wiki ? "Wikipediaの記事を開く ↗" : "Wikipediaでこの作品を探す ↗");
-const wikiLink = it => `<a class="gwiki" href="${esc(wikiUrl(it))}" target="_blank" rel="noopener">${wikiLabel(it)}</a>`;
+const extLinks = it => (it.k === "a" ? `<span class="xlinks"><a href="${esc(syoboiUrl(it))}" target="_blank" rel="noopener">しょぼいカレンダー ↗</a></span>` : "");
 function subPasteHtml(it) {
   const p = subPaste;
   if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
-    <div class="gtool">${wikiLink(it)}<input id="spWiki" type="url" inputmode="url" autocomplete="off" placeholder="記事のURLを入れると次からそこを開きます" value="${esc(it.wiki || "")}" aria-label="WikipediaのURL"></div>
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,
@@ -140,7 +133,7 @@ function epListHtml(it, eps) {
   if (!eps.length)
     return (
       (A
-        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から、Wikipediaなどの各話リストを貼り付けるか、1話ずつ追加できます。</p><div class="ephead"><button type="button" class="ephb pri" id="epEditBtn">話数を登録</button></div>`
+        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から、各話リストを貼り付けるか、1話ずつ追加できます。</p><div class="ephead"><button type="button" class="ephb pri" id="epEditBtn">話数を登録</button></div>`
         : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から追加できます。</p><div class="ephead"><button type="button" class="ephb pri" id="epEditBtn">話数を登録</button></div>`)
     );
   /* 進み具合は見ない話を除いて数える */
@@ -265,8 +258,7 @@ function epEditorHtml(it) {
   const more = erMore
     ? `<div class="edmore">
       <div class="edm-r"><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${n ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><span>話</span><button type="button" id="erBulkGo">追加</button></div>
-      ${n ? `<button type="button" id="erWeekly">日付のない話を毎週の日付で埋める</button>` : ""}
-      ${n > 1 ? `<button type="button" id="erSameDay">1話の日付を全話に入れる（一挙配信など）</button><div class="edm-r"><span>並べ替え</span><button type="button" id="erSortN">話数順</button><button type="button" id="erSortD">日付順</button></div>` : ""}
+      ${n ? `<button type="button" id="erWeekly" title="日付が空いている話に、前の話の1週間後の日付を入れます">空いた日付を1週間おきに埋める</button>` : ""}
     </div>`
     : "";
   const top = `<div class="edtop">${A ? `<button type="button" class="edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" id="erAdd">＋ 1話追加</button><button type="button" class="edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
@@ -1341,39 +1333,6 @@ const EPEDIT_ACTIONS = [
       epEdit = null;
       saveEps(it, l, "話数を保存しました");
       refreshSheet();
-    },
-  ],
-  /* 話数の編集：話数順・日付順に並べ直す（数字でない話数・日付のない話は最後。同じなら今の順） */
-  [
-    "#erSortN",
-    () => {
-      const v = x => epNum(x.n) ?? Infinity;
-      epEdit.list = epEdit.list.map((x, k) => [x, k]).sort((a, b) => v(a[0]) - v(b[0]) || a[1] - b[1]).map(a => a[0]);
-      refreshEditor();
-    },
-  ],
-  [
-    "#erSortD",
-    () => {
-      const v = x => x.t || Infinity;
-      epEdit.list = epEdit.list.map((x, k) => [x, k]).sort((a, b) => v(a[0]) - v(b[0]) || a[1] - b[1]).map(a => a[0]);
-      refreshEditor();
-    },
-  ],
-  [
-    "#erSameDay",
-    (el, it) => {
-      const l = epEdit.list;
-      const j = l[0] && jst(l[0].t);
-      if (!j) return toast("1話の日付を入れてください");
-      l.forEach((x, k) => {
-        if (!k) return;
-        const hm = x.t ? jst(x.t).hm : j.hm;
-        if (!x.t) x.nt = l[0].nt;
-        x.t = dayTimeToT(j.day, hm);
-        x.moved = true;
-      });
-      refreshEditor();
     },
   ],
   [
