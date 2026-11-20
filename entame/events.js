@@ -256,24 +256,6 @@ const CHANGE_ACTIONS = [
       toast("名前を変更しました");
     },
   ],
-  /* しょぼいカレンダーの作品ページのURLを登録（番組詳細の下のリンクも同じURLを開く） */
-  [
-    "#spSyoboi",
-    t => {
-      const it = items.find(x => x.id === openId);
-      if (!it) return false;
-      const v = t.value.trim();
-      if (v && !/^https?:\/\//.test(v)) return toast("https:// から始まるURLを貼ってください"), false;
-      if (v === (it.syoboi || "")) return;
-      saveTitle(it.id, { syoboi: v }, v ? "しょぼいカレンダーのURLを登録しました" : "しょぼいカレンダーのURLを消しました");
-      /* 貼り付け画面は描き直さないので、リンクだけ直す */
-      const n = { ...it, syoboi: v };
-      document.querySelectorAll("a.syb").forEach(a => {
-        a.href = syoboiUrl(n);
-        a.textContent = syoboiLab(n);
-      });
-    },
-  ],
   /* 各話リストの貼り付け：日付も更新・ない話も追加 */
   /* 更新する項目（サブタイトル・放送日・話数） */
   [

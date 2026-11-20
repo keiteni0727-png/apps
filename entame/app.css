@@ -1670,9 +1670,6 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .sp-r .epn .was{margin-right:4px}
 
 /* 整形の表：上の操作の並び */
-.xlinks{display:flex;gap:12px;align-items:center}
-.xlinks a{color:var(--u-sub);font-size:var(--fs-s);text-decoration:none;opacity:.75;padding:6px 0}
-@media (hover:hover){.xlinks a:hover{opacity:1;color:var(--u-ink)}}
 
 /* ===== 話数タブ：上の段（進み具合のバー・話数を編集・…） ===== */
 .ephead{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 10px}
@@ -1709,10 +1706,6 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
   .er input{font-size:var(--fs-m);padding:5px 4px}
   .er .er-d{font-size:var(--fs-s)}
 }
-/* 各話リストの貼り付け画面：しょぼいカレンダーへのリンクとURLの登録欄 */
-.sylink{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 8px;font-size:var(--fs-m)}
-.sylink .syb{color:var(--u-acct);font-weight:700;text-decoration:none;white-space:nowrap}
-#spSyoboi{flex:1 1 200px;min-width:0;font-size:var(--fs-m);padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-surface);color:inherit}
 /* 作品の編集：URLの欄は小さめに */
 .field input[type=url]{font-size:var(--fs-m);padding:6px 9px}
 /* ===== 作品の編集：タイトル・ジャンルとステータスの札・表の形の段 ===== */

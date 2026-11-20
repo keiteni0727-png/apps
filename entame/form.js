@@ -126,7 +126,7 @@ const ONLY_A = {
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
   relb: ["関連放送", ["relb"]],
-  onair: ["基本情報", ["media", "vurl", "from", "time", "cours", "series", "url", "syoboi"]],
+  onair: ["基本情報", ["media", "vurl", "from", "time", "cours", "series", "url"]],
   "f-url": ["公式サイト", ["url"]],
   "f-vurl": ["配信サイトURL", ["vurl"]],
 };
@@ -206,8 +206,6 @@ function formHtml() {
       if (!sites.length && f.only !== "f-vurl") return "";
       return `<div class="field full"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
     })(),
-    /* しょぼいカレンダーの作品ページ（アニメだけ。各話リストの貼り付け画面の欄と同じ） */
-    syoboi: f.k === "a" ? `<div class="field full"><label class="field" for="f-syoboi"><span>しょぼいカレンダー</span></label><input id="f-syoboi" type="url" inputmode="url" autocomplete="off" placeholder="https://cal.syoboi.jp/tid/…" value="${esc(f.syoboi || "")}"></div>` : "",
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
@@ -233,7 +231,7 @@ function formHtml() {
     ${head}
     ${sec("放送", P.media + P.vurl + P.from + P.time + P.cours, "", "", "ftbl")}
     ${sec("曲", P.songs, "", sgNoneBox(), "fsongs")}
-    ${sec("そのほか", P.series + P.url + P.syoboi, "", "", "ftbl")}
+    ${sec("そのほか", P.series + P.url, "", "", "ftbl")}
     <div class="ffoot"><button type="button" class="u-btn" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -257,7 +255,6 @@ function readForm() {
   if ($("#f-from")) form.from = normDate($("#f-from").value) || "";
   v("#f-url", "url");
   v("#f-vurl", "vurl");
-  v("#f-syoboi", "syoboi");
   v("#f-rbt", "rbT");
   if ($("#f-rbf")) form.rbF = normDate($("#f-rbf").value) || "";
   if ($("#f-rbto")) form.rbTo = normDate($("#f-rbto").value) || "";
@@ -347,7 +344,6 @@ function openForm(it, target, el) {
       series: it.series || "",
       url: it.url || "",
       vurl: it.vurl || "",
-      syoboi: it.syoboi || "",
       cours: [...coursOf(it)],
       cy: yearOf(it) || y,
     };
@@ -369,7 +365,6 @@ function openForm(it, target, el) {
       series: state.series.length === 1 ? state.series[0] : "",
       url: "",
       vurl: "",
-      syoboi: "",
       cours: [],
       cy: y,
     };
@@ -483,7 +478,6 @@ function buildPatch(f) {
     series: (f.series || "").trim(),
     url: (f.url || "").trim(),
     vurl: normVurl(f.vurl),
-    ...(f.k === "a" ? { syoboi: (f.syoboi || "").trim() } : {}),
   };
   /* 入力した項目の「なし」は自動で外す */
   /* 「なし」にした項目は入力欄を隠しているので、残っている値は消して「なし」を優先 */
