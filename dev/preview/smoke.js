@@ -52,11 +52,8 @@ const PORT = 8170;
     await p.fill("#spText", "#1\tはじまりの絵の具\n#2\t青い屋根の店\n#3\t小さな依頼人\n#4\t雨の日の約束");
     await c("#spRead");
   });
-  await step("話数に反映", () => c("#spApply"));
-  await step("話数の編集を保存", async () => {
-    const save = p.locator("button", { hasText: "話数を保存" }).locator("visible=true").first();
-    await save.click({ timeout: 5000 });
-  });
+  /* 「反映して保存」で保存まで終わる（話数の編集から開いたときも） */
+  await step("反映して保存", () => c("#spApply"));
   await step("サブタイトルが保存された", async () => {
     const sub = await p.evaluate(() => (prog.a1.eps.find(e => epNum(e.n) === 4) || {}).s);
     if (sub !== "雨の日の約束") throw new Error("4話のサブタイトル：" + sub);

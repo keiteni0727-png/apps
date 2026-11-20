@@ -172,8 +172,8 @@ function epEditorHtml(it) {
   /* 上の操作：貼り付け・1話追加・その他（まとめて追加・日付・並べ替え） */
   const more = erMore
     ? `<div class="edmore">
-      <div class="edm-r"><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${n ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><span>話</span><button type="button" id="erBulkGo">追加</button></div>
-      ${n ? `<button type="button" id="erWeekly" title="日付が空いている話に、前の話の1週間後の日付を入れます">空いた日付を1週間おきに埋める</button>` : ""}
+      <div class="edm-r"><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${n ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><span>話</span><button type="button" class="u-btn sm" id="erBulkGo">追加</button></div>
+      ${n > 1 ? `<button type="button" class="u-btn sm" id="erAlign" title="1話の放送日時から1週間おきに、2話目からの日付を入れ直します">1話の日付で揃える（1週間おき）</button>` : ""}
     </div>`
     : "";
   const top = `<div class="edtop">${A ? `<button type="button" class="u-btn sm pri edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" class="u-btn sm" id="erAdd">＋ 1話追加</button><button type="button" class="u-btn sm edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
@@ -355,25 +355,24 @@ const EPEDIT_ACTIONS = [
     },
   ],
   /* 日付のない話を、前の日付のある話から1週間おきに埋める（最初の話に日付がなければ開始日から） */
+  /* 1話の日付で揃える：1話（一番上の話）の放送日時から1週間おきに、2話目からの日付を入れ直す。
+     1話に日付がなければ作品の開始日と放送時間から */
   [
-    "#erWeekly",
+    "#erAlign",
     (el, it) => {
       const l = epEdit.list;
-      let prev = null,
-        n = 0;
+      const f = l[0];
+      if (!f) return;
+      const t0 = f.t || (it.from ? dayTimeToT(normDate(it.from), hasTime(it) ? it.time : "9:00") : 0);
+      if (!t0) return toast("1話の日付（または作品の開始日）を入れてください");
+      const nt = f.t ? !!f.nt : !hasTime(it);
       l.forEach((x, k) => {
-        if (x.t) return void (prev = x);
-        let t = 0;
-        if (prev) t = prev.t + WEEK;
-        else if (!k && it.from) t = dayTimeToT(normDate(it.from), hasTime(it) ? it.time : "9:00");
-        if (!t) return;
+        const t = t0 + k * WEEK;
+        if (x.t !== t || !!x.nt !== nt) x.moved = true;
         x.t = t;
-        x.nt = prev ? prev.nt : !hasTime(it);
-        x.moved = true;
-        prev = x;
-        n++;
+        x.nt = nt;
       });
-      toast(n ? `${n}話に日付を入れました` : "埋める話がありません（1話か開始日の日付が必要です）");
+      toast(`1話の日付から1週間おきに揃えました（${l.length}話）。「話数を保存」で保存されます`);
       refreshEditor();
     },
   ],

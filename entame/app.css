@@ -1630,10 +1630,8 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .edtop{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
 .edtop .edmb{margin-left:auto}
 .edmore{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px;padding:10px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-soft);font-size:var(--fs-m)}
-.edmore button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);padding:6px 10px;font:inherit;font-size:var(--fs-m);text-align:left;cursor:pointer}
 .edm-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .edm-r span{color:var(--u-sub)}
-.edm-r button{text-align:center}
 #erBulk{width:56px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);padding:5px 7px;font:inherit;font-size:var(--fs-m)}
 .erh,.er{display:grid;gap:6px;align-items:center;grid-template-columns:18px 56px minmax(0,1fr) 104px 26px}
 .erh.nosub,.eped.nosub .er{grid-template-columns:18px 72px 120px minmax(0,1fr) 26px}
