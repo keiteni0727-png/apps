@@ -373,7 +373,7 @@ function formHtml() {
           <button type="button" class="u-chip fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
-        ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
+        ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="sgins"><button type="button" class="u-chip add sgadd" data-sgadd="挿入歌">＋ 挿入歌を追加</button></div>` : ""}
 </div>`,
     /* 関連放送（旧作・再放送など）：タイトル・放送開始と終了・主題歌。主題歌の行は作品の主題歌と同じ作り */
     relb: `<label class="field full"><span>タイトル</span><input id="f-rbt" type="text" autocomplete="off" placeholder="旧作・再放送などのタイトル" value="${esc(f.rbT || "")}"></label>

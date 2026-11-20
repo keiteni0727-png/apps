@@ -497,6 +497,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .miss.hot b{background:var(--u-danger)}
 .miss{align-items:center;gap:5px;max-width:100%;vertical-align:1px;font-size:var(--fs-xs);font-weight:700;line-height:1.5;color:var(--u-warn);background:var(--u-warn2);border-radius:var(--r-full);padding:0 9px 0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;display:inline-flex}
 .miss.pconly{display:none}
+.miss .mh{font-family:var(--u-num);font-weight:600}
 @media (min-width:900px){.miss.pconly{display:inline-flex}}
 /* 詳細：1行に畳んだアラート。開くと項目ごとのボタン（押すとその項目の編集へ） */
 @media (min-width:0px){
@@ -1803,3 +1804,5 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .u-chip.add:is(.sgadd,.sgnext,.sg-exadd){color:var(--sgc,var(--u-acct));border-color:color-mix(in srgb,var(--sgc,var(--u-acct)) 55%,transparent)}
 /* 主題歌の「DL済み」：済みは緑 */
 .u-chip.mudl.on{background:var(--u-ok2);border-color:color-mix(in srgb,var(--u-ok) 55%,transparent);color:var(--u-ok)}
+/* 挿入歌がまだないときの「＋ 挿入歌を追加」（OP・EDなどの「＋追加」と同じ札） */
+.sgins{margin-top:2px}

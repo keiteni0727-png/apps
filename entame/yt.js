@@ -131,10 +131,7 @@ function ytMissingOf(x) {
   return out;
 }
 function ytMissBadge(x) {
-  const names = ytMissingOf(x).map(m => m.k);
-  if (!names.length) return "";
-  const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  return `<span class="miss" title="要確認：${esc(names.join("・"))}"><b>要確認</b><span class="mh">${esc(head)}</span></span>`;
+  return missPill(ytMissingOf(x).map(m => m.k), false);
 }
 /* 詳細のアラート（作品の詳細と同じ）：たたまずに、足りない項目のボタンを最初から全部出す。ボタンを押すとその項目だけ詳細の中で編集 */
 function ytMissDetail(x) {
