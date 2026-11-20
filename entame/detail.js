@@ -127,7 +127,7 @@ function epListHtml(it, eps) {
   const warnN = eps.filter((e, i) => warnAny(warnOf(e, i))).length;
   const dc = epDateCheck(it);
   /* 日付のアラートを直すボタン：曜日のずれ（まとめて1日ずらす）・開始日を1話の日付に合わせる */
-  const fixDow = dc.dowN ? `<button type="button" id="epFixDow">曜日を放送日に合わせる（${dc.dowN}話を1日ずらす）</button>` : "";
+  const fixDow = dc.dowN ? `<button type="button" id="epFixDow">曜日を放送日に合わせる（${dc.dowN}話を1日ずらす）</button><button type="button" id="epDowOk">曜日のずれ${dc.dowN}話を全部問題なしにする</button>` : "";
   const fixStart = dc.start && !dc.eps[0]?.dow ? `<button type="button" id="epFixStart">開始日を1話の日付（${fmtD(dc.start)}）に合わせる</button>` : "";
   const fixBar = fixDow || fixStart ? `<div class="epfix">${fixDow}${fixStart}</div>` : "";
   const arcOfNum = e => {
@@ -161,7 +161,7 @@ function epListHtml(it, eps) {
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
     const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
     const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="tlok" data-gapadd="${wn.gap[0]}-${wn.gap[1]}">話数を追加</button><button type="button" class="tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
+    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
     return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}"${e.x ? " disabled" : ""} aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
@@ -981,6 +981,22 @@ const DETAIL_ACTIONS = [
       if (!e || !e.t) return;
       e.go = e.t;
       saveEps(it, l, `${epVal(e.n) ? epVal(e.n) + "話" : e.n}の日付を確認済みにしました`);
+    },
+  ],
+  /* 曜日のずれをまとめて「問題なし」に（途中で放送曜日・時間帯が変わった作品など） */
+  [
+    "#epDowOk",
+    (el, it) => {
+      const l = episodes(it),
+        dc = epDateCheck(it);
+      let n = 0;
+      l.forEach((e, i) => {
+        if (dc.eps[i] && dc.eps[i].dow && e.t) {
+          e.go = e.t;
+          n++;
+        }
+      });
+      if (n) saveEps(it, l, `曜日のずれ${n}話を問題なしにしました`);
     },
   ],
   /* 日付のアラート：開始日を1話の日付にする（毎週の曜日も合わせる） */

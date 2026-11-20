@@ -666,7 +666,7 @@ const IS_PC = () => matchMedia("(min-width:900px)").matches;
    rev＝前の話より前の日付 / gap＝前の話から180日以上空いている / start＝1話の日付が開始日と違う /
    dow＝放送曜日と1日ずれている（深夜枠で実際の日付と「木 26:00」の書き方が混ざったとき。-1＝1日前にずらす、1＝1日後に）
    映画は対象外。OVAは発売の間が空くことが多いので gap を見ない。
-   「問題なし」を押した話は rev・gap を見ない（go＝押したときの日時。日付を変えたらまたチェックする）。全話が同じ日（まとめて配信）のときは曜日を見ない */
+   「問題なし」を押した話は rev・gap・dow を見ない（go＝押したときの日時。日付を変えたらまたチェックする）。全話が同じ日（まとめて配信）のときは曜日を見ない */
 const dayNo = d => Math.round(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 86400e3);
 const DATE_WHY = { rev: "前の話より前の日付です", gap: "前の話から半年以上空いています", start: "開始日と違います", dow: "放送曜日と1日ずれています" };
 function epDateCheck(it) {
@@ -698,7 +698,8 @@ function epDateCheck(it) {
   if (weekly) {
     const fd = (dayNo(f) + 4) % 7; // 1970/1/1＝木
     ds.forEach((d, i) => {
-      if (!d) return;
+      /* 「問題なし」を押した話は見ない（途中で放送曜日が変わった作品など） */
+      if (!d || (l[i].go && l[i].go === l[i].t)) return;
       const df = ((dayNo(d) + 4) % 7 - fd + 7) % 7;
       if (df === 1 || df === 6) {
         mark(i, "dow", df === 1 ? -1 : 1);
