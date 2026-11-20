@@ -1407,11 +1407,11 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 /* 話数一覧：行の高さ・余白を詰める。ドラマ（サブタイトルなし）は放送日と見た日を1行に */
 .ep,.sheet:not(.form) .ep{font-size:var(--fs-base);color:var(--u-ink);display:flex;align-items:center;grid-template-columns:none;min-height:46px;padding:6px 4px 6px 10px;gap:10px}
 /* 1話だけ編集（話数タブの中） */
-.e1{gap:6px;padding:8px 10px;grid-template-columns:72px 1fr 108px}
-.e1 .e1-d{width:108px;justify-self:start}
-.e1.nosub{grid-template-columns:72px 108px 1fr}
+.e1{gap:6px;padding:8px 10px;grid-template-columns:72px 1fr 176px}
+.e1 .e1-dt{width:176px;justify-self:start}
+.e1.nosub{grid-template-columns:72px 176px 1fr}
 @media (max-width:520px){
-  .e1{grid-template-columns:72px 108px 1fr}
+  .e1{grid-template-columns:72px 176px 1fr}
   .e1 .e1-s{grid-column:1/-1;grid-row:2}
 }
 /* スマホの絞り込み：開いた選択肢は内側でスクロールさせず、シート全体のスクロールで最後まで見られるようにする */
@@ -1471,7 +1471,7 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .eps>.e1.seen::before{background:var(--u-accent)}
 @media (max-width:520px){
   .e1,.e1.nosub{grid-template-columns:96px 1fr}
-  .e1 .e1-d{grid-column:2;grid-row:1;width:100%}
+  .e1 .e1-dt{grid-column:2;grid-row:1;width:100%}
   .eps>.e1{padding-right:10px}
 }
 /* スマホの未入力アラート：見出しとボタンを詰めて並べ、高すぎるときは中だけスクロール */
@@ -1764,3 +1764,6 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
   .spaste .ffoot .u-btn:not(.primary){flex:none;padding-inline:12px}
   .spaste textarea{min-height:42vh}
 }
+/* 1話だけ編集：放送日と時刻を1つのまとまりに（時刻は右に短く） */
+.e1-dt{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:6px;min-width:0}
+.e1-note{grid-column:1/-1;font-size:var(--fs-xs);color:var(--u-sub);text-align:right;margin-top:-2px}
