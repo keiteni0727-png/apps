@@ -23,6 +23,20 @@ const click = sel => async p => {
   await p.waitForTimeout(500);
 };
 const openDetail = id => click(`#main [data-id="${id}"]`);
+/* 各話リストの貼り付け：話数タブ →「話数を編集」→「各話リストを貼り付け」→ 架空の各話リストを入れる → steps の順に押す */
+const PASTE_TEXT = ["話数\tサブタイトル\t放送日", "第1話\tはじまりの絵の具\t2026年10月2日", "第2話\t青い屋根の店\t10月9日", "第3話\t小さな依頼人\t10月16日", "第4話\t雨の日の約束\t10月23日", "第5話\t星を描く少女\t10月30日", "第6話\t秋祭りの夜\t11月6日", "第7話\t消えた絵筆\t11月13日"].join("\n");
+const pasteTo = (...steps) => pasteWith(PASTE_TEXT, steps);
+/* 話数が読めない行が途中にある表（自動で読めないので整形の表が開く） */
+const PASTE_MESSY = ["話数\tサブタイトル\t放送日", "第1話\tはじまりの絵の具\t2026年10月2日", "総集編\tこれまでのアトリエ\t10月9日", "第2話\t青い屋根の店\t10月16日"].join("\n");
+pasteTo.messy = (...steps) => pasteWith(PASTE_MESSY, steps);
+const pasteWith = (text, steps) => async p => {
+  await openDetail("a1")(p);
+  await click('[data-dtab="ep"]')(p);
+  await click("#epEditBtn")(p);
+  await click("#spOpen")(p);
+  await p.fill("#spText", text);
+  for (const s of steps) await click(s)(p);
+};
 const SCENES = [
   ...MODES.map(m => ({ name: `list-${m}`, mode: m, full: true, only: m === "o" ? "sp" : "" })),
   { name: "filter-sheet", mode: "a", act: click("[data-fsheet]"), sheet: true },
@@ -35,6 +49,12 @@ const SCENES = [
   { name: "detail-movie", mode: "m", act: openDetail("m1"), sheet: true },
   { name: "detail-variety", mode: "s", act: openDetail("s1"), sheet: true },
   { name: "detail-yt", mode: "yt", act: click('#main [data-yt="y1"]'), sheet: true },
+  { name: "detail-eps", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p)), sheet: true },
+  { name: "detail-eps-menu", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p), await click("#epMenuBtn")(p)) },
+  { name: "paste-input", mode: "a", act: pasteTo(), sheet: true },
+  { name: "paste-result", mode: "a", act: pasteTo("#spRead"), sheet: true },
+  { name: "paste-grid", mode: "a", act: pasteTo("#spRead", "#spFmt"), sheet: true },
+  { name: "paste-grid-auto", mode: "a", act: pasteTo.messy("#spRead"), sheet: true },
   { name: "form-add", mode: "a", act: click("#hAdd, #sbAdd"), sheet: true },
   { name: "form-add-yt", mode: "yt", act: click("#hAdd, #sbAdd"), sheet: true },
   {

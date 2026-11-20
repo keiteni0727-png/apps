@@ -492,17 +492,6 @@ function searchSoon() {
   clearTimeout(sTimer);
   sTimer = setTimeout(render, 120);
 }
-/* 整形の表：最後に選んだマス（‹ › でずらす起点） */
-document.addEventListener("focusin", e => {
-  const t = e.target.closest && e.target.closest("input[data-g]");
-  const g = subPaste && subPaste.grid;
-  if (!t || !g) return;
-  g.sel = t.dataset.g.split(":").map(Number);
-  document.querySelectorAll(".sgt td.sel").forEach(x => x.classList.remove("sel"));
-  document.querySelectorAll(".sgt tr.selrow").forEach(x => x.classList.remove("selrow"));
-  t.parentElement.classList.add("sel");
-  t.closest("tr")?.classList.add("selrow");
-});
 /* 変換を確定した直後の時刻。Safari などは確定の Enter が「変換中ではない Enter」として届くので、その Enter を見分ける */
 let compEndAt = 0;
 document.addEventListener("compositionend", e => {

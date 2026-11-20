@@ -1,8 +1,8 @@
 /* ===================== 作品の詳細：基本情報・話数（視聴チェック・各話リストの貼り付け・話数の編集・〇〇編） ===================== */
 let openId = null, // 開いている作品
   epEdit = null; // 話数の編集中の下書き
-/* 整形の表（Excelの形）：元のマスを列のまま並べる。列の見出し（A・B…）で役割を選び、マスは押して直す。
-   ‹ › でその行の選んだマスから右を左右にずらす（マスを選んでいなければ行ごと）、✕ で行を消す */
+/* 整形の表（Excelの形）：元のマスを列のまま並べる。列の見出し（A・B…）で役割を選び、マスは押して直す。✕ で行を消す。
+   ふだんは開かない（自動で読み取れなかったときと、結果の画面で「整形」を押したときだけ） */
 function gridHtml(g) {
   gColsInit(g);
   const bad = g.rows.filter(r => gBad(g, r)).length;
@@ -15,29 +15,16 @@ function gridHtml(g) {
     .join("");
   const rows = g.rows
     .map((r, i) => {
-      const cells = g.cols.map((c, j) => `<td class="r-${c}${g.sel && g.sel[0] === i && g.sel[1] === j ? " sel" : ""}"><input class="gc" data-g="${i}:${j}" value="${esc(gCell(r, j))}" autocomplete="off" aria-label="${i + 1}行目 ${gLetter(j)}列（${G_ROLE[c]}）"></td>`).join("");
-      return `<tr class="${gBad(g, r) ? "bad" : ""}${g.sel && g.sel[0] === i ? " selrow" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno">${i + 1}</td><td class="gsh"><button type="button" data-gsh="${i}:-1" aria-label="${i + 1}行目の選んだマスから右を左へ">‹</button><button type="button" data-gsh="${i}:1" aria-label="${i + 1}行目の選んだマスから右を右へ">›</button></td>${cells}</tr>`;
+      const cells = g.cols.map((c, j) => `<td class="r-${c}"><input class="gc" data-g="${i}:${j}" value="${esc(gCell(r, j))}" autocomplete="off" aria-label="${i + 1}行目 ${gLetter(j)}列（${G_ROLE[c]}）"></td>`).join("");
+      return `<tr class="${gBad(g, r) ? "bad" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno">${i + 1}</td>${cells}</tr>`;
     })
     .join("");
-  const p = subPaste,
-    it = items.find(x => x.id === openId);
-  const md = g.mode || "join";
-  const seg = [["join", "同じマスにまとめる"], ["col", "右のマスに分ける"], ["row", "下の行に分ける"]].map(([v, l]) => `<button type="button" data-gmode="${v}" class="${md === v ? "on" : ""}">${l}</button>`).join("");
-  const ex = { join: "「前編⏎後編」→「前編 後編」の1マス", col: "「前編⏎後編」→「前編」「後編」の2マス（横に並ぶ）", row: "「前編⏎後編」→「前編」「後編」の2行（縦に並ぶ）" }[md];
-  const tool = `    <div class="gtool gmode"><span class="gtl">1つのマスに改行があるとき</span><span class="gseg">${seg}</span><span class="gex">例：${ex}</span></div>
-    <div class="gtool"><span class="gtl">色の付いた行に対して</span><button type="button" id="gMerge">選んだ行を上の行に合体</button><button type="button" id="gAdd">選んだ行の下に空の行を追加</button><button type="button" id="gUndo"${(p.hist || []).length ? "" : ' class="off"'}>1つ前の操作を取り消す</button></div>`;
   return `<div class="spaste spgrid">
-    ${tool}
+    <p class="hint" style="margin:0 0 8px">${subPaste.back ? "" : "自動で読み取れなかった所があります。"}列の見出しで役割を選び、マスを直してから「この形で読み取る」を押してください</p>
     ${g.dropped ? `<p class="hint" style="margin:0 0 8px">見出しなど${g.dropped}行は外しています</p>` : ""}
     ${nj < 0 ? `<p class="hint" style="margin:0 0 8px">話数の列がないので、上から順に1話・2話…と付けます</p>` : bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数がない行（赤い行）を${bad}行まとめて消す</button>` : ""}
-    <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th class="gsh"></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
-}
-/* 整形の表の操作を戻せるように、変える前の表を取っておく（30回まで） */
-function gSnap() {
-  const h = (subPaste.hist = subPaste.hist || []);
-  h.push(JSON.stringify({ g: subPaste.grid }));
-  if (h.length > 30) h.shift();
 }
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
@@ -672,24 +659,28 @@ function nextEp(it, list) {
 /* 貼り付けた各話リストを読み取り、登録済みの話と比べた一覧を出す */
 function readPaste(it) {
   const text = $("#spText").value;
-  /* 表をコピーしたもの（タブ区切り）は、最初から整形の表で開く */
+  /* 表をコピーしたもの（タブ区切り）：表として読み、読めない行が上の見出しだけなら、そのまま結果の画面へ */
   if (text.includes("\t")) {
-    subPaste = { text, grid: gridBest(text, it.from) };
+    const g = gridBest(text, it.from);
+    const parsed = gridParse(g, it.from);
+    if (gridClean(g) && parsed.length && parsed.every(x => x.sub)) return buildPaste(it, parsed, text, g);
+    subPaste = { text, grid: g };
     return refreshSheet();
   }
-  const ps = parseSubtitles(text, { from: it.from });
-  const g = text.includes("\t") ? gridFrom(text, it.from) : null;
-  const gp = g ? gridParse(g, it.from).filter(x => x.sub) : [];
-  const useG = gp.length && gp.length >= ps.length;
-  const parsed = useG ? gp : ps;
+  const parsed = parseSubtitles(text, { from: it.from });
   if (!parsed.length) {
-    /* 1話も読み取れないときは、そのまま整形の表を開く */
-    subPaste = { text, grid: g || gridFrom(text, it.from) };
+    /* 1話も読み取れないときは、整形の表を開く */
+    subPaste = { text, grid: gridBest(text, it.from) };
     refreshSheet();
-    toast("読み取れなかったので、表で直してください");
     return;
   }
-  buildPaste(it, parsed, text, useG ? g : null);
+  buildPaste(it, parsed, text, null);
+}
+/* 整形の表を開かなくてよいか：話数が読めない行（赤い行）が、表の上の見出しの行だけ */
+function gridClean(g) {
+  const bad = g.rows.map(r => gBad(g, r));
+  const first = bad.indexOf(false);
+  return first >= 0 && bad.slice(first).every(b => !b);
 }
 /* 読み取った各話（{n, sub, date か md}）を登録済みの話と比べる。grid＝整形から来たとき（戻る先）
    サブタイトルの列がない・空のときは今のサブタイトルのまま（日付だけ直したいとき用） */
@@ -1213,7 +1204,7 @@ const PASTE_ACTIONS = [
     () => {
       /* 読み取った結果の画面から開く。前に整形した表があれば続きから。「戻る」で結果の画面へ */
       const p = subPaste;
-      subPaste = { text: p.text, grid: p.fromGrid || gridFrom(p.text, (items.find(x => x.id === openId) || {}).from), back: p };
+      subPaste = { text: p.text, grid: p.fromGrid || gridBest(p.text, (items.find(x => x.id === openId) || {}).from), back: p };
       refreshSheet();
     },
   ],
@@ -1226,24 +1217,9 @@ const PASTE_ACTIONS = [
       openDD(k, el);
     },
   ],
-  /* その行だけ左右にずらす */
-  [
-    "[data-gsh]",
-    el => {
-      const g = subPaste.grid;
-      const [i, d] = el.dataset.gsh.split(":").map(Number);
-      if (!g.rows[i]) return;
-      const j = g.sel && g.sel[0] === i ? g.sel[1] : 0;
-      gSnap();
-      if (!gShift(g, g.rows[i], d, j)) return toast("左に空いたマスがありません");
-      g.sel = [i, Math.max(0, j + d)];
-      refreshSheet();
-    },
-  ],
   [
     "[data-gdel]",
     el => {
-      gSnap();
       subPaste.grid.rows.splice(+el.dataset.gdel, 1);
       refreshSheet();
     },
@@ -1252,53 +1228,7 @@ const PASTE_ACTIONS = [
     "#gDelBad",
     () => {
       const g = subPaste.grid;
-      gSnap();
       g.rows = g.rows.filter(r => !gBad(g, r));
-      refreshSheet();
-    },
-  ],
-  /* 改行の扱い（つなぐ・次の列へ・次の行へ）を変える（貼り付けた文字から表を作り直す） */
-  [
-    "[data-gmode]",
-    (el, it) => {
-      const mode = el.dataset.gmode;
-      if ((subPaste.grid.mode || "join") === mode) return;
-      gSnap();
-      subPaste.grid = gridFrom(subPaste.text, it.from, { mode });
-      refreshSheet();
-    },
-  ],
-  [
-    "#gMerge",
-    () => {
-      const g = subPaste.grid,
-        i = g.sel ? g.sel[0] : -1;
-      if (!(i > 0)) return toast(i === 0 ? "1行目は上につなげません" : "つなぐ行のマスを選んでください");
-      gSnap();
-      gMergeUp(g, i);
-      g.sel = [i - 1, g.sel[1]];
-      refreshSheet();
-    },
-  ],
-  [
-    "#gAdd",
-    () => {
-      const g = subPaste.grid,
-        i = g.sel ? g.sel[0] : g.rows.length - 1;
-      gSnap();
-      gAddRow(g, i);
-      g.sel = [i + 1, 0];
-      refreshSheet();
-      document.querySelector(`input[data-g="${i + 1}:0"]`)?.focus();
-    },
-  ],
-  [
-    "#gUndo",
-    () => {
-      const h = subPaste.hist || [];
-      if (!h.length) return toast("戻せる操作がありません");
-      const s = JSON.parse(h.pop());
-      subPaste.grid = s.g;
       refreshSheet();
     },
   ],

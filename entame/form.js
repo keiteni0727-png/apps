@@ -124,7 +124,6 @@ function ddPick(v, none) {
   const k = ddOpen;
   if (k && k.startsWith("gcol:")) {
     if (subPaste && subPaste.grid) {
-      gSnap();
       if (v === "__del") gDelCol(subPaste.grid, +k.slice(5)) || toast("最後の列は消せません");
       else gSetCol(subPaste.grid, +k.slice(5), v);
     }
