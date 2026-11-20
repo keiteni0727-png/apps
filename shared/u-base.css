@@ -179,7 +179,8 @@ html.pkopen,html.pkopen body{overflow:hidden}
 .dd-h{display:flex;align-items:center;gap:8px;padding:14px 12px 8px 16px}
 .dd-h b{flex:1;font-size:17px}
 .dd-h span{font-size:12px;color:var(--u-sub)}
-.sheetmode .dd-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+/* 一覧は中だけスクロール（下から出るシートも、欄のすぐ下に出す形も） */
+:is(#pkPop,#ddPop) .dd-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 /* 一覧の上の検索欄（エンタメ管理のシリーズのプルダウンだけ） */
 .dd-q{display:flex;align-items:center;gap:8px;margin:10px 10px 8px;height:var(--h-in);padding:0 10px;border:1px solid var(--u-line);border-radius:var(--r-m);color:var(--u-sub);background:var(--u-bg);flex:none}
 .sheetmode .dd-q{margin-top:0}
