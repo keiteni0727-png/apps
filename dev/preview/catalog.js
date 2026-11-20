@@ -25,7 +25,7 @@ const SCENES = [
   ["yt", click('#main [data-yt="y1"]')],
   ["a", click("#hAdd")],
   ["yt", click("#hAdd")],
-  ["a", async p => (await openA1(p), await click("#layer .editbtn")(p))],
+  ["a", async p => (await openA1(p), await click("#editItem")(p))],
   ["a", click("[data-gear]")],
 ];
 (async () => {

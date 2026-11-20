@@ -71,10 +71,10 @@ function renderSeries() {
     ["prog", "見た作品", PL[f.prog], () => lOpts("sr.prog", f.prog, ["all", "left", "done"].map(v => [v, PL[v], cnt(x => (v === "all" ? true : v === "left" ? x.want + x.now > 0 : x.want + x.now === 0 && x.done > 0), gOk)]))],
   ];
   const bar = `<div class="fbar">
-    <button type="button" class="fb fsh-b${conds.length ? " on" : ""}" ${LA.sheet} aria-haspopup="dialog">${FSH_IC}<span class="v">絞り込み</span>${conds.length ? `<b class="fsh-n">${conds.length}</b>` : ""}</button>
-    <button type="button" class="fb srmgr" data-gear="series"><span class="v">管理</span></button>
-    <button type="button" class="fb srt${f.sort !== "count" || f.grp !== "none" ? " on" : ""}" ${LA.sort} aria-expanded="${lui.fp === "sort"}" aria-label="並び替え">${SORT_IC}</button>
-    <button type="button" class="fb fq" data-lqtog="1" aria-label="検索">${FQ_IC}</button></div>`;
+    <button type="button" class="u-btn fb fsh-b${conds.length ? " on" : ""}" ${LA.sheet} aria-haspopup="dialog">${FSH_IC}<span class="v">絞り込み</span>${conds.length ? `<b class="fsh-n">${conds.length}</b>` : ""}</button>
+    <button type="button" class="u-btn fb srmgr" data-gear="series"><span class="v">管理</span></button>
+    <button type="button" class="u-btn fb srt${f.sort !== "count" || f.grp !== "none" ? " on" : ""}" ${LA.sort} aria-expanded="${lui.fp === "sort"}" aria-label="並び替え">${SORT_IC}</button>
+    <button type="button" class="u-btn fb fq" data-lqtog="1" aria-label="検索">${FQ_IC}</button></div>`;
   const card = x => {
     const tot = x.l.length - x.drop;
     const pct = tot ? Math.round((x.done / tot) * 100) : 0;
@@ -93,7 +93,7 @@ function renderSeries() {
       : `<div class="srlist">${shown.map(card).join("")}</div>`;
   return `${lHead(bar, conds, list.length, "シリーズ")}
     <div id="fshBox">${lSheet("sr", rows, list.length, "シリーズ", conds.length)}</div>
-    ${list.length ? `${body}${list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : ""}` : `<p class="empty">${all.length ? "条件に合うシリーズはありません。" : "シリーズが付いた作品はまだありません。"}</p>`}`;
+    ${list.length ? `${body}${list.length > state.limit ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : ""}` : `<p class="empty">${all.length ? "条件に合うシリーズはありません。" : "シリーズが付いた作品はまだありません。"}</p>`}`;
 }
 
 /* ---------- 主題歌 ---------- */
@@ -139,7 +139,7 @@ function renderSongs() {
   ];
   const bar = fshBar({ a: LA, n: conds.length, open: lui.fp === "all", srtOn: f.grp !== "ar" || f.ord !== "old", srtOpen: lui.fp === "sort", srtLab: (MU_GRPS.find(x => x[0] === f.grp) || MU_GRPS[0])[1] });
   const row = r =>
-    `<div class="murow"><span class="mut ${SG_CLS[r.type] || ""}">${esc(r.type)}</span><button type="button" class="mux" data-id="${r.it.id}"><b>${esc(r.st || "（曲名なし）")}</b><small>${f.grp === "ar" ? esc(r.it.t) : f.grp === "work" ? esc(r.ar || "アーティスト未入力") : `${esc(r.ar || "アーティスト未入力")}・${esc(r.it.t)}`}</small></button><button type="button" class="mudl${r.dl ? " on" : ""}" data-mudl="${r.it.id}:${r.k}" aria-pressed="${r.dl}" aria-label="${esc(r.st)}を${r.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.dl ? "♪DL済" : "DL"}</button></div>`;
+    `<div class="murow"><span class="mut ${SG_CLS[r.type] || ""}">${esc(r.type)}</span><button type="button" class="mux" data-id="${r.it.id}"><b>${esc(r.st || "（曲名なし）")}</b><small>${f.grp === "ar" ? esc(r.it.t) : f.grp === "work" ? esc(r.ar || "アーティスト未入力") : `${esc(r.ar || "アーティスト未入力")}・${esc(r.it.t)}`}</small></button><button type="button" class="u-chip mudl${r.dl ? " on" : ""}" data-mudl="${r.it.id}:${r.k}" aria-pressed="${r.dl}" aria-label="${esc(r.st)}を${r.dl ? "未ダウンロードに戻す" : "ダウンロード済みにする"}">${r.dl ? "♪DL済" : "DL"}</button></div>`;
   let body = "";
   if (f.grp === "none") body = `<div class="mulist">${list.slice(0, state.limit).map(row).join("")}</div>`;
   else {
@@ -165,7 +165,7 @@ function renderSongs() {
   }
   return `${lHead(bar, conds, list.length, "曲")}
     <div id="fshBox">${lSheet("mu", rows, list.length, "曲", conds.length)}</div>
-    ${list.length ? body + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示</button>` : "") : `<p class="empty">${all.length ? "条件に合う曲はありません。" : "まだ曲が登録されていません。"}</p>`}`;
+    ${list.length ? body + (list.length > state.limit ? `<button type="button" class="u-btn wide more" id="more">さらに表示</button>` : "") : `<p class="empty">${all.length ? "条件に合う曲はありません。" : "まだ曲が登録されていません。"}</p>`}`;
 }
 
 /* ---------- 操作 ---------- */

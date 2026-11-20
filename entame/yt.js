@@ -340,24 +340,24 @@ function ytDetailHtml(x) {
     row("再生リスト", x.pl ? `<a class="ilnk" href="${esc(x.pl)}" target="_blank" rel="noopener" aria-label="${esc(x.t)}をYouTubeで見る">${IC_PLAY}YouTubeで見る</a>` : nf("pl") ? nn("なし") : un("未設定")),
     row("まとめ動画", x.sm ? `<a class="ilnk" href="${esc(x.sm)}" target="_blank" rel="noopener">まとめ動画を開く${IC_EXT}</a>` : nf("sm") ? nn("なし") : un("未設定")),
   ];
-  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span><button type="button" class="editbtn iedit" data-jump="ycard" aria-label="基本情報を編集">編集</button></div><dl class="idl">${rows.join("")}</dl></div>`;
+  const info = `<div class="icard ibc"><div class="ich"><span class="ilamp ytl">YOUTUBE</span><button type="button" class="u-btn sm iedit" data-jump="ycard" aria-label="基本情報を編集">編集</button></div><dl class="idl">${rows.join("")}</dl></div>`;
   const prog = `<div class="icard iprog"><div class="ich"><span class="ilamp progl">PROGRESS</span><span class="inow">${n ? `${pw} / ${n}本 見た` : "パート数を入れると進み具合を記録できます"}</span></div>${
     n
       ? `<div class="prog"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></div>
-      <div class="ystep"><button type="button" data-ytp="-1" aria-label="1本戻す" ${pw <= 0 ? "disabled" : ""}>−</button><span><b>${pw}</b>本目まで見た</span><button type="button" data-ytp="1" aria-label="1本進める" ${pw >= n ? "disabled" : ""}>＋</button><button type="button" class="u-btn sm ghost" data-ytp="all" ${pw >= n ? "disabled" : ""}>最後まで見た</button>${pw ? `<button type="button" class="u-btn sm ghost" data-ytp="reset">リセット</button>` : ""}</div>`
+      <div class="ystep"><button type="button" data-ytp="-1" class="u-btn icon" aria-label="1本戻す" ${pw <= 0 ? "disabled" : ""}>−</button><span><b>${pw}</b>本目まで見た</span><button type="button" data-ytp="1" class="u-btn icon" aria-label="1本進める" ${pw >= n ? "disabled" : ""}>＋</button><button type="button" class="u-btn sm" data-ytp="all" ${pw >= n ? "disabled" : ""}>最後まで見た</button>${pw ? `<button type="button" class="u-btn sm" data-ytp="reset">リセット</button>` : ""}</div>`
       : ""
   }</div>`;
   const nv = ytNeighbors(x.id),
     busy = !!(yform && yform.inline);
-  const navB = (d, lab) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${CHEV(d)}</button>`;
+  const navB = (d, lab) => `<button type="button" class="u-btn icon sm dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${CHEV(d)}</button>`;
   /* 上段のラベル：投稿者（作品のジャンルの位置）→ ジャンル（作品の種別の位置。押すとジャンルを編集）→ 視聴ステータス */
   const c = ytCat(x),
     sb = ytGrp(x);
   const gBtn = c ? `<button type="button" class="dmt lab s" data-jump="yfGenre" title="ジャンルを変える">${c}${sb ? `・${esc(sb)}` : ""}</button>` : "";
-  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="editbtn" id="ytEdit" aria-label="再生リストを編集">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="u-btn sm" id="ytEdit" aria-label="再生リストを編集">編集</button><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>${ytMissDetail(x)}</div>
     <div class="ydbody">${info}${prog}
-    <div class="links"><button type="button" class="delsm" id="ytDel">削除</button></div></div>`;
+    <div class="links"><button type="button" class="u-btn sm txt danger delsm" id="ytDel">削除</button></div></div>`;
 }
 /* 前・次の作品：詳細を開いた画面に出ていた並び（作品の詳細と同じ） */
 let ytNavIds = [];
@@ -439,11 +439,11 @@ function ytFormHtml() {
   const P = {
     title: `<label class="field full"><span>動画タイトル</span><input id="y-t" autocomplete="off" placeholder="動画タイトル" value="${esc(f.t)}"></label>`,
     author: `<div class="field full" id="yfAuthor"><span>投稿者</span><div class="chips">${authors.map(a => `<button type="button" data-yfa="${esc(a)}" aria-pressed="${f.a === a}">${esc(a)}</button>`).join("")}<input id="y-anew" class="chipin" autocomplete="off" placeholder="＋ ほかの投稿者" value="${esc(authors.includes(f.a) ? "" : f.a)}"></div></div>`,
-    genre: `<div class="field full" id="yfGenre"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${[SOLO, COLLAB].map(g => `<button type="button" data-yfg="${g}" aria-pressed="${ytCat(f) === g}">${g}</button>`).join("")}</div>${
+    genre: `<div class="field full" id="yfGenre"><span>ジャンル</span><div class="u-seg segc" role="group" aria-label="ジャンル">${[SOLO, COLLAB].map(g => `<button type="button" data-yfg="${g}" aria-pressed="${ytCat(f) === g}">${g}</button>`).join("")}</div>${
       ytCat(f) === COLLAB ? subChips("コラボのグループ", ytSubs(), "data-yfsub", ytSub(f)) : ytCat(f) === SOLO ? subChips("一人実況のグループ", M("soloGroups"), "data-yfsg", ytSolo(f)) : ""
     }</div>`,
     /* 視聴ステータス：作品と同じく「未視聴」も入れた4つから選ぶ */
-    status: `<div class="field full"><span>ステータス</span><div class="segc" role="group" aria-label="ステータス">${YT_ST.map(([v, l]) => `<button type="button" data-yfs="${v}" aria-pressed="${(f.s || "") === v}">${stLabel(l)}</button>`).join("")}</div></div>`,
+    status: `<div class="field full"><span>ステータス</span><div class="u-seg segc" role="group" aria-label="ステータス">${YT_ST.map(([v, l]) => `<button type="button" data-yfs="${v}" aria-pressed="${(f.s || "") === v}">${stLabel(l)}</button>`).join("")}</div></div>`,
     up: `<label class="field"><span>初回投稿日</span><input id="y-up" class="dto" type="text" inputmode="numeric" autocomplete="off" placeholder="2024/03/08" value="${esc(fmtD(f.up))}"><span class="hint err" id="yUpMsg"></span></label>`,
     n: `<label class="field"><span>パート数</span><input id="y-n" type="number" min="0" inputmode="numeric" placeholder="12" value="${f.n || ""}"></label>`,
     dur: `<label class="field"><span>再生時間 <span class="hint">「630」で6時間30分</span></span><input id="y-dur" inputmode="numeric" autocomplete="off" placeholder="630" value="${esc(f.dur)}"><span class="hint" id="yDurMsg"></span></label>`,
@@ -453,17 +453,17 @@ function ytFormHtml() {
   };
   if (f.only && ONLY_Y[f.only]) {
     const [lab, keys] = ONLY_Y[f.only];
-    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3><button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
+    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3><button class="u-btn icon sm soft close" type="button" data-back="1" aria-label="戻る">✕</button></div>
       <form id="ytF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
-      <div class="ffoot"><button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
+      <div class="ffoot"><button type="button" class="u-btn" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
   const sec = (t, b) => `<section class="fsec"><h4>${t}</h4><div class="fgrid">${b}</div></section>`;
-  return `<div class="hdrow"><h3>再生リストを${f.id ? "編集" : "追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
+  return `<div class="hdrow"><h3>再生リストを${f.id ? "編集" : "追加"}</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="ytF" novalidate>
     ${sec("基本情報", P.title + P.author + P.genre + P.status)}
     ${sec("動画の情報", P.up + P.n + P.dur)}
     ${sec("リンク", P.pl + P.sm)}
-    <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
+    <div class="ffoot"><button type="button" class="u-btn" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
 function ytReadForm() {

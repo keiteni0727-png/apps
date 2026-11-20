@@ -339,9 +339,9 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   const foot = v === "hero" ? coursOf(i).map(c => courLab(c)).join("") + (per ? `<span class="wc-per">${esc(per)}</span>` : "") : "";
   /* 視聴ボタン：未視聴があれば「○話を見た」 */
   const tick = back[0]
-    ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
+    ? `<button type="button" class="u-btn pri wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
     : spUnseen(i)
-      ? `<button type="button" class="wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
+      ? `<button type="button" class="u-btn pri wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
       : "";
   /* PCの曜日の列：どのカードも同じ高さ（ラベルは1行・タイトルと話は2行まで、下端に視聴ボタンか状態） */
   if (v === "col") {
@@ -557,7 +557,7 @@ function groupedHtml(list) {
     out = "",
     rest = 0;
   const ck = keys.map(k => "tv:" + k);
-  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
+  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
   for (const k of keys) {
     const l = g.get(k);
     const key = "tv:" + k;
@@ -577,7 +577,7 @@ function groupedHtml(list) {
   return (
     bulkBtns(ck) +
     out +
-    (rest ? `<button type="button" class="more" id="more">さらに表示（残り${rest}件）</button>` : "")
+    (rest ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${rest}件）</button>` : "")
   );
 }
 function renderList() {

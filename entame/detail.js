@@ -22,9 +22,9 @@ function gridHtml(g) {
   return `<div class="spaste spgrid">
     <p class="hint" style="margin:0 0 8px">${subPaste.back ? "" : "自動で読み取れなかった所があります。"}列の見出しで役割を選び、マスを直してから「この形で読み取る」を押してください</p>
     ${g.dropped ? `<p class="hint" style="margin:0 0 8px">見出しなど${g.dropped}行は外しています</p>` : ""}
-    ${nj < 0 ? `<p class="hint" style="margin:0 0 8px">話数の列がないので、上から順に1話・2話…と付けます</p>` : bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数がない行（赤い行）を${bad}行まとめて消す</button>` : ""}
+    ${nj < 0 ? `<p class="hint" style="margin:0 0 8px">話数の列がないので、上から順に1話・2話…と付けます</p>` : bad ? `<button type="button" class="u-btn sm gdelbad" id="gDelBad">話数がない行（赤い行）を${bad}行まとめて消す</button>` : ""}
     <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
 }
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
@@ -50,12 +50,12 @@ function arcEditHtml() {
   const row = (r, i) => `<div class="ar" data-ar="${i}">
       <input class="ar-nm" value="${esc(r.name || "")}" placeholder="編の名前" aria-label="編の名前" autocomplete="off">
       <input class="ar-a" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="最初の話"><span>〜</span><input class="ar-b" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="最後の話"><span>話</span>
-      <button type="button" class="del" data-ardel="${i}" aria-label="この編を削除">✕</button></div>`;
+      <button type="button" class="u-btn icon sm txt del" data-ardel="${i}" aria-label="この編を削除">✕</button></div>`;
   return `<div class="spaste arced">
     <p class="hint" style="margin:0 0 8px">話数は登録済みの番号で（最後を空けると最後まで）</p>
     <div class="arl">${arcEdit.length ? arcEdit.map(row).join("") : `<p class="empty" style="padding:10px 0;text-align:left">まだ編がありません。下のボタンで追加してください。</p>`}</div>
-    <button type="button" class="u-btn ghost sm" id="arAdd">＋ 編を追加</button>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="arCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="arSave">保存</button></div></div>`;
+    <button type="button" class="u-btn sm" id="arAdd">＋ 編を追加</button>
+    <div class="ffoot"><button type="button" class="u-btn" id="arCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="arSave">保存</button></div></div>`;
 }
 function arcSync() {
   if (!arcEdit) return;
@@ -81,7 +81,7 @@ function subPasteHtml(it) {
     return `<div class="spaste">
     ${it.k === "a" ? `<div class="sylink">${syoboiA(it, "syb")}<input id="spSyoboi" type="url" inputmode="url" autocomplete="off" placeholder="作品のページのURLを貼ると、次からそこを開きます" value="${esc(it.syoboi || "")}" aria-label="しょぼいカレンダーのURL"></div>` : ""}
     <textarea id="spText" rows="8" placeholder="各話リストの表をコピーして、ここに貼り付けてください">${esc(p.text || "")}</textarea>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,
     nch = p.match === "order" ? p.rows.filter(r => r.numCh).length : 0,
     same = p.rows.filter(r => r.idx >= 0 && r.old === r.sub && !r.dateCh).length,
@@ -98,12 +98,12 @@ function subPasteHtml(it) {
         ? `<small class="dsame">日付 ${md(r.date)}</small>`
         : "";
   return `<div class="spaste">
-    <div class="sp-opt"><span class="sp-ol">合わせ方</span><div class="sp-seg"><button type="button" data-spm="num" class="${p.match === "num" ? "on" : ""}">話数で</button><button type="button" data-spm="order" class="${p.match === "order" ? "on" : ""}">上から順に</button></div>${p.match === "order" ? `<select id="spFrom" aria-label="最初に合わせる話">${(epEdit ? epEdit.list : episodes(it)).map((e, i) => `<option value="${i}" ${i === p.from ? "selected" : ""}>${esc(e.n)}</option>`).join("")}</select><span class="sp-oh">から</span>` : ""}</div>
+    <div class="sp-opt"><span class="sp-ol">合わせ方</span><div class="u-seg sp-seg"><button type="button" data-spm="num" class="${p.match === "num" ? "on" : ""}">話数で</button><button type="button" data-spm="order" class="${p.match === "order" ? "on" : ""}">上から順に</button></div>${p.match === "order" ? `<select id="spFrom" aria-label="最初に合わせる話">${(epEdit ? epEdit.list : episodes(it)).map((e, i) => `<option value="${i}" ${i === p.from ? "selected" : ""}>${esc(e.n)}</option>`).join("")}</select><span class="sp-oh">から</span>` : ""}</div>
     <div class="sp-opt"><span class="sp-ol">更新する</span><label class="sp-ck"><input type="checkbox" data-spu="useSub" ${p.useSub ? "checked" : ""}>サブタイトル</label>${dch ? `<label class="sp-ck"><input type="checkbox" data-spu="useDate" ${p.useDate ? "checked" : ""}>放送日<small>${dch}話違う</small></label>` : ""}${nch ? `<label class="sp-ck"><input type="checkbox" data-spu="useNum" ${p.useNum ? "checked" : ""}>話数<small>${nch}話違う</small></label>` : ""}</div>
     <p class="sp-sum">${p.rows.length}話分を読み取りました。${p.useSub ? `<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。` : ""}</p>
     <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.idx >= 0 && r.numCh ? (p.useNum ? `<span class="was">${esc(r.oldN)}</span>${r.n}話` : `${esc(r.oldN)}<small class="was">←${r.n}</small>`) : `${r.n}話`}</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : !p.useSub ? (r.dateCh && p.useDate ? "日付" : r.numCh && p.useNum ? "話数" : "") : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) || (nch && p.useNum) ? "" : "disabled"}>${epEdit ? "話数に反映" : "更新する"}</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn" id="spBack">貼り直す</button><button type="button" class="u-btn" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) || (nch && p.useNum) ? "" : "disabled"}>${epEdit ? "話数に反映" : "更新する"}</button></div></div>`;
 }
 /* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
 function nextIdx(eps) {
@@ -124,8 +124,8 @@ function epListHtml(it, eps) {
   if (!eps.length)
     return (
       (A
-        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から、各話リストを貼り付けるか、1話ずつ追加できます。</p><div class="ephead"><button type="button" class="ephb pri" id="epEditBtn">話数を登録</button></div>`
-        : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から追加できます。</p><div class="ephead"><button type="button" class="ephb pri" id="epEditBtn">話数を登録</button></div>`)
+        ? `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から、各話リストを貼り付けるか、1話ずつ追加できます。</p><div class="ephead"><button type="button" class="u-btn sm pri ephb" id="epEditBtn">話数を登録</button></div>`
+        : `<p class="empty" style="padding:12px 0;text-align:left">話数がまだ登録されていません。「話数を登録」から追加できます。</p><div class="ephead"><button type="button" class="u-btn sm pri ephb" id="epEditBtn">話数を登録</button></div>`)
     );
   /* 進み具合は見ない話を除いて数える */
   const w = watchable(eps).filter(e => e.w).length,
@@ -169,8 +169,8 @@ function epListHtml(it, eps) {
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
     const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
-    const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="tlok" data-gapadd="${wn.gap[0]}-${wn.gap[1]}">話数を追加</button><button type="button" class="tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
+    const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="u-btn sm tlok" data-gapadd="${wn.gap[0]}-${wn.gap[1]}">話数を追加</button><button type="button" class="u-btn sm tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
+    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" class="u-btn sm tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
     return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}"${e.x ? " disabled" : ""} aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
@@ -209,7 +209,7 @@ function epListHtml(it, eps) {
   const menu = epMenu
     ? `<div class="epmenu" role="menu"><button type="button" role="menuitem" id="allAired">放送済みの話を全部チェック</button>${w ? `<button type="button" role="menuitem" id="clearAll">チェックを全部外す</button>` : ""}<button type="button" role="menuitem" id="arcOpenEd">${arcs.length ? "編（〇〇編）を編集" : "編（〇〇編）を登録"}</button></div>`
     : "";
-  return `<div class="ephead"><div class="prog"><i style="width:${(w / wt) * 100}%"></i></div><button type="button" class="ephb" id="epEditBtn">話数を編集</button><button type="button" class="ephb ephm" id="epMenuBtn" aria-haspopup="menu" aria-expanded="${epMenu}" aria-label="そのほかの操作">…</button>${menu}</div>
+  return `<div class="ephead"><div class="prog"><i style="width:${(w / wt) * 100}%"></i></div><button type="button" class="u-btn sm ephb" id="epEditBtn">話数を編集</button><button type="button" class="u-btn icon sm ephb ephm" id="epMenuBtn" aria-haspopup="menu" aria-expanded="${epMenu}" aria-label="そのほかの操作">…</button>${menu}</div>
     ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>押すと最初の話へ</span></button>` : ""}${fixBar}${arcBar}<div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */
@@ -229,7 +229,7 @@ function epOneHtml(it, e, i) {
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
     <label class="e1-x"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話（配信にない総集編など）</span></label>
-    <div class="e1-b"><button type="button" class="e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="pri" id="e1Save">保存</button></div></div>`;
+    <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
 }
 const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
 /* 話数の入力欄：1つの文字の欄。数字（「3」「第3話」など）なら「3話」、それ以外（SP・総集編など）は書いたとおりの名前にする（parseEpIn）
@@ -252,7 +252,7 @@ function epEditorHtml(it) {
       ${n ? `<button type="button" id="erWeekly" title="日付が空いている話に、前の話の1週間後の日付を入れます">空いた日付を1週間おきに埋める</button>` : ""}
     </div>`
     : "";
-  const top = `<div class="edtop">${A ? `<button type="button" class="edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" id="erAdd">＋ 1話追加</button><button type="button" class="edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
+  const top = `<div class="edtop">${A ? `<button type="button" class="u-btn pri edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" class="u-btn" id="erAdd">＋ 1話追加</button><button type="button" class="u-btn edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
   const head = n ? `<div class="erh${A ? "" : " nosub"}" aria-hidden="true"><span></span><span>話数</span>${A ? "<span>サブタイトル</span>" : ""}<span>放送日</span><span></span></div>` : "";
   const rows = n
     ? l
@@ -263,13 +263,13 @@ function epEditorHtml(it) {
           const gapRow = g ? `<div class="ergap"><span>⚠ ${g[0] === g[1] ? `${g[0]}話` : `${g[0]}〜${g[1]}話`}がありません</span><button type="button" data-ergap="${g[0]}-${g[1]}">追加</button></div>` : "";
           return (
             gapRow +
-            `<div class="er${e.moved ? " moved" : ""}${gd.dup.has(i) ? " dup" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}${epNumInput("er-n", e.n, e.sp)}${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}<input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button>${gd.dup.has(i) ? `<span class="erwhy">⚠ 同じ話数がほかにもあります</span>` : ""}</div>`
+            `<div class="er${e.moved ? " moved" : ""}${gd.dup.has(i) ? " dup" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}${epNumInput("er-n", e.n, e.sp)}${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}<input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><button type="button" class="u-btn icon sm txt del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button>${gd.dup.has(i) ? `<span class="erwhy">⚠ 同じ話数がほかにもあります</span>` : ""}</div>`
           );
         })
         .join("")
     : `<p class="empty" style="padding:14px">話がありません。${A ? "各話リストを貼り付けるか、" : ""}「＋ 1話追加」で追加してください。</p>`;
   return `${top}${head}<div class="eped${A ? "" : " nosub"}">${rows}</div>
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="erCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="erSave">話数を保存</button></div>`;
+    <div class="ffoot"><button type="button" class="u-btn" id="erCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="erSave">話数を保存</button></div>`;
 }
 /* 基本情報：放送・主題歌・リンクのカード。カードの「編集」ボタンで、そのカードの項目をその場で編集 */
 /* 配信ボタンの名前：配信サイトが1つだけならその名前、それ以外は「配信」 */
@@ -293,7 +293,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   /* 中身を押しても編集画面は出さない（編集は見出しの右の「編集」ボタンから） */
   const row = (lab, val) => `<dt>${lab}</dt><dd>${val}</dd>`;
   const courChip = cour ? `<span class="icour">${esc(cour)}</span>` : "";
-  const edB = (jump, lab) => `<button type="button" class="editbtn iedit" data-jump="${jump}" aria-label="${lab}を編集">編集</button>`;
+  const edB = (jump, lab) => `<button type="button" class="u-btn sm iedit" data-jump="${jump}" aria-label="${lab}を編集">編集</button>`;
   const rows = [];
   if (!ns) {
     const tLab = md === "stream" ? "配信時間" : "放送時間";
@@ -350,7 +350,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     .map((r, k) => {
       const per = r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${r.to ? fmtD(r.to) : ""}` : "";
       const name = esc(r.t || "関連放送");
-      const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="editbtn iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
+      const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="u-btn sm iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
       const sl = r.songs || [];
       const rows = sl
         .map((x, j) => {
@@ -412,13 +412,13 @@ function renderDetail(it) {
   const stBtn = `<span class="stw"><button type="button" class="pill dst ${it.s ? "s-" + esc(it.s) : "s-none"}" id="stOpen" aria-haspopup="true" aria-expanded="${stMenu}">${esc(stLabel(it.s || "未設定"))}<span class="stv" aria-hidden="true">▾</span></button>${stMenu ? `<span class="stmenu" role="menu">${STATUSES.map(s => `<button type="button" role="menuitemradio" data-set="${s}" aria-checked="${it.s === s}" class="s-${s}">${stLabel(s)}</button>`).join("")}</span>` : ""}</span>`;
   const nv = navNeighbors(it.id),
     busy = !!(epEdit || arcEdit || subPaste || epOne != null);
-  const navB = (d, lab, ic) => `<button type="button" class="dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${ic}</button>`;
-  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${(l => (l ? `<button type="button" class="dmt mtag m-${l[1]}" data-jump="fMedia" title="放送形態を変える">${l[0]}</button>` : ""))(mediaLabOf(it))}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", CHEV(-1))}${navB(1, "次の作品", CHEV(1))}<button type="button" class="editbtn" id="editItem" aria-label="作品を編集">編集</button><button class="close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  const navB = (d, lab, ic) => `<button type="button" class="u-btn icon sm dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${ic}</button>`;
+  return `<div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${(l => (l ? `<button type="button" class="dmt mtag m-${l[1]}" data-jump="fMedia" title="放送形態を変える">${l[0]}</button>` : ""))(mediaLabOf(it))}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", CHEV(-1))}${navB(1, "次の作品", CHEV(1))}<button type="button" class="u-btn sm" id="editItem" aria-label="作品を編集">編集</button><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
     ${missDetail(it)}
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${extLinks(it)}${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="delsm" id="delItem">削除</button></div></div>
+    <div class="links">${extLinks(it)}${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
@@ -629,7 +629,7 @@ function askSub(it, idx) {
   box.innerHTML = `<div class="spop-scrim" data-spopx></div><div class="spop" role="dialog" aria-modal="true" aria-label="サブタイトルを入力">
     <p class="spop-h"><small>${esc(it.t)}</small><b>${esc(e.n)}</b>のサブタイトル</p>
     <input id="spopIn" autocomplete="off" enterkeyhint="done" placeholder="サブタイトルを入力" aria-label="サブタイトル">
-    <div class="spop-f"><button type="button" class="u-btn ghost" data-spopx>あとで</button><button type="button" class="u-btn pri primary" data-spopok>保存</button></div></div>`;
+    <div class="spop-f"><button type="button" class="u-btn" data-spopx>あとで</button><button type="button" class="u-btn pri primary" data-spopok>保存</button></div></div>`;
   if (!TOUCH) setTimeout(() => $("#spopIn")?.focus(), 30);
 }
 function closeSub() {

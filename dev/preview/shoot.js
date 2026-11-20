@@ -62,7 +62,7 @@ const SCENES = [
     mode: "a",
     act: async p => {
       await openDetail("a1")(p);
-      await click("#layer .editbtn, #layer [data-edit]")(p);
+      await click("#editItem")(p);
     },
     sheet: true,
   },
