@@ -126,9 +126,7 @@ body:not([data-tab="home"]):not([data-tab="balance"]) #payWrap{display:none}
 .kb button.mcur:disabled{opacity:.35}
 .kb .mnav{display:flex;align-items:center;gap:2px;background:var(--u-chip);border:0;border-radius:var(--r-m);padding:3px}
 .kb .mnav select{border:0;background:none;width:auto;font-family:var(--u-num);font-weight:600;padding:4px 2px;text-align:center}
-.kb .ib{width:36px;height:36px;padding:0;border:0;border-radius:var(--r-full);background:none;color:var(--u-sub);display:grid;place-items:center;font-size:var(--fs-xl)}
 .kb .ib svg{width:20px;height:20px}
-.kb .mnav .ib{width:30px;height:30px}
 .kb #gear[aria-pressed="true"]{color:var(--u-acct);background:var(--u-accent2)}
 
 /* ===== 下部メニュー：選んでいる項目はアイコンの後ろに淡い丸 ===== */
@@ -619,8 +617,7 @@ body.sel .kb .layout{padding-bottom:190px}
 @media (prefers-reduced-motion:no-preference){.pay .sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}}}
 .pay .ad-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .pay .ad-btns{display:flex;gap:6px}
-.pay .xbtn{border:0;background:transparent;color:var(--u-sub);font-size:var(--fs-xl);line-height:1;width:36px;height:36px;padding:0;border-radius:50%;flex:none}
-.pay .xbtn:hover{background:var(--u-bg)}
+.pay .xbtn{flex:none}
 /* フォーム */
 .pay .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}
 .pay .form>*{min-width:0}
@@ -780,7 +777,6 @@ body.sel .kb .layout{padding-bottom:190px}
   .pay .scrim{align-items:center;padding:max(16px,env(safe-area-inset-top,0px)) 12px max(16px,env(safe-area-inset-bottom,0px));overscroll-behavior:contain}
   .pay .sheet,.pay .sheet.wide{max-height:calc(100dvh - 48px);border-radius:var(--r-l);gap:8px;padding:12px 12px 10px}
   .pay .sheet h3{font-size:var(--fs-l)}
-  .pay .sheet .xbtn{width:30px;height:30px}
   .pay .ad-top{flex-wrap:wrap}
   .pay .form{gap:10px}
   .pay .sheet .form{gap:6px 8px}
@@ -903,8 +899,8 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
 @media (min-width:900px){
   .kb{font-size:var(--fs-l)}
   /* PCは文字が大きいので、ボタン（共通部品）の文字も合わせて大きくする */
-  .u-btns button{font-size:var(--fs-l)}
-  .u-btns button.sm,.u-btns button.btn-s{font-size:var(--fs-base)}
+  .u-btns button:where(:not(.u-btn,.u-chip)){font-size:var(--fs-l)}
+  .u-btns button:where(:not(.u-btn,.u-chip)).sm,.u-btns button:where(:not(.u-btn,.u-chip)).btn-s{font-size:var(--fs-base)}
   .pay{font-size:var(--fs-l)}
   .kb select,.kb input[type=text],.kb input[type=number],.kb input[type=date]{font-size:var(--fs-xl)}
   .kb .mu{font-size:var(--fs-l)}
@@ -926,7 +922,6 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .kb .brand{font-size:var(--fs-xl)}
   
   .kb button.mcur{font-size:var(--fs-l)}
-  .kb .ib{font-size:var(--fs-xl)}
   .kb .eyebrow{font-size:var(--fs-base)}
   .kb .delta{font-size:var(--fs-base)}
   .kb .legend{font-size:var(--fs-base)}
@@ -1051,7 +1046,6 @@ body[data-tab="home"] .kb .layout,body[data-tab="balance"] .kb .layout{display:n
   .pay .tl .diff{font-size:var(--fs-base)}
   .pay .rd .note{font-size:var(--fs-m)}
   .pay .sheet h3{font-size:var(--fs-xl)}
-  .pay .xbtn{font-size:var(--fs-2xl)}
   .pay .cb{font-size:var(--fs-l)}
   .pay .nobal{font-size:var(--fs-base)}
   .pay .nobal .note{font-size:var(--fs-m)}
@@ -1232,9 +1226,6 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 /* 支払い：まとまりの折りたたみの印をエンタメ管理と同じ「›」に（たたむと右、開くと下） */
 .pay .fold-h h2::before{width:12px;height:12px;border:0;background:var(--u-sub);transform:rotate(90deg);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3.5 10.5 8 6 12.5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 3.5 10.5 8 6 12.5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 .pay .folded>.fold-h h2::before{transform:none}
-/* 編集ボタン：エンタメ管理と同じ「✎ 編集」の丸い形 */
-.kb button.editbtn{border:1px solid var(--u-line);background:transparent;color:var(--u-ink);border-radius:var(--r-full);padding:5px 12px;font-size:var(--fs-m);font-weight:700;min-height:0;height:auto;line-height:1.4;white-space:nowrap}
-.kb button.editbtn:hover{background:var(--u-chip)}
 /* ===== モニター（幅1600px以上）：全体を少し大きく（エンタメ管理と同じ） ===== */
 @media (min-width:1600px){
   .u-app{zoom:1.12}
@@ -1251,7 +1242,7 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 .kb .hcur .mic{width:26px;height:26px;color:var(--u-acct)}
 .kb .hcur .mic svg{width:24px;height:24px}
 .kb .hcur .hname{overflow:hidden;text-overflow:ellipsis}
-.kb button.hthm{flex:none;margin-left:auto;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--r-m);display:grid;place-items:center;padding:0}
+.kb button.hthm{flex:none;margin-left:auto}
 .kb button.hthm svg{width:19px;height:19px}
 .kb .mbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding-top:12px}
 .kb .mbar .mcur{margin-left:0!important}
@@ -1263,7 +1254,7 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 /* 家計簿の支出カード：総額の行は常に出し、内訳などは「›」でたたむ */
 .kb .sum .sumtop{cursor:pointer;align-items:center;flex-wrap:nowrap}
 .kb .sum .sumtop>div:first-child{flex:1;min-width:0}
-.kb button.sumtog{flex:none;width:32px;height:32px;border:0;background:var(--u-chip);border-radius:var(--r-full);display:grid;place-items:center;padding:0;color:var(--u-sub)}
+.kb button.sumtog{flex:none}
 .kb .sum.folded .sumbody{display:none}
 /* 家計簿の絞り込み：検索欄をなくし、分類と支払い方法の2つだけ */
 /* 家計簿の1行：1行目＝分類と小さめのメモ、2行目＝支払い方法（2行でコンパクトに） */
@@ -1281,16 +1272,15 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
 .kb .sum .totrow .delta{margin:0}
 /* 月度の切り替え：矢印を大きく、月度の名前は真ん中だけ押せる（端を押してもプルダウンが開かない） */
 .kb .mbar .mnav{justify-content:space-between;gap:6px}
-.kb .mbar .mnav .ib{width:44px;height:36px;flex:none;font-size:var(--fs-xl)}
+.kb .mbar .mnav .ib{flex:none;font-size:var(--fs-xl)}
 .kb .mbar .mnav select{flex:0 1 auto!important;width:auto;min-width:0;text-align:center;text-align-last:center}
 /* 家計簿の絞り込み（分類・支払い方法）：iPhoneでも文字が枠に収まるよう、⌄を自前で描いて右に余白を取る */
 
 /* ===================== 2026-11-17 エンタメ管理と同じ形にそろえる ===================== */
 /* ---------- 上の帯（スマホ）：左にアイコンと「おかね手帳」、真ん中に今の画面、右に＋（オレンジ）と⚙ ---------- */
-.kb button.hact{display:none;flex:none;width:36px;height:36px;border:0;background:var(--u-chip);color:var(--u-ink);border-radius:var(--r-m);place-items:center;padding:0;cursor:pointer}
-.kb button.hact svg{width:20px;height:20px}
+.kb button.hact{display:none;flex:none}
 .kb button.hact[aria-pressed="true"]{background:var(--u-accent2);color:var(--u-acct)}
-.kb button.hadd{background:var(--u-accent);color:var(--u-on)}
+.kb button.hact svg{width:20px;height:20px}
 .kb .brand .bname{font:inherit}
 @media (max-width:899px){
   .kb .abin{position:relative;gap:8px}
@@ -1300,7 +1290,7 @@ body.sbc .u-app .sb .sbp .sb-row>.sb-it{justify-content:center;padding:10px 0}
   .kb .hcur .mic{width:22px!important;height:22px!important}
   .kb .hcur .mic svg{width:20px!important;height:20px!important}
   .kb button.hthm{display:none!important}
-  .kb button.hact{display:grid}
+  .kb button.hact{display:inline-flex}
   .kb button.hadd{margin-left:auto}
   /* 左から出すメニューは使わない */.u-app .sb{display:none!important}
 }
@@ -1331,22 +1321,19 @@ html .kb .addcard{background:none;border:0;box-shadow:none;padding:0}
 /* ---------- 絞り込み：ボタン・件数・条件のラベル ---------- */
 .fline{display:flex;align-items:center;gap:10px;min-width:0}
 .fbar{display:flex;flex:none}
-.fbar .fb{height:36px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);font:inherit;font-size:var(--fs-m);font-weight:700;display:flex;align-items:center;gap:5px;padding:0 12px;cursor:pointer;line-height:1;box-shadow:none}
 .fbar .fb svg{flex:none}
-.fbar .fb.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
-.fbar .fb[aria-expanded="true"]{box-shadow:0 0 0 2px var(--u-accent)}
 .fsh-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:var(--r-full);background:var(--u-surface);color:var(--u-ink);font-family:var(--u-num);font-size:var(--fs-xs);margin-left:2px}
 .fcnt{margin-left:auto;display:flex;align-items:baseline;gap:8px;font-size:var(--fs-m);color:var(--u-sub);white-space:nowrap;font-family:var(--u-num)}
 .fcnt b{font-size:var(--fs-l);color:var(--u-ink);font-weight:600}
 .fsum{display:flex;align-items:center;gap:8px;margin:8px 0 0;min-height:28px;font-size:var(--fs-s);color:var(--u-sub)}
 .fsum-l{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
-.fsum .fchip{min-width:0;max-width:46%;display:inline-flex;align-items:center;border:1px solid color-mix(in srgb,var(--u-acct) 55%,transparent);background:var(--u-accent2);color:var(--u-acct);border-radius:var(--r-full);padding:3px 10px;font:inherit;font-size:var(--fs-s);font-weight:700;cursor:pointer;line-height:1.5}
+.fsum .fchip{min-width:0;max-width:46%}
 .fsum .fchip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fsum .fmore{flex:none;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-full);padding:3px 9px;font:inherit;font-size:var(--fs-s);font-weight:700;cursor:pointer;white-space:nowrap;line-height:1.5}
-.fsum .clear{flex:none;border:0;background:transparent;color:var(--u-acct);font:inherit;font-size:var(--fs-m);font-weight:700;padding:2px 0;cursor:pointer}
+.fsum .fmore{flex:none}
+.fsum .clear{flex:none}
 .pay .listbar{display:block}
 .pay #cFsum .fsum{margin:0 0 4px}
-@media (min-width:900px){.fbar .fb{font-size:var(--fs-base);height:38px}.fcnt{font-size:var(--fs-base)}.fcnt b{font-size:var(--fs-l)}}
+@media (min-width:900px){.fcnt{font-size:var(--fs-base)}.fcnt b{font-size:var(--fs-l)}}
 
 /* ---------- 絞り込みパネル：ボタンのすぐ下に出す（スマホ・PC同じ形） ---------- */
 html.fshopen,html.fshopen body{overflow:hidden}
@@ -1357,8 +1344,8 @@ html.fshopen,html.fshopen body{overflow:hidden}
 @media (min-width:900px){.fsh{right:auto;width:380px}.fsh-scrim{background:rgba(0,0,0,.12)}}
 .fsh-h{display:flex;align-items:center;gap:10px;padding:12px 12px 8px 18px;flex:none}
 .fsh-h b{flex:1;font-size:var(--fs-l)}
-.fsh-reset{border:0;background:none;color:var(--u-acct);font:inherit;font-size:var(--fs-base);font-weight:700;padding:6px 4px;cursor:pointer}
-.fsh-x,.dd-x{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--u-soft);color:var(--u-sub);display:grid;place-items:center;padding:0;cursor:pointer}
+.dd-x{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--u-soft);color:var(--u-sub);display:grid;place-items:center;padding:0;cursor:pointer}
+.fsh-x{flex:none}
 .fsh-body{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 0 6px}
 .fsh-it{border-top:1px solid var(--u-soft)}
 .fsh-row{width:100%;display:flex;align-items:center;gap:10px;min-height:50px;padding:0 14px 0 18px;border:0;background:none;color:var(--u-ink);font:inherit;font-size:var(--fs-l);text-align:left;cursor:pointer}
@@ -1375,7 +1362,7 @@ html.fshopen,html.fshopen body{overflow:hidden}
 .fsh-subb.dd-list{max-height:46vh;overflow:auto}
 .fsh-subb.dd-list .dd-row:first-child{border-top:0}
 .fsh-f{flex:none;padding:10px 16px 12px;border-top:1px solid var(--u-line)}
-.fsh-go{width:100%;height:46px;border:0;border-radius:var(--r-l);background:var(--u-ink);color:var(--u-surface);font:inherit;font-size:var(--fs-l);font-weight:700;cursor:pointer}
+.fsh-go{width:100%}
 @media (min-width:900px){.fsh-row{min-height:46px;font-size:var(--fs-base)}.fsh-subb.dd-list{max-height:320px}}
 
 /* ---------- プルダウン（端末標準の選択も同じ一覧の見た目に）。スマホは下から、PCは欄のすぐ下 ---------- */
@@ -1418,11 +1405,7 @@ input.calcon{border-color:var(--u-accent)!important;box-shadow:0 0 0 2px color-m
   html.calcopen #sheetHost .sheet{border-radius:var(--r-l) var(--r-l) 0 0}
   html.calcopen .totop{display:none!important}
 }
-
-/* ---------- 編集ボタン：エンタメ管理と同じ角丸の普通のボタン「編集」 ---------- */
-.kb button.editbtn,.pay button.editbtn{border:1px solid var(--u-line)!important;background:var(--u-surface)!important;color:var(--u-ink)!important;border-radius:var(--r-m)!important;font:inherit;font-size:var(--fs-m)!important;font-weight:700!important;padding:0 12px!important;height:30px;min-height:0;line-height:1}
-.kb button.setedit{flex:none;height:30px;padding:0 12px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);font:inherit;font-size:var(--fs-m);font-weight:700;display:inline-flex;align-items:center;cursor:pointer}
-.kb button.setedit.on{background:var(--u-ink);border-color:var(--u-ink);color:var(--u-surface)}
+.kb button.setedit{flex:none}
 
 .kb .rule .acts .delbtn{color:var(--u-danger)}
 /* マスタ：ふだんは見るだけ */
@@ -1494,10 +1477,9 @@ html.setopen,html.setopen body{overflow:hidden}
 .kb #rulepanel.setpanel:not([hidden]){display:flex;flex-direction:column;top:50%;bottom:auto;transform:translateY(-50%);height:min(640px,calc(100% - 48px));max-width:640px;padding:16px 16px 0;overflow:hidden;border:1px solid var(--u-line)}
 .kb #rulepanel .sethd{display:flex;align-items:center;gap:6px;flex:none;padding-bottom:4px}
 .kb #rulepanel .sethd .ptitle{flex:1;min-width:0;font-size:var(--fs-xl);font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.kb #rulepanel button.setback{width:34px;height:34px;border:0;border-radius:50%;background:none;color:var(--u-ink);display:grid;place-items:center;padding:0;margin-left:-8px;cursor:pointer}
+.kb #rulepanel button.setback{margin-left:-8px}
 .kb #rulepanel button.setback[hidden]{display:none}
-.kb #rulepanel button.setback:hover{background:var(--u-soft)}
-.kb #rulepanel button.setx{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--u-soft);color:var(--u-sub);display:grid;place-items:center;padding:0;cursor:pointer}
+.kb #rulepanel button.setx{flex:none}
 .kb #rulepanel button.setedit[hidden]{display:none}
 .kb #rulepanel .stbody{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin:0 -16px;padding:0 16px 18px}
 .kb #rulepanel .stbody>[hidden]{display:none!important}

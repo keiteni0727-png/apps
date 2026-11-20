@@ -27,14 +27,14 @@
 <header class="appbar"><div class="wrap abin">
   <span class="hcur" id="hcur"></span>
   <div class="brand"><svg class="u-mark sb-logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--u-accent)"/><rect x="7.5" y="6.5" width="17" height="19" rx="2.6" fill="#fff"/><rect x="7.5" y="6.5" width="3.2" height="19" rx="1.2" fill="var(--u-accent)" opacity=".22"/><path d="M13.6 10.6 17.6 15.6 21.6 10.6M17.6 15.6v6.4M14.6 17h6M14.6 19.8h6" fill="none" stroke="var(--u-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><b class="bname">おかね手帳</b><span id="saveSt" class="savest wait" role="status" aria-live="polite">接続中…</span></div>
-  <button type="button" class="hthm" id="hTheme" aria-label="表示の切り替え"></button>
-  <button type="button" class="hact hadd" id="hAdd" aria-label="追加"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button type="button" class="hact" id="gear" aria-label="設定" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button type="button" class="u-btn icon soft hthm" id="hTheme" aria-label="表示の切り替え"></button>
+  <button type="button" class="u-btn icon pri hact hadd" id="hAdd" aria-label="追加"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button type="button" class="u-btn icon soft hact" id="gear" aria-label="設定" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </div></header>
 <!-- 日付（月度の切り替え）は上の帯の下に -->
 <div class="wrap mbar">
   <button type="button" class="mcur" id="mcur">当月</button>
-  <div class="mnav"><button class="ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="ib" id="mnext" aria-label="次の月度">›</button></div>
+  <div class="mnav"><button class="u-btn icon sm txt ib" id="mprev" aria-label="前の月度">‹</button><select id="month" aria-label="表示する月度"></select><button class="u-btn icon sm txt ib" id="mnext" aria-label="次の月度">›</button></div>
 </div>
 
 <div class="wrap anseg-w"><nav class="anseg" aria-label="分析の画面"><button data-tab="graph">グラフ</button><button data-tab="balance">残高と計画</button></nav></div>
@@ -157,7 +157,7 @@
   <div id="bmsg" class="err mt6"></div></div>
 
 <div class="card pop setpanel" id="rulepanel" hidden role="dialog" aria-modal="true" aria-label="設定">
-  <div class="sethd"><button type="button" class="setback" data-stab="home" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><b class="ptitle" id="stTitle">設定</b><button type="button" class="setedit" id="stEdit" data-setedit="" hidden>編集</button><button type="button" class="setx" id="rclose" aria-label="閉じる"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="sethd"><button type="button" class="u-btn icon sm txt setback" data-stab="home" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><b class="ptitle" id="stTitle">設定</b><button type="button" class="u-btn sm setedit" id="stEdit" data-setedit="" hidden>編集</button><button type="button" class="u-btn icon sm soft setx" id="rclose" aria-label="閉じる"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="stbody" id="stBody">
   <div id="st-home"></div>
   <div id="st-rules">

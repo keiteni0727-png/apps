@@ -45,15 +45,15 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .u-app .sb-it:not([aria-current]):hover{background:var(--u-chip);color:var(--u-ink)}
 }
 
-/* ===== ボタン：大きさ・形をアプリ共通にそろえる =====
-  ・class="u-btns" の中の button すべて、または class="u-btn" を付けた button に効く
+/* ===== ボタン（おかね手帳の書き方）：class="u-btns" の中の button すべてに効く =====
+  ・.u-btn / .u-chip を付けたボタンには効かない（そちらは下の「見た目の決まり」の形になる）
   ・塗り＝主な操作（pri / primary）、枠線＝そのほかの操作、小さいもの（sm / btn-s）、文字だけ（u-btns の中の ghost） */
-.u-btns button,.u-btn{font:inherit;font-size:14px;font-weight:700;line-height:1.4;padding:9px 14px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);color:var(--u-ink);cursor:pointer}
-@media (hover:hover){.u-btns button:hover,.u-btn:hover{border-color:var(--u-accent)}}
-.u-btns button:disabled,.u-btn:disabled{opacity:.45;cursor:default}
-.u-btns button.pri,.u-btns button.primary,.u-btn.pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
-.u-btns button.sm,.u-btns button.btn-s,.u-btn.sm{padding:6px 12px;font-size:13px}
-.u-btns button.ghost{border:0;background:none;color:var(--u-sub);padding:6px 8px}
+.u-btns button:where(:not(.u-btn,.u-chip)){font:inherit;font-size:var(--fs-base);font-weight:700;line-height:1.4;padding:9px 14px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-surface);color:var(--u-ink);cursor:pointer}
+@media (hover:hover){.u-btns button:where(:not(.u-btn,.u-chip)):hover{border-color:var(--u-accent)}}
+.u-btns button:where(:not(.u-btn,.u-chip)):disabled{opacity:.45;cursor:default}
+.u-btns button:where(:not(.u-btn,.u-chip)).pri,.u-btns button:where(:not(.u-btn,.u-chip)).primary{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.u-btns button:where(:not(.u-btn,.u-chip)).sm,.u-btns button:where(:not(.u-btn,.u-chip)).btn-s{padding:6px 12px;font-size:var(--fs-m)}
+.u-btns button:where(:not(.u-btn,.u-chip)).ghost{border:0;background:none;color:var(--u-sub);padding:6px 8px}
 
 /* ===================== 見た目の決まり（2026-11 エンタメ管理の整理で作成） =====================
   画面ごとに大きさや形を決めず、ここの決まった値と部品だけを使う。おかね手帳などは、まだ使っていない（使い始めるときはここを見る）。
