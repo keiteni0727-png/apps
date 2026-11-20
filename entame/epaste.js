@@ -7,7 +7,7 @@ function subPasteHtml(it) {
   if (!p.rows)
     return `<div class="spaste">
     <p class="hint sp-how">しょぼいカレンダーの「サブタイトル」の一覧、または「放送時間」の表をコピーして貼り付けてください</p>
-    <textarea id="spText" rows="8" placeholder="#1 サブタイトル&#10;#2 サブタイトル">${esc(p.text || "")}</textarea>
+    <textarea id="spText" rows="8" placeholder="1　サブタイトル&#10;2　サブタイトル">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn" id="spCancel">キャンセル</button><button type="button" class="u-btn pri" id="spRead">読み取る</button></div></div>`;
   const subN = p.rows.filter(r => r.subCh).length,
     dateN = p.rows.filter(r => r.dateCh).length,
