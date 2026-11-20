@@ -21,3 +21,12 @@ node dev/preview/serve.js                           # ブラウザで http://loc
 バックアップのファイルはコミットしないこと（`.gitignore` で除外済み）。
 
 公開されるサイトには関係しません（GitHub Pages に載っても、ここのファイルはアプリから読み込まれません）。
+
+## そのほか
+
+```bash
+node dev/preview/smoke.js                 # よく使う操作（話数のチェック・貼り付け・保存など）を順に試す
+node dev/preview/catalog.js 出力先         # 押せる部品の見た目の種類を集める
+node dev/preview/shoot-guide.js 出力先     # 見た目の決まりの見本（style-guide.html）を撮る
+python3 dev/tools/compare.py 前 後 [違い]  # 2回撮った画面を見比べる
+```

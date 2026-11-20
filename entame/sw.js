@@ -8,6 +8,8 @@ const SHELL = [
   "filters.js",
   "paste.js",
   "detail.js",
+  "episodes.js",
+  "epaste.js",
   "form.js",
   "settings.js",
   "yt.js",

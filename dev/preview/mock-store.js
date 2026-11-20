@@ -36,7 +36,16 @@
       return snapDoc(id, clone((cols[c] || new Map()).get(id)));
     },
     set: (data, opt) => write(path, old => (opt && opt.merge ? { ...(old || {}), ...clone(data) } : clone(data))),
-    update: data => write(path, old => ({ ...(old || {}), ...clone(data) })),
+    /* 本物（u-core.js）と同じ：{items:{id:中身}} のような中身のある入れ物は、中の項目ごとに書きかえる */
+    update: data =>
+      write(path, old => {
+        const n = { ...(old || {}) };
+        Object.entries(clone(data)).forEach(([k, v]) => {
+          if (v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length) n[k] = { ...(n[k] && typeof n[k] === "object" ? n[k] : {}), ...v };
+          else n[k] = v;
+        });
+        return n;
+      }),
     delete: () => write(path, () => undefined),
     onSnapshot: cb => {
       const [c, id] = split(path);
