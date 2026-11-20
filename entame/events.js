@@ -472,7 +472,7 @@ const enterClick = sel => (t, e) => {
 const KEY_ACTIONS = [
   /* プルダウンを開いているとき：Escで閉じる・検索欄でEnterなら一番上の候補を選ぶ */
   [null, (t, e) => (e.key === "Escape" && ddOpen ? (e.preventDefault(), closeDD(true), true) : false)],
-  ["#ddq", enterClick("#ddList [data-ddpick],#ddList [data-ddsernew]")],
+  ["#ddq", enterClick("#ddList [data-ddpick],#ddList [data-ddsernew],#ddList [data-ddslotnew]")],
   [
     "[data-svren]",
     (t, e) => {

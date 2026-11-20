@@ -63,7 +63,7 @@ function seriesSettingsHtml() {
       }
       ${setEdit ? `<button type="button" class="kind ${smap[n] === "a" ? "a" : "d"} kindsw" data-sermain="${esc(n)}" aria-label="ジャンルを切り替え">${smap[n] === "a" ? "アニメ" : "ドラマ"} ⇄</button>` : `<span class="kind ${smap[n] === "a" ? "a" : "d"}">${smap[n] === "a" ? "アニメ" : "ドラマ"}</span>`}
       <small class="mcnt">${c}作品</small>
-      ${setEdit ? `<button type="button" class="u-btn sm txt danger delsm${setDel === n ? " pri armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button>` : ""}</div>`;
+      ${setEdit && smap[n] !== "a" ? `<button type="button" class="u-btn sm txt toslot" data-toslot="${esc(n)}" title="このシリーズの作品をまとめて放送枠に移します">放送枠へ</button>` : ""}${setEdit ? `<button type="button" class="u-btn sm txt danger delsm${setDel === n ? " pri armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button>` : ""}</div>`;
             })
             .join("")
         : `<p class="hint" style="padding:10px">${q ? "一致するシリーズはありません" : "まだありません"}</p>`
@@ -96,6 +96,7 @@ const SET_IC = {
   theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   series: '<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',
   stations: '<path d="M4 10a8 8 0 0 1 16 0M7.5 11a4.5 4.5 0 0 1 9 0"/><circle cx="12" cy="12" r="1.5"/><path d="M12 13.5V21"/>',
+  slots: '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h4"/>',
   vods: '<rect x="3" y="5" width="18" height="13" rx="2"/><path d="m10 9 5 2.5-5 2.5z"/>',
   authors: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
   soloGroups: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
@@ -315,6 +316,10 @@ function propagate(key, from, to) {
       if (i.series === from) ch.push([i.id, { series: to }]);
       return;
     }
+    if (key === "slots") {
+      if (i.slot === from) ch.push([i.id, { slot: to }]);
+      return;
+    }
     const m = mediaOf(i);
     const sw = l => [...new Set(l.map(v => (v === from ? to : v)).filter(Boolean))];
     if (key === "stations" && m.stations.includes(from)) {
@@ -479,6 +484,24 @@ const SETTINGS_ACTIONS = [
   ],
   /* シリーズ名：その作品一覧を開く */
   ["[data-seropen]", el => showSeries(el.dataset.seropen, seriesMainMap().map[el.dataset.seropen])],
+  /* シリーズに入れていた放送枠（月9など）を、放送枠に移す：そのシリーズの作品は放送枠をその名前にしてシリーズを外し、シリーズの一覧から消す */
+  [
+    "[data-toslot]",
+    el => {
+      const n = el.dataset.toslot;
+      const ch = items.filter(i => i.series === n).map(i => [i.id, { series: "", slot: n }]);
+      ch.forEach(([id, p]) => (over[id] = { ...(over[id] || {}), ...p }));
+      const sm = { ...(master.seriesMain || {}) };
+      delete sm[n];
+      master = { ...master, series: M("series").filter(x => x !== n), seriesMain: sm, slots: M("slots").includes(n) ? M("slots") : [...M("slots"), n] };
+      rebuild();
+      ch.forEach(([id, p]) => mergeDoc("titles", id, p).catch(fail));
+      saveMaster();
+      render();
+      refreshSettings();
+      toast(`「${n}」を放送枠に移しました${ch.length ? `（${ch.length}作品）` : ""}`);
+    },
+  ],
   /* シリーズのメインのジャンルを切り替え */
   [
     "[data-sermain]",

@@ -67,6 +67,8 @@ const GROUPS = [
 const K_UI = "adb.v3.ui";
 /* 共通部品（shared/u-core.js）：端末に覚える設定・エスケープ */
 const ls = U.ls;
+/* プルダウンの一覧は、スマホでも下から出すシートにせず、押した欄のすぐ下に小さく出す（PCと同じ） */
+U.noSheet = true;
 const esc = U.esc;
 const $ = s => document.querySelector(s);
 /* クリックの割り当て表を上から順に試す。表は [目印のセレクタ, 処理(押した要素, 作品など, イベント)] の並び。
@@ -105,6 +107,7 @@ const state = Object.assign(
     sort: "new",
     grp: "cour",
     vod: "",
+    slot: "",
     unOnly: false,
     missOnly: false,
     missKey: "",
@@ -123,6 +126,7 @@ if (!GROUPS.some(([v]) => v === state.grp)) state.grp = "cour";
 if (!MODE_KEYS.includes(state.mode) && state.mode !== "o") state.mode = "w";
 if (!(SUBS[state.mode] || ["all"]).includes(state.sub)) state.sub = "all";
 if (typeof state.vod !== "string") state.vod = "";
+if (typeof state.slot !== "string") state.slot = "";
 state.unOnly = !!state.unOnly;
 state.missOnly = !!state.missOnly;
 if (typeof state.missKey !== "string") state.missKey = "";
@@ -133,6 +137,7 @@ const saveUI = () =>
     mode: state.mode,
     sub: state.sub,
     vod: state.vod,
+    slot: state.slot,
     unOnly: state.unOnly,
     missOnly: state.missOnly,
     missKey: state.missKey,
@@ -334,6 +339,7 @@ let master = {};
 const MKEYS = [
   ["series", "シリーズ"],
   ["stations", "放送局"],
+  ["slots", "放送枠（ドラマ）"],
   ["vods", "配信サイト"],
   ["authors", "YouTube投稿者"],
   ["soloGroups", "一人実況のグループ"],
@@ -347,6 +353,7 @@ function usedNames(key) {
   /* シリーズはアニメ・ドラマ・映画・バラエティで共通の1つ（実写化などをまたいで同じ名前を使う） */
   if (key === "series") items.forEach(i => add(i.series));
   else if (key === "stations") items.forEach(i => mediaOf(i).stations.forEach(add));
+  else if (key === "slots") items.forEach(i => add(i.slot));
   else if (key === "vods")
     items.forEach(i => {
       const m = mediaOf(i);

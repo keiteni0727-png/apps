@@ -48,6 +48,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   if (md === "stream") rows.push(row("配信サイト", labsOr(m.plat, m.plat.map(vlab).join(""), "plat"), "fMedia"));
   else {
     if (hasSt(md)) rows.push(row("放送局", labsOr(m.stations, m.stations.map(x => `<span class="lab">${esc(x)}</span>`).join(""), "st"), "fMedia"));
+    if (it.k === "d") rows.push(row("放送枠", it.slot ? `<span class="lab sl">${esc(it.slot)}</span>` : nofHas(it, "slot") ? nn("なし") : un("未設定"), "fSlot"));
     rows.push(row("配信サイト", labsOr(m.vods, m.vods.map(vlab).join(""), "vods"), "fMedia"));
   }
   /* 外部リンクのアイコン（公式サイト＝外に開く、配信＝再生） */
