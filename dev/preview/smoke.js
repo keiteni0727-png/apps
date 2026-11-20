@@ -49,12 +49,8 @@ const PORT = 8170;
   await step("1話追加", () => c("#erAdd"));
   await step("貼り付けを開いて読み取り", async () => {
     await c("#spOpen");
-    await p.fill("#spText", "第1話\tはじまりの絵の具\t2026年10月2日\n第2話\t青い屋根の店\t10月9日\n第3話\t小さな依頼人\t10月16日\n第4話\t雨の日の約束\t10月23日");
+    await p.fill("#spText", "#1\tはじまりの絵の具\n#2\t青い屋根の店\n#3\t小さな依頼人\n#4\t雨の日の約束");
     await c("#spRead");
-  });
-  await step("整形の表を開いて戻る", async () => {
-    await c("#spFmt");
-    await c("#gBack");
   });
   await step("話数に反映", () => c("#spApply"));
   await step("話数の編集を保存", async () => {

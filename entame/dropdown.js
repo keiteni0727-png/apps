@@ -1,4 +1,4 @@
-/* ===================== 編集画面のプルダウン（放送形態・放送局・配信サイト・シリーズ・ほかのクール・整形の表の列） ===================== */
+/* ===================== 編集画面のプルダウン（放送形態・放送局・配信サイト・シリーズ・ほかのクール） ===================== */
 /* ===== 編集画面のプルダウン（1つだけ選ぶ。選んだらすぐ閉じる）=====
    一覧は詳細・編集のシートの外（body直下の #ddPop）に出す：シートの中だとはみ出して切れるため。
    スマホは下から出る一覧、PCはボタンのすぐ下（下に場所がなければ上）に小さく出す */
@@ -25,14 +25,6 @@ const ddBtn = k =>
   `<button type="button" class="fdd" data-fdd="${k}" aria-haspopup="listbox" aria-expanded="${ddOpen === k}" aria-label="${DD_TITLE[k]}を選ぶ"><span class="fdd-v">${ddValue(k)}</span>${DD_CHEV}</button>`;
 /* 一覧の行 */
 function ddRows(k) {
-  /* 整形の表：列の役割 */
-  if (k.startsWith("gcol:")) {
-    const g = subPaste && subPaste.grid,
-      cur = g ? g.cols[+k.slice(5)] : "";
-    return Object.entries(G_ROLE)
-      .map(([v, l]) => `<button type="button" class="dd-row${cur === v ? " on" : ""}" role="option" aria-selected="${cur === v}" data-ddpick="${v}"><span class="dd-l">${l}</span>${cur === v ? DD_CHECK : ""}</button>`)
-      .join("") + `<button type="button" class="dd-row dd-del" role="option" aria-selected="false" data-ddpick="__del"><span class="dd-l">この列を消す</span></button>`;
-  }
   const row = (v, lab, on, extra = "") =>
     `<button type="button" class="dd-row${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddpick="${esc(v)}">${extra}<span class="dd-l">${lab}</span>${on ? DD_CHECK : ""}</button>`;
   const none = on => `<button type="button" class="dd-row none${on ? " on" : ""}" role="option" aria-selected="${on}" data-ddnone="1"><span class="dd-l">${DD_NONE[k]}</span>${on ? DD_CHECK : ""}</button>`;
@@ -64,8 +56,8 @@ function ddRows(k) {
   return none(nof) + (opts.length ? opts.map(v => row(v, esc(v), !nof && a[0] === v && a.length === 1 ? true : !nof && a.includes(v), dot(v))).join("") : "");
 }
 const ddSheetMode = U.sheetMode;
-const ddTitle = k => (k.startsWith("gcol:") ? `${gLetter(+k.slice(5))}列` : DD_TITLE[k]);
-const ddBtnOf = k => document.querySelector(k.startsWith("gcol:") ? `[data-gcol="${k.slice(5)}"]` : `[data-fdd="${k}"]`);
+const ddTitle = k => DD_TITLE[k];
+const ddBtnOf = k => document.querySelector(`[data-fdd="${k}"]`);
 function openDD(k, btn) {
   closeDD();
   ddOpen = k;
@@ -115,16 +107,6 @@ function closeDD(refocus) {
 /* 選んだ：入力中の内容を読み取ってから値を入れ、閉じて描き直す */
 function ddPick(v, none) {
   const k = ddOpen;
-  if (k && k.startsWith("gcol:")) {
-    if (subPaste && subPaste.grid) {
-      if (v === "__del") gDelCol(subPaste.grid, +k.slice(5)) || toast("最後の列は消せません");
-      else gSetCol(subPaste.grid, +k.slice(5), v);
-    }
-    closeDD();
-    refreshSheet();
-    if (!TOUCH) ddBtnOf(k)?.focus();
-    return;
-  }
   if (!k || !form) return closeDD();
   readForm();
   if (k === "media") form.media = v;
