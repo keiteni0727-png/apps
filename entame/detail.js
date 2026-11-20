@@ -19,11 +19,22 @@ function gridHtml(g) {
       return `<tr class="${gBad(g, r) ? "bad" : ""}" data-gr="${i}"><td class="gx"><button type="button" data-gdel="${i}" aria-label="${i + 1}行目を消す">✕</button></td><td class="gno">${i + 1}</td><td class="gsh"><button type="button" data-gsh="${i}:-1" aria-label="${i + 1}行目の選んだマスから右を左へ">‹</button><button type="button" data-gsh="${i}:1" aria-label="${i + 1}行目の選んだマスから右を右へ">›</button></td>${cells}</tr>`;
     })
     .join("");
+  const p = subPaste,
+    it = items.find(x => x.id === openId);
+  const tool = `<div class="gtool"><span class="gtl">行を自動でつなぐ</span><span class="gseg"><button type="button" data-gjoin="1" class="${p.flat ? "" : "on"}">する</button><button type="button" data-gjoin="0" class="${p.flat ? "on" : ""}">しない</button></span>${it ? wikiLink(it) : ""}</div>
+    <div class="gtool"><button type="button" id="gMerge" title="選んだマスの行を上の行につなぐ">上の行につなぐ</button><button type="button" id="gAdd">＋ 行を追加</button><button type="button" id="gUndo"${(p.hist || []).length ? "" : ' class="off"'}>元に戻す</button></div>`;
   return `<div class="spaste spgrid">
+    ${tool}
     ${g.dropped ? `<p class="hint" style="margin:0 0 8px">見出しなど${g.dropped}行は外しています</p>` : ""}
     ${nj < 0 ? `<p class="hint" style="margin:0 0 8px">話数の列がないので、上から順に1話・2話…と付けます</p>` : bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
     <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th class="gsh"></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
+}
+/* 整形の表の操作を戻せるように、変える前の表を取っておく（30回まで） */
+function gSnap() {
+  const h = (subPaste.hist = subPaste.hist || []);
+  h.push(JSON.stringify({ g: subPaste.grid, flat: !!subPaste.flat }));
+  if (h.length > 30) h.shift();
 }
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
 let epOne = null; // 1話だけ編集中の話の番号
@@ -66,11 +77,15 @@ function arcSync() {
     r.b = num(el.querySelector(".ar-b").value);
   });
 }
+/* Wikipediaの記事へ（URLを登録していればそこ、なければ作品名で検索。名前がぴったりなら記事に直接飛ぶ） */
+const wikiUrl = it => it.wiki || `https://ja.wikipedia.org/w/index.php?search=${encodeURIComponent(it.t || "")}`;
+const wikiLink = it => `<a class="gwiki" href="${esc(wikiUrl(it))}" target="_blank" rel="noopener">Wikipediaを開く ↗</a>`;
 function subPasteHtml(it) {
   const p = subPaste;
   if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
+    <div class="gtool">${wikiLink(it)}<input id="spWiki" type="url" inputmode="url" autocomplete="off" placeholder="記事のURLを入れると次からそこを開きます" value="${esc(it.wiki || "")}" aria-label="WikipediaのURL"></div>
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,
@@ -645,7 +660,11 @@ function nextEp(it, list) {
 /* 貼り付けた各話リストを読み取り、登録済みの話と比べた一覧を出す */
 function readPaste(it) {
   const text = $("#spText").value;
-  /* 表をコピーしたもの（タブ区切り）は整形の表と同じ読み方のほうが多く読めればそちらを使う */
+  /* 表をコピーしたもの（タブ区切り）は、最初から整形の表で開く */
+  if (text.includes("\t")) {
+    subPaste = { text, grid: gridFrom(text, it.from) };
+    return refreshSheet();
+  }
   const ps = parseSubtitles(text, { from: it.from });
   const g = text.includes("\t") ? gridFrom(text, it.from) : null;
   const gp = g ? gridParse(g, it.from).filter(x => x.sub) : [];
@@ -1191,6 +1210,7 @@ const PASTE_ACTIONS = [
       const [i, d] = el.dataset.gsh.split(":").map(Number);
       if (!g.rows[i]) return;
       const j = g.sel && g.sel[0] === i ? g.sel[1] : 0;
+      gSnap();
       if (!gShift(g, g.rows[i], d, j)) return toast("左に空いたマスがありません");
       g.sel = [i, Math.max(0, j + d)];
       refreshSheet();
@@ -1199,6 +1219,7 @@ const PASTE_ACTIONS = [
   [
     "[data-gdel]",
     el => {
+      gSnap();
       subPaste.grid.rows.splice(+el.dataset.gdel, 1);
       refreshSheet();
     },
@@ -1207,7 +1228,55 @@ const PASTE_ACTIONS = [
     "#gDelBad",
     () => {
       const g = subPaste.grid;
+      gSnap();
       g.rows = g.rows.filter(r => !gBad(g, r));
+      refreshSheet();
+    },
+  ],
+  /* 行を自動でつなぐ／つながない（貼り付けた文字から表を作り直す） */
+  [
+    "[data-gjoin]",
+    (el, it) => {
+      const flat = el.dataset.gjoin === "0";
+      if (!!subPaste.flat === flat) return;
+      gSnap();
+      subPaste.flat = flat;
+      subPaste.grid = gridFrom(subPaste.text, it.from, { flat });
+      refreshSheet();
+    },
+  ],
+  [
+    "#gMerge",
+    () => {
+      const g = subPaste.grid,
+        i = g.sel ? g.sel[0] : -1;
+      if (!(i > 0)) return toast(i === 0 ? "1行目は上につなげません" : "つなぐ行のマスを選んでください");
+      gSnap();
+      gMergeUp(g, i);
+      g.sel = [i - 1, g.sel[1]];
+      refreshSheet();
+    },
+  ],
+  [
+    "#gAdd",
+    () => {
+      const g = subPaste.grid,
+        i = g.sel ? g.sel[0] : g.rows.length - 1;
+      gSnap();
+      gAddRow(g, i);
+      g.sel = [i + 1, 0];
+      refreshSheet();
+      document.querySelector(`input[data-g="${i + 1}:0"]`)?.focus();
+    },
+  ],
+  [
+    "#gUndo",
+    () => {
+      const h = subPaste.hist || [];
+      if (!h.length) return toast("戻せる操作がありません");
+      const s = JSON.parse(h.pop());
+      subPaste.grid = s.g;
+      subPaste.flat = s.flat;
       refreshSheet();
     },
   ],

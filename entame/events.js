@@ -257,6 +257,17 @@ const CHANGE_ACTIONS = [
       toast("名前を変更しました");
     },
   ],
+  /* WikipediaのURLを作品に登録（次から「Wikipediaを開く」でそこへ） */
+  [
+    "#spWiki",
+    t => {
+      const it = items.find(x => x.id === openId);
+      if (!it) return false;
+      const v = t.value.trim();
+      if (v && !/^https?:\/\//.test(v)) return false;
+      if (v !== (it.wiki || "")) saveTitle(it.id, { wiki: v });
+    },
+  ],
   /* 各話リストの貼り付け：日付も更新・ない話も追加 */
   /* 更新する項目（サブタイトル・放送日・話数） */
   [

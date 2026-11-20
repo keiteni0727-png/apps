@@ -32,7 +32,7 @@ function ddRows(k, q) {
       cur = g ? g.cols[+k.slice(5)] : "";
     return Object.entries(G_ROLE)
       .map(([v, l]) => `<button type="button" class="dd-row${cur === v ? " on" : ""}" role="option" aria-selected="${cur === v}" data-ddpick="${v}"><span class="dd-l">${l}</span>${cur === v ? DD_CHECK : ""}</button>`)
-      .join("");
+      .join("") + `<button type="button" class="dd-row dd-del" role="option" aria-selected="false" data-ddpick="__del"><span class="dd-l">この列を消す</span></button>`;
   }
   const nq = norm(q || "");
   const hit = t => !nq || norm(t).includes(nq);
@@ -123,7 +123,11 @@ function closeDD(refocus) {
 function ddPick(v, none) {
   const k = ddOpen;
   if (k && k.startsWith("gcol:")) {
-    if (subPaste && subPaste.grid) gSetCol(subPaste.grid, +k.slice(5), v);
+    if (subPaste && subPaste.grid) {
+      gSnap();
+      if (v === "__del") gDelCol(subPaste.grid, +k.slice(5)) || toast("最後の列は消せません");
+      else gSetCol(subPaste.grid, +k.slice(5), v);
+    }
     closeDD();
     refreshSheet();
     if (!TOUCH) ddBtnOf(k)?.focus();

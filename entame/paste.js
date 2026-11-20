@@ -259,7 +259,7 @@ const isDateCell = c => !!findDates(c).length && zen(c).replace(DATE_RE, "").rep
 /* 数字・記号だけのマス（視聴率「3.1%」・「-」など） */
 const SP_RE = /^(特別|総集|番外|未放送|SP|OVA|OAD|Extra)/i;
 const isNumCell = c => /^[\d０-９.．,%％\s\-－―‐]*$/.test(c);
-function gridFrom(text, from) {
+function gridFrom(text, from, opt = {}) {
   const raw = String(text || "")
     .replace(/\r/g, "")
     .split("\n")
@@ -296,7 +296,8 @@ function gridFrom(text, from) {
     return i >= 0 && i < main && r[main] && gNum(r[main]) != null ? main : i;
   };
   const isHead = r => epAt(r) >= 0;
-  const anyHead = raw.some(isHead);
+  /* opt.flat＝行を自動でつながない（コピーした1行をそのまま表の1行にする） */
+  const anyHead = !opt.flat && raw.some(isHead);
   const recs = [];
   let head = null,
     cur = null;
@@ -451,6 +452,35 @@ function gShift(g, r, d, j = 0) {
   gColsFit(g);
   return true;
 }
+/* j列を丸ごと消す（右の列が1つ左へ）。最後の1列は消さない */
+function gDelCol(g, j) {
+  if (g.cols.length <= 1) return false;
+  g.rows.forEach(r => {
+    const i = j - r.off;
+    if (i < 0) r.off--;
+    else if (i < r.raw.length) r.raw.splice(i, 1);
+  });
+  g.cols.splice(j, 1);
+  return true;
+}
+/* i行目を上の行につなぐ（同じ列のマスどうしをつなぐ。上が空ならそのまま入れる） */
+function gMergeUp(g, i) {
+  const a = g.rows[i - 1],
+    b = g.rows[i];
+  if (!a || !b) return false;
+  const n = Math.max(gColN({ rows: [a] }), gColN({ rows: [b] }));
+  for (let j = 0; j < n; j++) {
+    const v = String(gCell(b, j)).trim();
+    if (!v) continue;
+    const u = String(gCell(a, j)).trim();
+    gSet(a, j, u ? `${u} ${v}` : v);
+  }
+  g.rows.splice(i, 1);
+  gColsFit(g);
+  return true;
+}
+/* i行目の下に空の行を足す */
+const gAddRow = (g, i) => g.rows.splice(i + 1, 0, { raw: [], off: 0, mk: false, cells: [], ds: [] });
 /* マスを直す（元のマスの外なら空のマスを足してから） */
 function gSet(r, j, v) {
   let i = j - r.off;
@@ -515,4 +545,4 @@ function gridParse(g, from) {
   });
   return out;
 }
-if (typeof module !== "undefined") module.exports = { gSetSub, gColsInit, gSetCol, gShift, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { gSetSub, gColsInit, gSetCol, gDelCol, gMergeUp, gAddRow, gShift, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
