@@ -1,6 +1,6 @@
 /* ===================== 共通の画面部品：おかね手帳・エンタメ管理で同じファイルを使う（u-core.js のあとに読み込む） =====================
   U.TOUCH        … 指で操作する端末か（スマホ・iPad）
-  U.sheetMode()  … 下から出すシートの形にする画面幅か（スマホ）
+  U.sheetMode()  … 下から出すシートの形にする画面幅か（スマホ）。U.noSheet を true にしたアプリは、スマホでも欄のすぐ下に出す
   U.lock(on)     … シートなどを開いている間、後ろの画面をスクロールさせない（iPhoneでも効くよう body を固定）。U.lockY は固定前の位置
   表示の切り替えボタン（#hTheme）… 自動 → ライト → ダーク → 自動。押したときの処理とアイコンはここで行う
   U.pick         … プルダウン（select）を開くと、端末標準ではなく同じ見た目の一覧を出す。スマホは下から、PCは欄のすぐ下
@@ -8,7 +8,9 @@
     U.pick.onOpen  … 一覧を開く直前に呼ぶ関数（ほかの部品を閉じるときに使う）
     data-native を付けた select は端末標準のまま */
 U.TOUCH = matchMedia("(hover:none) and (pointer:coarse)").matches;
-U.sheetMode = () => matchMedia("(max-width:699px)").matches;
+U.sheetMode = () => !U.noSheet && matchMedia("(max-width:699px)").matches;
+/* 欄のすぐ下に出した一覧を、画面の大きさの変化・スクロールで閉じてよいか（スマホでキーボードが出たとき・一覧の中の欄に入力中は閉じない） */
+U.popKeep = box => U.TOUCH || !!(document.activeElement && document.activeElement.closest && document.activeElement.closest(box));
 U.IC = {
   check: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
   x: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
@@ -223,8 +225,8 @@ U.pick = (() => {
     true,
   );
   /* PC：画面の大きさが変わったり、後ろをスクロールしたら閉じる（欄からずれるため） */
-  addEventListener("resize", () => cur && !U.sheetMode() && close());
-  document.addEventListener("scroll", e => cur && !U.sheetMode() && !(e.target.closest && e.target.closest("#pkPop")) && close(), true);
+  addEventListener("resize", () => cur && !U.sheetMode() && !U.popKeep("#pkPop") && close());
+  document.addEventListener("scroll", e => cur && !U.sheetMode() && !(e.target.closest && e.target.closest("#pkPop")) && !(U.TOUCH && document.activeElement && document.activeElement.closest && document.activeElement.closest("#pkPop")) && close(), true);
   api.close = close;
   api.isOpen = () => !!cur;
   return api;

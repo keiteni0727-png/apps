@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>プルダウンの案</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="../../shared/u-base.css">
+<style>
+  /* 案を並べて見せるためだけのページ（アプリには関係しない） */
+  body{font-family:var(--u-f);margin:0;padding:20px;background:#d9dde4}
+  .grid{display:flex;gap:22px;align-items:flex-start}
+  .case{width:360px;flex:none}
+  .case h2{font-size:var(--fs-l);margin:0 0 4px}
+  .case p{font-size:var(--fs-s);color:#4a5160;margin:0 0 10px;line-height:1.55;min-height:56px}
+  .phone{position:relative;width:360px;height:640px;border-radius:28px;overflow:hidden;background:var(--u-bg);box-shadow:0 8px 30px rgba(0,0,0,.18)}
+  .form{position:absolute;inset:14px 10px 0;background:var(--u-surface);border-radius:var(--r-l) var(--r-l) 0 0;padding:14px}
+  .form h3{margin:0 0 10px;font-size:var(--fs-xl)}
+  .ftbl{border:1px solid var(--u-line);border-radius:var(--r-m);overflow:hidden}
+  .fr{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-top:1px solid var(--u-line);font-size:var(--fs-base)}
+  .fr:first-child{border-top:0}
+  .fr b{width:76px;flex:none;font-size:var(--fs-s);color:var(--u-sub)}
+  .fr .v{flex:1}
+  .fr .cv{color:var(--u-sub)}
+  .fr.on{outline:2px solid var(--u-accent);outline-offset:-2px;border-radius:var(--r-m)}
+  .ph{color:var(--u-sub)}
+  .dim{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+  .row{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border-top:1px solid var(--u-soft);font-size:var(--fs-base)}
+  .row:first-child{border-top:0}
+  .row.on{background:var(--u-accent2);font-weight:700}
+  .row .ck{margin-left:auto;color:var(--u-acct)}
+  .row small{font-family:var(--u-num);color:var(--u-sub);font-size:var(--fs-xs)}
+  .row.none{color:var(--u-sub)}
+  /* A：いま（下から出るシート） */
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--u-surface);border-radius:18px 18px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,.15)}
+  .sh-h{display:flex;align-items:center;padding:14px 12px 8px 16px}
+  .sh-h b{flex:1;font-size:17px}
+  /* B：欄のすぐ下 */
+  .pop{position:absolute;left:96px;right:20px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--r-l);box-shadow:0 12px 32px rgba(16,24,40,.22);overflow:hidden}
+  /* C：画面いっぱい */
+  .full{position:absolute;inset:0;background:var(--u-surface)}
+  .full-h{display:flex;align-items:center;gap:6px;height:52px;padding:0 8px;border-bottom:1px solid var(--u-line)}
+  .full-h b{font-size:var(--fs-l)}
+  /* D：その場で札が広がる */
+  .inline{padding:8px 12px 12px;border-top:1px solid var(--u-line);background:var(--u-soft);display:flex;flex-wrap:wrap;gap:6px}
+  /* E：真ん中に出る */
+  .dlg{position:absolute;left:24px;right:24px;top:150px;background:var(--u-surface);border-radius:var(--r-l);box-shadow:var(--u-shadow);overflow:hidden}
+  .dlg-h{display:flex;align-items:center;padding:12px 10px 8px 16px}
+  .dlg-h b{flex:1;font-size:var(--fs-l)}
+  .tag{position:absolute;top:10px;right:14px;font:700 var(--fs-xs)/1 var(--u-f);background:var(--u-ink);color:var(--u-surface);padding:4px 8px;border-radius:var(--r-full)}
+</style>
+</head>
+<body>
+<div class="grid">
+
+<!-- A：いま -->
+<div class="case">
+  <h2>A. いまの形（下から出るシート）</h2>
+  <p>画面の下から一覧がせり上がる。どの欄でも同じ場所に出る。</p>
+  <div class="phone"><div class="form"><h3>作品を編集</h3>
+    <div class="ftbl"><div class="fr"><b>放送形態</b><span class="v">TV</span><span class="cv">⌄</span></div><div class="fr on"><b>放送局</b><span class="v ph">未選択</span><span class="cv">⌄</span></div><div class="fr"><b>配信サイト</b><span class="v">Netflix</span><span class="cv">⌄</span></div></div></div>
+    <div class="dim"></div>
+    <div class="sheet"><div class="sh-h"><b>放送局</b><span class="u-btn icon sm soft">✕</span></div>
+      <div class="row none">なし（放送局なし）</div><div class="row">フジテレビ</div><div class="row on">日本テレビ<span class="ck">✓</span></div><div class="row">テレビ朝日</div><div class="row">TBS</div><div class="row">テレビ東京</div><div class="row">TOKYO MX</div><div style="height:16px"></div></div>
+  </div>
+</div>
+
+<!-- B：欄のすぐ下 -->
+<div class="case">
+  <h2>B. 欄のすぐ下に小さく出す</h2>
+  <p>押した欄の真下に小さな一覧が出る（PCのいまの形をスマホでも）。後ろは暗くしないので、どの欄を選んでいるかが見えたまま。</p>
+  <div class="phone"><span class="tag">おすすめ</span><div class="form"><h3>作品を編集</h3>
+    <div class="ftbl"><div class="fr"><b>放送形態</b><span class="v">TV</span><span class="cv">⌄</span></div><div class="fr on"><b>放送局</b><span class="v ph">未選択</span><span class="cv">⌃</span></div><div class="fr"><b>配信サイト</b><span class="v">Netflix</span><span class="cv">⌄</span></div><div class="fr"><b>開始日</b><span class="v">2026/10/02</span></div><div class="fr"><b>放送時間</b><span class="v">23:00</span></div></div></div>
+    <div class="pop" style="top:162px"><div class="row none">なし（放送局なし）</div><div class="row">フジテレビ</div><div class="row on">日本テレビ<span class="ck">✓</span></div><div class="row">テレビ朝日</div><div class="row">TBS</div><div class="row">テレビ東京</div></div>
+  </div>
+</div>
+
+<!-- C：画面いっぱい -->
+<div class="case">
+  <h2>C. 画面いっぱいの選ぶ画面</h2>
+  <p>押すと選ぶ画面に切り替わり、‹ で戻る（iPhoneの設定アプリの形）。項目が多いシリーズでも見やすい。</p>
+  <div class="phone"><div class="full"><div class="full-h"><span class="u-btn icon sm txt">‹</span><b>放送局</b></div>
+    <div class="row none">なし（放送局なし）</div><div class="row">フジテレビ</div><div class="row on">日本テレビ<span class="ck">✓</span></div><div class="row">テレビ朝日</div><div class="row">TBS</div><div class="row">テレビ東京</div><div class="row">TOKYO MX</div><div class="row">NHK</div><div class="row">BS</div><div class="row">その他</div></div>
+  </div>
+</div>
+
+<!-- D：その場で札 -->
+<div class="case">
+  <h2>D. その場で札が広がる</h2>
+  <p>押した欄の下に、選択肢が札で並ぶ。重ねて出さないので画面が隠れない。選ぶと閉じる。選択肢が少ない欄向き。</p>
+  <div class="phone"><div class="form"><h3>作品を編集</h3>
+    <div class="ftbl"><div class="fr"><b>放送形態</b><span class="v">TV</span><span class="cv">⌄</span></div><div class="fr on"><b>放送局</b><span class="v ph">未選択</span><span class="cv">⌃</span></div>
+      <div class="inline"><span class="u-chip">なし</span><span class="u-chip">フジテレビ</span><span class="u-chip on">日本テレビ</span><span class="u-chip">テレビ朝日</span><span class="u-chip">TBS</span><span class="u-chip">テレビ東京</span><span class="u-chip">TOKYO MX</span><span class="u-chip">NHK</span><span class="u-chip">BS</span><span class="u-chip">その他</span></div>
+      <div class="fr"><b>配信サイト</b><span class="v">Netflix</span><span class="cv">⌄</span></div><div class="fr"><b>開始日</b><span class="v">2026/10/02</span></div></div></div>
+  </div>
+</div>
+
+<!-- E：真ん中 -->
+<div class="case">
+  <h2>E. 真ん中に出す</h2>
+  <p>画面の真ん中に小さな選ぶ窓が出る。指が届きやすい高さで、閉じるのは外を押すだけ。</p>
+  <div class="phone"><div class="form"><h3>作品を編集</h3>
+    <div class="ftbl"><div class="fr"><b>放送形態</b><span class="v">TV</span><span class="cv">⌄</span></div><div class="fr on"><b>放送局</b><span class="v ph">未選択</span><span class="cv">⌄</span></div><div class="fr"><b>配信サイト</b><span class="v">Netflix</span><span class="cv">⌄</span></div></div></div>
+    <div class="dim"></div>
+    <div class="dlg"><div class="dlg-h"><b>放送局</b><span class="u-btn icon sm soft">✕</span></div>
+      <div class="row none">なし（放送局なし）</div><div class="row">フジテレビ</div><div class="row on">日本テレビ<span class="ck">✓</span></div><div class="row">テレビ朝日</div><div class="row">TBS</div><div class="row">テレビ東京</div></div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

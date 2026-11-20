@@ -184,9 +184,9 @@ function onDDClick(e) {
   } else if (e.target.closest("[data-ddclose]")) closeDD(true);
   return true;
 }
-addEventListener("resize", () => ddOpen && !ddSheetMode() && closeDD());
+addEventListener("resize", () => ddOpen && !ddSheetMode() && !U.popKeep("#ddPop") && closeDD());
 document.addEventListener(
   "scroll",
-  e => ddOpen && !ddSheetMode() && !(e.target.closest && e.target.closest("#ddPop")) && closeDD(),
+  e => ddOpen && !ddSheetMode() && !(e.target.closest && e.target.closest("#ddPop")) && !(TOUCH && document.activeElement && document.activeElement.closest && document.activeElement.closest("#ddPop")) && closeDD(),
   true,
 );

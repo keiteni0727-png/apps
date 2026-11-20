@@ -67,6 +67,8 @@ const GROUPS = [
 const K_UI = "adb.v3.ui";
 /* 共通部品（shared/u-core.js）：端末に覚える設定・エスケープ */
 const ls = U.ls;
+/* プルダウンの一覧は、スマホでも下から出すシートにせず、押した欄のすぐ下に小さく出す（PCと同じ） */
+U.noSheet = true;
 const esc = U.esc;
 const $ = s => document.querySelector(s);
 /* クリックの割り当て表を上から順に試す。表は [目印のセレクタ, 処理(押した要素, 作品など, イベント)] の並び。
