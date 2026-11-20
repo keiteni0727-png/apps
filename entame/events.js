@@ -265,7 +265,14 @@ const CHANGE_ACTIONS = [
       if (!it) return false;
       const v = t.value.trim();
       if (v && !/^https?:\/\//.test(v)) return false;
-      if (v !== (it.wiki || "")) saveTitle(it.id, { wiki: v });
+      if (v !== (it.wiki || "")) saveTitle(it.id, { wiki: v }, v ? "WikipediaのURLを登録しました" : "WikipediaのURLを消しました");
+      /* 貼り付け画面は描き直さないので、リンクだけ直す */
+      const a = document.querySelector(".gwiki");
+      if (a) {
+        const n = { ...it, wiki: v };
+        a.href = wikiUrl(n);
+        a.textContent = wikiLabel(n);
+      }
     },
   ],
   /* 各話リストの貼り付け：日付も更新・ない話も追加 */
@@ -521,7 +528,9 @@ document.addEventListener("focusin", e => {
   if (!t || !g) return;
   g.sel = t.dataset.g.split(":").map(Number);
   document.querySelectorAll(".sgt td.sel").forEach(x => x.classList.remove("sel"));
+  document.querySelectorAll(".sgt tr.selrow").forEach(x => x.classList.remove("selrow"));
   t.parentElement.classList.add("sel");
+  t.closest("tr")?.classList.add("selrow");
 });
 /* 変換を確定した直後の時刻。Safari などは確定の Enter が「変換中ではない Enter」として届くので、その Enter を見分ける */
 let compEndAt = 0;

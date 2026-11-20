@@ -1915,11 +1915,16 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .gtool>button,.gseg button{border:1px solid var(--u-line);background:var(--u-surface);color:inherit;border-radius:var(--u-r);padding:5px 9px;font:inherit;cursor:pointer}
 .gtool>button.off{color:var(--u-sub)}
 .gtl{color:var(--u-sub)}
-.gseg{display:inline-flex}
+.gseg{display:flex;flex-basis:100%}
+.gseg button{flex:1;white-space:nowrap;font-size:11.5px;padding:6px 2px}
 .gseg button:first-child{border-radius:var(--u-r) 0 0 var(--u-r)}
 .gseg button:last-child{border-radius:0 var(--u-r) var(--u-r) 0;margin-left:-1px}
 .gseg button.on{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
-.gwiki{margin-left:auto;font-size:12px;color:var(--u-acct);text-decoration:none;font-weight:700;white-space:nowrap}
+.gwiki{font-size:12px;color:var(--u-acct);text-decoration:none;font-weight:700;white-space:nowrap}
 #spWiki{flex:1 1 180px;min-width:0;font-size:12.5px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);color:inherit}
 .gtool #spWiki{order:-1}
 .dd-row.dd-del .dd-l{color:var(--u-danger)}
+.gmode{row-gap:4px}
+.gex{flex-basis:100%;color:var(--u-sub);font-size:11.5px}
+.sgt tr.selrow td{background:var(--u-accent2)}
+.sgt tr.selrow td.sel{background:transparent}
