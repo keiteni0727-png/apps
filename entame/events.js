@@ -692,15 +692,16 @@ function navScroll(el) {
   if (r.top < top + pad) sc.scrollTop -= top + pad - r.top;
   else if (r.bottom > bot - pad) sc.scrollTop += r.bottom - (bot - pad);
 }
-/* 整形の表で i行目 j列目のマスへ移る（表の中だけスクロール） */
+/* 整形の表で i行目 j列目のマスへ移る（表の中だけスクロール。カーソルは文字の頭） */
 function gridGo(e, i, j) {
   const el = document.querySelector(`input[data-g="${i}:${j}"]`);
   if (!el) return e.preventDefault();
   e.preventDefault();
   el.focus({ preventScroll: true });
   el.scrollIntoView({ block: "nearest", inline: "nearest" });
+  /* カーソルは文字の頭に置く（そのまま打つと頭に入る。全部消したいときは Ctrl+A／⌘A） */
   try {
-    el.select();
+    el.setSelectionRange(0, 0);
   } catch (_) {}
 }
 /* 整形の表：Enter で下のマス（Shift+Enter で上） */
