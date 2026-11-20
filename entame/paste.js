@@ -259,7 +259,31 @@ const isDateCell = c => !!findDates(c).length && zen(c).replace(DATE_RE, "").rep
 /* 数字・記号だけのマス（視聴率「3.1%」・「-」など） */
 const SP_RE = /^(特別|総集|番外|未放送|SP|OVA|OAD|Extra)/i;
 const isNumCell = c => /^[\d０-９.．,%％\s\-－―‐]*$/.test(c);
+/* 放送一覧の形（チャンネル｜開始日時｜分｜回数｜サブタイトル…、次の行にフラグ・更新日）を、
+   「回数｜サブタイトル｜放送日｜チャンネル｜時刻｜分｜フラグ｜更新日」の1話1行に並べ直す。この形でなければ null。
+   放送日は一覧に書いてある日付のまま（25:20 のような深夜の時刻も前の日の日付） */
+const BC_RE = /^(\d{4})-(\d{2})-(\d{2})\s*[(（].[)）]\s*(\S*)/;
+function bcastTsv(text) {
+  const ls = String(text || "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .map(l => l.split("\t").map(c => gLink(c).trim()));
+  const isRec = r => r.length >= 5 && BC_RE.test(r[1] || "") && gNum(r[3]) != null;
+  if (ls.filter(isRec).length < 2) return null;
+  const out = [];
+  let cur = null;
+  ls.forEach(r => {
+    if (isRec(r)) {
+      const m = r[1].match(BC_RE);
+      out.push((cur = [r[3], r[4] || "", `${m[1]}-${m[2]}-${m[3]}`, r[0], m[4], r[2], ...r.slice(5)]));
+    } else if (/チャンネル/.test(r[0] || "") && r.join("").includes("回数")) out.push(["話数", "サブタイトル", "放送日", "チャンネル", "時刻", "分", "フラグ", "更新日"]);
+    else if (cur) cur.push(...r.filter(Boolean));
+    else if (r.some(Boolean)) out.push(r);
+  });
+  return out.map(r => r.join("\t")).join("\n");
+}
 function gridFrom(text, from, opt = {}) {
+  text = bcastTsv(text) ?? text;
   const raw = String(text || "")
     .replace(/\r/g, "")
     .split("\n")
