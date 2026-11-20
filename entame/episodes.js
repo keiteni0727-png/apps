@@ -152,8 +152,7 @@ function epOneHtml(it, e, i) {
     ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <span class="e1-dt"><input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><input class="e1-tm" type="text" inputmode="numeric" autocomplete="off" placeholder="24:30" value="${j && !e.nt ? j.hm : ""}" aria-label="放送時刻（例：24:30）"></span>
-    <label class="e1-x"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話（配信にない総集編など）</span></label>
-    <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
+    <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><label class="e1-x" title="配信にない総集編など。視聴チェックの対象にしない"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話</span></label><button type="button" class="u-btn sm" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
 }
 const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
 /* 話数の入力欄：1つの文字の欄。数字（「3」「第3話」など）なら「3話」、それ以外（SP・総集編など）は書いたとおりの名前にする（parseEpIn）
@@ -172,8 +171,8 @@ function epEditorHtml(it) {
   /* 上の操作：貼り付け・1話追加・その他（まとめて追加・日付・並べ替え） */
   const more = erMore
     ? `<div class="edmore">
-      <div class="edm-r"><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${n ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><span>話</span><button type="button" id="erBulkGo">追加</button></div>
-      ${n ? `<button type="button" id="erWeekly" title="日付が空いている話に、前の話の1週間後の日付を入れます">空いた日付を1週間おきに埋める</button>` : ""}
+      <div class="edm-r"><span>まとめて</span><input id="erBulk" type="number" min="1" max="200" value="${n ? 4 : 12}" inputmode="numeric" aria-label="追加する話数"><span>話</span><button type="button" class="u-btn sm" id="erBulkGo">追加</button></div>
+      ${n > 1 ? `<button type="button" class="u-btn sm" id="erAlign" title="一挙配信の作品などで、全話の放送日時を1話と同じにします">全話を1話と同じ日付にする</button>` : ""}
     </div>`
     : "";
   const top = `<div class="edtop">${A ? `<button type="button" class="u-btn sm pri edpri" id="spOpen">各話リストを貼り付け</button>` : ""}<button type="button" class="u-btn sm" id="erAdd">＋ 1話追加</button><button type="button" class="u-btn sm edmb" id="erMore" aria-expanded="${erMore}">その他 ${erMore ? "▴" : "▾"}</button></div>${more}`;
@@ -355,25 +354,19 @@ const EPEDIT_ACTIONS = [
     },
   ],
   /* 日付のない話を、前の日付のある話から1週間おきに埋める（最初の話に日付がなければ開始日から） */
+  /* 全話を1話と同じ日付にする（1話の放送日時をそのまま全話にコピー。一挙配信の作品など） */
   [
-    "#erWeekly",
-    (el, it) => {
+    "#erAlign",
+    () => {
       const l = epEdit.list;
-      let prev = null,
-        n = 0;
-      l.forEach((x, k) => {
-        if (x.t) return void (prev = x);
-        let t = 0;
-        if (prev) t = prev.t + WEEK;
-        else if (!k && it.from) t = dayTimeToT(normDate(it.from), hasTime(it) ? it.time : "9:00");
-        if (!t) return;
-        x.t = t;
-        x.nt = prev ? prev.nt : !hasTime(it);
-        x.moved = true;
-        prev = x;
-        n++;
+      const f = l[0];
+      if (!f || !f.t) return toast("先に1話の日付を入れてください");
+      l.forEach(x => {
+        x.moved = x !== f && (x.t !== f.t || !!x.nt !== !!f.nt);
+        x.t = f.t;
+        x.nt = !!f.nt;
       });
-      toast(n ? `${n}話に日付を入れました` : "埋める話がありません（1話か開始日の日付が必要です）");
+      toast(`全話を1話と同じ日付にしました（${l.length}話）。「話数を保存」で保存されます`);
       refreshEditor();
     },
   ],
