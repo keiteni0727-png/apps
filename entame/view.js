@@ -583,6 +583,20 @@ function groupedHtml(list) {
     (rest ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${rest}件）</button>` : "")
   );
 }
+/* シリーズの一覧（xser）に並ぶ作品のid（閉じている見出し・件数の上限も外した、画面と同じ順）。xser でなければ null */
+function xserAllIds() {
+  if (!(state.xser && state.series.length && state.mode !== "w" && state.mode !== "yt")) return null;
+  const col = [...collapsed],
+    lim = state.limit;
+  collapsed.clear();
+  state.limit = Infinity;
+  try {
+    return [...groupedHtml(filtered()).matchAll(/data-id="([^"]+)"/g)].map(m => m[1]);
+  } finally {
+    col.forEach(k => collapsed.add(k));
+    state.limit = lim;
+  }
+}
 function renderList() {
   const list = filtered();
   const sortHtml = sortSteps([

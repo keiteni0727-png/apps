@@ -156,7 +156,7 @@ function formHtml() {
       noSched(f.media)
         ? ""
         : `<div class="field full"><span>放送クール</span>
-        <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="u-chip tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未選択</span>` : ""}
+        <div class="cours" id="coursBox"><div class="cours-l">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="u-chip tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未選択</span>` : ""}
           ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="u-chip add sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}</button>` : ""}
           ${(() => {
             /* 2クール目以降：選んだ最後のクールの次をワンタップで */
@@ -167,7 +167,8 @@ function formHtml() {
             return f.cours.includes(nx) ? "" : `<button type="button" class="u-chip add sugbtn" data-courkey="${nx}">＋ ${courLabel(nx)}</button>`;
           })()}
           <button type="button" class="u-chip ${f.cours.includes(ALLYEAR) ? "on" : "add"} sugbtn" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
-          <button type="button" class="u-chip fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
+          </div>
+          <button type="button" class="fdd cour-dd" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}" aria-label="ほかのクールを選ぶ">${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="sgins"><button type="button" class="u-chip add sgadd" data-sgadd="挿入歌">＋ 挿入歌を追加</button></div>` : ""}
