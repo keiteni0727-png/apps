@@ -159,8 +159,8 @@ function contCours(i) {
 }
 /* ライブラリの1行 */
 function slotRow(i) {
-  return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
-    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || (state.xser && state.series.length) ? kindTag(i) : ""}</span>
+  return `<div class="row${i.s === "視聴済み" ? " done" : ""} lst thr ls-${esc(i.s || "none")}"><button class="slot" type="button" data-id="${i.id}">
+    <span class="time">${i.from ? `${+i.from.slice(5, 7)}/${+i.from.slice(8, 10)}` : "—"}${mediaTag(i)}${curKind() === "all" || (state.xser && state.series.length) ? kindTag(i) : ""}</span>${thumbHtml(i)}
     <span class="ttl"><strong>${esc(i.t)}</strong><span class="meta"><span class="pmob">${stPill(i)}</span>${libLabels(i)}${missBadge(i)}</span></span>
     <span class="pwide">${stPill(i)}</span></button></div>`;
 }
