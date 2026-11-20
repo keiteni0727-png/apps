@@ -1,15 +1,16 @@
 /* ===================== 確認用：保存先のかわり（メモリの中だけ） =====================
    ログインもFirebaseも使わずに、アプリをサンプルデータで動かすためのもの。本番のデータには一切つながらない。
-   u-core.js の直後に読み込み、U.store を差しかえる。中身は window.PREVIEW_DATA（{titles, progress, master, yt}）。
+   u-core.js の直後に読み込み、U.store を差しかえる。中身は window.PREVIEW_DATA（{コレクションのパス: {ドキュメントID: 中身}}）。
    書きこみはメモリの中だけで、ページを開き直すと元に戻る。 */
 (() => {
   const D = window.PREVIEW_DATA || {};
+  /* cols＝{コレクションのパス: Map(ドキュメントID → 中身)}。パスは「titles」「data/users/preview」のように何段でもよい */
   const cols = {};
-  ["titles", "progress", "master", "yt"].forEach(k => (cols[k] = new Map(Object.entries(D[k] || {}))));
+  Object.entries(D).forEach(([k, v]) => (cols[k] = new Map(Object.entries(v || {}))));
   const subs = {};
   const clone = v => (v === undefined ? v : JSON.parse(JSON.stringify(v)));
   const split = path => {
-    const i = path.indexOf("/");
+    const i = path.lastIndexOf("/");
     return [path.slice(0, i), path.slice(i + 1)];
   };
   const snapDoc = (id, v) => ({ id, exists: v !== undefined, data: () => clone(v) });
