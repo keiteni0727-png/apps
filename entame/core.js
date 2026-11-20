@@ -858,4 +858,9 @@ const epNum = n => {
   return m ? +m[0] : null;
 };
 const epLab = v => `${+v}話`;
+/* 話数の欄に入れた文字：数字（「3」「第3話」「３話」など）は「3話」、それ以外は書いたとおりの名前（SP・総集編など） */
+const parseEpIn = t => {
+  const v = epVal(String(t).trim());
+  return v ? { n: epLab(v), sp: false } : { n: String(t).trim(), sp: true };
+};
 /* 折りたたみの印（FOLD_IC）と並び替え（GRIP／SORT_DONE）は、ほかのアプリと共通で shared/u-core.js にある */

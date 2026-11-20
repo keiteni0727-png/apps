@@ -99,8 +99,6 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
     .sheet{animation:none}
   }
 }
-.epset{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
-.epset button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700}
 .loading{padding:60px 16px;text-align:center;color:var(--u-sub)}
 /* 未視聴あり・未入力ありのスイッチ */
 
@@ -343,8 +341,6 @@ html,body{overscroll-behavior:none}
         .sheet:not(.form) h4{font-size:12.5px;margin:14px 0 6px}
   .sheet:not(.form) .editbtn{padding:4px 10px;font-size:12px}
   .sheet:not(.form) .close{width:30px;height:30px;font-size:13px}
-          .sheet:not(.form) .epset{gap:6px;margin-bottom:8px}
-      .sheet:not(.form) .prog{margin-bottom:8px}
   .sheet:not(.form) .links{margin-top:10px;padding-bottom:12px}
               .ttl .meta{margin-top:2px;gap:3px}
     .ttl .lab{font-size:9.5px;line-height:1.45}
@@ -378,8 +374,6 @@ html,body{overscroll-behavior:none}
 /* 話数の編集 */
 .eped{border:1px solid var(--u-line);border-radius:10px;overflow:hidden}
 .er:first-child{border-top:0}
-.er input{min-width:0;width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:6px;padding:6px 7px;font:inherit;font-size:13.5px}
-.er .del{border:0;background:transparent;color:var(--u-sub);font-size:15px}
 .er.moved .er-d{border-color:var(--accent)}
 .dtx{font-family:var(--u-num);letter-spacing:.02em}
 .dtw{display:flex;gap:6px;align-items:stretch;position:relative}
@@ -393,9 +387,6 @@ html,body{overscroll-behavior:none}
 input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;display:block;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left}
 .field input[type=date]{min-height:calc(1.5em + 18px)}
-.edfoot{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.edfoot input{width:64px;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:8px;padding:7px 8px;font:inherit;font-size:14px}
-.edfoot button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700}
 /* 放送クールの選択 */
 .cours .tag{border:0;background:var(--u-chip);border-radius:999px;padding:5px 10px;font-size:13px;font-weight:700}
 .cours .tag::after{content:" ✕";color:var(--u-sub);font-weight:400}
@@ -409,7 +400,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .slots,.banner,.fsdrop,.fsec,.spaste,.eps,.eped{border-radius:var(--u-rl)}
 .ftools input,.field input,.field select{border-radius:var(--u-r)}
 /* ボタンの角丸をそろえる */
-.epset button,.edfoot button,.sernew button{border-radius:var(--u-r)}
+.sernew button{border-radius:var(--u-r)}
 /* サブタイトル入力の小さな画面 */
 .spop-scrim{position:fixed;inset:0;z-index:40;background:var(--u-scrim)}
 .spop{position:fixed;z-index:41;left:50%;top:38%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 40px));background:var(--u-surface);border-radius:var(--u-rl);box-shadow:var(--u-shadow);padding:16px}
@@ -524,8 +515,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
   .sheet:not(.form) .dp-ep>h4{font-size:12.5px}
   .sheet:not(.form) dl{grid-template-columns:84px 1fr;gap:10px 8px;font-size:13px}
   .sheet:not(.form) dt{font-size:12.5px}
-  .sheet:not(.form) .epset button{padding:7px 12px;font-size:12.5px}
-  .sheet:not(.form) .epset>button{flex:1}
   .sheet:not(.form) .ep{gap:8px;grid-template-columns:24px 46px 1fr auto;padding:10px 12px;font-size:13px}
   .sheet:not(.form) .ep .epd{font-size:11.5px}
 }
@@ -799,20 +788,9 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .e1-b .e1-del.arm{background:var(--u-danger);border-color:var(--u-danger);color:#fff}
 .e1{background:var(--u-chip)}
 @media (max-width:560px){
-  .e1{grid-template-columns:96px 1fr}
-  .e1 .e1-s{grid-column:1/-1;grid-row:2}
   .e1 input{font-size:13px}
 }
-.edtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.edtop button{border:1px solid var(--u-line);background:var(--u-bg);border-radius:var(--u-r);padding:8px 12px;font-size:13px;font-weight:700}
-/* スマホ：話数の上の4つのボタンを1段に収める */
-@media (max-width:560px){
-  .sheet:not(.form) .epset{flex-wrap:nowrap}
-  .sheet:not(.form) .epset>button{flex:1 1 auto;white-space:nowrap;padding:7px 6px;font-size:12px}
-  .epset .epx{display:none}
-}
 @media (max-width:360px){
-  .sheet:not(.form) .epset{flex-wrap:wrap}
   .epe{padding:0 8px;min-width:30px}
 }
 /* ---------- 視聴記録 ---------- */
@@ -1296,7 +1274,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .archd{display:flex;gap:8px;width:100%;border:0;border-top:1px solid var(--u-line);text-align:left;padding:9px 12px;font:inherit;color:var(--u-ink);background:var(--u-soft);align-items:center;min-height:44px}
 .archd .arcnm{font-size:13.5px;min-width:0;font-weight:900}
 .archd.done .arcct{color:var(--u-acct);font-weight:700}
-.prog{margin-bottom:10px;height:6px;border-radius:3px;background:var(--u-soft);overflow:hidden}
 .prog i{display:block;height:100%;background:var(--u-accent)}
 .sheet.t-info .dtabs [data-dtab="info"],.sheet.t-ep .dtabs [data-dtab="ep"]{color:var(--u-ink);border-bottom-color:var(--u-accent)}
 
@@ -1655,25 +1632,14 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .eps.nosub .ep .epm>*{white-space:nowrap}
 .eps.nosub .ep .epm>:first-child{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .eps.nosub .ep .eps-sub{font-size:13.5px;font-variant-numeric:tabular-nums}
-/* 話数の編集：日付の枠は日付がちょうど入る幅に。ドラマは［話数］［日付］［✕］を1行に */
-/* 話数の編集の行：⠿・話数・サブタイトル・日付・✕（スマホはサブタイトルを2段目に） */
-.er{display:grid;gap:6px;align-items:start;padding:6px 8px 6px 4px;border-top:1px solid var(--u-line);grid-template-columns:24px 104px 1fr 108px 30px}
-.er .mgrip{width:24px;height:34px;margin:0}
-.er .er-d,.e1 .e1-d{width:108px;justify-self:start}
-.er .del{align-self:start;height:34px}
-.eped.nosub .er{grid-template-columns:24px 104px 108px 1fr 30px}
-.eped.nosub .er .del{grid-column:5}
-.e1{gap:6px;padding:8px 10px;grid-template-columns:104px 1fr 108px}
-.e1.nosub{grid-template-columns:104px 108px 1fr}
+/* 1話だけ編集（話数タブの中） */
+.e1{gap:6px;padding:8px 10px;grid-template-columns:72px 1fr 108px}
+.e1 .e1-d{width:108px;justify-self:start}
+.e1.nosub{grid-template-columns:72px 108px 1fr}
 @media (max-width:520px){
-  .er,.eped.nosub .er{grid-template-columns:24px 96px 1fr 30px}
-  .er .er-s{grid-column:2/-1;grid-row:2}
-  .er .er-d{grid-column:3;grid-row:1;width:100%}
-  .er .del{grid-column:4;grid-row:1;justify-self:end}
-  .e1{grid-template-columns:96px 108px 1fr}
+  .e1{grid-template-columns:72px 108px 1fr}
   .e1 .e1-s{grid-column:1/-1;grid-row:2}
 }
-.edr{margin-left:auto;display:inline-flex;flex-wrap:wrap;gap:6px}
 /* スマホの絞り込み：開いた選択肢は内側でスクロールさせず、シート全体のスクロールで最後まで見られるようにする */
 @media (max-width:899px){
   .fsh.subopen .fsh-subb{flex:1;min-height:0;padding-bottom:4px;max-height:none;overflow:visible;overscroll-behavior:auto}
@@ -1717,11 +1683,6 @@ span.mname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space
 .tl.seen .tlt{color:var(--u-sub);font-weight:500}
 .tl.future{opacity:.7}
 .tl .epe{align-self:center}
-/* 話数の欄の「文字で入力」チェック（欄の下） */
-.epnw{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0}
-.epnw>input{min-width:0}
-.epspk{flex:none;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--u-sub);white-space:nowrap;cursor:pointer}
-.er .epspk input,.e1 .epspk input{margin:0;padding:0;width:15px;height:15px;flex:none;border:0;accent-color:var(--u-accent)}
 /* 話数リストのアラート：要確認の話を赤で示す */
 .tln.tlbad{color:var(--u-danger)}
 .tl.unseen .tln.tlbad{color:var(--u-danger)}
@@ -1931,3 +1892,46 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .xlinks{display:flex;gap:12px;align-items:center}
 .xlinks a{color:var(--u-sub);font-size:12px;text-decoration:none;opacity:.75;padding:6px 0}
 @media (hover:hover){.xlinks a:hover{opacity:1;color:var(--u-ink)}}
+
+/* ===== 話数タブ：上の段（進み具合のバー・話数を編集・…） ===== */
+.ephead{position:relative;display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.ephead .prog{flex:1;margin:0;height:6px;border-radius:3px;background:var(--u-soft);overflow:hidden}
+.ephb{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.ephb.pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on);padding:8px 16px}
+.ephm{padding:6px 10px;letter-spacing:1px}
+.epmenu{position:absolute;right:0;top:calc(100% + 4px);z-index:5;display:flex;flex-direction:column;width:max-content;max-width:100%;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);box-shadow:var(--u-shadow);overflow:hidden}
+.epmenu button{border:0;border-top:1px solid var(--u-line);background:transparent;color:var(--u-ink);font:inherit;font-size:13px;text-align:left;padding:10px 14px;cursor:pointer}
+.epmenu button:first-child{border-top:0}
+@media (hover:hover){.epmenu button:hover{background:var(--u-soft)}}
+.epwarn{padding:6px 10px;font-size:12.5px;gap:8px}
+/* ===== 話数の編集：上の操作（貼り付け・1話追加・その他）と、1話1行の表 ===== */
+.edtop{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.edtop button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);padding:7px 11px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.edtop .edpri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.edtop .edmb{margin-left:auto;font-weight:500;color:var(--u-sub)}
+.edmore{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px;padding:10px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-soft);font-size:12.5px}
+.edmore button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);padding:6px 10px;font:inherit;font-size:12.5px;text-align:left;cursor:pointer}
+.edm-r{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.edm-r span{color:var(--u-sub)}
+.edm-r button{text-align:center}
+#erBulk{width:56px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);padding:5px 7px;font:inherit;font-size:13px}
+.erh,.er{display:grid;gap:6px;align-items:center;grid-template-columns:18px 56px minmax(0,1fr) 104px 26px}
+.erh.nosub,.eped.nosub .er{grid-template-columns:18px 72px 120px minmax(0,1fr) 26px}
+.eped.nosub .er .del{grid-column:5}
+.erh{padding:0 7px 4px;font-size:11px;color:var(--u-sub)}
+.er{padding:4px 6px;border-top:1px solid var(--u-line)}
+.er .mgrip{width:18px;height:30px;margin:0}
+.er input{min-width:0;width:100%;border:1px solid transparent;background:transparent;color:var(--u-ink);border-radius:6px;padding:5px 6px;font:inherit;font-size:13.5px}
+.er input:focus{border-color:var(--u-accent);background:var(--u-surface);outline:0}
+@media (hover:hover){.er input:hover{border-color:var(--u-line)}}
+.er .er-n{font-weight:700;font-variant-numeric:tabular-nums}
+.er .er-d{font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--u-sub)}
+.er .del{border:0;background:transparent;color:var(--u-sub);font-size:13px;height:30px;padding:0;cursor:pointer;opacity:.6}
+.er .er-s:placeholder-shown{border-color:color-mix(in srgb,var(--u-line) 70%,transparent)}
+@media (max-width:520px){
+  .erh,.er{grid-template-columns:16px 40px minmax(0,1fr) 84px 22px;gap:4px}
+  .erh.nosub,.eped.nosub .er{grid-template-columns:16px 60px 96px minmax(0,1fr) 22px}
+  .er input{font-size:13px;padding:5px 4px}
+  .er .er-d{font-size:11.5px}
+  .edtop button{padding:7px 9px;font-size:12px}
+}
