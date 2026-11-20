@@ -302,12 +302,12 @@ function schedText() {
 const ONLY_A = {
   fSeries: ["シリーズ", ["series"]],
   "f-time": ["放送時間", ["time"]],
-  fMedia: ["放送局・配信", ["media"]],
+  fMedia: ["放送局・配信", ["media", "vurl"]],
   "f-from": ["放送日", ["from"]],
   coursBox: ["放送クール", ["cours"]],
   sgList: ["OP・ED・主題歌", ["songs"]],
   relb: ["関連放送", ["relb"]],
-  onair: ["基本情報", ["media", "from", "time", "cours", "series", "url", "vurl"]],
+  onair: ["基本情報", ["media", "vurl", "from", "time", "cours", "series", "url", "syoboi"]],
   "f-url": ["公式サイト", ["url"]],
   "f-vurl": ["配信サイトURL", ["vurl"]],
 };
@@ -381,7 +381,14 @@ function formHtml() {
         ${dtField("f-rbf", "放送開始", f.rbF)}${dtField("f-rbto", "放送終了", f.rbTo)}
         <div class="field full"><span>主題歌</span><div class="sglist" id="sgList">${songRowsHtml()}</div></div>`,
     url: `<div class="field full"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
-    vurl: `<div class="field full"><label class="field" for="f-vurl"><span>配信URL</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`,
+    /* 配信URL：配信サイトを選んだときだけ出す（選んだサイトが1つならその名前を見出しに） */
+    vurl: (() => {
+      const sites = f.media === "stream" ? f.plat : f.vods;
+      if (!sites.length && f.only !== "f-vurl") return "";
+      return `<div class="field full"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.netflix.com/title/…" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
+    })(),
+    /* しょぼいカレンダーの作品ページ（アニメだけ。各話リストの貼り付け画面の欄と同じ） */
+    syoboi: f.k === "a" ? `<div class="field full"><label class="field" for="f-syoboi"><span>しょぼいカレンダー</span></label><input id="f-syoboi" type="url" inputmode="url" autocomplete="off" placeholder="https://cal.syoboi.jp/tid/…" value="${esc(f.syoboi || "")}"></div>` : "",
   };
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
@@ -393,10 +400,9 @@ function formHtml() {
   }
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
-    ${sec("基本情報", P.title + P.kind + P.status + P.series)}
-    ${sec("放送", P.media + P.from + P.time + P.cours)}
+    ${sec("基本情報", P.title + P.kind + P.status + P.series + P.url + P.syoboi)}
+    ${sec("放送", P.media + P.vurl + P.from + P.time + P.cours)}
     ${sec("OP・ED・主題歌", P.songs, "", sgNoneBox())}
-    ${sec("リンク", P.url + P.vurl)}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -420,6 +426,7 @@ function readForm() {
   if ($("#f-from")) form.from = normDate($("#f-from").value) || "";
   v("#f-url", "url");
   v("#f-vurl", "vurl");
+  v("#f-syoboi", "syoboi");
   v("#f-rbt", "rbT");
   if ($("#f-rbf")) form.rbF = normDate($("#f-rbf").value) || "";
   if ($("#f-rbto")) form.rbTo = normDate($("#f-rbto").value) || "";
@@ -509,6 +516,7 @@ function openForm(it, target, el) {
       series: it.series || "",
       url: it.url || "",
       vurl: it.vurl || "",
+      syoboi: it.syoboi || "",
       cours: [...coursOf(it)],
       cy: yearOf(it) || y,
     };
@@ -530,6 +538,7 @@ function openForm(it, target, el) {
       series: state.series.length === 1 ? state.series[0] : "",
       url: "",
       vurl: "",
+      syoboi: "",
       cours: [],
       cy: y,
     };
@@ -643,6 +652,7 @@ function buildPatch(f) {
     series: (f.series || "").trim(),
     url: (f.url || "").trim(),
     vurl: normVurl(f.vurl),
+    ...(f.k === "a" ? { syoboi: (f.syoboi || "").trim() } : {}),
   };
   /* 入力した項目の「なし」は自動で外す */
   /* 「なし」にした項目は入力欄を隠しているので、残っている値は消して「なし」を優先 */

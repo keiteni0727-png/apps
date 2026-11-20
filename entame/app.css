@@ -1936,3 +1936,5 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .sylink{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 8px;font-size:12.5px}
 .sylink .syb{color:var(--u-acct);font-weight:700;text-decoration:none;white-space:nowrap}
 #spSyoboi{flex:1 1 200px;min-width:0;font-size:12.5px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);color:inherit}
+/* 作品の編集：URLの欄は小さめに */
+.field input[type=url]{font-size:13px;padding:6px 9px}
