@@ -151,8 +151,7 @@ function epOneHtml(it, e, i) {
   return `<div class="epw e1${A ? "" : " nosub"}${e.w ? " seen" : ""}" role="listitem" data-e1="${i}">
     ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
-    <span class="e1-dt"><input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><input class="e1-tm" type="text" inputmode="numeric" autocomplete="off" placeholder="24:30" value="${j && !e.nt ? j.hm : ""}" aria-label="放送時刻（例：24:30）"></span>
-    ${i === 0 && episodes(it).length > 1 ? `<small class="e1-note">時刻は全話に反映</small>` : ""}
+    <span class="e1-dt"><input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><input class="e1-tm" type="text" inputmode="numeric" autocomplete="off" placeholder="24:30" value="${j && !e.nt ? j.hm : ""}" aria-label="放送時刻（例：24:30）">${i === 0 && episodes(it).length > 1 ? `<small class="e1-note">時刻は全話に反映</small>` : ""}</span>
     <label class="e1-x"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話（配信にない総集編など）</span></label>
     <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><button type="button" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
 }

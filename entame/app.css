@@ -1766,4 +1766,4 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 }
 /* 1話だけ編集：放送日と時刻を1つのまとまりに（時刻は右に短く） */
 .e1-dt{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:6px;min-width:0}
-.e1-note{grid-column:1/-1;font-size:var(--fs-xs);color:var(--u-sub);text-align:right;margin-top:-2px}
+.e1-note{grid-column:1/-1;font-size:var(--fs-xs);color:var(--u-sub);text-align:right;white-space:nowrap;margin-top:-3px;line-height:1.2}
