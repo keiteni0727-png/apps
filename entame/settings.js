@@ -63,7 +63,7 @@ function seriesSettingsHtml() {
       }
       ${setEdit ? `<button type="button" class="kind ${smap[n] === "a" ? "a" : "d"} kindsw" data-sermain="${esc(n)}" aria-label="ジャンルを切り替え">${smap[n] === "a" ? "アニメ" : "ドラマ"} ⇄</button>` : `<span class="kind ${smap[n] === "a" ? "a" : "d"}">${smap[n] === "a" ? "アニメ" : "ドラマ"}</span>`}
       <small class="mcnt">${c}作品</small>
-      ${setEdit ? `<button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button>` : ""}</div>`;
+      ${setEdit ? `<button type="button" class="u-btn sm txt danger delsm${setDel === n ? " pri armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (c ? `${c}件から外して削除` : "もう一度で削除") : "削除"}</button>` : ""}</div>`;
             })
             .join("")
         : `<p class="hint" style="padding:10px">${q ? "一致するシリーズはありません" : "まだありません"}</p>`
@@ -83,7 +83,7 @@ function masterListHtml() {
       ${GRIP("master")}
       ${setRen === n ? `<input class="mren" data-mold="${esc(n)}" value="${esc(n)}" autocomplete="off" aria-label="新しい名前">` : setEdit ? `<button type="button" class="mname ed" data-mrename="${esc(n)}" aria-label="${esc(n)}の名前を変更">${esc(n)}</button>` : `<span class="mname">${esc(n)}</span>`}
       <small class="mcnt">${cnt[n] || 0}${unit}</small>
-      ${setEdit ? `<button type="button" class="delsm${setDel === n ? " armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button>` : ""}</div>`,
+      ${setEdit ? `<button type="button" class="u-btn sm txt danger delsm${setDel === n ? " pri armed" : ""}" data-mdel="${esc(n)}">${setDel === n ? (cnt[n] ? `${cnt[n]}件から外して削除` : "もう一度押すと削除") : "削除"}</button>` : ""}</div>`,
             )
             .join("")
         : `<p class="hint">まだありません</p>`
@@ -111,7 +111,7 @@ function settingsHtml() {
   const th = U.theme();
   if (setPage) {
     const isM = MKEYS.some(([k]) => k === setPage);
-    const head = `<div class="hdrow sethd"><button type="button" class="setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3>${isM ? `<button type="button" class="u-btn sm setedit${setEdit ? " pri" : ""}" data-setedit="1">${setEdit ? "完了" : "編集"}</button>` : ""}<button class="close" type="button" data-close aria-label="閉じる">✕</button></div>`;
+    const head = `<div class="hdrow sethd"><button type="button" class="u-btn icon sm txt setback" data-setpg="" aria-label="設定に戻る"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><h3>${esc(SET_TITLE[setPage] || "設定")}</h3>${isM ? `<button type="button" class="u-btn sm setedit${setEdit ? " pri" : ""}" data-setedit="1">${setEdit ? "完了" : "編集"}</button>` : ""}<button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>`;
     if (setPage === "bk") return head + backupHtml();
     if (setPage === "trash") return head + trashHtml();
     const ser = setPage === "series";
@@ -120,9 +120,9 @@ function settingsHtml() {
   }
   const row = (k, lab, val, attr = `data-setpg="${k}"`) => `<button type="button" class="setrow" ${attr}>${setIc(k)}<span class="setl">${lab}</span><span class="setv">${val}</span><svg class="setcv" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>`;
   const tl = trashList().length;
-  return `<div class="hdrow"><h3>設定</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
+  return `<div class="hdrow"><h3>設定</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
     <div class="setsec">表示</div>
-    <div class="setgrp"><div class="setrow static">${setIc("theme")}<span class="setl">テーマ</span><div class="hseg3 setthm3" role="radiogroup" aria-label="テーマ">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" role="radio" data-setthm="${v}" aria-selected="${th === v}" aria-checked="${th === v}">${l}</button>`).join("")}</div></div></div>
+    <div class="setgrp"><div class="setrow static">${setIc("theme")}<span class="setl">テーマ</span><div class="u-seg hseg3 setthm3" role="radiogroup" aria-label="テーマ">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" role="radio" data-setthm="${v}" aria-selected="${th === v}" aria-checked="${th === v}">${l}</button>`).join("")}</div></div></div>
     <div class="setsec">選択肢の管理</div>
     <div class="setgrp">${MKEYS.map(([k, l]) => row(k, l, M(k).length)).join("")}</div>
     <div class="setsec">データ</div>
@@ -149,10 +149,10 @@ function trashHtml() {
       d = new Date(x.at),
       left = Math.max(1, Math.ceil((x.at + TRASH_DAYS * 864e5 - Date.now()) / 864e5)),
       arm = trashArm === key;
-    return `<div class="trrow"><span class="trk">${x.tag}</span><span class="trt"><b>${esc(x.t)}</b><small>${d.getMonth() + 1}/${d.getDate()} に削除・あと${left}日で完全に削除</small></span><span class="trb"><button type="button" class="u-btn sm" data-trback="${esc(key)}">戻す</button><button type="button" class="u-btn sm ghost${arm ? " armed" : ""}" data-trdel="${esc(key)}">${arm ? "もう一度押すと完全に削除" : "完全に削除"}</button></span></div>`;
+    return `<div class="trrow"><span class="trk">${x.tag}</span><span class="trt"><b>${esc(x.t)}</b><small>${d.getMonth() + 1}/${d.getDate()} に削除・あと${left}日で完全に削除</small></span><span class="trb"><button type="button" class="u-btn sm" data-trback="${esc(key)}">戻す</button><button type="button" class="u-btn sm${arm ? " armed" : ""}" data-trdel="${esc(key)}">${arm ? "もう一度押すと完全に削除" : "完全に削除"}</button></span></div>`;
   };
   return `<div class="bkbox bkdata trash"><div class="bkhd"><b>ゴミ箱</b><span class="trn">${l.length ? `${l.length}件` : "空です"}</span>${
-    l.length ? `<span class="bkrow"><button type="button" class="u-btn sm ghost" data-trtog="1" aria-expanded="${trashOpen}">${trashOpen ? "閉じる" : "中を見る"}${FOLD_IC}</button></span>` : ""
+    l.length ? `<span class="bkrow"><button type="button" class="u-btn sm" data-trtog="1" aria-expanded="${trashOpen}">${trashOpen ? "閉じる" : "中を見る"}${FOLD_IC}</button></span>` : ""
   }</div>
     <p class="hint">${TRASH_DAYS}日間はここから戻せます</p>
     ${trashOpen && l.length ? `<div class="trlist">${l.map(row).join("")}</div>` : ""}</div>`;
@@ -181,11 +181,11 @@ const BK_COLS = [
 function backupHtml() {
   const p = bkPending;
   const cnt = d => BK_COLS.map(([k, l]) => `${l} ${Object.keys(d[k] || {}).length}件`).join("・");
-  return `<div class="bkbox bkdata"><div class="bkhd"><b>データのバックアップ</b><span class="bkrow"><button type="button" class="u-btn sm" data-bkout="1">ファイルに書き出す</button><label class="u-btn sm ghost bkin">ファイルから戻す<input type="file" id="bkFile" accept="application/json,.json" hidden></label></span></div>
+  return `<div class="bkbox bkdata"><div class="bkhd"><b>データのバックアップ</b><span class="bkrow"><button type="button" class="u-btn sm" data-bkout="1">ファイルに書き出す</button><label class="u-btn sm bkin">ファイルから戻す<input type="file" id="bkFile" accept="application/json,.json" hidden></label></span></div>
     
     ${
       p
-        ? `<div class="bkconf"><p><b>${esc(p.name)}</b>（${esc(p.at)}）<br>${cnt(p.data)}</p><p class="hint">ファイルにある作品などを、ファイルの内容で上書きします。ファイルにない作品はそのまま残ります。</p><div class="bkrow"><button type="button" class="u-btn sm ghost" data-bkcancel="1">やめる</button><button type="button" class="u-btn sm pri${bkArm ? " armed" : ""}" data-bkgo="1">${bkArm ? "もう一度押すと戻す" : "このファイルで戻す"}</button></div></div>`
+        ? `<div class="bkconf"><p><b>${esc(p.name)}</b>（${esc(p.at)}）<br>${cnt(p.data)}</p><p class="hint">ファイルにある作品などを、ファイルの内容で上書きします。ファイルにない作品はそのまま残ります。</p><div class="bkrow"><button type="button" class="u-btn sm" data-bkcancel="1">やめる</button><button type="button" class="u-btn sm pri${bkArm ? " armed" : ""}" data-bkgo="1">${bkArm ? "もう一度押すと戻す" : "このファイルで戻す"}</button></div></div>`
         : ""
     }</div>`;
 }

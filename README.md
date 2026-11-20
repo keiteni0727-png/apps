@@ -3,6 +3,8 @@
 自分用のアプリ置き場です（データは入っていません。ログインした本人だけが自分のデータを読み書きできます）。
 
 - `entame/` … エンタメ管理
+  機能ごとにファイルを分けている：core.js（決まった値・データ・保存・要確認のチェック）→ view.js（一覧・番組表）→ filters.js（絞り込み・並び替え）→ paste.js（各話リストの読み取り）→ detail.js（作品の詳細）→ episodes.js（話数タブ）→ epaste.js（貼り付けの画面）→ form.js（作品の編集）→ settings.js → yt.js（YouTube）→ lists.js（シリーズ・主題歌）→ events.js（ボタン・起動）。見た目は app.css
+  ボタン・文字の大きさ・角の丸みなどは `shared/u-base.css` の「見た目の決まり」を使う（見本は `dev/preview/style-guide.html`）
 - `okane/` … おかね手帳
 - `fitlife/` … FitLife（ふたり用の健康管理。別のFirebaseプロジェクトを使用）
 - `futari/` … ウリログ（恋人と共有するおでかけ候補。別のFirebaseプロジェクトを使用。ルールは firestore.rules）
@@ -21,3 +23,8 @@ main に反映すると、GitHub Actions（`.github/workflows/pages.yml`）が G
 
 そのため、ファイルの中の版の番号を手で書きかえる必要はありません。
 （リポジトリの Settings → Pages → Source は「GitHub Actions」にしておく）
+
+## 確認用の道具（dev/）
+
+- `dev/preview/` … ログインせずに、架空のサンプルデータでエンタメ管理の全画面を撮る・操作を試す（本番のデータにはつながらない）。使い方は `dev/preview/README.md`
+- `dev/tools/` … 見た目のファイルの掃除や、撮った画面の見比べに使う小さな道具

@@ -523,22 +523,6 @@ function gSetCol(g, j, role) {
   if (role === "n") g.cols = g.cols.map(c => (c === role ? "x" : c));
   g.cols[j] = role;
 }
-/* その行の j列から右を1つずらす（Excelの「セルの挿入・削除」）。右＝j列に空のマスを入れる、
-   左＝j列の左の空のマスを詰める（中身のあるマスは消さない。詰められないときは false） */
-function gShift(g, r, d, j = 0) {
-  if (d > 0) gIns(r, j);
-  else {
-    const i = j - r.off;
-    if (i <= 0) {
-      if (r.off > 0) r.off--;
-      else if (r.raw[0] === "" && r.raw.length > 1) r.raw.shift();
-      else return false;
-    } else if (r.raw[i - 1] === "") r.raw.splice(i - 1, 1);
-    else return false;
-  }
-  gColsFit(g);
-  return true;
-}
 /* j列を丸ごと消す（右の列が1つ左へ）。最後の1列は消さない */
 function gDelCol(g, j) {
   if (g.cols.length <= 1) return false;
@@ -550,24 +534,6 @@ function gDelCol(g, j) {
   g.cols.splice(j, 1);
   return true;
 }
-/* i行目を上の行につなぐ（同じ列のマスどうしをつなぐ。上が空ならそのまま入れる） */
-function gMergeUp(g, i) {
-  const a = g.rows[i - 1],
-    b = g.rows[i];
-  if (!a || !b) return false;
-  const n = Math.max(gColN({ rows: [a] }), gColN({ rows: [b] }));
-  for (let j = 0; j < n; j++) {
-    const v = String(gCell(b, j)).trim();
-    if (!v) continue;
-    const u = String(gCell(a, j)).trim();
-    gSet(a, j, u ? `${u} ${v}` : v);
-  }
-  g.rows.splice(i, 1);
-  gColsFit(g);
-  return true;
-}
-/* i行目の下に空の行を足す */
-const gAddRow = (g, i) => g.rows.splice(i + 1, 0, { raw: [], off: 0, mk: false, cells: [], ds: [] });
 /* マスを直す（元のマスの外なら空のマスを足してから） */
 function gSet(r, j, v) {
   let i = j - r.off;
@@ -632,4 +598,4 @@ function gridParse(g, from) {
   });
   return out;
 }
-if (typeof module !== "undefined") module.exports = { gridBest, gColsSplit, gSetSub, gColsInit, gSetCol, gDelCol, gMergeUp, gAddRow, gShift, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { gridBest, gColsSplit, gSetSub, gColsInit, gSetCol, gDelCol, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };

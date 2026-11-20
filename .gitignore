@@ -1,0 +1,3 @@
+dev/preview/*.json
+dev/preview/shots/
+__pycache__/

@@ -55,6 +55,62 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .u-btns button.sm,.u-btns button.btn-s,.u-btn.sm{padding:6px 12px;font-size:13px}
 .u-btns button.ghost{border:0;background:none;color:var(--u-sub);padding:6px 8px}
 
+/* ===================== 見た目の決まり（2026-11 エンタメ管理の整理で作成） =====================
+  画面ごとに大きさや形を決めず、ここの決まった値と部品だけを使う。おかね手帳などは、まだ使っていない（使い始めるときはここを見る）。
+  ・文字の大きさ：6段階＋大きな数字用の2つ
+      --fs-xs 11 札・小さな補足 / --fs-s 12 説明文・ラベル / --fs-m 13 小さいボタン・一覧の2行目
+      --fs-base 14 本文・ボタン・入力 / --fs-l 16 作品名・小見出し / --fs-xl 20 画面の見出し
+      --fs-2xl 28・--fs-3xl 40 数字の大きな表示（時計・件数）だけ
+  ・角の丸み：--r-s 6 札・小物 / --r-m 10 ボタン・入力・カード / --r-l 14 シート・大きなカード / --r-full まんまる（札・丸ボタン）
+  ・部品の高さ：--h-s 32 小さいボタン / --h-m 40 ふつうのボタン・入力・プルダウン / --h-l 48 画面の下の大きなボタン / --h-chip 28 札のボタン */
+:root{--fs-xs:11px;--fs-s:12px;--fs-m:13px;--fs-base:14px;--fs-l:16px;--fs-xl:20px;--fs-2xl:28px;--fs-3xl:40px;
+  --r-s:6px;--r-m:var(--u-r);--r-l:var(--u-rl);--r-full:999px;
+  --h-s:32px;--h-m:40px;--h-l:48px;--h-chip:28px}
+
+/* ----- ボタン：.u-btn ＝ 枠線（ふつうの操作）。形は4つだけ -----
+  .pri 塗り（その画面の主な操作。1画面に1つが目安） / （なし）枠線 / .txt 文字だけ（取り消し・補助） / .icon 丸い記号ボタン（✕・‹ ›・＋など）
+  大きさ：.sm 小さい / （なし）ふつう / .lg 大きい。 .danger 削除など（赤）。 .on 選んでいる状態。 .wide 横いっぱい */
+.u-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:var(--h-m);padding:0 16px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-surface);color:var(--u-ink);font:700 var(--fs-base)/1.2 var(--u-f);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:none}
+.u-btn.sm{height:var(--h-s);padding:0 12px;font-size:var(--fs-m)}
+.u-btn.lg{height:var(--h-l);padding:0 20px;font-size:var(--fs-l)}
+.u-btn.wide{display:flex;width:100%}
+.u-btn.pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
+.u-btn.txt{border-color:transparent;background:transparent;color:var(--u-sub);padding:0 8px}
+.u-btn.danger{color:var(--u-danger)}
+.u-btn.pri.danger{background:var(--u-danger);border-color:var(--u-danger);color:#fff}
+.u-btn.on{background:var(--u-accent2);border-color:color-mix(in srgb,var(--u-accent) 60%,transparent);color:var(--u-acct)}
+.u-btn.icon{width:var(--h-m);padding:0;border-radius:var(--r-full);font-size:var(--fs-l)}
+.u-btn.icon.sm{width:var(--h-s)}
+.u-btn.icon.lg{width:var(--h-l)}
+.u-btn.icon.soft{border-color:transparent;background:var(--u-chip);color:var(--u-sub)}
+.u-btn svg{width:1.15em;height:1.15em;flex:none}
+.u-btn:disabled{opacity:.4;cursor:default}
+@media (hover:hover){.u-btn:not(:disabled):not(.pri):not(.txt):hover{border-color:var(--u-accent)}.u-btn.txt:hover{color:var(--u-ink)}}
+
+/* ----- 札のボタン：.u-chip（まんまる・押せる）。ジャンル・クール・絞り込みの候補など、選んだり外したりするもの -----
+  .on 選んでいる / .add 追加（点線） / 中に .x（✕）を入れると外せる札。色付きの札は style="--chip-bg:…;--chip-fg:…" */
+.u-chip{display:inline-flex;align-items:center;gap:4px;height:var(--h-chip);padding:0 12px;border:1px solid transparent;border-radius:var(--r-full);background:var(--chip-bg,var(--u-chip));color:var(--chip-fg,var(--u-ink));font:700 var(--fs-m)/1 var(--u-f);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.u-chip.on{background:var(--u-accent2);border-color:color-mix(in srgb,var(--u-accent) 60%,transparent);color:var(--u-acct)}
+.u-chip.add{background:transparent;border:1px dashed color-mix(in srgb,var(--u-acct) 55%,transparent);color:var(--u-acct)}
+.u-chip .x{font-size:var(--fs-s);color:currentColor;opacity:.6;margin-right:-4px}
+.u-chip svg{width:14px;height:14px;flex:none}
+
+/* ----- 札（表示だけ・押せない）：.u-tag。放送形態・配信サイト・ステータスなど。色は style="--tag-bg:…;--tag-fg:…" ----- */
+.u-tag{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:var(--r-s);background:var(--tag-bg,var(--u-chip));color:var(--tag-fg,var(--u-sub));font:700 var(--fs-xs)/1 var(--u-f);white-space:nowrap}
+
+/* ----- プルダウン：形は2つだけ。選ぶ一覧は全部共通（U.pick / #ddPop） -----
+  .u-dd 欄の形（枠線・左に選んだ値・右に ⌄）。.u-chip に .dd を付けると札の形（札の右に ⌄） */
+.u-dd{display:flex;align-items:center;gap:8px;width:100%;height:var(--h-m);padding:0 10px 0 12px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-surface);color:var(--u-ink);font:400 var(--fs-base)/1.2 var(--u-f);text-align:left;cursor:pointer}
+.u-dd .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.u-dd .ph{color:var(--u-sub)}
+.u-dd::after,.u-chip.dd::after{content:"";flex:none;width:7px;height:7px;border:solid currentColor;border-width:0 2px 2px 0;transform:translateY(-2px) rotate(45deg);opacity:.6;margin:0 2px 0 4px}
+.u-dd.sm{height:var(--h-s);font-size:var(--fs-m)}
+
+/* ----- 切り替え（2〜4択）：.u-seg。テーマ・合わせ方・並び替えのグループなど ----- */
+.u-seg{display:flex;gap:2px;padding:3px;border-radius:var(--r-m);background:var(--u-chip)}
+.u-seg>button{flex:1;height:calc(var(--h-s) - 2px);padding:0 10px;border:0;border-radius:calc(var(--r-m) - 3px);background:transparent;color:var(--u-sub);font:700 var(--fs-m)/1 var(--u-f);white-space:nowrap;cursor:pointer}
+.u-seg>button.on,.u-seg>button[aria-selected="true"],.u-seg>button[aria-pressed="true"]{background:var(--u-surface);color:var(--u-ink);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+
 /* ===== スマホの下部メニュー：.tbwrap の中に .tabbar（画面の切り替え）と .tbgear（設定）。PCでは出さない ===== */
 /* 画面下からの距離（ウリログと同じ：ホームバーぎりぎりまで下げる） */
 :root{--u-navb:max(4px,calc(env(safe-area-inset-bottom,0px) - 16px))}

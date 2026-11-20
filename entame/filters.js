@@ -56,7 +56,7 @@ function seriesPanelHtml() {
 /* 絞り込みの中身：時期（放送クール・放送年） */
 /* 放送クール・放送年の選択肢（要確認と同じボタンの並び。どちらも複数選べる） */
 const mpTile = (attr, val, on, label, n) =>
-  `<button type="button" class="mp-t${on ? " on" : ""}" ${attr}="${esc(val)}" aria-pressed="${on}"><span class="mp-l">${esc(label)}</span>${n != null ? `<span class="mp-n">${n}</span>` : ""}</button>`;
+  `<button type="button" class="u-chip mp-t${on ? " on" : ""}" ${attr}="${esc(val)}" aria-pressed="${on}"><span class="mp-l">${esc(label)}</span>${n != null ? `<span class="mp-n">${n}</span>` : ""}</button>`;
 const timeBase = () => items.filter(i => ofKind(i) && seriesOk(i) && typeOk(i));
 /* 放送クール：年を ‹ › で切り替えて季節を選ぶ。最初は選んでいるクールの年（なければ最新の年） */
 function courPanelHtml() {
@@ -66,7 +66,7 @@ function courPanelHtml() {
   const cy = courYears.includes(state.courY) ? state.courY : picked.length ? Math.max(...picked) : courYears[0];
   const yAll = SEASONS.every(se => state.cour.includes(cy + se));
   return `<div class="mp-top one">${mpTile("data-cour", "すべて", !state.cour.length, "指定なし")}</div>
-    ${cy ? `<div class="mp-sec"><div class="mp-yr"><button type="button" class="mp-yb" data-couryb="1" data-cy="${cy}" aria-label="前の年" ${courYears.indexOf(cy) >= courYears.length - 1 ? "disabled" : ""}>‹</button><b>${cy}年</b><button type="button" class="mp-yb" data-couryb="-1" data-cy="${cy}" aria-label="次の年" ${courYears.indexOf(cy) <= 0 ? "disabled" : ""}>›</button><button type="button" class="mp-ya${yAll ? " on" : ""}" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button></div>
+    ${cy ? `<div class="mp-sec"><div class="mp-yr"><button type="button" class="u-btn icon sm mp-yb" data-couryb="1" data-cy="${cy}" aria-label="前の年" ${courYears.indexOf(cy) >= courYears.length - 1 ? "disabled" : ""}>‹</button><b>${cy}年</b><button type="button" class="u-btn icon sm mp-yb" data-couryb="-1" data-cy="${cy}" aria-label="次の年" ${courYears.indexOf(cy) <= 0 ? "disabled" : ""}>›</button><button type="button" class="u-chip mp-ya${yAll ? " on" : ""}" data-couryear="${cy}" aria-pressed="${yAll}">この年すべて</button></div>
       <div class="mp-grid g4">${SEASONS.map(se => mpTile("data-cour", cy + se, state.cour.includes(cy + se), se, tb.filter(i => coursOf(i).includes(cy + se)).length)).join("")}</div></div>` : ""}
     <div class="mp-sec"><div class="mp-grid g1">${mpTile("data-cour", ALLYEAR, state.cour.includes(ALLYEAR), "通年", tb.filter(i => coursOf(i).includes(ALLYEAR)).length)}</div></div>`;
 }
@@ -140,7 +140,7 @@ function svPanelHtml() {
       )
       .join("")}</div></div>`;
   }
-  return `<div class="fgroup">${head}<div class="chips">${l.map(f => `<button type="button" data-svapply="${esc(f.id)}" aria-pressed="${f === cur}">★ ${esc(f.name)}</button>`).join("")}${cur || svEmpty() ? "" : `<button type="button" class="svadd" data-svnew="1">＋今の条件を保存</button>`}${l.length ? `<button type="button" class="svedit" data-svedit="1">編集</button>` : ""}</div></div>`;
+  return `<div class="fgroup">${head}<div class="chips">${l.map(f => `<button type="button" data-svapply="${esc(f.id)}" aria-pressed="${f === cur}">★ ${esc(f.name)}</button>`).join("")}${cur || svEmpty() ? "" : `<button type="button" class="u-chip add svadd" data-svnew="1">＋今の条件を保存</button>`}${l.length ? `<button type="button" class="u-btn sm txt svedit" data-svedit="1">編集</button>` : ""}</div></div>`;
 }
 function svSubmit() {
   const inp = $("#svName");
@@ -370,17 +370,17 @@ let fshShown = "",
 /* 共通の部品 */
 const fshBar = o =>
   `<div class="fbar${o.sv ? "" : " nosv"}">
-    <button type="button" class="fb fsh-b${o.n ? " on" : ""}" ${o.a.sheet} aria-haspopup="dialog" aria-expanded="${o.open}">${FSH_IC}<span class="v">絞り込み</span>${o.n ? `<b class="fsh-n">${o.n}</b>` : ""}</button>
+    <button type="button" class="u-btn fb fsh-b${o.n ? " on" : ""}" ${o.a.sheet} aria-haspopup="dialog" aria-expanded="${o.open}">${FSH_IC}<span class="v">絞り込み</span>${o.n ? `<b class="fsh-n">${o.n}</b>` : ""}</button>
     ${o.sv || ""}
-    <button type="button" class="fb srt${o.srtOn ? " on" : ""}" ${o.a.sort} aria-expanded="${o.srtOpen}" aria-label="並び順：${esc(o.srtLab)}">${SORT_IC}</button>
-    <button type="button" class="fb fq" ${o.a.q}="1" aria-label="検索">${FQ_IC}</button>
+    <button type="button" class="u-btn fb srt${o.srtOn ? " on" : ""}" ${o.a.sort} aria-expanded="${o.srtOpen}" aria-label="並び順：${esc(o.srtLab)}">${SORT_IC}</button>
+    <button type="button" class="u-btn fb fq" ${o.a.q}="1" aria-label="検索">${FQ_IC}</button>
   </div>`;
 const fshSearch = o =>
-  `<div class="ftools"><input id="${o.id}" type="search" enterkeyhint="search" autocomplete="off" placeholder="${o.ph}" value="${esc(o.q)}" aria-label="検索"><button type="button" class="fq-x" ${o.a}="0">キャンセル</button></div>`;
+  `<div class="ftools"><input id="${o.id}" type="search" enterkeyhint="search" autocomplete="off" placeholder="${o.ph}" value="${esc(o.q)}" aria-label="検索"><button type="button" class="u-btn txt fq-x" ${o.a}="0">キャンセル</button></div>`;
 /* 条件のラベル：2つまで出して、残りは「他○件」。押すと絞り込みシート */
 const fshSum = (conds, a) =>
   conds.length
-    ? `<div class="fsum"><div class="fsum-l">${conds.slice(0, 2).map(t => `<button type="button" class="fchip" ${a.sheet} title="${esc(t)}"><span>${esc(t)}</span></button>`).join("")}${conds.length > 2 ? `<button type="button" class="fmore" ${a.sheet}>他${conds.length - 2}件</button>` : ""}</div><button type="button" class="clear" ${a.reset}>解除</button></div>`
+    ? `<div class="fsum"><div class="fsum-l">${conds.slice(0, 2).map(t => `<button type="button" class="u-chip on fchip" ${a.sheet} title="${esc(t)}"><span>${esc(t)}</span></button>`).join("")}${conds.length > 2 ? `<button type="button" class="u-chip fmore" ${a.sheet}>他${conds.length - 2}件</button>` : ""}</div><button type="button" class="u-btn sm txt clear" ${a.reset}>解除</button></div>`
     : "";
 /* 件数（「すべて開く・閉じる」と同じ行の左端） */
 const fshCount = (n, unit, q) => `<p class="count"><span class="cnt">${q ? `「${esc(q)}」` : ""}${n}${unit}</span></p>`;
@@ -405,12 +405,12 @@ function fshShell(o) {
     .join("");
   const r = o.rows.find(x => x[0] === cur);
   const pane = r
-    ? `<div class="fsh-sub${subFirst ? " in" : ""}" role="group" aria-label="${r[1]}"><div class="fsh-subh"><button type="button" class="fsh-back" ${o.a.sub}="" aria-label="戻る">${FSH_BACK}</button><b>${r[1]}</b><span class="fsh-hint">${r[4] === true || r[0] === "cour" || r[0] === "era" ? "複数選べます" : ""}</span></div><div class="fsh-subb${r[4] === "grid" ? " mpwrap" : r[4] ? " chipsmode" : " dd-list"}" role="${r[4] ? "group" : "listbox"}">${r[3]()}</div></div>`
+    ? `<div class="fsh-sub${subFirst ? " in" : ""}" role="group" aria-label="${r[1]}"><div class="fsh-subh"><button type="button" class="u-btn icon sm txt fsh-back" ${o.a.sub}="" aria-label="戻る">${FSH_BACK}</button><b>${r[1]}</b><span class="fsh-hint">${r[4] === true || r[0] === "cour" || r[0] === "era" ? "複数選べます" : ""}</span></div><div class="fsh-subb${r[4] === "grid" ? " mpwrap" : r[4] ? " chipsmode" : " dd-list"}" role="${r[4] ? "group" : "listbox"}">${r[3]()}</div></div>`
     : "";
   return `<div class="fsh-scrim" ${o.a.close}></div><div class="fsh${o.sub ? " subopen" : ""}${first ? " in" : ""}" role="dialog" aria-label="絞り込み">
-    <div class="fsh-h"><b>絞り込み</b>${o.nConds ? `<button type="button" class="fsh-reset" ${o.a.reset}>リセット</button>` : ""}<button type="button" class="fsh-x" ${o.a.close} aria-label="閉じる">${FSH_X}</button></div>
+    <div class="fsh-h"><b>絞り込み</b>${o.nConds ? `<button type="button" class="u-btn sm txt fsh-reset" ${o.a.reset}>リセット</button>` : ""}<button type="button" class="u-btn icon sm soft fsh-x" ${o.a.close} aria-label="閉じる">${FSH_X}</button></div>
     <div class="fsh-body"><div class="fsh-rows">${rows}</div>${pane ? `<div class="fsh-pane">${pane}</div>` : ""}</div>
-    <div class="fsh-f"><button type="button" class="fsh-go" ${o.a.close}>${o.n}${o.unit}を表示</button></div>
+    <div class="fsh-f"><button type="button" class="u-btn pri wide fsh-go" ${o.a.close}>${o.n}${o.unit}を表示</button></div>
   </div>`;
 }
 const fshClosed = () => {
@@ -422,7 +422,7 @@ const fshClosed = () => {
    groups＝[[見出し, [項目…]]]、cnt＝項目ごとの件数、n＝要確認ありの件数 */
 function missPanel(attr, on, cur, cnt, n, groups) {
   const tile = (v, lab, sel, c) =>
-    `<button type="button" class="mp-t${sel ? " on" : ""}" ${attr}="${esc(v)}" aria-pressed="${sel}"><span class="mp-l">${esc(lab)}</span>${c != null ? `<span class="mp-n">${c}</span>` : ""}</button>`;
+    `<button type="button" class="u-chip mp-t${sel ? " on" : ""}" ${attr}="${esc(v)}" aria-pressed="${sel}"><span class="mp-l">${esc(lab)}</span>${c != null ? `<span class="mp-n">${c}</span>` : ""}</button>`;
   return (
     `<div class="mp-top">${tile("__off", "指定なし", !on)}${tile("", "全項目", on && !cur, n)}</div>` +
     groups
@@ -471,7 +471,7 @@ function fBarHtml() {
     a: FA,
     n: fConds().length,
     open: state.fOpen === "all",
-    sv: `<button type="button" class="fb fsv${svOn ? " on" : ""}" data-fpop="sv" aria-expanded="${state.fOpen === "sv"}"><span class="v">${esc(svLab)}</span></button>`,
+    sv: `<button type="button" class="u-btn fb fsv${svOn ? " on" : ""}" data-fpop="sv" aria-expanded="${state.fOpen === "sv"}"><span class="v">${esc(svLab)}</span></button>`,
     srtOn,
     srtOpen: state.fOpen === "sort",
     srtLab: SORTS.find(x => x[0] === state.sort)[1],

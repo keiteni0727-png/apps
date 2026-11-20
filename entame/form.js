@@ -124,7 +124,6 @@ function ddPick(v, none) {
   const k = ddOpen;
   if (k && k.startsWith("gcol:")) {
     if (subPaste && subPaste.grid) {
-      gSnap();
       if (v === "__del") gDelCol(subPaste.grid, +k.slice(5)) || toast("最後の列は消せません");
       else gSetCol(subPaste.grid, +k.slice(5), v);
     }
@@ -221,7 +220,7 @@ function serSugForm(q) {
   if (form.serAll) {
     if (others.length) h += `<span class="hint ser-oh">${SER_GL[other]}のシリーズ</span>` + others.slice(0, 30).map(n => btn(n, true)).join("");
     else h += `<span class="hint ser-oh">${SER_GL[other]}のシリーズに${nq ? `「${esc(q)}」は` : ""}ありません</span>`;
-  } else if (others.length) h += `<button type="button" class="ser-all" data-fserall="1">${SER_GL[other]}のシリーズからも探す（${nq ? "一致 " : ""}${others.length}件）</button>`;
+  } else if (others.length) h += `<button type="button" class="u-btn sm txt ser-all" data-fserall="1">${SER_GL[other]}のシリーズからも探す（${nq ? "一致 " : ""}${others.length}件）</button>`;
   return h;
 }
 /* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
@@ -258,10 +257,10 @@ function songRowsHtml() {
     ${(x.ex || [])
       .map(
         (r, j) =>
-          `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほか</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-sp"></span><button type="button" class="sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
+          `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほか</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-sp"></span><button type="button" class="u-btn icon sm txt sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
       )
       .join("")}
-    <div class="sg-ft"><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="sg-exadd" data-sgex="${k}">＋ 範囲を追加</button><button type="button" class="del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
+    <div class="sg-ft"><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="u-chip add sg-exadd" data-sgex="${k}">＋ 範囲を追加</button><button type="button" class="u-btn sm txt danger del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
   };
   const secs = types
     .map(t => {
@@ -269,9 +268,9 @@ function songRowsHtml() {
       if (!l.length && !main.includes(t)) return "";
       return `<div class="sgsec ${SG_CLS[t]}">
         <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
-          ${l.length > 1 ? `<button type="button" class="sgfoldall" data-sgfoldall="${t}">${l.some(([, k]) => sgOpen.has(k)) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
-          ${l.length ? "" : `<button type="button" class="sgadd" data-sgadd="${t}">＋ ${t}を追加</button>`}</div>
-        ${l.length ? l.map(([x, k]) => card(x, k, l.length > 1)).join("") + `<button type="button" class="sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : ""}</div>`;
+          ${l.length > 1 ? `<button type="button" class="u-btn sm txt sgfoldall" data-sgfoldall="${t}">${l.some(([, k]) => sgOpen.has(k)) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
+          ${l.length ? "" : `<button type="button" class="u-chip add sgadd" data-sgadd="${t}">＋ ${t}を追加</button>`}</div>
+        ${l.length ? l.map(([x, k]) => card(x, k, l.length > 1)).join("") + `<button type="button" class="u-chip add sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : ""}</div>`;
     })
     .join("");
   return secs;
@@ -326,7 +325,7 @@ function formHtml() {
     `<section class="fsec${cls ? " " + cls : ""}"><h4>${title}${side}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
     title: `<label class="field full"><span>タイトル</span><input id="f-t" autocomplete="off" placeholder="タイトル" value="${esc(f.t)}"></label>`,
-    kind: `<div class="field"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${seg(
+    kind: `<div class="field"><span>ジャンル</span><div class="u-seg segc" role="group" aria-label="ジャンル">${seg(
       "data-fk",
       [
         ["a", "アニメ", "ka"],
@@ -336,7 +335,7 @@ function formHtml() {
       ],
       f.k,
     )}</div></div>`,
-    status: `<div class="field"><span>ステータス</span><div class="segc" role="group" aria-label="ステータス">${seg(
+    status: `<div class="field"><span>ステータス</span><div class="u-seg segc" role="group" aria-label="ステータス">${seg(
       "data-fs",
       STATUSES.map(s => [s, stLabel(s)]),
       f.s,
@@ -345,7 +344,7 @@ function formHtml() {
     /* 放送形態：ジャンル映画は出さず「公開（映画館／配信）」だけ。バラエティは TV／配信 の2つ。どのジャンルでも映画なら公開を選べる */
     /* 放送形態・放送局・配信サイト：PCでは1行に横並び（スマホは縦） */
     media: `<div class="frow3 full">${f.k === "f" ? "" : `<div class="field" id="fMedia"><span>放送形態</span>${ddBtn("media")}</div>`}
-      ${f.media === "movie" ? `<div class="field"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}
+      ${f.media === "movie" ? `<div class="field"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="u-seg segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}
       ${hasSt(f.media) ? `<div class="field"><span>放送局</span>${ddBtn("st")}</div>` : ""}
       ${f.media === "stream" ? `<div class="field"><span>配信サイト</span>${ddBtn("plat")}</div>` : ""}
       ${f.media !== "stream" ? `<div class="field"><span>配信サイト</span>${ddBtn("vods")}</div>` : ""}</div>`,
@@ -360,18 +359,18 @@ function formHtml() {
       noSched(f.media)
         ? ""
         : `<div class="field full"><span>放送クール</span>
-        <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未設定</span>` : ""}
-          ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}</button>` : ""}
+        <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="u-chip tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未設定</span>` : ""}
+          ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="u-chip add sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}</button>` : ""}
           ${(() => {
             /* 2クール目以降：選んだ最後のクールの次をワンタップで */
             const last = dyn.filter(c => /^\d{4}/.test(c)).sort().pop();
             if (!last || f.cours.includes(ALLYEAR)) return "";
             const si = SEASONS.indexOf(last.slice(4)),
               nx = si === 3 ? `${+last.slice(0, 4) + 1}${SEASONS[0]}` : `${last.slice(0, 4)}${SEASONS[si + 1]}`;
-            return f.cours.includes(nx) ? "" : `<button type="button" class="sugbtn" data-courkey="${nx}">＋ ${courLabel(nx)}</button>`;
+            return f.cours.includes(nx) ? "" : `<button type="button" class="u-chip add sugbtn" data-courkey="${nx}">＋ ${courLabel(nx)}</button>`;
           })()}
-          <button type="button" class="sugbtn${f.cours.includes(ALLYEAR) ? " on" : ""}" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
-          <button type="button" class="sugbtn ghost fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
+          <button type="button" class="u-chip ${f.cours.includes(ALLYEAR) ? "on" : "add"} sugbtn" data-courall="1" aria-pressed="${f.cours.includes(ALLYEAR)}">${f.cours.includes(ALLYEAR) ? "✓ 通年" : "＋ 通年"}</button>
+          <button type="button" class="u-chip fdd-mini" data-fdd="cour" aria-haspopup="listbox" aria-expanded="${ddOpen === "cour"}">ほかのクール ${DD_CHEV}</button></div>${nofBox("cours")}</div>`,
     songs: `<div class="field full">
         <div class="sglist" id="sgList">${songRowsHtml()}</div>
         ${songTypes.includes("挿入歌") && !f.songs.some(x => x.type === "挿入歌") ? `<div class="chips" style="margin-top:2px"><button type="button" data-sgadd="挿入歌">＋ 挿入歌</button></div>` : ""}
@@ -394,9 +393,9 @@ function formHtml() {
     let [lab, keys] = ONLY_A[f.only];
     /* OP・ED・主題歌の「なし」は見出しの行の右に（曲が1曲もないときだけ） */
     const sgNone = f.only === "sgList" ? sgNoneBox() : "";
-    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="close" type="button" data-back="1" aria-label="戻る">✕</button></div>
+    return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="u-btn icon sm soft close" type="button" data-back="1" aria-label="戻る">✕</button></div>
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
-    <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="delsm" id="rbDel" aria-label="この関連放送を削除">削除</button>` : ""}<button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
+    <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="u-btn sm txt danger delsm" id="rbDel" aria-label="この関連放送を削除">削除</button>` : ""}<button type="button" class="u-btn" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
   /* 上：タイトル、その下にジャンル・ステータス（色付きの札。押すと選択肢が開く） */
   const KINDS = [
@@ -407,15 +406,15 @@ function formHtml() {
   ];
   const ck = KINDS.find(x => x[0] === f.k) || KINDS[0];
   const head = `<div class="fhead"><input id="f-t" class="ftitle" autocomplete="off" placeholder="タイトル" aria-label="タイトル" value="${esc(f.t)}">
-    <div class="fchips"><button type="button" class="fchip ${ck[2]}" data-fx="kind" aria-expanded="${f.fx === "kind"}" aria-label="ジャンル：${ck[1]}">${ck[1]}${DD_CHEV}</button><button type="button" class="fchip s-${esc(f.s)}" data-fx="status" aria-expanded="${f.fx === "status"}" aria-label="ステータス：${esc(stLabel(f.s))}">${esc(stLabel(f.s))}${DD_CHEV}</button></div>
-    ${f.fx === "kind" ? `<div class="segc fxopt" role="group" aria-label="ジャンル">${seg("data-fk", KINDS, f.k)}</div>` : ""}${f.fx === "status" ? `<div class="segc fxopt fxst" role="group" aria-label="ステータス">${seg("data-fs", STATUSES.map(x => [x, stLabel(x), "s-" + x]), f.s)}</div>` : ""}</div>`;
-  return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
+    <div class="fchips"><button type="button" class="u-chip fchip ${ck[2]}" data-fx="kind" aria-expanded="${f.fx === "kind"}" aria-label="ジャンル：${ck[1]}">${ck[1]}${DD_CHEV}</button><button type="button" class="u-chip fchip s-${esc(f.s)}" data-fx="status" aria-expanded="${f.fx === "status"}" aria-label="ステータス：${esc(stLabel(f.s))}">${esc(stLabel(f.s))}${DD_CHEV}</button></div>
+    ${f.fx === "kind" ? `<div class="u-seg segc fxopt" role="group" aria-label="ジャンル">${seg("data-fk", KINDS, f.k)}</div>` : ""}${f.fx === "status" ? `<div class="u-seg segc fxopt fxst" role="group" aria-label="ステータス">${seg("data-fs", STATUSES.map(x => [x, stLabel(x), "s-" + x]), f.s)}</div>` : ""}</div>`;
+  return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
     ${head}
     ${sec("放送", P.media + P.vurl + P.from + P.time + P.cours, "", "", "ftbl")}
     ${sec("曲", P.songs, "", sgNoneBox(), "fsongs")}
     ${sec("そのほか", P.series + P.url + P.syoboi, "", "", "ftbl")}
-    <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
+    <div class="ffoot"><button type="button" class="u-btn" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
 function seg(attr, opts, cur) {

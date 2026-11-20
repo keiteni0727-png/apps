@@ -10,14 +10,13 @@ const MODE_IC = {
   d: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8z"/><path d="M4 11l-.6-3.4a1 1 0 0 1 .8-1.2l13.6-2.4a1 1 0 0 1 1.2.8L19.6 7z"/><path d="M8.5 5.8l2.4 3.6M13.5 4.9l2.4 3.6"/></svg>',
   m: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 12h4M3 16h4M17 8h4M17 12h4M17 16h4"/></svg>',
   s: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18.5a10 10 0 0 1 0-13M19 5.5a10 10 0 0 1 0 13M8.2 15.3a5.5 5.5 0 0 1 0-6.6M15.8 8.7a5.5 5.5 0 0 1 0 6.6"/><path d="M10.6 9.8v4.4l3.6-2.2z" fill="currentColor"/></svg>',
-  h: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
   yt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor"/></svg>',
   sr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/></svg>',
   mu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>',
   o: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>',
 };
-/* スマホの下メニュー：番組表・アニメ・ドラマ・その他（映画・バラエティ・YouTube・視聴記録は「その他」の中） */
-const OTHER_MODES = ["m", "s", "yt", "sr", "mu", "h"];
+/* スマホの下メニュー：番組表・アニメ・ドラマ・その他（映画・バラエティ・YouTube・シリーズ・主題歌は「その他」の中） */
+const OTHER_MODES = ["m", "s", "yt", "sr", "mu"];
 function renderBnav() {
   const nav = $("#bnav");
   if (!nav) return;
@@ -28,11 +27,11 @@ function renderBnav() {
 }
 /* 「その他」の画面：タイルで並べる */
 function renderOther() {
-  const n = m => (m === "yt" ? ytItems.length : m === "h" ? null : m === "sr" ? new Set(items.map(i => i.series).filter(Boolean)).size : m === "mu" ? songRows().length : items.filter(i => inMode(m, i)).length);
+  const n = m => (m === "yt" ? ytItems.length : m === "sr" ? new Set(items.map(i => i.series).filter(Boolean)).size : m === "mu" ? songRows().length : items.filter(i => inMode(m, i)).length);
   const sub = { m: "作品", s: "作品", yt: "本", sr: "シリーズ", mu: "曲" };
   return `<div class="otiles">${OTHER_MODES.map(m => {
     const c = n(m);
-    return `<button type="button" class="otile ${m}" data-bnav="${m}"><span class="mic ${m}" aria-hidden="true">${MODE_IC[m]}</span><b>${MODE_NAME[m]}</b><small>${c == null ? "見た話数の記録" : `${c}${sub[m]}`}</small></button>`;
+    return `<button type="button" class="otile ${m}" data-bnav="${m}"><span class="mic ${m}" aria-hidden="true">${MODE_IC[m]}</span><b>${MODE_NAME[m]}</b><small>${c}${sub[m]}</small></button>`;
   }).join("")}</div>`;
 }
 /* PC：左の折りたためるメニュー */
@@ -340,9 +339,9 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
   const foot = v === "hero" ? coursOf(i).map(c => courLab(c)).join("") + (per ? `<span class="wc-per">${esc(per)}</span>` : "") : "";
   /* 視聴ボタン：未視聴があれば「○話を見た」 */
   const tick = back[0]
-    ? `<button type="button" class="wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
+    ? `<button type="button" class="u-btn pri wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
     : spUnseen(i)
-      ? `<button type="button" class="wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
+      ? `<button type="button" class="u-btn pri wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
       : "";
   /* PCの曜日の列：どのカードも同じ高さ（ラベルは1行・タイトルと話は2行まで、下端に視聴ボタンか状態） */
   if (v === "col") {
@@ -558,7 +557,7 @@ function groupedHtml(list) {
     out = "",
     rest = 0;
   const ck = keys.map(k => "tv:" + k);
-  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
+  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
   for (const k of keys) {
     const l = g.get(k);
     const key = "tv:" + k;
@@ -578,7 +577,7 @@ function groupedHtml(list) {
   return (
     bulkBtns(ck) +
     out +
-    (rest ? `<button type="button" class="more" id="more">さらに表示（残り${rest}件）</button>` : "")
+    (rest ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${rest}件）</button>` : "")
   );
 }
 function renderList() {
@@ -712,7 +711,7 @@ function render() {
   document.documentElement.classList.toggle("fshopen", state.mode === "yt" ? yst.fp === "all" : state.mode === "sr" || state.mode === "mu" ? lui.fp === "all" : state.fOpen === "all");
   if (!loaded) return;
   const y = U.lockY ?? scrollY;
-  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "h" ? renderHist() : state.mode === "o" ? renderOther() : state.mode === "sr" ? renderSeries() : state.mode === "mu" ? renderSongs() : renderList();
+  let body = yt ? renderYt() : state.mode === "w" ? renderWeek() : state.mode === "o" ? renderOther() : state.mode === "sr" ? renderSeries() : state.mode === "mu" ? renderSongs() : renderList();
   /* 「すべて開く／閉じる」は件数と同じ行の右端に置く */
   const gb = /<span class="gbulk">[\s\S]*?<\/span>/.exec(body);
   const ci = body.indexOf('<p class="count">');
@@ -739,7 +738,7 @@ const FEMPTY = { sf: [], era: [], cour: [], series: [], type: [], vod: "", missO
 function setMode(m) {
   if (state.mode === m) return;
   Object.assign(lui, { q: "", qOpen: false, fp: "", fSub: "" });
-  if (!state.xser && !["w", "yt", "h", "o", "sr", "mu"].includes(state.mode)) state.fm[state.mode] = Object.fromEntries(FKEEP.map(k => [k, state[k]]));
+  if (!state.xser && !["w", "yt", "o", "sr", "mu"].includes(state.mode)) state.fm[state.mode] = Object.fromEntries(FKEEP.map(k => [k, state[k]]));
   const saved = state.fm[m] || {};
   Object.assign(state, FEMPTY, Object.fromEntries(FKEEP.filter(k => k in saved).map(k => [k, saved[k]])));
   state.mode = m;
@@ -750,7 +749,7 @@ function setMode(m) {
   state.fSub = "";
   state.qOpen = false;
   state.q = "";
-  if (["w", "yt", "h", "o", "sr", "mu"].includes(m)) return;
+  if (["w", "yt", "o", "sr", "mu"].includes(m)) return;
   if (m === "m" || m === "s") state.type = [];
   state.limit = 200;
 }

@@ -1,11 +1,11 @@
 /* ===================== エンタメ管理：土台 =====================
    決まった値・画面の状態・作品データの組み立て・保存（Firebase）・マスタ・話数・未入力チェック。
-   ファイルの読み込み順：core → view → filters → detail → form → settings → yt → events（最後に起動） */
+   ファイルの読み込み順：core → view → filters → paste → detail → episodes → epaste → form → settings → yt → lists → events（最後に起動） */
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
-const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", sr: "シリーズ", mu: "主題歌", h: "視聴記録", o: "その他" };
-/* o＝スマホの下メニュー「その他」（映画・バラエティ・YouTube・視聴記録のタイル）。左メニューには出さない */
+const MODE_NAME = { w: "番組表", a: "アニメ", d: "ドラマ", m: "映画", s: "バラエティ", yt: "YouTube", sr: "シリーズ", mu: "主題歌", o: "その他" };
+/* o＝スマホの下メニュー「その他」（映画・バラエティ・YouTube・シリーズ・主題歌のタイル）。左メニューには出さない */
 const MODE_KEYS = Object.keys(MODE_NAME).filter(k => k !== "o");
 const STATUSES = ["未視聴", "視聴中", "視聴済み", "見ない"];
 /* 表示の言い回し：保存データの値は「視聴済み」のまま、画面では「視聴済」と出す */
@@ -88,7 +88,7 @@ let over = {}, // titles：作品（1作品1件）
   prog = {}; // progress：話数リストと視聴チェック
 let items = [],
   eras = [];
-/* 画面の状態。mode＝メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s バラエティ・yt YouTube・sr シリーズ・mu 主題歌・h 視聴記録・o その他）、
+/* 画面の状態。mode＝メニュー（w 番組表・a アニメ・d ドラマ・m 映画・s バラエティ・yt YouTube・sr シリーズ・mu 主題歌・o その他）、
    sub＝映画の絞り込み「種類」（all/a アニメ映画/d 実写）。
    そのほかは絞り込み（sf 視聴・era 放送年・type 種別・cour 放送クール・series シリーズ・vod 配信サイト）と並び順 */
 const SUBS = { m: ["all", "a", "d"] };
@@ -444,7 +444,7 @@ function purgeTrash(col) {
     if (o && o.deleted && +o.deleted < lim) trashGone(col, id);
   });
 }
-/* 保存先につないで、作品・視聴記録・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
+/* 保存先につないで、作品・話数と視聴チェック・マスタ・YouTube を読み込む（ほかの端末で変えた分も自動で反映） */
 async function initStore() {
   const conn = await U.store();
   if (!conn.db) {
@@ -648,7 +648,6 @@ const finIdx = it => {
   return l.length > 1 ? l.length - 1 : -1;
 };
 const FIN = '<span class="fin">最終回</span>';
-/* 話数リストが未登録（未視聴・視聴中の作品、映画・OVA・TV SP以外） */
 /* ---------- 未入力チェック（一覧のバッジ・詳細のアラート・絞り込み） ----------
    編集画面の項目のうち、その作品に関係あるものだけを見る。シリーズは「なければ空欄」なので対象外。
    k＝表示名、j＝押したときに開く編集項目（data-jump）、n＝「なし」にできる項目のキー（noF） */
@@ -756,53 +755,77 @@ const normVod = v => {
   if (/crunchyroll/.test(s)) return "crunchyroll";
   return s;
 };
-function missingOf(i) {
-  const m = mediaOf(i);
-  const md = m.media,
-    ns = noSched(md);
-  const sl = songsOf(i);
-  const nf = i.noF || [];
-  const out = [];
-  const add = (k, j = "", n = "") => (!n || !nf.includes(n)) && out.push({ k, j, n });
-  if (!i.s) add("ステータス");
-  if (!ns && !episodes(i).length) add("話数");
+/* 要確認の項目の一覧（1つの表にまとめる。並び＝一覧のバッジ・詳細のアラートに出る順）
+   g＝絞り込みのまとまり、k＝表示名（作品によって名前が変わるものは候補を全部）、j＝押したときに開く編集項目（data-jump）、
+   n＝「なし」にできる項目のキー（noF に入っていれば出さない）、ns＝「なし」ボタンで曲を「なし」にできる項目。
+   test(c)＝出すときは true（名前が変わるものはその名前）。c は作品ごとに1回だけ作る材料（missCtx） */
+const MISS_CHECKS = [
+  { g: "基本情報", k: "ステータス", test: c => !c.i.s },
+  { g: "話数", k: "話数", test: c => !c.ns && !c.eps.length },
   /* アニメ：登録済みの話のうち、1話でもサブタイトルが空なら（「なし」にはできない。サブタイトル欄はアニメだけ）
      今クール・通年の作品はサブタイトル未定が多いので対象外 */
-  if (i.k === "a" && !(ns && episodes(i).length < 2) && !coursOf(i).some(c => c === ALLYEAR || c === nowCour()) && episodes(i).some(e => !(e.sub || "").trim())) add("サブタイトル");
-  if (episodes(i).some(e => !epVal(e.n) && !e.sp)) add("話数の表記");
-  if (epDateCheck(i).n) add("日付の確認");
+  { g: "話数", k: "サブタイトル", test: c => c.i.k === "a" && !(c.ns && c.eps.length < 2) && !coursOf(c.i).some(x => x === ALLYEAR || x === nowCour()) && c.eps.some(e => !(e.sub || "").trim()) },
+  { g: "話数", k: "話数の表記", test: c => c.eps.some(e => !epVal(e.n) && !e.sp) },
+  { g: "話数", k: "日付の確認", test: c => epDateCheck(c.i).n > 0 },
   /* 「視聴済み」なのにチェックが付いていない話がある（勝手には付けない。話数タブで自分で付ける） */
-  if (i.s === "視聴済み" && episodes(i).some(e => !done(e))) add("未チェックの話");
+  { g: "話数", k: "未チェックの話", test: c => c.i.s === "視聴済み" && c.eps.some(e => !done(e)) },
   /* 話数の抜け（1・2・4話…）・重複（同じ話数が2つ）。数字の話数だけ見る（5.5話などは抜けに数えない） */
-  const nums = episodes(i).filter(e => !e.sp).map(e => epNum(e.n)).filter(n => n != null);
-  const gd = epGapDup(episodes(i), i.gapOk);
-  if (gd.gap.size) add("話数の抜け");
-  if (gd.dup.size) add("話数の重複");
+  { g: "話数", k: "話数の抜け", test: c => c.gd.gap.size > 0 },
+  { g: "話数", k: "話数の重複", test: c => c.gd.dup.size > 0 },
   /* ステータスのずれ：視聴中なのにチェック0話／未視聴なのにチェックあり／放送前なのに視聴済み */
-  const eps = episodes(i);
-  if ((i.s === "視聴中" && watchable(eps).length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)) || (i.s === "視聴済み" && i.from && i.from.slice(0, 10) > todayStr())) add("ステータスのずれ");
-  if (!i.from) add({ movie: "公開日", ova: "発売日", sp: "放送日" }[md] || "開始日", "f-from");
-  if (!ns && !(i.time || "").trim()) add(md === "stream" ? "配信時間" : "放送時間", "f-time", "time");
-  if (hasSt(md) && !m.stations.length) add("放送局", "fMedia", "st");
-  if (md === "stream" && !m.plat.length) add("配信サイト", "fMedia", "plat");
-  if (md !== "stream" && !m.vods.length) add("配信サイト", "fMedia", "vods");
-  if (!ns && !(i.cours || []).length) add("放送クール", "coursBox", "cours");
+  {
+    g: "ずれ",
+    k: "ステータスのずれ",
+    test: ({ i, eps }) => (i.s === "視聴中" && watchable(eps).length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)) || (i.s === "視聴済み" && i.from && i.from.slice(0, 10) > todayStr()),
+  },
+  { g: "基本情報", k: ["開始日", "公開日", "発売日", "放送日"], j: "f-from", test: c => !c.i.from && ({ movie: "公開日", ova: "発売日", sp: "放送日" }[c.md] || "開始日") },
+  { g: "基本情報", k: ["放送時間", "配信時間"], j: "f-time", n: "time", test: c => !c.ns && !(c.i.time || "").trim() && (c.md === "stream" ? "配信時間" : "放送時間") },
+  { g: "基本情報", k: "放送局", j: "fMedia", n: "st", test: c => hasSt(c.md) && !c.m.stations.length },
+  { g: "基本情報", k: "配信サイト", j: "fMedia", n: "plat", test: c => c.md === "stream" && !c.m.plat.length },
+  { g: "基本情報", k: "配信サイト", j: "fMedia", n: "vods", test: c => c.md !== "stream" && !c.m.vods.length },
+  { g: "基本情報", k: "放送クール", j: "coursBox", n: "cours", test: c => !c.ns && !coursOf(c.i).length },
   /* クールと開始日が合わない（最初のクールが開始日の季節と違う。9月末スタートの秋アニメなどは2週間までずれてよい） */
-  if (!ns && i.from && courMismatch(i)) add("クールのずれ", "coursBox");
-  // 曲が1曲もなく「なし」にもしていないときだけ（OP・ED・主題歌まとめて1項目）
-  if (!sl.some(x => (x.s || "").trim()) && !(i.noSongs || []).length) out.push({ k: "OP・ED・主題歌", j: "sgList", n: "", ns: 1 });
+  { g: "ずれ", k: "クールのずれ", j: "coursBox", test: c => !c.ns && c.i.from && courMismatch(c.i) },
+  /* 曲が1曲もなく「なし」にもしていないときだけ（OP・ED・主題歌まとめて1項目） */
+  { g: "曲", k: "OP・ED・主題歌", j: "sgList", ns: 1, test: c => !c.sl.some(x => (x.s || "").trim()) && !(c.i.noSongs || []).length },
   /* 曲名・アーティストのどちらかだけ入っている曲（編集画面の2つの入力欄と同じ中身で判定） */
-  const ta = sl.filter(x => (x.s || "").trim()).map(x => ({ st: songTA(x).st.trim(), ar: songTA(x).ar.trim() }));
-  if (ta.some(x => x.st && !x.ar)) add("アーティスト", "sgList");
-  if (ta.some(x => !x.st && x.ar)) add("曲名", "sgList");
+  { g: "曲", k: "アーティスト", j: "sgList", test: c => c.ta.some(x => x.st && !x.ar) },
+  { g: "曲", k: "曲名", j: "sgList", test: c => c.ta.some(x => !x.st && x.ar) },
   /* 曲の使われた話が、登録されている話数を超えている（OPが1〜30話なのに24話まで、など） */
-  const em = Math.max(0, ...nums);
-  if (em && sl.some(x => [x.a, x.b, ...exOf(x).flatMap(r => [r.a, r.b])].some(v => v != null && +v > em))) add("曲の話数", "sgList");
-  if (!(i.url || "").trim()) add("公式サイト", "f-url", "url");
-  if (!(i.vurl || "").trim()) add("配信URL", "f-vurl", "vurl");
+  { g: "曲", k: "曲の話数", j: "sgList", test: c => c.em > 0 && c.sl.some(x => [x.a, x.b, ...exOf(x).flatMap(r => [r.a, r.b])].some(v => v != null && +v > c.em)) },
+  { g: "基本情報", k: "公式サイト", j: "f-url", n: "url", test: c => !(c.i.url || "").trim() },
+  { g: "基本情報", k: "配信URL", j: "f-vurl", n: "vurl", test: c => !(c.i.vurl || "").trim() },
   /* 配信URLのサイトが、作品の配信サイトに入っていない（URLからサイトが分かるときだけ） */
-  const us = vurlSite(i.vurl);
-  if (us && ![...m.plat, ...m.vods].some(v => normVod(v) === us)) add("配信URLのずれ", "f-vurl");
+  { g: "ずれ", k: "配信URLのずれ", j: "f-vurl", test: c => { const us = vurlSite(c.i.vurl); return !!us && ![...c.m.plat, ...c.m.vods].some(v => normVod(v) === us); } },
+];
+/* 判定の材料：話数リストなどを作品ごとに1回だけ作る */
+function missCtx(i) {
+  const m = mediaOf(i),
+    eps = episodes(i),
+    sl = songsOf(i);
+  const nums = eps.filter(e => !e.sp).map(e => epNum(e.n)).filter(n => n != null);
+  return {
+    i,
+    m,
+    md: m.media,
+    ns: noSched(m.media),
+    eps,
+    sl,
+    gd: epGapDup(eps, i.gapOk),
+    em: Math.max(0, ...nums),
+    ta: sl.filter(x => (x.s || "").trim()).map(x => ({ st: songTA(x).st.trim(), ar: songTA(x).ar.trim() })),
+  };
+}
+/* 作品の要確認の項目：[{k, j, n, ns}] */
+function missingOf(i) {
+  const c = missCtx(i),
+    nf = i.noF || [];
+  const out = [];
+  MISS_CHECKS.forEach(x => {
+    if (x.n && nf.includes(x.n)) return;
+    const r = x.test(c);
+    if (r) out.push({ k: typeof r === "string" ? r : x.k, j: x.j || "", n: x.n || "", ...(x.ns ? { ns: 1 } : {}) });
+  });
   return out;
 }
 /* 「なし」にできる項目（noF に入れる）。ステータス・話数・開始日は必ずあるはずなので「なし」にしない */
@@ -810,14 +833,10 @@ const NOF_LAB = { time: "時間", st: "放送局", plat: "配信サイト", vods
 const nofHas = (i, k) => (i.noF || []).includes(k);
 const nofBox = (k, lab) =>
   `<label class="yr nofl" title="${lab || NOF_LAB[k]}なし"><input type="checkbox" class="nof" value="${k}" ${(form.noF || []).includes(k) ? "checked" : ""} aria-label="${lab || NOF_LAB[k]}なし"><span>なし</span></label>`;
-/* 絞り込みの「要確認」の選択肢のまとまり */
-const MISS_GROUPS = [
-  ["話数", ["話数", "話数の表記", "話数の抜け", "話数の重複", "サブタイトル", "日付の確認", "未チェックの話"]],
-  ["基本情報", ["ステータス", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "公式サイト", "配信URL"]],
-  ["曲", ["OP・ED・主題歌", "曲名", "アーティスト", "曲の話数"]],
-  ["ずれ", ["ステータスのずれ", "クールのずれ", "配信URLのずれ"]],
-];
-const MISS_KEYS = ["ステータス", "話数", "話数の表記", "話数の抜け", "話数の重複", "日付の確認", "未チェックの話", "ステータスのずれ", "サブタイトル", "開始日", "公開日", "発売日", "放送時間", "配信時間", "放送局", "配信サイト", "放送クール", "クールのずれ", "OP・ED・主題歌", "曲名", "アーティスト", "曲の話数", "公式サイト", "配信URL", "配信URLのずれ"];
+/* 絞り込みの「要確認」の選択肢のまとまり（MISS_CHECKS から作る） */
+const MISS_GROUPS = ["話数", "基本情報", "曲", "ずれ"].map(g => [g, [...new Set(MISS_CHECKS.filter(x => x.g === g).flatMap(x => [].concat(x.k)))]]);
+/* 端末に覚えた「要確認」の項目のうち、今は無いものは外す */
+if (state.missKey && !MISS_CHECKS.some(x => [].concat(x.k).includes(state.missKey))) state.missKey = "";
 /* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
 function missBadge(i) {
   const l = missingOf(i);
