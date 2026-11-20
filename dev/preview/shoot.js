@@ -51,6 +51,7 @@ const SCENES = [
   { name: "detail-yt", mode: "yt", act: click('#main [data-yt="y1"]'), sheet: true },
   { name: "detail-eps", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p)), sheet: true },
   { name: "detail-eps-menu", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p), await click("#epMenuBtn")(p)) },
+  { name: "eps-edit", mode: "a", act: async p => (await openDetail("a1")(p), await click('[data-dtab="ep"]')(p), await click("#epEditBtn")(p)), sheet: true },
   { name: "paste-input", mode: "a", act: pasteTo(), sheet: true },
   { name: "paste-result", mode: "a", act: pasteTo("#spRead"), sheet: true },
   { name: "paste-grid", mode: "a", act: pasteTo("#spRead", "#spFmt"), sheet: true },
@@ -102,7 +103,7 @@ async function shotSheet(p, file) {
         if (dev.key === "pc" && sc.mode === "o") continue;
         const name = `${dev.key}-${theme}-${sc.name}`;
         if (ONLY && !name.includes(ONLY)) continue;
-        if (theme === "dark" && !/^(list-(w|a)|detail-anime|form-edit|settings|filter-sheet)$/.test(sc.name)) continue;
+        if (theme === "dark" && !/^(list-(w|a)|detail-anime|form-edit|settings|filter-sheet|eps-edit)$/.test(sc.name)) continue;
         const ctx = await browser.newContext({ ...dev, deviceScaleFactor: 2, timezoneId: "Asia/Tokyo", locale: "ja-JP", colorScheme: theme });
         const p = await ctx.newPage();
         await p.clock.install({ time: NOW });

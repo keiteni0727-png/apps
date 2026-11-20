@@ -47,7 +47,7 @@ function seriesSettingsHtml() {
       <div class="sseg" role="radiogroup" aria-label="ジャンル">${[["all", "すべて"], ["a", "アニメ"], ["d", "ドラマ"]].map(([v, l]) => `<button type="button" role="radio" data-serg="${v}" aria-checked="${setSerG === v}">${l}<small>${nG(v)}</small></button>`).join("")}</div>
       <button type="button" class="smsort" data-sersort="${setSerSort === "count" ? "name" : "count"}" aria-label="並び順を切り替え">${SORT_IC}<span>${setSerSort === "count" ? "作品数" : "名前"}</span></button>
     </div>
-    <input id="mq" type="search" class="mq" placeholder="シリーズ名で探す" value="${esc(setQ)}" autocomplete="off">
+    <input id="mq" type="search" class="u-input mq" placeholder="シリーズ名で探す" value="${esc(setQ)}" autocomplete="off">
     <div class="mlist slist">${
       rows.length
         ? rows

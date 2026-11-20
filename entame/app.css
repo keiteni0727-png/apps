@@ -99,7 +99,7 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 
 /* ライブラリ：検索・絞り込み */
 .ftools{display:flex;gap:8px;padding-block:14px 10px}
-.ftools input{flex:1;min-width:0;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);padding:9px 10px;font:inherit}
+.ftools input{flex:1}
 .fgroup{margin-top:16px}
 .fgroup h5{font-size:var(--fs-s);color:var(--u-sub);margin:0 0 8px;font-weight:700;letter-spacing:.04em}
 .fgroup .chips{padding-top:0}
@@ -247,7 +247,7 @@ html{scrollbar-gutter:stable}
 html,body{overscroll-behavior:none}
 @media (hover:none) and (pointer:coarse){
   /* 入力中に画面が拡大されないよう、拡大の上限は表示の設定（maximum-scale）で止める */
-  .sheet input,.sheet select,.sheet textarea,.ftools input{font-size:var(--fs-base)!important}
+  .sheet input:not(.u-input),.sheet select,.sheet textarea{font-size:var(--fs-base)!important}
   .sheet input::placeholder,.sheet textarea::placeholder{font-size:var(--fs-m)}
 }
 /* YouTube */
@@ -365,7 +365,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 :focus-visible{outline:2px solid var(--u-accent);outline-offset:2px}
 /* 枠の角丸をそろえる */
 .slots,.banner,.fsdrop,.fsec,.spaste,.eps,.eped{border-radius:var(--r-l)}
-.ftools input,.field input,.field select{border-radius:var(--r-m)}
+.field input,.field select{border-radius:var(--r-m)}
 /* ボタンの角丸をそろえる */
 .sernew button{border-radius:var(--r-m)}
 /* サブタイトル入力の小さな画面 */
@@ -423,8 +423,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .bkbox{border-top:1px solid var(--u-line);margin-top:14px;padding-top:12px;flex:none}
 .bkrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .fsdrop select#courY{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-full);padding:3px 8px;font:inherit;font-size:var(--fs-s)}
-@media (hover:none) and (pointer:coarse){
-}
 .nosong{color:var(--u-sub);font-size:var(--fs-m)}
 /* 「○○なし」は項目名の行の右端に置く（入力欄の下にはみ出さない） */
 /* 「なし」にした項目は入力欄ごと隠す */
@@ -435,8 +433,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 @media (max-width:899px){
   :root{--tbh:58px}
     /* 下部メニュー（共通部品）：このアプリではシートを手前に出す。2項目のときは狭く */
-  .ftools input{padding:5px 10px}
-  .ftools input::placeholder{font-size:var(--fs-s)}
 }
 /* 基本情報カード */
 .icard{border:1px solid var(--u-line);border-radius:var(--r-l);padding:12px 14px;margin-bottom:10px}
@@ -541,7 +537,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 /* 設定（マスタ） */
 .sheet.setsheet{max-width:640px;height:min(640px,calc(100% - 48px));display:flex;flex-direction:column;overflow:hidden}
 
-.mq{width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:8px 10px;font:inherit;font-size:var(--fs-base);margin-bottom:8px}
+.mq{margin-bottom:8px}
 .mlist{border:1px solid var(--u-line);border-radius:var(--r-l);overflow:hidden;max-height:52vh;overflow-y:auto;overscroll-behavior:none}
 .mrow2{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;background:var(--u-surface);gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--u-line)}
 .mrow2:first-child{border-top:0}
@@ -666,8 +662,6 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 .wtabs button{flex:1;display:grid;justify-items:center;gap:1px;border:0;background:none;color:var(--u-sub);border-radius:var(--r-m);padding:7px 4px;position:relative;font:inherit;line-height:1.2}
 .wtabs button b{font-size:var(--fs-l)}
 .wtabs button small{font-family:var(--u-num);font-size:var(--fs-xs);font-weight:600}
-.ser-oh{width:100%;margin-top:4px}
-.ser-o em{font-style:normal;font-size:var(--fs-xs);color:var(--u-sub);margin-left:5px}
 
 .xser{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--accent) 9%,var(--u-surface));border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:var(--r-m);padding:8px 12px;margin:0 0 8px;font-size:var(--fs-m)}
 .xser span{flex:1;min-width:0}
@@ -1233,7 +1227,6 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fsh-n{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:var(--r-full);background:var(--u-surface);color:var(--u-ink);font-family:var(--u-num);font-size:var(--fs-xs);margin-left:2px}
 /* 検索欄（虫めがねを押したとき） */
 .ftools .fq-x{flex:none}
-.ftools input{font-size:var(--fs-l)}
 /* 条件のラベル（2つまで＋他○件）・解除・件数。高さは1行のまま */
 .fsum{display:flex;align-items:center;gap:8px;margin:10px 0 2px;min-height:28px;font-size:var(--fs-s);color:var(--u-sub)}
 .fsum-l{flex:1;min-width:0;display:flex;align-items:center;gap:5px;overflow:hidden}
@@ -1675,7 +1668,7 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 @media (hover:hover){.epmenu button:hover{background:var(--u-soft)}}
 .epwarn{padding:6px 10px;font-size:var(--fs-m);gap:8px}
 /* ===== 話数の編集：上の操作（貼り付け・1話追加・その他）と、1話1行の表 ===== */
-.edtop{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.edtop{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px}
 .edtop .edmb{margin-left:auto}
 .edmore{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px;padding:10px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-soft);font-size:var(--fs-m)}
 .edmore button{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-m);padding:6px 10px;font:inherit;font-size:var(--fs-m);text-align:left;cursor:pointer}
@@ -1794,6 +1787,5 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .u-chip.mudl.on{background:var(--u-ok2);border-color:color-mix(in srgb,var(--u-ok) 55%,transparent);color:var(--u-ok)}
 /* 挿入歌がまだないときの「＋ 挿入歌を追加」（OP・EDなどの「＋追加」と同じ札） */
 .sgins{margin-top:2px}
-/* 絞り込みの「シリーズ」の検索窓：ほかの検索窓（一覧の検索など）と同じ大きさ */
-#seriesQ{display:block;width:100%;height:var(--h-m);box-sizing:border-box;padding:0 12px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-bg);color:var(--u-ink);font:400 var(--fs-base)/1.2 var(--u-f)}
-#seriesQ::placeholder{color:var(--u-sub)}
+/* 作品の詳細の下の「＋ 関連放送を追加」「＋ 話数を追加」：目立たないグレーの点線 */
+.u-chip.add.epadd{color:var(--u-sub);border-color:var(--u-strong)}

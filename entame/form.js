@@ -19,30 +19,6 @@ function seriesMainMap() {
   });
   return { map, cnt };
 }
-/* 編集画面のシリーズ検索：基本は同じジャンルのシリーズだけ。「○○のシリーズからも探す」で別ジャンルも出す */
-function serSugForm(q) {
-  const nq = norm(q);
-  const grp = serGroup(form.k),
-    other = grp === "a" ? "d" : "a";
-  const { map, cnt } = seriesMainMap();
-  const n0 = n => (cnt[n] ? cnt[n].a + cnt[n].d : 0);
-  const hit = n => n !== form.series && (!nq || norm(n).includes(nq));
-  const sort = l => (nq ? l.sort((x, y) => norm(x).indexOf(nq) - norm(y).indexOf(nq) || n0(y) - n0(x)) : l.sort((x, y) => n0(y) - n0(x)));
-  const mine = sort(Object.keys(map).filter(n => map[n] === grp && hit(n)));
-  const others = sort(Object.keys(map).filter(n => map[n] === other && hit(n)));
-  const btn = (n, o) => `<button type="button" data-fser="${esc(n)}"${o ? ' class="ser-o"' : ""}>${esc(n)}<small>${n0(n)}</small>${o ? `<em>${SER_GL[other]}</em>` : ""}</button>`;
-  let h = "";
-  if (nq || form.serAll) {
-    const shown = mine.slice(0, 20);
-    if (form.serAll) h += `<span class="hint ser-oh">${SER_GL[grp]}のシリーズ</span>`;
-    h += shown.length ? shown.map(n => btn(n)).join("") : `<span class="hint">${SER_GL[grp]}のシリーズに${nq ? `「${esc(q)}」は` : ""}ありません</span>`;
-  }
-  if (form.serAll) {
-    if (others.length) h += `<span class="hint ser-oh">${SER_GL[other]}のシリーズ</span>` + others.slice(0, 30).map(n => btn(n, true)).join("");
-    else h += `<span class="hint ser-oh">${SER_GL[other]}のシリーズに${nq ? `「${esc(q)}」は` : ""}ありません</span>`;
-  } else if (others.length) h += `<button type="button" class="u-btn sm txt ser-all" data-fserall="1">${SER_GL[other]}のシリーズからも探す（${nq ? "一致 " : ""}${others.length}件）</button>`;
-  return h;
-}
 /* 編集画面の曲：種類ごとの区切り（色の帯・見出し・＋追加・なし）に曲のカードを並べる */
 const SONG_MAIN = ["OP", "ED", "主題歌"];
 /* OP・ED・主題歌の「なし」：見出しのすぐ右に置く（曲が1曲もないときだけ） */
@@ -258,7 +234,6 @@ function readForm() {
   v("#f-rbt", "rbT");
   if ($("#f-rbf")) form.rbF = normDate($("#f-rbf").value) || "";
   if ($("#f-rbto")) form.rbTo = normDate($("#f-rbto").value) || "";
-  v("#f-sernew", "serNewName");
   const cy = g("#f-cy");
   if (cy) form.cy = +cy;
   document.querySelectorAll("#titleF .nof").forEach(c => {
@@ -592,43 +567,6 @@ const FORM_ACTIONS = [
     },
   ],
   /* シリーズ：別のジャンルのシリーズからも探す */
-  [
-    "[data-fserall]",
-    () => {
-      form.serAll = true;
-      const b = $("#fSerSug");
-      if (b) b.innerHTML = serSugForm($("#f-serq")?.value || "");
-    },
-  ],
-  ["[data-fser]", formEdit(el => (form.series = el.dataset.fser))],
-  ["[data-fserdel]", formEdit(() => (form.series = ""), () => !TOUCH && $("#f-serq")?.focus())],
-  [
-    "[data-fsernew]",
-    formEdit(
-      el => {
-        form.serNew = el.dataset.fsernew === "1";
-        form.serNewName = $("#f-serq")?.value || "";
-      },
-      () => !TOUCH && $("#f-sernew")?.focus(),
-    ),
-  ],
-  [
-    "[data-fsercreate]",
-    () => {
-      readForm();
-      const n = (form.serNewName || "").trim();
-      if (!n) return toast("シリーズ名を入れてください");
-      form.series = n;
-      form.serNew = false;
-      /* 新しく作ったシリーズのメインのジャンルは、作った作品のジャンルにする */
-      if (!M("series").includes(n)) {
-        master = { ...master, seriesMain: { ...(master.seriesMain || {}), [n]: serGroup(form.k) } };
-        saveMaster();
-      }
-      redrawForm();
-      toast(`シリーズ「${n}」を作りました`);
-    },
-  ],
   /* 曲を追加：前の曲の続きの話から最後の話まで */
   [
     "[data-sgadd]",

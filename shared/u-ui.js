@@ -84,10 +84,8 @@ U.pick = (() => {
     document.documentElement.classList.remove("pkopen");
     if (s && refocus && !U.TOUCH && s.isConnected) s.focus();
   }
-  function rows(q) {
-    const nq = U.norm(q || "");
-    const opts = [...cur.options].filter(o => !o.hidden && (!nq || U.norm(o.textContent).includes(nq)));
-    if (!opts.length) return `<p class="dd-hint">「${esc(q)}」は見つかりません</p>`;
+  function rows() {
+    const opts = [...cur.options].filter(o => !o.hidden);
     return opts
       .map(o => {
         const on = cur.selectedIndex === o.index;
@@ -107,8 +105,7 @@ U.pick = (() => {
     box.className = sheet ? "sheetmode" : "popmode";
     box.innerHTML = `<div class="dd-scrim" data-pkclose="1"></div><div class="dd-box" role="dialog" aria-label="${esc(tt)}">
       ${sheet ? `<div class="dd-h"><b>${esc(tt)}</b><span>選ぶと閉じます</span><button type="button" class="dd-x" data-pkclose="1" aria-label="閉じる">${U.IC.x}</button></div>` : ""}
-      ${sel.options.length > 10 ? `<label class="dd-q">${U.IC.search}<input id="pkq" type="search" autocomplete="off" placeholder="探す" aria-label="探す"></label>` : ""}
-      <div class="dd-list" role="listbox" id="pkList">${rows("")}</div></div>`;
+      <div class="dd-list" role="listbox" id="pkList">${rows()}</div></div>`;
     document.body.appendChild(box);
     if (sheet) document.documentElement.classList.add("pkopen");
     else {
@@ -130,7 +127,7 @@ U.pick = (() => {
     }
     const on = box.querySelector(".dd-row.on");
     if (on) on.scrollIntoView({ block: "center" });
-    if (!U.TOUCH) (box.querySelector("#pkq") || on || box.querySelector(".dd-row"))?.focus();
+    if (!U.TOUCH) (on || box.querySelector(".dd-row"))?.focus();
   }
   function pick(i) {
     const s = cur;
@@ -194,9 +191,6 @@ U.pick = (() => {
     },
     true,
   );
-  document.addEventListener("input", e => {
-    if (e.target.id === "pkq" && cur) document.getElementById("pkList").innerHTML = rows(e.target.value);
-  });
   /* キーボード：選択欄で Enter・Space・↑↓ を押すと開く。一覧の中は ↑↓・Home・End で移動、Escで閉じる。
      アプリ側の一覧（編集画面のプルダウン・絞り込みの選択肢）も同じ動き */
   document.addEventListener(
@@ -214,15 +208,6 @@ U.pick = (() => {
         e.preventDefault();
         e.stopPropagation();
         close(true);
-        return;
-      }
-      if (cur && t.id === "pkq" && e.key === "Enter") {
-        e.preventDefault();
-        const r = document.querySelector("#pkList [data-pki]");
-        if (r) {
-          at = 0;
-          pick(+r.dataset.pki);
-        }
         return;
       }
       const box = t.closest(".dd-box,.fsh-sub");

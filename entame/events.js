@@ -368,21 +368,6 @@ const INPUT_ACTIONS = [
     },
   ],
   [
-    "#ddq",
-    t => {
-      const l = $("#ddList");
-      if (l && ddOpen) l.innerHTML = ddRows(ddOpen, t.value);
-    },
-  ],
-  [
-    "#f-serq",
-    t => {
-      if (!form) return false;
-      const b = $("#fSerSug");
-      if (b) b.innerHTML = serSugForm(t.value);
-    },
-  ],
-  [
     "#spText",
     t => {
       if (!subPaste) return false;
@@ -521,7 +506,6 @@ const enterClick = sel => (t, e) => {
 const KEY_ACTIONS = [
   /* プルダウンを開いているとき：Escで閉じる・検索欄でEnterなら一番上の候補を選ぶ */
   [null, (t, e) => (e.key === "Escape" && ddOpen ? (e.preventDefault(), closeDD(true), true) : false)],
-  ["#ddq", enterClick("#ddList [data-ddpick],#ddList [data-ddsernew]")],
   [
     "[data-svren]",
     (t, e) => {
@@ -552,8 +536,6 @@ const KEY_ACTIONS = [
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
   [null, (t, e) => (e.key === "Escape" && yform && yform.inline ? ytCloseInline() || true : false)],
   [null, (t, e) => (e.key === "Escape" ? close() : false)],
-  ["#f-serq", enterClick("#fSerSug [data-fser]")],
-  ["#f-sernew", enterClick("[data-fsercreate]")],
   ["#seriesQ", enterClick("#serSug [data-seradd]")],
 ];
 document.addEventListener("keydown", e => runInputs(KEY_ACTIONS, e));
