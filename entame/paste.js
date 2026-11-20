@@ -295,26 +295,39 @@ function gridFrom(text, from, opt = {}) {
     const i = epAt0(r);
     return i >= 0 && i < main && r[main] && gNum(r[main]) != null ? main : i;
   };
-  const isHead = r => epAt(r) >= 0;
-  /* opt.flat＝行を自動でつながない（コピーした1行をそのまま表の1行にする） */
-  const anyHead = !opt.flat && raw.some(isHead);
+  /* 話の始まりの行がだいたいマス2つ以上なら、マス1つだけの行（「Chapter.2 河沿いの町」のような続きの題名）は始まりにしない */
+  const multiN = raw.filter(r => epAt(r) >= 0 && r.length > 1).length;
+  const isHead = r => epAt(r) >= 0 && (r.length > 1 || multiN < 2);
+  /* 改行の扱い（opt.mode）：join＝前のマスにつなぐ（マスの中の改行）／col＝次の列へ（改行ごとに新しいマス）／row＝次の行へ（コピーした1行がそのまま表の1行）
+     見出し・区切りの行など、話の始まりでない行も消さずに1行として残す（話数が読めない行として赤く出る） */
+  const mode = opt.mode || (opt.flat ? "row" : "join");
+  const anyHead = mode !== "row" && raw.some(isHead);
   const recs = [];
   let head = null,
     cur = null;
-  /* 放送日のマスで終わっている話の次に、日付でない1マスだけの行（「無限列車編」などの区切り）が来たら、つながず外す */
-  const sect = (c, r) => r.length === 1 && isDateCell(c[c.length - 1]) && !findDates(r[0]).length && !/^\d{4}\s*年$/.test(zen(r[0]));
+  /* 放送日のマスで終わっている話の次に、日付でない1マスだけの行（「無限列車編」などの区切り）が来たら、別の行にする */
+  /* ただし、その話のサブタイトルと同じ言葉で始まる行（「Chapter.1 …」の次の「Chapter.2 …」）は続きにする */
+  const sameKey = (c, t) => c.some(x => {
+    const k = subKey(x);
+    return k && zen(String(t)).startsWith(k);
+  });
+  const sect = (c, r) => r.length === 1 && isDateCell(c[c.length - 1]) && !findDates(r[0]).length && !/^\d{4}\s*年$/.test(zen(r[0])) && !sameKey(c, r[0]);
+  const yearOnly = c => /^\d{4}\s*年$/.test(zen(String(c || "").trim()));
   raw.forEach(r => {
     if (!anyHead || isHead(r)) recs.push((cur = [...r]));
     else if (!cur) {
-      if (!recs.length && !head && r.length > 1 && HEAD_RE.test(r.join(""))) head = cur = [...r];
-    } else if (sect(cur, r)) cur = null;
-    else {
+      if (!recs.length && !head && r.length > 1 && HEAD_RE.test(r.join(""))) head = [...r];
+      recs.push([...r]);
+    } else if (sect(cur, r)) {
+      recs.push([...r]);
+      cur = null;
+    } else if (mode === "join" || (yearOnly(cur[cur.length - 1]) && isDateCell(r[0]))) {
+      /* 「2016年」のマスの次の行の日付は、どちらの扱いでも同じマスにする */
       cur[cur.length - 1] = `${cur[cur.length - 1]} ${r[0]}`.trim();
       cur.push(...r.slice(1));
-    }
+    } else cur.push(...r);
   });
-  /* 外した行（最初の話より前の見出しなど） */
-  const dropped = anyHead ? raw.findIndex(isHead) : 0;
+  const dropped = 0;
   const rows = recs.map(r => {
     const ni = Math.max(0, epAt(r));
     /* cells＝話数以外のマス（並び順のまま）。def＝最初にサブタイトルにするマス（話数より後ろで、日付・数字でない最初のマス） */
@@ -323,9 +336,9 @@ function gridFrom(text, from, opt = {}) {
     /* 話数を含むマス（「01.PHASE-01」のような別の番号の列）もサブタイトルにしない */
     const nt = String(r[ni] || "").trim();
     const di = after.findIndex(c => !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt)));
-    return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "", raw: r, ni, mk: ni === 0 && isMk(r) };
+    return { n: r[ni], cells: [...pre, ...after], def: di >= 0 ? pre.length + di : -1, pick: null, d: null, sub: "", ds: [], other: "", raw: r, ni, mk: ni === 0 && isMk(r), hd: anyHead ? isHead(r) : true };
   });
-  const g = { rows, dropped, from };
+  const g = { rows, dropped, from, mode };
   gSetSub(g, null);
   return Object.assign(
     g,
@@ -335,6 +348,17 @@ function gridFrom(text, from, opt = {}) {
       from,
     ),
   );
+}
+/* 3つの改行の扱いで表を作り、サブタイトル・放送日を一番多く読める扱いの表を返す（同じなら join → col → row の順） */
+function gridBest(text, from) {
+  let best = null,
+    bs = -1;
+  ["join", "col", "row"].forEach(mode => {
+    const g = gColsInit(gridFrom(text, from, { mode }));
+    const sc = gridParse(g, from).reduce((a, x) => a + (x.sub ? 1 : 0) + (x.date ? 1 : 0), 0);
+    if (sc > bs) (bs = sc), (best = g);
+  });
+  return best;
 }
 /* 行のサブタイトル・放送日の候補・その他を決める。pick＝その行だけ選んだマス、なければ表全体の番目（si）、それもなければ def */
 function gApply(g, r) {
@@ -361,8 +385,47 @@ const G_ROLE = { n: "話数", sub: "サブタイトル", date: "放送日", x: "
 const gLetter = j => (j >= 26 ? gLetter(Math.floor(j / 26) - 1) : "") + String.fromCharCode(65 + (j % 26));
 const gCell = (r, j) => (j - r.off >= 0 && r.raw[j - r.off] != null ? r.raw[j - r.off] : "");
 const gColN = g => Math.max(1, ...g.rows.map(r => r.off + r.raw.length));
+/* サブタイトルの始まりの言葉（「Chapter.1 …」→「Chapter.」、「LETTER01」→「LETTER」）。同じ言葉で始まる続きのマスもサブタイトルにする */
+function subKey(c) {
+  const m = zen(String(c || "")).match(/^([^\d\s]{2,12}?)\s*\d/);
+  return m && !/^第/.test(m[1]) ? m[1] : "";
+}
+/* 改行を「次の列へ」にした表：話ごとにマスを中身で振り分けて列をそろえる（話数｜サブタイトル…｜放送日…｜そのほか…）。中身は消さない */
+function gColsSplit(g) {
+  const isSubC = (c, nt) => c && !isDateCell(c) && !isNumCell(c) && gNum(c) == null && !(nt.length > 1 && c.includes(nt));
+  const heads = g.rows.filter(r => r.hd);
+  const M = Math.max(0, ...heads.map(r => r.ni));
+  const parts = g.rows.map(r => {
+    if (!r.hd) return null;
+    const nt = String(r.raw[r.ni] || "").trim();
+    const rest = r.raw.slice(r.ni + 1);
+    const mi = rest.findIndex(c => isSubC(c, nt));
+    const key = mi >= 0 ? subKey(rest[mi]) : "";
+    const o = { pre: r.raw.slice(0, r.ni), n: r.raw[r.ni], subs: mi >= 0 ? [rest[mi]] : [], dates: [], other: [] };
+    rest.forEach((c, i) => {
+      if (i === mi || !String(c).trim()) return;
+      if (isDateCell(c)) o.dates.push(c);
+      else if (key && zen(c).startsWith(key)) o.subs.push(c);
+      else o.other.push(c);
+    });
+    return o;
+  });
+  const mx = k => Math.max(0, ...parts.filter(Boolean).map(o => o[k].length));
+  const S = Math.max(1, mx("subs")),
+    D = Math.max(1, mx("dates")),
+    pad = (a, n) => [...a, ...Array(Math.max(0, n - a.length)).fill("")];
+  g.rows.forEach((r, i) => {
+    const o = parts[i];
+    if (!o) return (r.off = 0);
+    r.raw = [...o.pre, o.n, ...pad(o.subs, S), ...pad(o.dates, D), ...o.other];
+    r.off = M - o.pre.length;
+  });
+  g.cols = [...Array(M).fill("x"), "n", ...Array(S).fill("sub"), ...Array(D).fill("date")];
+  return gColsFit(g);
+}
 function gColsInit(g) {
   if (g.cols) return gColsFit(g);
+  if (g.mode === "col") return gColsSplit(g);
   const M = Math.max(0, ...g.rows.map(r => r.ni));
   g.rows.forEach(r => {
     r.raw = [...r.raw];
@@ -431,9 +494,9 @@ function gColsFit(g) {
   while (g.cols.length < n) g.cols.push("x");
   return g;
 }
-/* 列の役割を決める。話数・サブタイトルは1列だけ（ほかの列は「使わない」に）、放送日は何列でも（左の列を優先） */
+/* 列の役割を決める。話数は1列だけ（ほかの列は「使わない」に）。サブタイトルは何列でも（中身のある列を「 / 」でつなぐ）、放送日も何列でも（左の列を優先） */
 function gSetCol(g, j, role) {
-  if (role === "n" || role === "sub") g.cols = g.cols.map(c => (c === role ? "x" : c));
+  if (role === "n") g.cols = g.cols.map(c => (c === role ? "x" : c));
   g.cols[j] = role;
 }
 /* その行の j列から右を1つずらす（Excelの「セルの挿入・削除」）。右＝j列に空のマスを入れる、
@@ -498,7 +561,7 @@ function gVals(g, r) {
   g.cols.forEach((c, j) => {
     const t = gCell(r, j);
     if (c === "n") v.n = t;
-    else if (c === "sub") v.sub = t;
+    else if (c === "sub") v.sub = [v.sub, String(t).trim()].filter(Boolean).join(" / ");
     else if (c === "date" && !v.day && t.trim()) v.day = t;
   });
   return v;
@@ -545,4 +608,4 @@ function gridParse(g, from) {
   });
   return out;
 }
-if (typeof module !== "undefined") module.exports = { gSetSub, gColsInit, gSetCol, gDelCol, gMergeUp, gAddRow, gShift, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };
+if (typeof module !== "undefined") module.exports = { gridBest, gColsSplit, gSetSub, gColsInit, gSetCol, gDelCol, gMergeUp, gAddRow, gShift, gSet, gVals, gCell, EP_NUM, EP_NOT, kanjiNum, zen, parseSubtitles, gridFrom, gridParse, gDay, gNum, findDates };

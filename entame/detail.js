@@ -21,7 +21,9 @@ function gridHtml(g) {
     .join("");
   const p = subPaste,
     it = items.find(x => x.id === openId);
-  const tool = `<div class="gtool"><span class="gtl">行を自動でつなぐ</span><span class="gseg"><button type="button" data-gjoin="1" class="${p.flat ? "" : "on"}">する</button><button type="button" data-gjoin="0" class="${p.flat ? "on" : ""}">しない</button></span>${it ? wikiLink(it) : ""}</div>
+  const md = g.mode || "join";
+  const seg = [["join", "つなぐ"], ["col", "次の列へ"], ["row", "次の行へ"]].map(([v, l]) => `<button type="button" data-gmode="${v}" class="${md === v ? "on" : ""}">${l}</button>`).join("");
+  const tool = `<div class="gtool"><span class="gtl">改行は</span><span class="gseg">${seg}</span>${it ? wikiLink(it) : ""}</div>
     <div class="gtool"><button type="button" id="gMerge" title="選んだマスの行を上の行につなぐ">上の行につなぐ</button><button type="button" id="gAdd">＋ 行を追加</button><button type="button" id="gUndo"${(p.hist || []).length ? "" : ' class="off"'}>元に戻す</button></div>`;
   return `<div class="spaste spgrid">
     ${tool}
@@ -33,7 +35,7 @@ function gridHtml(g) {
 /* 整形の表の操作を戻せるように、変える前の表を取っておく（30回まで） */
 function gSnap() {
   const h = (subPaste.hist = subPaste.hist || []);
-  h.push(JSON.stringify({ g: subPaste.grid, flat: !!subPaste.flat }));
+  h.push(JSON.stringify({ g: subPaste.grid }));
   if (h.length > 30) h.shift();
 }
 let subPaste = null; // {text, rows:[{n,sub,idx,old}], addMissing}（話数の編集の中で開き、編集中の話数に反映する）
@@ -662,7 +664,7 @@ function readPaste(it) {
   const text = $("#spText").value;
   /* 表をコピーしたもの（タブ区切り）は、最初から整形の表で開く */
   if (text.includes("\t")) {
-    subPaste = { text, grid: gridFrom(text, it.from) };
+    subPaste = { text, grid: gridBest(text, it.from) };
     return refreshSheet();
   }
   const ps = parseSubtitles(text, { from: it.from });
@@ -1233,15 +1235,14 @@ const PASTE_ACTIONS = [
       refreshSheet();
     },
   ],
-  /* 行を自動でつなぐ／つながない（貼り付けた文字から表を作り直す） */
+  /* 改行の扱い（つなぐ・次の列へ・次の行へ）を変える（貼り付けた文字から表を作り直す） */
   [
-    "[data-gjoin]",
+    "[data-gmode]",
     (el, it) => {
-      const flat = el.dataset.gjoin === "0";
-      if (!!subPaste.flat === flat) return;
+      const mode = el.dataset.gmode;
+      if ((subPaste.grid.mode || "join") === mode) return;
       gSnap();
-      subPaste.flat = flat;
-      subPaste.grid = gridFrom(subPaste.text, it.from, { flat });
+      subPaste.grid = gridFrom(subPaste.text, it.from, { mode });
       refreshSheet();
     },
   ],
@@ -1276,7 +1277,6 @@ const PASTE_ACTIONS = [
       if (!h.length) return toast("戻せる操作がありません");
       const s = JSON.parse(h.pop());
       subPaste.grid = s.g;
-      subPaste.flat = s.flat;
       refreshSheet();
     },
   ],
