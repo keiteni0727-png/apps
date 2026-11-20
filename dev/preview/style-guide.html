@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>見た目の決まり</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&family=Bebas+Neue&display=swap">
+<link rel="stylesheet" href="../../shared/u-base.css">
+<style>
+  /* この見本ページの並べ方だけ（アプリには関係しない） */
+  body{font-family:var(--u-f);padding:20px 16px 60px;max-width:900px;margin:0 auto}
+  h1{font-size:var(--fs-xl);margin:0 0 4px}
+  h2{font-size:var(--fs-l);margin:28px 0 10px;padding-top:16px;border-top:1px solid var(--u-line)}
+  p.note{font-size:var(--fs-s);color:var(--u-sub);margin:0 0 12px;line-height:1.6}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+  .lab{width:120px;flex:none;font-size:var(--fs-s);color:var(--u-sub);font-weight:700}
+  .card{background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--r-l);padding:14px 16px}
+  table{border-collapse:collapse;font-size:var(--fs-s);width:100%}
+  td,th{border-bottom:1px solid var(--u-line);padding:6px 8px;text-align:left;vertical-align:middle}
+  th{color:var(--u-sub);font-weight:700}
+  .old{color:var(--u-sub);font-family:var(--u-num)}
+  .sw{display:inline-block;width:56px;height:36px;background:var(--u-accent2);border:1px solid var(--u-accent)}
+  .hbar{display:inline-flex;align-items:center;justify-content:center;width:80px;background:var(--u-chip);border-radius:6px;font-size:var(--fs-s);color:var(--u-sub)}
+  .ex{display:grid;gap:8px;max-width:360px}
+</style>
+</head>
+<body>
+<h1>見た目の決まり（エンタメ管理）</h1>
+<p class="note">画面ごとに大きさや形を決めず、ここにある値と部品だけを使います。左の数字は、いまアプリの中で使われている値です（矢印の右に寄せます）。</p>
+
+<h2>文字の大きさ：34種類 → 6段階＋数字用2つ</h2>
+<div class="card">
+<table>
+  <tr><th>名前</th><th>見本</th><th>使う所</th><th>いまの値（→ここに寄せる）</th></tr>
+  <tr><td>xs 11</td><td style="font-size:var(--fs-xs);font-weight:700">放送中 Netflix</td><td>札・小さな補足</td><td class="old">9 / 9.5 / 10 / 10.5 / 11</td></tr>
+  <tr><td>s 12</td><td style="font-size:var(--fs-s)">説明文・ラベル・件数</td><td>説明・ラベル</td><td class="old">11.5 / 12</td></tr>
+  <tr><td>m 13</td><td style="font-size:var(--fs-m)">小さいボタン・一覧の2行目</td><td>小さいボタン</td><td class="old">12.5 / 13</td></tr>
+  <tr><td>base 14</td><td style="font-size:var(--fs-base)">本文・ふつうのボタン・入力</td><td>ふだんの文字</td><td class="old">13.5 / 14 / 14.5</td></tr>
+  <tr><td>l 16</td><td style="font-size:var(--fs-l);font-weight:700">星降る街のアトリエ</td><td>作品名・小見出し</td><td class="old">15 / 16 / 16.5 / 17</td></tr>
+  <tr><td>xl 20</td><td style="font-size:var(--fs-xl);font-weight:900">作品を編集</td><td>画面の見出し</td><td class="old">18 / 19 / 20 / 21 / 22</td></tr>
+  <tr><td>2xl 28 / 3xl 40</td><td style="font-family:var(--u-disp);font-size:var(--fs-3xl);line-height:1;color:var(--u-acct)">23:00</td><td>時計・大きな件数だけ</td><td class="old">23〜44</td></tr>
+</table>
+</div>
+
+<h2>角の丸み：28種類 → 3つ＋まんまる</h2>
+<div class="row">
+  <span><span class="sw" style="border-radius:var(--r-s)"></span><br><small>s 6：札・小物</small></span>
+  <span><span class="sw" style="border-radius:var(--r-m)"></span><br><small>m 10：ボタン・入力・カード</small></span>
+  <span><span class="sw" style="border-radius:var(--r-l)"></span><br><small>l 14：シート・大きなカード</small></span>
+  <span><span class="sw" style="border-radius:var(--r-full)"></span><br><small>まんまる：札・丸ボタン</small></span>
+</div>
+<p class="note">いまの 2〜7 は s、8〜11 は m、12〜20 は l に寄せます。</p>
+
+<h2>部品の高さ：36種類 → 4つ</h2>
+<div class="row">
+  <span class="hbar" style="height:var(--h-chip)">札 28</span>
+  <span class="hbar" style="height:var(--h-s)">小 32</span>
+  <span class="hbar" style="height:var(--h-m)">ふつう 40</span>
+  <span class="hbar" style="height:var(--h-l)">大 48</span>
+</div>
+
+<h2>ボタン：約70種類 → 形は4つ × 大きさ3つ</h2>
+<div class="card">
+  <div class="row"><span class="lab">塗り（主な操作）</span><button class="u-btn pri sm">話数を保存</button><button class="u-btn pri">保存する</button><button class="u-btn pri lg">各話リストを貼り付け</button></div>
+  <div class="row"><span class="lab">枠線（ふつう）</span><button class="u-btn sm">編集</button><button class="u-btn">話数を編集</button><button class="u-btn lg">キャンセル</button></div>
+  <div class="row"><span class="lab">文字だけ（補助）</span><button class="u-btn txt sm">すべて開く</button><button class="u-btn txt">貼り直す</button></div>
+  <div class="row"><span class="lab">丸い記号ボタン</span>
+    <button class="u-btn icon sm" aria-label="前"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+    <button class="u-btn icon sm" aria-label="次"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+    <button class="u-btn icon sm soft" aria-label="閉じる">✕</button>
+    <button class="u-btn icon pri" aria-label="追加"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button class="u-btn icon soft" aria-label="設定">⚙</button>
+  </div>
+  <div class="row"><span class="lab">削除・選んでいる</span><button class="u-btn sm danger">削除</button><button class="u-btn sm pri danger">本当に削除</button><button class="u-btn sm on">★ 保存</button><button class="u-btn sm" disabled>押せない</button></div>
+</div>
+
+<h2>札のボタン（押せる・まんまる）</h2>
+<div class="card">
+  <div class="row"><span class="lab">ふつう・選択中</span><button class="u-chip">クール別</button><button class="u-chip on">新しい順</button><button class="u-chip">2026年秋 <span class="x">✕</span></button></div>
+  <div class="row"><span class="lab">追加</span><button class="u-chip add">＋ 通年</button><button class="u-chip add">＋ 次のOPを追加</button></div>
+  <div class="row"><span class="lab">色付き・プルダウン</span><button class="u-chip dd" style="--chip-bg:#d6372e;--chip-fg:#fff">アニメ</button><button class="u-chip dd" style="--chip-bg:#c97c00;--chip-fg:#fff">視聴中</button><button class="u-chip dd">ほかのクール</button></div>
+</div>
+
+<h2>札（表示だけ・押せない）</h2>
+<div class="row"><span class="u-tag">TV</span><span class="u-tag" style="--tag-bg:#E50914;--tag-fg:#fff">Netflix</span><span class="u-tag" style="--tag-bg:var(--u-live2);--tag-fg:var(--u-live)">ON AIR</span><span class="u-tag" style="--tag-bg:var(--u-warn2);--tag-fg:var(--u-warn)">要確認</span></div>
+
+<h2>プルダウン：3種類 → 形は2つ（選ぶ一覧は共通）</h2>
+<div class="ex">
+  <button class="u-dd"><span class="v">TV</span></button>
+  <button class="u-dd"><span class="v ph">選ぶ</span></button>
+  <button class="u-dd sm"><span class="v">OP</span></button>
+  <div class="row"><button class="u-chip dd">ほかのクール</button><button class="u-chip dd on">シリーズ：アトリエ</button></div>
+</div>
+<p class="note">欄の形＝作品の編集・曲の種類・編へ移動など。札の形＝ジャンル・ステータス・絞り込み。押したあとに出る一覧は、いまと同じ共通のものです。</p>
+
+<h2>切り替え（2〜4択）</h2>
+<div class="ex">
+  <div class="u-seg" role="tablist"><button aria-selected="false">自動</button><button aria-selected="true">ライト</button><button aria-selected="false">ダーク</button></div>
+  <div class="u-seg"><button class="on">話数で</button><button>上から順に</button></div>
+</div>
+<p class="note">テーマ・貼り付けの「合わせ方」・並び替えのグループなど、いまは画面ごとに形が違う切り替えを、この1つにそろえます。</p>
+</body>
+</html>
