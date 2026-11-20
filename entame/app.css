@@ -1855,3 +1855,5 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .mp-ya{height:30px;padding:0 10px;font-size:12px;border-radius:8px}
 .fsh-f{padding:8px 12px 10px}
 .fsh-go{height:40px;font-size:14px;border-radius:10px}
+/* 話数の抜け：抜けた場所に1行入れる */
+.tlgap{margin:4px 0 4px 28px;padding:5px 10px;border:1px dashed var(--u-warn);border-radius:8px;color:var(--u-warn);font-size:12.5px;font-weight:700}

@@ -103,9 +103,27 @@ function nextIdx(eps) {
 function epWarn(it) {
   const subA = it.k === "a" && missingOf(it).some(x => x.k === "サブタイトル");
   const dc = epDateCheck(it);
-  return (e, i) => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim(), d: dc.eps[i] || null });
+  const gd = epGapDup(episodes(it));
+  return (e, i) => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim(), d: dc.eps[i] || null, gap: gd.gap.get(i) || null, dup: gd.dup.has(i) });
 }
-const warnAny = x => x.n || x.s || x.d;
+const warnAny = x => x.n || x.s || x.d || x.gap || x.dup;
+/* 話数の抜け・重複の場所。gap＝その話の直前に抜けている話数（[最初, 最後]）、dup＝同じ話数がほかにもある話。数字の話数だけ見る */
+function epGapDup(eps) {
+  const gap = new Map(),
+    dup = new Set();
+  const nums = eps.map(e => (e.sp ? null : epNum(e.n)));
+  const cnt = {};
+  nums.forEach(n => n != null && (cnt[n] = (cnt[n] || 0) + 1));
+  nums.forEach((n, i) => n != null && cnt[n] > 1 && dup.add(i));
+  /* 整数の話数を小さい順に見て、間が空いていたら、空いた後の話（並びで最初に出てくる行）に印を付ける */
+  const ints = [...new Set(nums.filter(n => n != null && Number.isInteger(n)))].sort((a, b) => a - b);
+  for (let k = 1; k < ints.length; k++)
+    if (ints[k] - ints[k - 1] > 1) {
+      const i = nums.indexOf(ints[k]);
+      if (i >= 0) gap.set(i, [ints[k - 1] + 1, ints[k] - 1]);
+    }
+  return { gap, dup };
+}
 function epListHtml(it, eps) {
   if (arcEdit) return arcEditHtml();
   const A = it.k === "a";
@@ -154,9 +172,11 @@ function epListHtml(it, eps) {
     const st = e.w ? " seen" : fut ? " future" : " unseen";
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n ? " tlbad" : ""}">${wn.n ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why ? `<span class="tlwhy">${why}${wn.d.gap || wn.d.rev ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
+    const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
+    const gapRow = wn.gap ? `<div class="tlgap" role="listitem">⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</div>` : "";
+    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${!e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
-    return `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
+    return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}" aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
 
   /* 編がある作品：編ごとに見出しを入れ、見終わった編はたたむ（次に見る話がある編は開く） */
