@@ -4,10 +4,12 @@ let openId = null, // 開いている作品
   epEdit = null; // 話数の編集中の下書き
 let stMenu = false; // 視聴ステータスの選択肢を開いているか
 let navIds = []; // 詳細を開いた画面に出ていた作品の並び（前・次の作品へ移る順）
-/* 一覧・番組表に出ている作品を、画面の上から順に（同じ作品は1回） */
+/* 一覧・番組表に出ている作品を、画面の上から順に（同じ作品は1回）
+   シリーズの一覧（xser）は、見出しを閉じているクールや「さらに表示」の先の作品も含めて、シリーズの作品を全部たどれるようにする */
 function screenIds() {
   const seen = new Set();
-  return [...document.querySelectorAll("#main [data-id]")].map(el => el.dataset.id).filter(id => !seen.has(id) && seen.add(id) && items.some(x => x.id === id));
+  const ids = xserAllIds() || [...document.querySelectorAll("#main [data-id]")].map(el => el.dataset.id);
+  return ids.filter(id => !seen.has(id) && seen.add(id) && items.some(x => x.id === id));
 }
 function navNeighbors(id) {
   const i = navIds.indexOf(id);
