@@ -73,14 +73,15 @@ function subPasteHtml(it) {
     return `<div class="spaste">
     <textarea id="spText" rows="8" placeholder="第一話	人生万事塞翁が虎	五十嵐卓哉 …&#10;第二話	或る爆弾	…">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
-  const ch = p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length,
+  const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,
+    nch = p.match === "order" ? p.rows.filter(r => r.numCh).length : 0,
     same = p.rows.filter(r => r.idx >= 0 && r.old === r.sub && !r.dateCh).length,
     miss = p.rows.filter(r => r.idx < 0).length,
     dch = p.rows.filter(r => r.dateCh).length;
   const md = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}(${"日月火水木金土"[new Date(d).getUTCDay()]})` : "");
   /* 変わる所は「今の値（灰色）→ 更新後（太字）」。日付は年が違うときだけ年も出す */
   const yd = (d, o) => (d && o && d.slice(0, 4) !== o.slice(0, 4) ? `${d.slice(0, 4)}/` : "");
-  const subCell = r => (r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><span class="was">今：${esc(r.old)}</span><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
+  const subCell = r => (!p.useSub && r.idx >= 0 ? `<span>${esc(r.old || "")}</span>` : r.idx >= 0 && r.old && r.old !== r.sub ? `<span class="spv"><span class="was">今：${esc(r.old)}</span><b>${esc(r.sub)}</b></span>` : `<span>${esc(r.sub || r.old)}</span>`);
   const dateCell = r =>
     r.dateCh
       ? `<small class="dch${p.useDate ? " on" : ""}">日付 <span class="was">${yd(r.oldDay, r.date)}${md(r.oldDay)}</span> → <b>${yd(r.date, r.oldDay)}${md(r.date)}</b></small>`
@@ -88,11 +89,12 @@ function subPasteHtml(it) {
         ? `<small class="dsame">日付 ${md(r.date)}</small>`
         : "";
   return `<div class="spaste">
-    <p class="sp-sum">${p.rows.length}話分を読み取りました。<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。</p>
-    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.n}話</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない"  : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
-    ${dch ? `<div class="dconfirm"><b>貼り付けた放送日が、登録済みの日付と${dch}話分違います。</b><label class="yr"><input type="checkbox" id="spDate" ${p.useDate ? "checked" : ""}>日付も貼り付けた内容に更新する（時刻はそのまま）</label></div>` : ""}
+    <div class="sp-opt"><span class="sp-ol">合わせ方</span><div class="sp-seg"><button type="button" data-spm="num" class="${p.match === "num" ? "on" : ""}">話数で</button><button type="button" data-spm="order" class="${p.match === "order" ? "on" : ""}">上から順に</button></div>${p.match === "order" ? `<select id="spFrom" aria-label="最初に合わせる話">${(epEdit ? epEdit.list : episodes(it)).map((e, i) => `<option value="${i}" ${i === p.from ? "selected" : ""}>${esc(e.n)}</option>`).join("")}</select><span class="sp-oh">から</span>` : ""}</div>
+    <div class="sp-opt"><span class="sp-ol">更新する</span><label class="sp-ck"><input type="checkbox" data-spu="useSub" ${p.useSub ? "checked" : ""}>サブタイトル</label>${dch ? `<label class="sp-ck"><input type="checkbox" data-spu="useDate" ${p.useDate ? "checked" : ""}>放送日<small>${dch}話違う</small></label>` : ""}${nch ? `<label class="sp-ck"><input type="checkbox" data-spu="useNum" ${p.useNum ? "checked" : ""}>話数<small>${nch}話違う</small></label>` : ""}</div>
+    <p class="sp-sum">${p.rows.length}話分を読み取りました。${p.useSub ? `<b>${ch}話</b>のサブタイトルを更新します${same ? `（${same}話は同じ）` : ""}。` : ""}</p>
+    <div class="sp-list">${p.rows.map(r => `<div class="sp-r${r.idx < 0 ? " nomatch" : r.old === r.sub ? " same" : ""}"><span class="epn">${r.idx >= 0 && r.numCh ? (p.useNum ? `<span class="was">${esc(r.oldN)}</span>${r.n}話` : `${esc(r.oldN)}<small class="was">←${r.n}</small>`) : `${r.n}話`}</span><span class="spc">${subCell(r)}${dateCell(r)}</span><span class="sp-st">${r.idx < 0 ? "話がない" : !p.useSub ? (r.dateCh && p.useDate ? "日付" : r.numCh && p.useNum ? "話数" : "") : r.old === r.sub ? (r.dateCh ? "日付のみ" : "同じ") : r.old ? "更新" : "追加"}</span></div>`).join("")}</div>
     ${miss ? `<label class="yr"><input type="checkbox" id="spAdd" ${p.addMissing ? "checked" : ""}>登録されていない${miss}話も新しく追加する</label>` : ""}
-    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) ? "" : "disabled"}>${epEdit ? "話数に反映" : dch && p.useDate ? "サブタイトルと日付を更新" : "サブタイトルを更新"}</button></div></div>`;
+    <div class="ffoot"><button type="button" class="u-btn ghost" id="spBack">貼り直す</button><button type="button" class="u-btn ghost" id="spFmt">整形</button><button type="button" class="u-btn pri primary" id="spApply" ${ch || (miss && p.addMissing) || (dch && p.useDate) || (nch && p.useNum) ? "" : "disabled"}>${epEdit ? "話数に反映" : "更新する"}</button></div></div>`;
 }
 /* 次に見る話：放送済みで未チェックの最初の話（なければ未チェックの最初の話） */
 function nextIdx(eps) {
@@ -662,15 +664,28 @@ function readPaste(it) {
    サブタイトルの列がない・空のときは今のサブタイトルのまま（日付だけ直したいとき用） */
 function buildPaste(it, parsed, text, grid) {
   const eps = epEdit ? epEdit.list : episodes(it);
-  const fy = yearOf(it) || new Date().getFullYear();
-  const prev = subPaste || {};
   subPaste = {
     text,
     ...(grid ? { fromGrid: grid } : {}),
+    parsed,
     addMissing: !eps.length,
     useDate: false,
-    rows: parsed.map(r => {
-      const idx = eps.findIndex(x => epNum(x.n) === r.n);
+    /* 更新する項目と合わせ方。match＝"num"（話数で合わせる）／"order"（上から順に合わせる。from＝最初に合わせる登録済みの話） */
+    useSub: true,
+    useNum: false,
+    match: "num",
+    from: 0,
+  };
+  pasteRows(it);
+  refreshSheet();
+}
+/* 読み取った各話を、登録済みの話と組み合わせる（合わせ方で変わる） */
+function pasteRows(it) {
+  const p = subPaste;
+  const eps = epEdit ? epEdit.list : episodes(it);
+  const fy = yearOf(it) || new Date().getFullYear();
+  p.rows = p.parsed.map((r, k) => {
+      const idx = p.match === "order" ? (p.from + k < eps.length ? p.from + k : -1) : eps.findIndex(x => epNum(x.n) === r.n);
       const cur = idx >= 0 ? eps[idx] : null;
       let date = r.date;
       if (!date && r.md) {
@@ -684,12 +699,12 @@ function buildPaste(it, parsed, text, grid) {
         date,
         idx,
         old: cur ? cur.sub || "" : "",
+        oldN: cur ? cur.n : "",
         oldDay,
         dateCh: !!(date && cur && date !== oldDay),
+        numCh: !!(cur && epNum(cur.n) !== r.n),
       };
-    }),
-  };
-  refreshSheet();
+  });
 }
 /* 読み取った内容でサブタイトル（選んだときは日付も）を更新し、ない話は追加 */
 function applyPaste(it) {
@@ -701,12 +716,19 @@ function applyPaste(it) {
     const hm = old && old.t ? jst(old.t).hm : hasTime(it) ? it.time : "9:00";
     return dayTimeToT(day, hm);
   };
+  let nn = 0;
   p.rows.forEach(r => {
     if (r.idx < 0) return;
     const x = l[r.idx];
-    if (x.sub !== r.sub) {
+    if (p.useSub && x.sub !== r.sub) {
       x.sub = r.sub;
       n++;
+    }
+    /* 上から順に合わせたときだけ：話数を貼り付けた番号に変える（選んだときだけ） */
+    if (p.useNum && p.match === "order" && r.numCh) {
+      x.n = `${r.n}話`;
+      x.sp = false;
+      nn++;
     }
     if (p.useDate && r.dateCh) {
       x.t = at(r.date, x);
@@ -732,7 +754,7 @@ function applyPaste(it) {
     l.sort((a, b) => (epNum(a.n) ?? 0) - (epNum(b.n) ?? 0));
   }
   subPaste = null;
-  const msg = [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : ""].filter(Boolean).join("・");
+  const msg = [n ? `サブタイトル${n}話` : "", dn ? `日付${dn}話` : "", nn ? `話数${nn}話` : ""].filter(Boolean).join("・") || "変更なし";
   /* 話数の編集の中から開いたときは、編集中の話数に入れて編集画面に戻る（保存は「話数を保存」で） */
   if (epEdit) {
     refreshSheet();
@@ -808,6 +830,17 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["#e1Save", (el, it) => saveEpOne(it)],
+  /* Wiki貼り付けの合わせ方：話数で／上から順に */
+  [
+    "[data-spm]",
+    (el, it) => {
+      if (!subPaste || !subPaste.parsed) return;
+      subPaste.match = el.dataset.spm;
+      if (subPaste.match === "num") subPaste.useNum = false;
+      pasteRows(it);
+      refreshSheet();
+    },
+  ],
   /* 話数の抜けをそのまま登録（抜けた場所に足す） */
   [
     "[data-gapadd]",

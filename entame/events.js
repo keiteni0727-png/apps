@@ -258,11 +258,23 @@ const CHANGE_ACTIONS = [
     },
   ],
   /* 各話リストの貼り付け：日付も更新・ない話も追加 */
+  /* 更新する項目（サブタイトル・放送日・話数） */
   [
-    "#spDate",
+    "[data-spu]",
     t => {
       if (!subPaste) return false;
-      subPaste.useDate = t.checked;
+      subPaste[t.dataset.spu] = t.checked;
+      refreshSheet();
+    },
+  ],
+  /* 上から順に合わせるとき、最初に合わせる話 */
+  [
+    "#spFrom",
+    t => {
+      if (!subPaste || !subPaste.parsed) return false;
+      subPaste.from = +t.value;
+      const it = items.find(x => x.id === openId);
+      if (it) pasteRows(it);
       refreshSheet();
     },
   ],

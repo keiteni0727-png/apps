@@ -1897,3 +1897,16 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .sg-sum .sg-sa{font-size:11.5px;font-weight:500;color:var(--u-sub)}
 /* スマホは曲名・アーティストを縦に並べる（長い名前も見えるように）。PCは横に並べる */
 @media (max-width:899px){.sg-f2{grid-template-columns:1fr}}
+/* Wiki貼り付けの比較画面：合わせ方・更新する項目 */
+.sp-opt{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;margin:0 0 8px}
+.sp-ol{font-size:11.5px;font-weight:700;color:var(--u-sub);min-width:52px}
+.sp-seg{display:inline-flex;border:1px solid var(--u-line);border-radius:8px;overflow:hidden}
+.sp-seg button{border:0;background:var(--u-surface);color:var(--u-ink);font:inherit;font-size:12.5px;font-weight:700;padding:5px 10px;cursor:pointer}
+.sp-seg button+button{border-left:1px solid var(--u-line)}
+.sp-seg button.on{background:var(--u-accent);color:var(--u-on)}
+#spFrom{height:30px;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:8px;font:inherit;font-size:12.5px;padding:0 6px}
+.sp-oh{font-size:12px;color:var(--u-sub)}
+.sp-ck{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;border:1px solid var(--u-line);border-radius:8px;padding:4px 8px;cursor:pointer}
+.sp-ck input{margin:0;width:15px;height:15px;accent-color:var(--u-accent)}
+.sp-ck small{font-weight:500;color:var(--u-sub);margin-left:2px}
+.sp-r .epn .was{margin-right:4px}
