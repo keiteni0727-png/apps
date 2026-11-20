@@ -11,13 +11,13 @@ let ddOpen = null; // 開いているプルダウン（media・st・plat・vods�
 const ddArr = k => (k === "st" ? form.stations : k === "plat" ? form.plat : form.vods);
 const ddMedia = () => (form.k === "r" ? MEDIA.filter(([m]) => m === "tv" || m === "stream") : MEDIA);
 const ddChip = (v, vod) => (vod && VOD_COLOR[v] ? `<span class="fdd-c vc"${vcStyle(v)}>${esc(v)}</span>` : `<span class="fdd-c">${esc(v)}</span>`);
-/* 閉じているときの中身：選んだもの（前に2つ以上入れた作品は「ほか○」）・なし・未選択
-   まだ選んでいないときは、どの欄も薄い文字の「選ぶ」。「なし」を選んだときは、ほかの値と同じ濃い文字の「なし」 */
+/* 閉じているときの中身：選んだもの（前に2つ以上入れた作品は「ほか○」）か、薄い文字の「なし」
+   まだ選んでいないときも、「なし」を選んだときも、どの欄も同じ「なし」と出す（要確認に出るかどうかは別） */
 function ddValue(k) {
-  const ph = `<span class="fdd-ph">選ぶ</span>`;
+  const ph = `<span class="fdd-ph">なし</span>`;
   if (k === "media") return (MEDIA.find(([m]) => m === form.media) || [])[1] ? esc(MEDIA.find(([m]) => m === form.media)[1]) : ph;
   if (k === "ser") return form.series ? esc(form.series) : ph;
-  if ((form.noF || []).includes(DD_NOF[k])) return "なし";
+  if ((form.noF || []).includes(DD_NOF[k])) return ph;
   const a = ddArr(k);
   if (!a.length) return ph;
   return ddChip(a[0], k !== "st") + (a.length > 1 ? `<span class="fdd-more">ほか${a.length - 1}</span>` : "");
