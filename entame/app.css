@@ -1928,3 +1928,6 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .gex{flex-basis:100%;color:var(--u-sub);font-size:11.5px}
 .sgt tr.selrow td{background:var(--u-accent2)}
 .sgt tr.selrow td.sel{background:transparent}
+.xlinks{display:flex;gap:12px;align-items:center}
+.xlinks a{color:var(--u-sub);font-size:12px;text-decoration:none;opacity:.75;padding:6px 0}
+@media (hover:hover){.xlinks a:hover{opacity:1;color:var(--u-ink)}}

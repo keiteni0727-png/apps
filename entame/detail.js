@@ -83,6 +83,10 @@ function arcSync() {
 }
 /* Wikipediaの記事へ（URLを登録していればそこ、なければ作品名で検索。名前がぴったりなら記事に直接飛ぶ） */
 const wikiUrl = it => it.wiki || `https://ja.wikipedia.org/w/index.php?search=${encodeURIComponent(it.t || "")}`;
+/* 番組詳細の下の小さなリンク：Wikipedia・しょぼいカレンダー（アニメだけ）。各話・放送日を見ながら直すとき用 */
+const syoboiUrl = it => `https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t || "")}`;
+const extLinks = it =>
+  `<span class="xlinks"><a href="${esc(wikiUrl(it))}" target="_blank" rel="noopener">Wikipedia ↗</a>${it.k === "a" ? `<a href="${esc(syoboiUrl(it))}" target="_blank" rel="noopener">しょぼいカレンダー ↗</a>` : ""}</span>`;
 const wikiLabel = it => (it.wiki ? "Wikipediaの記事を開く ↗" : "Wikipediaでこの作品を探す ↗");
 const wikiLink = it => `<a class="gwiki" href="${esc(wikiUrl(it))}" target="_blank" rel="noopener">${wikiLabel(it)}</a>`;
 function subPasteHtml(it) {
@@ -426,7 +430,7 @@ function renderDetail(it) {
     ${missDetail(it)}
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="delsm" id="delItem">削除</button></div></div>
+    <div class="links">${extLinks(it)}${noEp ? `<button type="button" class="epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
