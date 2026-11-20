@@ -3,7 +3,7 @@
 自分用のアプリ置き場です（データは入っていません。ログインした本人だけが自分のデータを読み書きできます）。
 
 - `entame/` … エンタメ管理
-  機能ごとにファイルを分けている：core.js（決まった値・データ・保存・要確認のチェック）→ view.js（一覧・番組表）→ filters.js（絞り込み・並び替え）→ paste.js（各話リストの読み取り）→ detail.js（作品の詳細）→ episodes.js（話数タブ）→ epaste.js（貼り付けの画面）→ form.js（作品の編集）→ settings.js → yt.js（YouTube）→ lists.js（シリーズ・主題歌）→ events.js（ボタン・起動）。見た目は app.css
+  機能ごとにファイルを分けている：core.js（決まった値・データ・保存・要確認のチェック）→ view.js（一覧・番組表）→ filters.js（絞り込み・並び替え）→ paste.js（各話リストの読み取り）→ detail.js（作品の詳細）→ episodes.js（話数タブ）→ epaste.js（貼り付けの画面）→ dropdown.js（編集画面のプルダウン）→ form.js（作品の編集）→ settings.js → yt.js（YouTubeの一覧）→ yt-detail.js（YouTubeの詳細・編集）→ lists.js（シリーズ・主題歌）→ events.js（ボタン・入力の受け付け）→ helpers.js（矢印キー・日付の入力などの補助）→ boot.js（起動）。見た目は app.css
   ボタン・文字の大きさ・角の丸みなどは `shared/u-base.css` の「見た目の決まり」を使う（見本は `dev/preview/style-guide.html`）
 - `okane/` … おかね手帳
 - `fitlife/` … FitLife（ふたり用の健康管理。別のFirebaseプロジェクトを使用）

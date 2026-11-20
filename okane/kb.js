@@ -812,7 +812,7 @@ function renderSummary(mi, pi) {
   const sf = sumFolded();
   $("summary").classList.toggle("folded", sf);
   $("summary").innerHTML =
-    `<div class="sumtop"><div><div class="eyebrow">${FIN.periodLabel(view.month)}の支出<span class="rng">${md(ps)}〜${md(pe)}</span></div><div class="totrow"><span class="total">${yen(sum)}</span>${delta}</div></div><button type="button" class="sumtog" id="sumtog" aria-expanded="${!sf}" aria-label="${sf ? "支出の内訳を開く" : "支出の内訳をたたむ"}">${FOLD_IC}</button></div><div class="sumbody">` +
+    `<div class="sumtop"><div><div class="eyebrow">${FIN.periodLabel(view.month)}の支出<span class="rng">${md(ps)}〜${md(pe)}</span></div><div class="totrow"><span class="total">${yen(sum)}</span>${delta}</div></div><button type="button" class="u-btn icon sm soft sumtog" id="sumtog" aria-expanded="${!sf}" aria-label="${sf ? "支出の内訳を開く" : "支出の内訳をたたむ"}">${FOLD_IC}</button></div><div class="sumbody">` +
     (sum
       ? `<div class="stack" role="img" aria-label="分類の内訳">${top.map(([c, v]) => `<span title="${esc(c)} ${yen(v)}（${Math.round((v / sum) * 100)}%）" style="flex:${v};background:${bcol(c)}"></span>`).join("")}</div>
     <div class="legend">${top.map(([c, v]) => `<span><i style="background:${bcol(c)}"></i>${emo(c)} ${esc(c)} <b class="num">${Math.round((v / sum) * 100)}%</b></span>`).join("")}</div>`
@@ -1250,7 +1250,7 @@ function renderRules() {
           const [kc, kl] = kindOf(r);
           return `<div class="rule"><div class="top"><span class="kind ${kc}">${kl}</span><label class="ckl"><input type="checkbox" class="ck" data-rauto="${r.id}"${r.auto !== false ? " checked" : ""}> 新規に自動適用</label></div>
     <div class="rdesc">${descRule(r)}</div>
-    <div class="acts">${setting.edit.rules ? `<button class="editbtn" data-redit="${r.id}" aria-label="ルールを変更">変更</button><button class="ghost delbtn" data-rdel="${r.id}">削除</button>` : `<button data-rprev="${r.id}">既存データに適用…</button>`}</div>
+    <div class="acts">${setting.edit.rules ? `<button class="u-btn sm editbtn" data-redit="${r.id}" aria-label="ルールを変更">変更</button><button class="ghost delbtn" data-rdel="${r.id}">削除</button>` : `<button data-rprev="${r.id}">既存データに適用…</button>`}</div>
     ${setting.preview && setting.preview.rid === r.id ? previewHTML() : ""}</div>`;
         })
         .join("")

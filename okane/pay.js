@@ -1477,7 +1477,7 @@
     });
   }
   function payHTML({ it, a, debt }) {
-    return `<div class="ad-top"><div><h3>${esc(it.name)}${it.kind === "late" ? ' <span class="chip late">⚠ 延滞分</span>' : ""}</h3><div class="note">予定 ${md(it.date)}（${wd(it.date)}）・${yen(it.amount)}</div></div><button class="xbtn" data-close="1" aria-label="閉じる">×</button></div>
+    return `<div class="ad-top"><div><h3>${esc(it.name)}${it.kind === "late" ? ' <span class="chip late">⚠ 延滞分</span>' : ""}</h3><div class="note">予定 ${md(it.date)}（${wd(it.date)}）・${yen(it.amount)}</div></div><button class="u-btn icon sm soft xbtn" data-close="1" aria-label="閉じる">×</button></div>
   <div class="form">
     <div class="field"><label for="p-date">支払日</label><input type="date" id="p-date" value="${it.date > today() ? it.date : today()}"></div>
     <div class="field"><label for="p-me">支払方法</label><select id="p-me">${mopt(it.method)}</select></div>
@@ -1866,7 +1866,7 @@
         : f && it.status === "deferred"
           ? `<div class="stbar deferred"><span>→ 延滞にして翌月へ回しました</span><button class="sm" data-undefer="${it.id}">延滞を取り消す</button></div>`
           : "";
-    return `<div class="ad-top"><h3>${f ? "支払を編集" : "支払を追加"}</h3><button class="xbtn" data-close="1" aria-label="閉じる">×</button></div>${stBar}
+    return `<div class="ad-top"><h3>${f ? "支払を編集" : "支払を追加"}</h3><button class="u-btn icon sm soft xbtn" data-close="1" aria-label="閉じる">×</button></div>${stBar}
   <div class="form">
     <div class="field"><label for="e-acc">口座</label><select id="e-acc">${opt(accs, it.accountId || "")}</select></div>
     <div class="field"><label for="e-name">表示名</label><input id="e-name" value="${esc(it.name)}"></div>
@@ -1880,7 +1880,7 @@
     <div class="full memo-row"><div class="field"><label for="e-memo">メモ</label><input id="e-memo" value="${esc(it.memo)}"></div><label class="cb"><input type="checkbox" id="e-late" ${it.kind === "late" ? "checked" : ""}>延滞分</label></div>
     <label class="cb full nobal"><input type="checkbox" id="e-nobal" ${it.noBal ? "checked" : ""}>残高に反映しない<span class="note">（管理を始める前の延滞分など）</span></label>
   </div>
-  <div class="actions"><div>${f ? '<button class="danger" id="e-del">削除</button>' : ""}</div><div><button class="ghost" data-close="1">キャンセル</button><button class="primary" id="e-save">保存</button></div></div>`;
+  <div class="actions"><div>${f ? '<button class="u-btn danger" id="e-del">削除</button>' : ""}</div><div><button class="ghost" data-close="1">キャンセル</button><button class="primary" id="e-save">保存</button></div></div>`;
   }
   /* 保存：支払済の元金が変わったら、残高に反映済みの分を戻してから引き直す */
   async function saveItem(ctx) {
@@ -2028,7 +2028,7 @@
     <label class="cb full"><input type="checkbox" id="a-act" ${a.active !== false ? "checked" : ""}>有効（集計と支払予定の対象）</label>
     <div class="note full">元金定額：毎月の元金＋利息を払う ／ 元利定額：毎月同じ額を払う（その中から利息を引いた分が元金）。「それ以外の支払額」は家賃や一括払いなど、リボ以外に毎月一緒に引き落とされる額です。</div>
   </div>
-  <div class="actions"><div>${id ? '<button class="danger" id="a-del">削除</button>' : ""}</div><div><button class="ghost" data-close="1">キャンセル</button><button class="primary" id="a-save">保存</button></div></div>`;
+  <div class="actions"><div>${id ? '<button class="u-btn danger" id="a-del">削除</button>' : ""}</div><div><button class="ghost" data-close="1">キャンセル</button><button class="primary" id="a-save">保存</button></div></div>`;
   }
   /* 保存すると、その口座の今後の支払予定を作り直す */
   async function saveAccount(id, a) {

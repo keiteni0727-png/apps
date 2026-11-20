@@ -32,13 +32,13 @@ const UI = {};
     },
     isOpen: id => fst.id === id,
     btn: (id, n) =>
-      `<div class="fbar"><button type="button" class="fb fsh-b${n ? " on" : ""}" data-fsh="${id}" aria-haspopup="dialog" aria-expanded="${fst.id === id}">${FIC}<span class="v">絞り込み</span>${n ? `<b class="fsh-n">${n}</b>` : ""}</button></div>`,
+      `<div class="fbar"><button type="button" class="u-btn fb fsh-b${n ? " on" : ""}" data-fsh="${id}" aria-haspopup="dialog" aria-expanded="${fst.id === id}">${FIC}<span class="v">絞り込み</span>${n ? `<b class="fsh-n">${n}</b>` : ""}</button></div>`,
     sum: (id, conds) =>
       conds.length
         ? `<div class="fsum"><div class="fsum-l">${conds
             .slice(0, 2)
-            .map(t => `<button type="button" class="fchip" data-fsh="${id}" title="${esc(t)}"><span>${esc(t)}</span></button>`)
-            .join("")}${conds.length > 2 ? `<button type="button" class="fmore" data-fsh="${id}">他${conds.length - 2}件</button>` : ""}</div><button type="button" class="clear" data-fshreset="${id}">解除</button></div>`
+            .map(t => `<button type="button" class="u-chip on fchip" data-fsh="${id}" title="${esc(t)}"><span>${esc(t)}</span></button>`)
+            .join("")}${conds.length > 2 ? `<button type="button" class="u-chip fmore" data-fsh="${id}">他${conds.length - 2}件</button>` : ""}</div><button type="button" class="u-btn sm txt clear" data-fshreset="${id}">解除</button></div>`
         : "",
     refresh: () => fRender(),
     close: () => fClose(),
@@ -81,9 +81,9 @@ const UI = {};
       .join("");
     const sc = h.querySelector(".fsh-body")?.scrollTop || 0;
     h.innerHTML = `<div class="fsh-scrim" data-fshclose="1"></div><div class="fsh${fst.first ? " in" : ""}" role="dialog" aria-label="絞り込み">
-      <div class="fsh-h"><b>絞り込み</b>${nConds ? `<button type="button" class="fsh-reset" data-fshreset="${fst.id}">リセット</button>` : ""}<button type="button" class="fsh-x" data-fshclose="1" aria-label="閉じる">${X_IC}</button></div>
+      <div class="fsh-h"><b>絞り込み</b>${nConds ? `<button type="button" class="u-btn sm txt fsh-reset" data-fshreset="${fst.id}">リセット</button>` : ""}<button type="button" class="u-btn icon sm soft fsh-x" data-fshclose="1" aria-label="閉じる">${X_IC}</button></div>
       <div class="fsh-body">${body}</div>
-      <div class="fsh-f"><button type="button" class="fsh-go" data-fshclose="1">${c.n}${c.unit}を表示</button></div></div>`;
+      <div class="fsh-f"><button type="button" class="u-btn pri wide fsh-go" data-fshclose="1">${c.n}${c.unit}を表示</button></div></div>`;
     const b = h.querySelector(".fsh-body");
     if (b) b.scrollTop = sc;
     fst.first = fst.subFirst = false;

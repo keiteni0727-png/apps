@@ -30,7 +30,6 @@ function subPasteHtml(it) {
   if (p.grid) return gridHtml(p.grid);
   if (!p.rows)
     return `<div class="spaste">
-    ${it.k === "a" ? `<div class="sylink">${syoboiA(it, "syb")}<input id="spSyoboi" type="url" inputmode="url" autocomplete="off" placeholder="作品のページのURLを貼ると、次からそこを開きます" value="${esc(it.syoboi || "")}" aria-label="しょぼいカレンダーのURL"></div>` : ""}
     <textarea id="spText" rows="8" placeholder="各話リストの表をコピーして、ここに貼り付けてください">${esc(p.text || "")}</textarea>
     <div class="ffoot"><button type="button" class="u-btn" id="spCancel">キャンセル</button><button type="button" class="u-btn pri primary" id="spRead">読み取る</button></div></div>`;
   const ch = p.useSub ? p.rows.filter(r => r.idx >= 0 && r.old !== r.sub).length : 0,

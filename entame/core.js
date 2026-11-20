@@ -1,6 +1,6 @@
 /* ===================== エンタメ管理：土台 =====================
    決まった値・画面の状態・作品データの組み立て・保存（Firebase）・マスタ・話数・未入力チェック。
-   ファイルの読み込み順：core → view → filters → paste → detail → episodes → epaste → form → settings → yt → lists → events（最後に起動） */
+   ファイルの読み込み順：core → view → filters → paste → detail → episodes → epaste → dropdown → form → settings → yt → yt-detail → lists → events → helpers → boot（最後に起動） */
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */
@@ -837,13 +837,13 @@ const nofBox = (k, lab) =>
 const MISS_GROUPS = ["話数", "基本情報", "曲", "ずれ"].map(g => [g, [...new Set(MISS_CHECKS.filter(x => x.g === g).flatMap(x => [].concat(x.k)))]]);
 /* 端末に覚えた「要確認」の項目のうち、今は無いものは外す */
 if (state.missKey && !MISS_CHECKS.some(x => [].concat(x.k).includes(state.missKey))) state.missKey = "";
-/* 一覧のバッジ：先頭2項目＋「ほかN」。全部はマウスを乗せると出る（話数がないときだけ赤） */
+/* 一覧のバッジ：件数だけ（話数がないときだけ赤） */
+/* 一覧の札は件数だけ（項目の名前はマウスを乗せると出る・詳細のアラートと絞り込みで見る）。YouTube も同じ形 */
+const missPill = (names, hot) =>
+  names.length ? `<span class="miss${hot ? " hot" : ""}" title="要確認：${esc(names.join("・"))}"><b>要確認</b><span class="mh">${names.length}</span></span>` : "";
 function missBadge(i) {
-  const l = missingOf(i);
-  if (!l.length) return "";
-  const names = l.map(x => x.k);
-  const head = names.slice(0, 2).join("・") + (names.length > 2 ? ` ほか${names.length - 2}` : "");
-  return `<span class="miss${names.includes("話数") ? " hot" : ""}" title="要確認：${esc(names.join("・"))}"><b>要確認</b><span class="mh">${esc(head)}</span></span>`;
+  const names = missingOf(i).map(x => x.k);
+  return missPill(names, names.includes("話数"));
 }
 function missOk(i) {
   if (!state.missOnly) return true;

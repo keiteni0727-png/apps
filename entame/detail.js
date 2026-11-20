@@ -13,12 +13,6 @@ function navNeighbors(id) {
   const i = navIds.indexOf(id);
   return i < 0 ? [null, null] : [navIds[i - 1] || null, navIds[i + 1] || null];
 }
-/* しょぼいカレンダーへのリンク（アニメだけ）：作品のページのURLを登録していればそこ、なければ作品名で検索。
-   番組詳細の下と、各話リストの貼り付け画面の両方に出す（登録したURLはどちらにも使う） */
-const syoboiUrl = it => it.syoboi || `https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t || "")}`;
-const syoboiLab = it => (it.syoboi ? "しょぼいカレンダーを開く ↗" : "しょぼいカレンダーで探す ↗");
-const syoboiA = (it, cls) => `<a class="${cls}" href="${esc(syoboiUrl(it))}" target="_blank" rel="noopener">${syoboiLab(it)}</a>`;
-const extLinks = it => (it.k === "a" ? `<span class="xlinks">${syoboiA(it, "syb")}</span>` : "");
 /* 基本情報：放送・主題歌・リンクのカード。カードの「編集」ボタンで、そのカードの項目をその場で編集 */
 /* 配信ボタンの名前：配信サイトが1つだけならその名前、それ以外は「配信」 */
 function vodName(it) {
@@ -166,7 +160,7 @@ function renderDetail(it) {
     ${missDetail(it)}
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${extLinks(it)}${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
+    <div class="links">${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${epEdit ? (subPaste ? subPasteHtml(it) : epEditorHtml(it)) : epListHtml(it, eps)}</div></div>`;
 }
