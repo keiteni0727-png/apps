@@ -1916,9 +1916,9 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .gtool>button.off{color:var(--u-sub)}
 .gtl{color:var(--u-sub)}
 .gseg{display:flex;flex-basis:100%}
-.gseg button{flex:1;white-space:nowrap;font-size:11.5px;padding:6px 2px}
-.gseg button:first-child{border-radius:var(--u-r) 0 0 var(--u-r)}
-.gseg button:last-child{border-radius:0 var(--u-r) var(--u-r) 0;margin-left:-1px}
+.gseg button{flex:1;white-space:nowrap;font-size:11.5px;padding:6px 2px;border-radius:0;margin-left:-1px}
+.gseg button:first-child{border-radius:var(--u-r) 0 0 var(--u-r);margin-left:0}
+.gseg button:last-child{border-radius:0 var(--u-r) var(--u-r) 0}
 .gseg button.on{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
 .gwiki{font-size:12px;color:var(--u-acct);text-decoration:none;font-weight:700;white-space:nowrap}
 #spWiki{flex:1 1 180px;min-width:0;font-size:12.5px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);color:inherit}
