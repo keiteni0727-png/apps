@@ -155,7 +155,7 @@ function formHtml() {
       noSched(f.media)
         ? ""
         : `<div class="field full"><span>放送クール</span>
-        <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="u-chip tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未設定</span>` : ""}
+        <div class="cours" id="coursBox">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="u-chip tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未選択</span>` : ""}
           ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="u-chip add sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}</button>` : ""}
           ${(() => {
             /* 2クール目以降：選んだ最後のクールの次をワンタップで */

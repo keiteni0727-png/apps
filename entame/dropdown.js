@@ -12,9 +12,9 @@ const ddArr = k => (k === "st" ? form.stations : k === "plat" ? form.plat : form
 const ddMedia = () => (form.k === "r" ? MEDIA.filter(([m]) => m === "tv" || m === "stream") : MEDIA);
 const ddChip = (v, vod) => (vod && VOD_COLOR[v] ? `<span class="fdd-c vc"${vcStyle(v)}>${esc(v)}</span>` : `<span class="fdd-c">${esc(v)}</span>`);
 /* 閉じているときの中身：選んだもの（前に2つ以上入れた作品は「ほか○」）・なし・未選択
-   まだ何も選んでいない欄は薄い文字の「未設定」（詳細画面・放送クールと同じ言葉）。一覧の「なし」を選んだ欄は、ほかの値と同じ濃い文字の「なし」 */
+   まだ何も選んでいない欄は薄い文字の「未選択」（放送クールも同じ）。一覧の「なし」を選んだ欄は、ほかの値と同じ濃い文字の「なし」 */
 function ddValue(k) {
-  const ph = `<span class="fdd-ph">未設定</span>`;
+  const ph = `<span class="fdd-ph">未選択</span>`;
   if (k === "media") return (MEDIA.find(([m]) => m === form.media) || [])[1] ? esc(MEDIA.find(([m]) => m === form.media)[1]) : ph;
   if ((form.noF || []).includes(DD_NOF[k])) return "なし";
   if (k === "ser") return form.series ? esc(form.series) : ph;
