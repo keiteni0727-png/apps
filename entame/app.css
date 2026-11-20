@@ -1231,7 +1231,7 @@ body.sbc .u-app .sb .sb-logo{display:none}
 .fsh-subh{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--u-soft)}
 .fsh-hint{flex:1;color:var(--u-sub)}
 .fsh-subb.dd-list .dd-row:first-child{border-top:0}
-.fsh-subb.chipsmode{padding:4px 16px 14px}
+.fsh-subb.chipsmode{padding:4px 16px 14px;overflow-x:hidden}
 .fsh-subb.chipsmode .fgroup{margin-top:12px}
 .fsh-subb.chipsmode .fgroup h5 .hint{font-weight:400}
 .fsh-subb.chipsmode #serSug{display:block;margin-top:8px}
@@ -1374,7 +1374,7 @@ button.setrow:hover{background:var(--u-soft)}
 .slist .srow{display:flex;align-items:center;gap:8px;min-height:46px;height:auto;padding:4px 10px;box-sizing:border-box;border-top:1px solid var(--u-soft)}
 .slist .srow:first-child{border-top:0}
 /* === 選択ボタンを全部同じ見た目に（編集画面・絞り込み・並び替え・未入力の項目・シリーズ候補）：札のボタン（.u-chip）と同じ形 === */
-.chips button:not(.u-btn):not(.u-chip),.fsh-subb .serbox button,.mkeys button{display:inline-flex!important;align-items:center;justify-content:center;gap:4px;min-height:var(--h-chip);height:auto!important;padding:0 12px!important;border:1px solid transparent!important;background:var(--u-chip)!important;color:var(--u-ink)!important;border-radius:var(--r-full)!important;font:700 var(--fs-m)/1.2 var(--u-f)!important;white-space:nowrap;cursor:pointer;box-shadow:none!important}
+.chips button:not(.u-btn):not(.u-chip),.fsh-subb .serbox button,.mkeys button{display:inline-flex!important;align-items:center;justify-content:center;gap:4px;min-height:var(--h-chip);height:auto!important;padding:0 12px!important;border:1px solid transparent!important;background:var(--u-chip)!important;color:var(--u-ink)!important;border-radius:var(--r-full)!important;font:700 var(--fs-m)/1.2 var(--u-f)!important;max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left;cursor:pointer;box-shadow:none!important}
 .chips button:not(.u-btn):not(.u-chip)[aria-pressed="true"],.chips button:not(.u-btn):not(.u-chip)[aria-checked="true"],.mkeys button[aria-pressed="true"]{border-color:color-mix(in srgb,var(--u-accent) 60%,transparent)!important;background:var(--u-accent2)!important;color:var(--u-acct)!important}
 .chips button small,.serbox button small{font-family:var(--u-num);font-size:var(--fs-xs)!important;font-weight:500;opacity:.75;margin-left:4px}
 .fsdrop.fpop.k-sort .sortlist{margin-top:0;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));display:flex!important;flex-wrap:wrap;gap:6px}

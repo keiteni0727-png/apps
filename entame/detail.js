@@ -61,7 +61,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       return u;
     }
   };
-  rows.push(row("シリーズ", it.series ? `<button type="button" class="ilnk" data-series="${esc(it.series)}">${esc(it.series)}<span class="ilar" aria-hidden="true">›</span></button>` : un("未設定")));
+  rows.push(row("シリーズ", it.series ? `<button type="button" class="ilnk" data-series="${esc(it.series)}">${esc(it.series)}<span class="ilar" aria-hidden="true">›</span></button>` : nofHas(it, "ser") ? nn("なし") : un("未設定")));
   rows.push(row("公式サイト", it.url ? `<a class="ilnk" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(host(it.url))}${IC_EXT}</a>` : nofHas(it, "url") ? nn("なし") : un("未設定")));
   rows.push(row("配信URL", it.vurl ? `<a class="ilnk" href="${esc(it.vurl)}" target="_blank" rel="noopener" aria-label="${esc(vodName(it))}で見る">${IC_PLAY}${esc(vodName(it))}</a>` : nofHas(it, "vurl") ? nn("なし") : un("未設定")));
   const bc = `<div class="icard ibc"><div class="ich"><span class="ilamp onair">ON AIR</span>${edB("onair", "基本情報")}</div><dl class="idl">${rows.join("")}</dl></div>`;
