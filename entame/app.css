@@ -1864,3 +1864,9 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 .tlgap{display:flex;align-items:center;gap:8px}
 .tlgap span{flex:1}
 .e1-x{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--u-sub);grid-column:1/-1}
+/* 話数の編集：抜けの行・重複した話 */
+.ergap{display:flex;align-items:center;gap:8px;margin:4px 0;padding:6px 10px;border:1px dashed var(--u-warn);border-radius:8px;color:var(--u-warn);font-size:12.5px;font-weight:700}
+.ergap span{flex:1}
+.ergap button,.tlgap .tlok{border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:8px;padding:3px 9px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.er.dup{box-shadow:inset 0 0 0 1.5px var(--u-danger);border-radius:8px}
+.er .erwhy{grid-column:1/-1;flex-basis:100%;font-size:11.5px;color:var(--u-danger);padding:0 6px 4px}

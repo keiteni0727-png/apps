@@ -158,7 +158,7 @@ function epListHtml(it, eps) {
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
     const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
-    const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
+    const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="tlok" data-gapadd="${wn.gap[0]}-${wn.gap[1]}">話数を追加</button><button type="button" class="tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
     const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev) ? `<button type="button" class="tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
     return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}"${e.x ? " disabled" : ""} aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
@@ -231,6 +231,7 @@ function epNumInput(cls, n, sp) {
 function epEditorHtml(it) {
   const l = epEdit.list;
   const A = it.k === "a";
+  const gd = epGapDup(l, it.gapOk);
   /* 日付をそろえる：1話の日付を全話にコピー（配信でまとめて公開された作品など） */
   const same = l.length > 1 ? `<button type="button" class="edsame" id="erSameDay" title="1話の日付を全話に入れます">日付をそろえる</button>` : "";
   /* 並べ直す：話数順・日付順（1話ずつは⠿を押さえたまま上下に動かす） */
@@ -240,11 +241,14 @@ function epEditorHtml(it) {
       ? l
           .map((e, i) => {
             const j = jst(e.t);
-            return `<div class="er${e.moved ? " moved" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}
+            /* 話数の抜け・重複を編集画面にも出す（抜けた場所に行を入れる。重複した話は赤枠） */
+            const g = gd.gap.get(i);
+            const gapRow = g ? `<div class="ergap"><span>⚠ ${g[0] === g[1] ? `${g[0]}話` : `${g[0]}〜${g[1]}話`}がありません</span><button type="button" data-ergap="${g[0]}-${g[1]}">話数を追加</button></div>` : "";
+            return gapRow + `<div class="er${e.moved ? " moved" : ""}${gd.dup.has(i) ? " dup" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}
       ${epNumInput("er-n", e.n, e.sp)}
       ${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル">` : ""}
       <input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">
-      <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button></div>`;
+      <button type="button" class="del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button>${gd.dup.has(i) ? `<span class="erwhy">⚠ 同じ話数がほかにもあります</span>` : ""}</div>`;
           })
           .join("")
       : `<p class="empty" style="padding:14px">話がありません。下のボタンで追加してください。</p>`
@@ -804,6 +808,16 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["#e1Save", (el, it) => saveEpOne(it)],
+  /* 話数の抜けをそのまま登録（抜けた場所に足す） */
+  [
+    "[data-gapadd]",
+    (el, it) => {
+      const [a, b] = el.dataset.gapadd.split("-").map(Number);
+      const l = episodes(it);
+      const n = gapFill(it, l, a, b);
+      saveEps(it, l, `${a === b ? a : `${a}〜${b}`}話を追加しました`);
+    },
+  ],
   /* 話数の抜けを「問題なし」に（配信にない総集編など。その作品のその抜けは数えない） */
   [
     "[data-gapnok]",
@@ -1213,6 +1227,15 @@ const EPEDIT_ACTIONS = [
       refreshEditor();
     },
   ],
+  /* 編集画面：抜けている話数を、抜けた場所に足す（保存するまで反映しない） */
+  [
+    "[data-ergap]",
+    (el, it) => {
+      const [a, b] = el.dataset.ergap.split("-").map(Number);
+      gapFill(it, epEdit.list, a, b);
+      refreshEditor();
+    },
+  ],
   [
     "[data-erdel]",
     el => {
@@ -1221,6 +1244,22 @@ const EPEDIT_ACTIONS = [
     },
   ],
 ];
+/* 抜けている話数（a〜b話）を、抜けた場所（b+1話の前）に足す。日付は前の話の1週間おき（前の話に日付がなければ空） */
+function gapFill(it, list, a, b) {
+  const nums = list.map(e => (e.sp ? null : epNum(e.n)));
+  let at = nums.findIndex(n => n != null && n > b);
+  if (at < 0) at = list.length;
+  const prev = list.slice(0, at).filter(e => e.t).pop() || null;
+  const add = [];
+  for (let k = a; k <= b; k++) {
+    const base = add.length ? add[add.length - 1] : prev;
+    const e = { ...nextEp(it, base ? [base] : []), n: `${k}話` };
+    if (!base || !base.t) e.t = 0;
+    add.push(e);
+  }
+  list.splice(at, 0, ...add);
+  return add.length;
+}
 /* 1話だけ編集の保存：その話だけを書き換える（ほかの話の日付はずらさない） */
 function saveEpOne(it) {
   const r = $(".e1");

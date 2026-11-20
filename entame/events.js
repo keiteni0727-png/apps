@@ -452,6 +452,10 @@ const INPUT_ACTIONS = [
   ],
 ];
 document.addEventListener("input", e => runInputs(INPUT_ACTIONS, e));
+/* 話数の編集：話数を変えたら（欄を離れたとき）抜け・重複の表示を描き直す */
+document.addEventListener("change", e => {
+  if (epEdit && e.target.classList && e.target.classList.contains("er-n")) refreshEditor();
+});
 /* 話数の「文字で入力」チェック：数字の欄 ⇔ 文字の欄を切り替える（話数の編集・1話だけ編集） */
 document.addEventListener("change", e => {
   const cb = e.target;
