@@ -1938,3 +1938,41 @@ select.sg-t,select#arcJump{-webkit-appearance:none;appearance:none;padding-right
 #spSyoboi{flex:1 1 200px;min-width:0;font-size:12.5px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface);color:inherit}
 /* 作品の編集：URLの欄は小さめに */
 .field input[type=url]{font-size:13px;padding:6px 9px}
+/* ===== 作品の編集：タイトル・ジャンルとステータスの札・表の形の段 ===== */
+.fhead{display:grid;gap:8px;margin:4px 0 10px}
+.ftitle{width:100%;border:1px solid var(--u-line);background:var(--u-surface);color:var(--u-ink);border-radius:var(--u-r);padding:8px 10px;font:inherit;font-size:16px;font-weight:700}
+.fchips{display:flex;gap:6px;flex-wrap:wrap}
+.fchip{display:inline-flex;align-items:center;gap:2px;border:0;border-radius:999px;padding:5px 8px 5px 12px;font:inherit;font-size:12.5px;font-weight:800;color:#fff;cursor:pointer}
+.fchip .fdd-cv{width:14px;height:14px;color:inherit;opacity:.85}
+.fchip[aria-expanded="true"] .fdd-cv{transform:rotate(180deg)}
+.fhead .fchip.ka{background:var(--anime)}.fhead .fchip.kd{background:var(--drama)}.fhead .fchip.kf{background:var(--movie)}.fhead .fchip.kr{background:var(--stream)}
+.fhead .fchip.s-未視聴{background:var(--st-want)}.fhead .fchip.s-視聴中{background:var(--st-now)}.fhead .fchip.s-視聴済み{background:var(--st-done)}.fhead .fchip.s-見ない{background:var(--st-drop)}
+.fxopt{padding:8px;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-soft)}
+.fxopt button{padding:5px 12px;font-size:12.5px}
+.fxst button[aria-pressed="true"]{color:#fff;border-color:transparent}
+.fxst button[aria-pressed="true"].s-未視聴{background:var(--st-want)}.fxst button[aria-pressed="true"].s-視聴中{background:var(--st-now)}.fxst button[aria-pressed="true"].s-視聴済み{background:var(--st-done)}.fxst button[aria-pressed="true"].s-見ない{background:var(--st-drop)}
+.fsec.ftbl,.fsec.fsongs{border:0;padding:0;background:none;margin-top:12px}
+.fsec.ftbl h4,.fsec.fsongs h4{margin:0 0 4px;font-size:11.5px;color:var(--u-sub);font-weight:700}
+.ftbl .fgrid{display:block;border:1px solid var(--u-line);border-radius:var(--u-r);background:var(--u-surface)}
+.ftbl .frow3{display:contents}
+.ftbl .fgrid>.field,.ftbl .frow3>.field{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;column-gap:8px;row-gap:2px;padding:5px 10px;border-top:1px solid var(--u-line);margin:0}
+.ftbl .fgrid>.field:first-child,.ftbl .frow3:first-child>.field:first-child{border-top:0}
+.ftbl .fgrid>.field>span:first-child,.ftbl .frow3>.field>span:first-child,.ftbl .field>label.field>span{font-size:11.5px;font-weight:700;color:var(--u-sub);margin:0}
+.ftbl .field>label.field{display:block;padding:0;border:0;margin:0}
+.ftbl .field input:not([type=checkbox]),.ftbl .field select{border-color:transparent;background:transparent;padding:6px 8px;font-size:14px}
+.ftbl .field input:not([type=checkbox]):focus{border-color:var(--u-accent);background:var(--u-surface)}
+@media (hover:hover){.ftbl .field input:not([type=checkbox]):hover{border-color:var(--u-line)}}
+.ftbl .fdd{min-height:34px;border-color:transparent;background:transparent;font-size:14px;padding:3px 6px 3px 8px}
+.ftbl .dtw{display:flex;gap:4px}
+.ftbl .dtcal{border:0;background:transparent}
+.ftbl .nofl{grid-column:1;font-size:11px}
+.ftbl .nofl:not(:has(input:checked)){display:none}
+.ftbl .cours{padding:3px 0}
+/* 曲：1曲1行（押すと広がる） */
+.fsongs .fgrid{gap:8px}
+.fsongs .sgsec{gap:4px}
+.fsongs .sg{padding:0;border-radius:var(--u-r);background:var(--u-surface)}
+.fsongs .sg-hd{padding:4px 8px}
+.fsongs .sg .sg-sum{grid-template-columns:minmax(0,1fr) auto}
+.fsongs .sg-sum .sg-se{justify-self:end}
+.fsongs .sgnext{padding:4px 12px;font-size:12px}

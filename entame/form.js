@@ -243,14 +243,14 @@ function songRowsHtml() {
     /* 1話だけ：「最後」の欄を隠して、最初の話だけ入れる */
     const one = !!x.one;
     const { st, ar } = songTA(x);
-    const open = !multi || sgOpen.has(k);
+    const open = sgOpen.has(k);
     /* 最初・最後が空の欄は、話数リストの最初・最後の話を入れて見せる（保存するときは、話数リストの最初・最後と同じなら空に戻す） */
     const sp = !one && f.span;
     const va = x.a ?? (sp ? sp[0] : ""),
       vb = x.b ?? (sp ? sp[1] : "");
     const rt = [rangeTxt(sp ? { a: va, b: vb } : x), ...exOf(x).map(exTxt)].filter(Boolean).join("・") || "全話";
     return `<div class="sg${open ? " open" : ""}${multi ? " multi" : ""}" data-sg="${k}"${multi ? " data-sortrow" : ""}>
-    ${multi ? `<div class="sg-hd">${GRIP("sg")}<button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn"><span class="sg-st1">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span><span class="sg-sv">${FOLD_IC}</span></button></div>` : ""}
+    ${`<div class="sg-hd">${multi ? GRIP("sg") : ""}<button type="button" class="sg-sum" data-sgfold="${k}" aria-expanded="${open}"><span class="sg-sn"><span class="sg-st1">${st.trim() ? `『${esc(st)}』` : "曲名 未設定"}</span>${ar.trim() ? `<span class="sg-sa">${esc(ar)}</span>` : ""}</span><span class="sg-se">${esc(rt)}</span><span class="sg-sv">${FOLD_IC}</span></button></div>`}
     <div class="sg-body">
     <div class="sg-f2"><input class="sg-st" value="${esc(songTA(x).st)}" placeholder="曲名" aria-label="曲名" autocomplete="off"><input class="sg-ar" value="${esc(songTA(x).ar)}" placeholder="アーティスト" aria-label="アーティスト" autocomplete="off"></div>
     <div class="sg-r"><input class="sg-a" type="number" min="0" inputmode="numeric" value="${va}" placeholder="最初" aria-label="使われた最初の話"><span class="sg-bw${one ? " inv" : ""}" ${one ? 'aria-hidden="true"' : ""}><span>〜</span><input class="sg-b" type="number" min="0" inputmode="numeric" value="${vb}" placeholder="最後" aria-label="使われた最後の話"></span><span>話</span>${x.a == null && x.b == null && !one && !f.span ? `<span class="sg-all">全話</span>` : ""}
@@ -322,8 +322,8 @@ function formHtml() {
   const dyn = f.cours.filter(c => c !== ALLYEAR);
   const songTypes = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
   const sug = courOfDate(f.from);
-  const sec = (title, body, note = "", side = "") =>
-    `<section class="fsec"><h4>${title}${side}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
+  const sec = (title, body, note = "", side = "", cls = "") =>
+    `<section class="fsec${cls ? " " + cls : ""}"><h4>${title}${side}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
     title: `<label class="field full"><span>タイトル</span><input id="f-t" autocomplete="off" placeholder="例：薬屋のひとりごと 第3期" value="${esc(f.t)}"></label>`,
     kind: `<div class="field"><span>ジャンル</span><div class="segc" role="group" aria-label="ジャンル">${seg(
@@ -398,11 +398,23 @@ function formHtml() {
     <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
     <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="delsm" id="rbDel" aria-label="この関連放送を削除">削除</button>` : ""}<button type="button" class="u-btn ghost" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
+  /* 上：タイトル、その下にジャンル・ステータス（色付きの札。押すと選択肢が開く） */
+  const KINDS = [
+    ["a", "アニメ", "ka"],
+    ["d", "ドラマ", "kd"],
+    ["f", "映画", "kf"],
+    ["r", "バラエティ", "kr"],
+  ];
+  const ck = KINDS.find(x => x[0] === f.k) || KINDS[0];
+  const head = `<div class="fhead"><input id="f-t" class="ftitle" autocomplete="off" placeholder="タイトル（例：薬屋のひとりごと 第3期）" aria-label="タイトル" value="${esc(f.t)}">
+    <div class="fchips"><button type="button" class="fchip ${ck[2]}" data-fx="kind" aria-expanded="${f.fx === "kind"}" aria-label="ジャンル：${ck[1]}">${ck[1]}${DD_CHEV}</button><button type="button" class="fchip s-${esc(f.s)}" data-fx="status" aria-expanded="${f.fx === "status"}" aria-label="ステータス：${esc(stLabel(f.s))}">${esc(stLabel(f.s))}${DD_CHEV}</button></div>
+    ${f.fx === "kind" ? `<div class="segc fxopt" role="group" aria-label="ジャンル">${seg("data-fk", KINDS, f.k)}</div>` : ""}${f.fx === "status" ? `<div class="segc fxopt fxst" role="group" aria-label="ステータス">${seg("data-fs", STATUSES.map(x => [x, stLabel(x), "s-" + x]), f.s)}</div>` : ""}</div>`;
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
-    ${sec("基本情報", P.title + P.kind + P.status + P.series + P.url + P.syoboi)}
-    ${sec("放送", P.media + P.vurl + P.from + P.time + P.cours)}
-    ${sec("OP・ED・主題歌", P.songs, "", sgNoneBox())}
+    ${head}
+    ${sec("放送", P.media + P.vurl + P.from + P.time + P.cours, "", "", "ftbl")}
+    ${sec("曲", P.songs, "", sgNoneBox(), "fsongs")}
+    ${sec("そのほか", P.series + P.url + P.syoboi, "", "", "ftbl")}
     <div class="ffoot"><button type="button" class="u-btn ghost" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -893,8 +905,11 @@ const FORM_ACTIONS = [
         if (form.k === "r" && form.media !== "tv" && form.media !== "stream") form.media = "stream";
       }
       if (el.dataset.fs) form.s = el.dataset.fs;
+      form.fx = null;
     }),
   ],
+  /* ジャンル・ステータスの札：押すと選択肢を開く／閉じる */
+  ["[data-fx]", formEdit(el => (form.fx = form.fx === el.dataset.fx ? null : el.dataset.fx))],
   /* 放送クール */
   [
     "[data-courkey]",
