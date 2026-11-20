@@ -686,7 +686,7 @@ body.sbc .u-app .sb .sb-it i{margin:0}
 .epw>.ep.ep{border-top:0;background:transparent;padding-right:4px}
 .epe{border:0;background:transparent;color:var(--u-sub);font-size:var(--fs-base);padding:0 12px;min-width:38px}
 .epe:active{color:var(--u-ink)}
-.e1 input{min-width:0;width:100%;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-s);padding:6px 7px;font:inherit;font-size:var(--fs-base)}
+.e1 input{min-width:0;width:100%;box-sizing:border-box;border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-s);padding:0 7px;font:inherit;font-size:var(--fs-base);line-height:1.5;height:calc(1.5em + 14px)}
 .e1-b{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
 .e1-b button{border:1px solid var(--u-line);background:var(--u-bg);color:var(--u-ink);border-radius:var(--r-m);padding:7px 14px;font-size:var(--fs-m);font-weight:700}
 .e1-b .pri{background:var(--u-accent);border-color:var(--u-accent);color:var(--u-on)}
