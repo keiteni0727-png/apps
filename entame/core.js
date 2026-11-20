@@ -20,11 +20,9 @@ const VODS = [
   "ABEMA",
   "U-NEXT",
   "Prime Video",
-  "hulu",
-  "FOD",
-  "TELASA",
   "Lemino",
   "dアニメストア",
+  "TVer",
 ];
 /* 配信サイトの色（ブランドカラー）[背景, 文字]。ロゴが白黒のサイトは黒系 */
 const VOD_COLOR = {
@@ -33,11 +31,9 @@ const VOD_COLOR = {
   ABEMA: ["#000000", "#fff"],
   "U-NEXT": ["#1F2A3A", "#fff"],
   "Prime Video": ["#1A98FF", "#fff"],
-  hulu: ["#1CE783", "#0B0C0F"],
-  FOD: ["#3A3A3A", "#fff"],
-  TELASA: ["#2F3BD9", "#fff"],
   Lemino: ["#7B2CE0", "#fff"],
   dアニメストア: ["#F08300", "#fff"],
+  TVer: ["#00A0E9", "#fff"],
 };
 const vcStyle = v => {
   const c = VOD_COLOR[v];
@@ -732,10 +728,8 @@ const VURL_SITES = [
   [/abema\.tv|abema\.app/, "abema"],
   [/unext\.jp/, "unext"],
   [/primevideo\.com|amazon\.co\.jp|amazon\.com/, "amazon"],
-  [/hulu\.jp/, "hulu"],
   [/animestore\.docomo\.ne\.jp/, "danime"],
   [/lemino\.docomo\.ne\.jp/, "lemino"],
-  [/fod\.fujitv\.co\.jp/, "fod"],
   [/tver\.jp/, "tver"],
   [/youtube\.com|youtu\.be/, "youtube"],
   [/tv\.apple\.com/, "apple"],
@@ -754,10 +748,8 @@ const normVod = v => {
   if (/abema|アベマ/.test(s)) return "abema";
   if (/unext/.test(s)) return "unext";
   if (/prime|amazon|アマゾン/.test(s)) return "amazon";
-  if (/hulu/.test(s)) return "hulu";
   if (/dアニメ|danime/.test(s)) return "danime";
   if (/lemino/.test(s)) return "lemino";
-  if (/fod/.test(s)) return "fod";
   if (/tver/.test(s)) return "tver";
   if (/youtube/.test(s)) return "youtube";
   if (/apple/.test(s)) return "apple";
