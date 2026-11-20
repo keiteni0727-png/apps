@@ -21,7 +21,7 @@ function gridHtml(g) {
     .join("");
   return `<div class="spaste spgrid">
     ${g.dropped ? `<p class="hint" style="margin:0 0 8px">見出しなど${g.dropped}行は外しています</p>` : ""}
-    ${nj < 0 ? `<p class="gwarn">話数の列を選んでください</p>` : bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
+    ${nj < 0 ? `<p class="hint" style="margin:0 0 8px">話数の列がないので、上から順に1話・2話…と付けます</p>` : bad ? `<button type="button" class="u-btn ghost sm gdelbad" id="gDelBad">話数を読み取れない ${bad}行を全部消す</button>` : ""}
     <div class="gw"><table class="sgt"><thead><tr><th class="gx"></th><th class="gno"></th><th class="gsh"></th>${head}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="ffoot"><button type="button" class="u-btn ghost" id="gBack">${subPaste.back ? "戻る" : "貼り直す"}</button><button type="button" class="u-btn pri primary" id="gRead">この形で読み取る</button></div></div>`;
 }

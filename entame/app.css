@@ -235,7 +235,6 @@ dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .dconfirm{margin-top:10px;border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;display:grid;gap:6px}
 .spgrid .hint{font-size:12px}
 .gdelbad{margin:0 0 8px;color:var(--u-danger)}
-.gwarn{margin:0 0 8px;font-size:12.5px;font-weight:700;color:var(--u-danger)}
 /* 整形の表：Excelの形（列の見出しA・B…で役割を選ぶ。左の ✕・行番号・‹› は横に動かしても残す） */
 .gw{max-height:min(420px,55vh);overflow:auto;overscroll-behavior:none;border:1px solid var(--u-line);border-radius:8px}
 .sgt{border-collapse:separate;border-spacing:0;font-size:12.5px;min-width:100%}
