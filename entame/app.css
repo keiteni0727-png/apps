@@ -1901,6 +1901,15 @@ html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1f
 .v-tl .wc-tags .wc-st{white-space:nowrap}
 /* スマホ：ライブラリ・YouTubeの一覧の行には画像を出さない（画像の前の見え方。PCは出す） */
 @media (max-width:599px){.row.thr .thb{display:none}.row.thr .slot,.row.thr.yrow .slot{grid-template-columns:48px minmax(0,1fr) auto!important;align-items:start}}
+/* 作品の詳細（スマホ・iPad）：タイトル＋要確認の左に縦画像を小さく（押すと拡大）。PCは左の列に大きく出すので隠す */
+.dtit{display:flex;gap:10px;align-items:flex-start}
+.dtc{flex:1;min-width:0}
+.dtc h3{margin-top:2px}
+.dtc .dmiss{margin-top:6px}
+.dtimg{flex:none;width:54px;aspect-ratio:2/3;margin-top:4px;padding:0;border:0;border-radius:var(--r-s);overflow:hidden;background:var(--u-chip);cursor:zoom-in}
+.dtimgi{display:block;width:100%;height:100%;object-fit:cover}
+.dtimgi:not([src]){visibility:hidden}
+@media (min-width:900px){.dgrid .dtimg{display:none}}
 /* ===== 作品の詳細（PC・幅900px以上）：左メニューにかぶらないよう一覧の場所の真ん中に出し、左にポスターの列。ON AIRの下にMUSIC（ノートPC・モニター共通） ===== */
 .dside,.dgrid .dside{display:none}
 @media (min-width:900px){
