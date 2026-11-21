@@ -24,7 +24,7 @@ function vodName(it) {
 }
 /* 詳細のMUSICでたたんでいる種類（OP・EDなど）。作品をまたいで同じ状態を保つ */
 const musFold = new Set();
-/* 関連放送の小見出し（OP・EDなど）で開いている種類。最初はたたんだ状態 */
+/* 関連作品の小見出し（OP・EDなど）で開いている種類。最初はたたんだ状態 */
 const rbUnfold = new Set();
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
@@ -88,14 +88,14 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
     })
     .join("");
 
-  /* 関連放送（旧作・再放送など）：MUSICの中に点線で区切って、タイトルと放送期間の下に曲を並べる */
+  /* 関連作品（旧作・再放送など）：MUSICの中に点線で区切って、タイトルと放送期間の下に曲を並べる */
   const rbRng = x => (x.a == null ? "" : x.b == null || x.b === x.a ? `${x.a}話${x.b == null && x.a !== 1 ? "〜" : ""}` : `${x.a}〜${x.b}話`);
-  /* 関連放送：見出し（タイトル・放送期間）の下に、OP・EDなどの小見出し。小見出しは最初たたんだ状態で、押すと開く（開いた種類はアプリを開いている間覚える） */
+  /* 関連作品：見出し（タイトル・放送期間）の下に、OP・EDなどの小見出し。小見出しは最初たたんだ状態で、押すと開く（開いた種類はアプリを開いている間覚える） */
   const relb = (it.relb || [])
     .map((r, k) => {
       const per = r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${r.to ? fmtD(r.to) : ""}` : "";
-      const name = esc(r.t || "関連放送");
-      const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="u-btn sm iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
+      const name = esc(r.t || "関連作品");
+      const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${MEDIA_LAB[r.md] ? `<span class="mtag m-${r.md}">${MEDIA_LAB[r.md]}</span>` : ""}${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="u-btn sm iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
       const sl = r.songs || [];
       const rows = sl
         .map((x, j) => {
@@ -163,7 +163,7 @@ function renderDetail(it) {
     ${missDetail(it)}
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${imgAddChip(it)}${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
+    <div class="links">${imgAddChip(it)}${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連作品を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${subPaste ? subPasteHtml(it) : epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
 }
