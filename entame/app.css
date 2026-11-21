@@ -1799,3 +1799,8 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .ivimg{max-width:100%;max-height:100%;object-fit:contain;border-radius:var(--r-m)}
 .ivbar{display:flex;gap:10px}
 @media (min-width:700px){.dhero{aspect-ratio:auto;height:300px}}
+.imgask{background:var(--u-scrim)}
+.iask{background:var(--u-surface);color:var(--u-ink);border-radius:var(--r-l);padding:20px;max-width:340px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--u-shadow)}
+.iask b{font-size:var(--fs-l)}
+.iask p{margin:0;font-size:var(--fs-m);color:var(--u-sub);line-height:1.6}
+.iask .ivbar{justify-content:flex-end;margin-top:6px}

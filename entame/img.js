@@ -145,7 +145,43 @@ function shrink(im, max, q, limit) {
   return d;
 }
 let imgBusy = false;
-function pickImage(id) {
+/* 「画像を追加」「変更」：コピーしてある画像があれば、それをそのまま貼る。なければ写真から選ぶかを聞く */
+async function pickImage(id) {
+  if (imgBusy) return;
+  const b = await clipImage();
+  if (b) return setImage(id, b);
+  askImageSource(id);
+}
+/* クリップボードの画像を取り出す（使えない端末・許可されなかったとき・画像がないときは null） */
+async function clipImage() {
+  try {
+    if (!navigator.clipboard || !navigator.clipboard.read) return null;
+    for (const it of await navigator.clipboard.read()) {
+      const t = it.types.find(x => x.startsWith("image/"));
+      if (t) return await it.getType(t);
+    }
+  } catch (e) {}
+  return null;
+}
+/* コピーした画像がないとき：写真から選ぶ（押したその場でファイルを選ぶ画面を開く） */
+function askImageSource(id) {
+  closeImgView();
+  const v = document.createElement("div");
+  v.className = "imgview imgask";
+  v.setAttribute("role", "dialog");
+  v.setAttribute("aria-modal", "true");
+  v.setAttribute("aria-label", "画像を追加");
+  v.innerHTML = `<div class="iask"><b>コピーした画像がありません</b><p>画像を長押し（パソコンは右クリック）して「コピー」してから、もう一度押すと自動で貼り付けます。</p><div class="ivbar"><button type="button" class="u-btn" data-iv="close">やめる</button><button type="button" class="u-btn pri" data-iv="file">写真から選ぶ</button></div></div>`;
+  v.addEventListener("click", e => {
+    const b = e.target.closest("[data-iv]");
+    if (!b && e.target.closest(".iask")) return;
+    closeImgView();
+    if (b && b.dataset.iv === "file") pickFile(id);
+  });
+  document.body.appendChild(v);
+  v.querySelector("[data-iv=file]").focus({ preventScroll: true });
+}
+function pickFile(id) {
   if (imgBusy) return;
   const inp = document.createElement("input");
   inp.type = "file";
@@ -248,4 +284,14 @@ document.addEventListener(
   },
   true,
 );
+/* パソコン：詳細を開いているときに Ctrl+V（⌘V）でも貼れる（入力欄の中は除く） */
+document.addEventListener("paste", e => {
+  if (!openId || !over[openId] || !$("#layer .sheet:not(.form) #sheetIn")) return;
+  if (e.target && e.target.closest && e.target.closest("input,textarea,[contenteditable]")) return;
+  const f = [...((e.clipboardData && e.clipboardData.files) || [])].find(x => /^image\//.test(x.type));
+  if (!f) return;
+  e.preventDefault();
+  closeImgView();
+  setImage(openId, f);
+});
 DETAIL_ACTIONS.push(["[data-imgadd]", (el, it) => pickImage(it.id)], ["[data-imgview]", (el, it) => openImgView(it)]);
