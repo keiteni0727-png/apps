@@ -228,7 +228,9 @@ const UWEAR_LINES = {
   acornhat:"どんぐりのきもちになったぷぎ", kinoko:"もりのきのこさんだよ〜", clover:"しあわせのよつば、みつけたの", ryukku:"ぼうけんのじゅんびばっちり！", watage:"ふーってしたら、とんでいくよ",
   unicorn:"ゆめのくにからきたぷぎ✨", flcrown:"おはなのおひめさま♪", guruguru:"めがまわる〜…じょうだんだよ", scarf:"みずたま、かわいいでしょ", devil:"こあくまうりぼー、いたずらしちゃうぞ",
   candy:"ぺろぺろ…ひとくちいる？", wataame:"ふわふわあま〜い", goldacorn:"きんのどんぐり、たからものぷぎ！", jewel:"きらきら、まぶしい？", starcrown:"ほしのおうさまぷぎ！",
-  dragon:"がおー！…こわくないよ", royal:"おうさまのおなーりー！"
+  dragon:"がおー！…こわくないよ", royal:"おうさまのおなーりー！",
+  hpin:"ハート、つけてみたぷぎ", bandaid:"ころんじゃった…でもへいき！", bandana:"ぼうけんうりぼーだよ", onigiri:"おにぎり、はんぶんこしよ",
+  rhalo:"にじのわっか、レアなんだって！", starglass:"ふたりがきらきらにみえるぷぎ", phoenix:"ほのおのはね、かっこいいでしょ", lantern:"よみちもあんしんぷぎ"
 };
 function uriMoreLines(u){
   const L = [], h = new Date().getHours(), wd = new Date().getDay(), pu = partnerUid(), pn = pu ? nameOf(pu) : "", mn = nameOf(me());
@@ -363,14 +365,24 @@ const UITEMS = [
   { id:"clover",   s:"face", n:"よつばのシール", e:"🍀", o:1 },
   { id:"ryukku",   s:"back", n:"ぼうけんリュック", e:"🎒", o:1 },
   { id:"watage",   s:"side", n:"たんぽぽのわたげ", e:"🌼", o:1 },
-  // どんぐりガチャで出る（g）
-  { id:"unicorn",  s:"head", n:"ユニコーンのつの", e:"🦄", g:1 },
-  { id:"flcrown",  s:"head", n:"おはなのかんむり", e:"💐", g:1 },
-  { id:"guruguru", s:"face", n:"ぐるぐるメガネ", e:"🌀", g:1 },
-  { id:"scarf",    s:"neck", n:"みずたまスカーフ", e:"🩵", g:1 },
-  { id:"devil",    s:"back", n:"こあくまのはね", e:"😈", g:1 },
-  { id:"candy",    s:"side", n:"ぐるぐるキャンディ", e:"🍭", g:1 },
-  { id:"wataame",  s:"side", n:"わたあめ",       e:"☁️", g:1 },
+  // レアガチャ（g:2）
+  { id:"unicorn",  s:"head", n:"ユニコーンのつの", e:"🦄", g:2 },
+  { id:"flcrown",  s:"head", n:"おはなのかんむり", e:"💐", g:2 },
+  { id:"guruguru", s:"face", n:"ぐるぐるメガネ", e:"🌀", g:2 },
+  { id:"scarf",    s:"neck", n:"みずたまスカーフ", e:"🩵", g:2 },
+  { id:"devil",    s:"back", n:"こあくまのはね", e:"😈", g:2 },
+  { id:"candy",    s:"side", n:"ぐるぐるキャンディ", e:"🍭", g:2 },
+  { id:"wataame",  s:"side", n:"わたあめ",       e:"☁️", g:2 },
+  // ノーマルガチャ（g:1）
+  { id:"hpin",     s:"head", n:"ハートのヘアピン", e:"💗", g:1 },
+  { id:"bandaid",  s:"face", n:"ばんそうこう",   e:"🩹", g:1 },
+  { id:"bandana",  s:"neck", n:"バンダナ",       e:"🧣", g:1 },
+  { id:"onigiri",  s:"side", n:"おにぎり",       e:"🍙", g:1 },
+  // 超レアガチャ（g:3）
+  { id:"rhalo",    s:"head", n:"にじのわっか",   e:"🌈", g:3 },
+  { id:"starglass",s:"face", n:"ほしのメガネ",   e:"⭐", g:3 },
+  { id:"phoenix",  s:"back", n:"ほうおうのはね", e:"🔥", g:3 },
+  { id:"lantern",  s:"side", n:"ほしのランタン", e:"🏮", g:3 },
   // ごうかアイテム（dx）
   { id:"goldacorn",s:"side", n:"きんのどんぐり", e:"✨", p:150, dx:1 },
   { id:"jewel",    s:"neck", n:"ほうせきのネックレス", e:"💠", p:200, dx:1 },
@@ -414,6 +426,8 @@ function uriWearSvg(W, g){
     santa: `<path d="M${hx - hrx * .88} ${top + hry * .38}Q${hx - hrx * .2} ${top - 24} ${hx + hrx * 1.05} ${top - 6}Q${hx + hrx * .55} ${top + 2} ${hx + hrx * .88} ${top + hry * .38}z" fill="#e25b5b"/><rect x="${hx - hrx * .95}" y="${top + hry * .3}" width="${hrx * 1.9}" height="7" rx="3.5" fill="#fff"/><circle cx="${hx + hrx * 1.05}" cy="${top - 6}" r="4.8" fill="#fff"/>`,
     tonakai: [-1, 1].map(d => { const x = hx + d * hrx * .42; return `<path d="M${x} ${top + 4}L${x + d * 3} ${top - 15}M${x + d * 1.4} ${top - 5}l${d * 8} -5M${x + d * 2.4} ${top - 11}l${d * -6} -5" stroke="#a5703f" stroke-width="3" stroke-linecap="round" fill="none"/>`; }).join(""),
     leaf: `<path d="M${hx} ${top + 2}q0-8 0-12" stroke="#6fbb9c" stroke-width="2.4" stroke-linecap="round"/><path d="M${hx} ${top - 8}q-11-7-15 3q10 5 15-3z" fill="#8fd1b3"/><path d="M${hx} ${top - 10}q10-9 15 0q-8 6-15 0z" fill="#a9ddc5"/>`,
+    hpin: heart(hx + hrx * .55, top + 9, .8, "#f08a9a") + heart(hx + hrx * .22, top + 4, .5, "#f9b6c7"),
+    rhalo: ["#f9b6c7", "#fde68a", "#a9ddc5", "#9fd3ee"].map((c, i) => `<ellipse cx="${hx}" cy="${top - 10 - i * 2.2}" rx="${hrx * .66 - i * 1.5}" ry="${4.6 - i * .5}" fill="none" stroke="${c}" stroke-width="2.4"/>`).join("") + star(hx + hrx * .6, top - 15, 3, "#fff3b0") + star(hx - hrx * .55, top - 6, 2.2, "#fff"),
     acornhat: `<path d="M${hx - hrx * .82} ${top + hry * .36}Q${hx - hrx * .88} ${top - 10} ${hx} ${top - 11}Q${hx + hrx * .88} ${top - 10} ${hx + hrx * .82} ${top + hry * .36}Q${hx} ${top + hry * .2} ${hx - hrx * .82} ${top + hry * .36}z" fill="#a5703f"/><path d="M${hx - hrx * .82} ${top + hry * .36}Q${hx} ${top + hry * .2} ${hx + hrx * .82} ${top + hry * .36}Q${hx} ${top + hry * .5} ${hx - hrx * .82} ${top + hry * .36}z" fill="#7e5230"/>${[-2, -1, 0, 1, 2].map(i => [0, 1].map(j => `<circle cx="${hx + i * hrx * .3}" cy="${top - 5 + j * 6 + Math.abs(i) * 1.6}" r="1.7" fill="#c99466"/>`).join("")).join("")}<path d="M${hx} ${top - 10}q1-6 6-8" stroke="#6e4b2b" stroke-width="3" stroke-linecap="round" fill="none"/>`,
     kinoko: `<path d="M${hx - hrx * 1.05} ${top + hry * .32}Q${hx - hrx} ${top - 18} ${hx} ${top - 18}Q${hx + hrx} ${top - 18} ${hx + hrx * 1.05} ${top + hry * .32}Q${hx} ${top + hry * .1} ${hx - hrx * 1.05} ${top + hry * .32}z" fill="#e86a5c"/><circle cx="${hx - hrx * .5}" cy="${top - 6}" r="4" fill="#fff"/><circle cx="${hx + hrx * .15}" cy="${top - 11}" r="3.4" fill="#fff"/><circle cx="${hx + hrx * .62}" cy="${top - 2}" r="3" fill="#fff"/><circle cx="${hx - hrx * .08}" cy="${top}" r="2.2" fill="#fff"/>`,
     unicorn: flower(hx - hrx * .55, top + 5, "#c7b8ef", .7) + flower(hx + hrx * .55, top + 5, "#f9b6c7", .7) + `<path d="M${hx - 5.5} ${top + 3}L${hx + 1} ${top - 23}L${hx + 6.5} ${top + 3}z" fill="#fde68a" stroke="#f2c94c" stroke-width="1"/><path d="M${hx - 4} ${top - 2}l9-3M${hx - 2.5} ${top - 9}l6.5-2.4M${hx - 1} ${top - 16}l4-1.6" stroke="#f2c94c" stroke-width="1.3"/>`,
@@ -428,6 +442,8 @@ function uriWearSvg(W, g){
     hglasses: heart(hx - ex, ey + 1, r / 5.2, "rgba(244,163,184,.55)", 'stroke="#e2809c" stroke-width="1.2"') + heart(hx + ex, ey + 1, r / 5.2, "rgba(244,163,184,.55)", 'stroke="#e2809c" stroke-width="1.2"') + `<path d="M${hx - ex + r * .9} ${ey - 1}h${2 * (ex - r * .9)}" stroke="#e2809c" stroke-width="1.6"/>`,
     monocle: `<circle cx="${hx + ex}" cy="${ey}" r="${r}" fill="rgba(255,255,255,.25)" stroke="#d9a92c" stroke-width="1.8"/><path d="M${hx + ex + r * .7} ${ey + r * .7}q5 10-2 19" stroke="#d9a92c" stroke-width="1" fill="none"/>`,
     sun: `<rect x="${hx - ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><rect x="${hx + ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><path d="M${hx - ex + r} ${ey - 1}h${2 * (ex - r)}" stroke="#4a3540" stroke-width="2"/><path d="M${hx - ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}M${hx + ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>`,
+    bandaid: `<g transform="translate(${hx - hrx * .72} ${sy - 3}) rotate(-25)"><rect x="-7.5" y="-3.2" width="15" height="6.4" rx="3.2" fill="#f6d2b0"/><rect x="-2.6" y="-3.2" width="5.2" height="6.4" fill="#ecc19c"/><circle cx="-1" cy="-1" r=".6" fill="#d9a88a"/><circle cx="1" cy="1" r=".6" fill="#d9a88a"/></g>`,
+    starglass: [-1, 1].map(d => star(hx + d * ex, ey, r * 1.55, "#e8b84a") + star(hx + d * ex, ey, r * 1.2, "rgba(255,243,176,.8)")).join("") + `<path d="M${hx - ex + r} ${ey}h${2 * (ex - r)}" stroke="#e8b84a" stroke-width="1.8"/>`,
     clover: `<g transform="translate(${hx + hrx * .72} ${sy - 2}) scale(.55)">${[0, 90, 180, 270].map(a => `<path transform="rotate(${a})" d="M0 0C-5-3-6-9-2-9C0-9 0-7 0-6C0-7 0-9 2-9C6-9 5-3 0 0z" fill="#7cc4a4"/>`).join("")}<path d="M0 0q4 6 9 8" stroke="#5aa886" stroke-width="2" fill="none"/></g>`,
     guruguru: [-1, 1].map(d => { const cx = hx + d * ex; return `<circle cx="${cx}" cy="${ey}" r="${r + .6}" fill="rgba(255,255,255,.88)" stroke="#7a5a48" stroke-width="1.8"/><path d="M${cx} ${ey}m${r * .2} 0a${r * .2} ${r * .2} 0 0 1 ${-r * .4} 0a${r * .4} ${r * .4} 0 0 1 ${r * .8} 0a${r * .6} ${r * .6} 0 0 1 ${-r * 1.2} 0a${r * .8} ${r * .8} 0 0 1 ${r * 1.6} 0" stroke="#7a5a48" stroke-width="1.1" fill="none" stroke-linecap="round"/>`; }).join("") + `<path d="M${hx - ex + r} ${ey}h${2 * (ex - r)}" stroke="#7a5a48" stroke-width="1.8"/>`
   };
@@ -446,6 +462,7 @@ function uriWearSvg(W, g){
     necklace: arc(9, (x, y) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="#fff" stroke="#eadbe2" stroke-width=".8"/>`) + heart(hx, ny + 6, .5, "#f4a3b8"),
     camera: `<path d="M${hx - hrx * .62} ${ny - 6}L${hx - 6} ${ny + 3}M${hx + hrx * .62} ${ny - 6}L${hx + 6} ${ny + 3}" stroke="#9580d0" stroke-width="2"/><rect x="${hx - 9}" y="${ny + 1}" width="18" height="12" rx="3" fill="#5d4e60"/><circle cx="${hx}" cy="${ny + 7}" r="3.6" fill="#b8a6e6" stroke="#fff" stroke-width="1.3"/><rect x="${hx + 3}" y="${ny - 1}" width="4" height="3" rx="1" fill="#5d4e60"/>`,
     omamori: `<path d="M${hx - hrx * .55} ${ny - 7}Q${hx} ${ny + 4} ${hx + hrx * .55} ${ny - 7}" stroke="#f2c94c" stroke-width="1.6" fill="none"/><rect x="${hx - 5.5}" y="${ny - 1}" width="11" height="14" rx="2.5" fill="#e25b5b"/><rect x="${hx - 3}" y="${ny + 3}" width="6" height="6" rx="1" fill="#f2c94c" opacity=".85"/>`,
+    bandana: `<path d="M${hx - hrx * .78} ${ny - 6}q${hrx * .78} 8 ${hrx * 1.56} 0l${-hrx * .78} 17z" fill="#e25b5b"/>${[[-.4, -1], [0, 3], [.4, -1], [0, 8], [-.2, -3.5], [.2, -3.5]].map(([k, y]) => `<circle cx="${hx + k * hrx}" cy="${ny + y}" r="1.1" fill="#fff"/>`).join("")}`,
     scarf: `<path d="M${hx - hrx * .82} ${ny - 6}q${hrx * .82} 10 ${hrx * 1.64} 0l-1 7q${-hrx * .82} 9 ${-hrx * 1.62} 0z" fill="#9fd3ee"/><path d="M${hx - 8} ${ny + 2}l8 13l8-13z" fill="#8cc8e8"/>${[[-.6, -2], [-.25, 1], [.15, 1.5], [.5, -1], [0, 7]].map(([k, y]) => `<circle cx="${hx + k * hrx}" cy="${ny + y}" r="1.4" fill="#fff"/>`).join("")}`,
     jewel: arc(9, (x, y) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#f2c94c"/>`) + `<path d="M${hx} ${ny + 1}l-6.5 6l6.5 9l6.5-9z" fill="#9fd3ee" stroke="#5fa9d6" stroke-width="1"/><path d="M${hx - 6.5} ${ny + 7}h13M${hx} ${ny + 1}v15" stroke="#d6efff" stroke-width=".8"/>${star(hx + 7, ny + 1, 2.4, "#fff")}`
   };
@@ -455,6 +472,7 @@ function uriWearSvg(W, g){
     angel: wings(`<path d="M0 0q15-15 26-6q-4 3-8 3q7 3 5 7q-5 1-9-1q2 5-2 7q-7-2-12-10z" fill="#fff" stroke="#eadbe2" stroke-width="1"/>`),
     bat: wings(`<path d="M0 0q9-13 24-11q-3 4-1 9q-5-1-7 3q-4-2-6 2q-3-3-10-3z" fill="#7d66b8"/>`),
     rainbow: wings(["#f9b6c7", "#ffe08a", "#a6d9c4", "#9fd3ee"].map((c, i) => `<path d="M0 ${i * 4}q${15 - i} ${-17 + i * 2} ${28 - i * 3} ${-8 + i * 2}" stroke="${c}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`).join("")),
+    phoenix: wings(`<path d="M0 0q8-24 32-24q-6 5-4 9q-8-1-10 5q-6-3-9 3q-5-2-9 7z" fill="#f5a04a"/><path d="M0 0q10-18 30-22q-4 6-2 9q-8 0-12 6z" fill="#ffd27a"/><path d="M2 -2q10-14 26-20" stroke="#e86a5c" stroke-width="1.2" fill="none"/>`),
     ryukku: `<rect x="${hx - brx - 6}" y="${by - bry * .75}" width="${2 * brx + 12}" height="${bry * 1.5}" rx="11" fill="#e8a25a"/><rect x="${hx - brx - 6}" y="${by - bry * .1}" width="${2 * brx + 12}" height="5" fill="#d48a43"/><ellipse cx="${hx}" cy="${by - bry * .8}" rx="${brx + 9}" ry="6" fill="#a6d9c4"/><path d="M${hx - brx - 5} ${by - bry * .8}h${2 * brx + 10}" stroke="#8fcbb2" stroke-width="1.2"/>`,
     devil: wings(`<path d="M0 0q6-16 22-16q-4 5-2 9q-6-1-8 4q-4-3-7 1q-2-2-5 2z" fill="#5d4e60"/><path d="M2 -2q6-11 16-12" stroke="#9580d0" stroke-width="1.2" fill="none"/>`),
     dragon: wings(`<path d="M0 0q4-22 30-26q-3 7 0 12q-7-1-9 5q-5-3-8 3q-4-3-7 2q-3-2-6 4z" fill="#7cc4a4"/><path d="M0 0q8-16 30-26M2 -2l19-7M2 0l13 0" stroke="#5aa886" stroke-width="1.4" fill="none"/><circle cx="30" cy="-26" r="1.8" fill="#f2c94c"/>`),
@@ -468,6 +486,8 @@ function uriWearSvg(W, g){
     hballoon: `<path d="M${hx + brx * .7} ${by - 4}Q${hx + brx + 10} ${by - 30} 103 36" stroke="#b8a6e6" stroke-width="1.2" fill="none"/>${heart(103, 26, 1.7, "#f08a9a")}<ellipse cx="98.5" cy="22" rx="2" ry="3" fill="#fff" opacity=".6"/>`,
     uchiwa: `<path d="M${sx} ${by + 12}V${by - 6}" stroke="#a5703f" stroke-width="2.2" stroke-linecap="round"/><circle cx="${sx}" cy="${by - 14}" r="10" fill="#fff" stroke="#9fd3ee" stroke-width="1.5"/><path d="M${sx - 7} ${by - 12}q3-4 7 0t7 0" stroke="#9fd3ee" stroke-width="2" fill="none"/>${flower(sx + 2, by - 18, "#f9c4d2", .45)}`,
     wand: `<path d="M${sx - 2} ${by + 12}L${sx + 3} ${by - 14}" stroke="#c7b8ef" stroke-width="2.4" stroke-linecap="round"/>${star(sx + 4, by - 19, 8, "#f2c94c")}${star(sx - 7, by - 24, 2.5, "#fbcfe8")}${star(sx + 13, by - 8, 2, "#fde68a")}`,
+    onigiri: `<path d="M${sx} ${by - 28}q3 0 11 15q2 5-3 5h-16q-5 0-3-5q8-15 11-15z" fill="#fff" stroke="#eadbe2" stroke-width="1"/><rect x="${sx - 6}" y="${by - 15}" width="12" height="7" rx="1" fill="#3f4a3c"/>`,
+    lantern: `<path d="M${sx} ${by + 12}V${by - 6}" stroke="#a5703f" stroke-width="2" stroke-linecap="round"/><circle cx="${sx}" cy="${by - 16}" r="13" fill="#fff3b0" opacity=".45"/><rect x="${sx - 5}" y="${by - 28}" width="10" height="3" rx="1" fill="#d9a92c"/><rect x="${sx - 7.5}" y="${by - 25}" width="15" height="17" rx="4" fill="#fff6c8" stroke="#d9a92c" stroke-width="1.6"/>${star(sx, by - 16.5, 4.4, "#f2c94c")}`,
     watage: `<path d="M${sx} ${by + 12}Q${sx - 3} ${by - 6} ${sx + 2} ${by - 18}" stroke="#6fbb9c" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="${sx + 2}" cy="${by - 27}" r="11" fill="#fff" opacity=".5"/>${Array.from({ length: 14 }, (_, i) => { const a = i / 14 * Math.PI * 2, x = sx + 2 + Math.cos(a) * 10, y = by - 27 + Math.sin(a) * 10; return `<path d="M${sx + 2} ${by - 27}L${x.toFixed(1)} ${y.toFixed(1)}" stroke="#fff" stroke-width=".9"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#fff"/>`; }).join("")}<circle cx="${sx + 2}" cy="${by - 27}" r="2" fill="#e8d9a6"/>`,
     candy: `<path d="M${sx} ${by + 12}V${by - 12}" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="${sx}" cy="${by - 20}" r="10" fill="#f9b6c7"/><path d="M${sx} ${by - 20}a1.6 1.6 0 0 1 3 0a3.4 3.4 0 0 1-6 .6a5.4 5.4 0 0 1 9-1a7.4 7.4 0 0 1-12 2" stroke="#e2809c" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M${sx} ${by - 9}l-5-3v6zM${sx} ${by - 9}l5-3v6z" fill="#9fd3ee"/>`,
     wataame: `<path d="M${sx} ${by + 12}V${by - 12}" stroke="#f3e2c7" stroke-width="2.4" stroke-linecap="round"/>${[[-5, -20, 7], [5, -21, 7], [0, -27, 8], [0, -15, 6], [-7, -27, 5], [7, -28, 5]].map(([x, y, r]) => `<circle cx="${sx + x}" cy="${by + y}" r="${r}" fill="#fbd3df"/>`).join("")}<ellipse cx="${sx - 3}" cy="${by - 29}" rx="3" ry="2" fill="#fff" opacity=".7"/>`,

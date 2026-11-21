@@ -725,24 +725,27 @@ header.hd2 .iconbtn{align-self:center}
 .snrow small{font-size:11.5px;color:var(--muted)}
 .snrow em{font-style:normal;font-weight:700;font-size:13px;white-space:nowrap}
 .snrow.poor em{color:#d46a7e}
-.gstage{height:210px;display:grid;place-items:center;margin-bottom:10px}
+.gstage{position:relative;isolation:isolate;overflow:hidden;border-radius:20px;height:250px;display:grid;place-items:center;margin-bottom:10px}
 .gmach{width:150px;display:flex;flex-direction:column;align-items:center}
 .gdome{position:relative;width:130px;height:110px;border-radius:65px 65px 10px 10px;background:radial-gradient(circle at 35% 30%,#fff 0,#eef6ff 40%,#d9e9fb 100%);border:4px solid #fff;box-shadow:0 4px 14px rgba(120,140,190,.25);overflow:hidden}
 .gdome i{position:absolute;width:24px;height:24px;border-radius:50%;box-shadow:inset -3px -4px 0 rgba(0,0,0,.08),inset 3px 3px 0 rgba(255,255,255,.6)}
-.gbody{position:relative;width:150px;height:84px;margin-top:-6px;border-radius:14px 14px 20px 20px;background:linear-gradient(180deg,#f6a8bd,#e2809c);box-shadow:inset 0 -6px 0 rgba(0,0,0,.08)}
+.gbody{position:relative;width:150px;height:84px;margin-top:-6px;border-radius:14px 14px 20px 20px;background:var(--gc,#f4a3b8);box-shadow:inset 0 -6px 0 rgba(0,0,0,.1)}
+.gname{position:absolute;left:0;right:0;top:-1px;text-align:center;font-size:10.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.gmach.t3 .gbody{background:linear-gradient(135deg,#c7b8ef,#f4a3b8 50%,#fde68a)}
+.gmach.t3 .gdome{border-color:#fde68a;box-shadow:0 0 18px rgba(242,201,76,.5)}
 .gknob{position:absolute;left:24px;top:20px;width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:inset 0 -3px 0 #f1e6ea}
 .gknob::after{content:"";position:absolute;left:17px;top:4px;width:6px;height:32px;border-radius:3px;background:#f4a3b8}
-.gslot{position:absolute;right:22px;top:26px;width:40px;height:30px;border-radius:10px;background:#c96a86}
+.gslot{position:absolute;right:22px;top:26px;width:40px;height:30px;border-radius:10px;background:rgba(74,53,64,.22)}
 .gmach.spin .gknob{animation:gturn 1.2s ease-in-out}
 .gmach.spin .gdome i{animation:gshake .25s ease-in-out infinite alternate}
 @keyframes gturn{to{transform:rotate(720deg)}}
 @keyframes gshake{from{transform:translate(-3px,2px)}to{transform:translate(3px,-3px)}}
-.gres{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.gres{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
 .gres b{font-size:15px}
 .gres small{font-size:12px;color:var(--muted)}
 .gres.new b{color:var(--pink-d)}
 .gcap{position:relative;width:70px;height:20px}
-.gcap i{position:absolute;left:0;width:70px;height:35px;background:#f9b6c7;animation:gopen .6s ease forwards}
+.gcap i{position:absolute;left:0;width:70px;height:35px;background:var(--gc,#f9b6c7);animation:gopen .6s ease forwards}
 .gcap i:first-child{top:-14px;border-radius:35px 35px 0 0;background:#fff}
 .gcap i:last-child{top:21px;border-radius:0 0 35px 35px;animation-name:gopen2}
 @keyframes gopen{to{transform:translate(-40px,-30px) rotate(-30deg);opacity:0}}
@@ -750,3 +753,7 @@ header.hd2 .iconbtn{align-self:center}
 .gitem{animation:lpop .5s .3s ease both}
 .gitem .uri,.gitem .rth{width:120px;height:120px;cursor:default}
 .witem.lock .rth{filter:grayscale(1);opacity:.7}
+.gres.sr .grays{position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-170px 0 0 -150px;border-radius:50%;background:repeating-conic-gradient(rgba(253,230,138,.55) 0 10deg,transparent 10deg 20deg);animation:grot 6s linear infinite;z-index:-1}
+.gres.sr b{background:linear-gradient(90deg,#e2809c,#9580d0,#d9a92c);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:17px}
+.gsr{font-weight:800;color:#d9a92c;font-size:18px;letter-spacing:.1em;animation:lpop .4s ease}
+@keyframes grot{to{transform:rotate(360deg)}}

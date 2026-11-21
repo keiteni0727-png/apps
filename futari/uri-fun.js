@@ -154,7 +154,7 @@ function openWardrobe(tab){
   const cell = (it, foot, act, cls) => `<button class="witem ${cls || ""}" ${act ? `data-a="${act}" data-id="${it.id}"` : "disabled"}><div class="uri">${uriSvg(u.st, "happy", { [it.s]: it.id })}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
   const body = t === "have"
     ? (have.length ? have.map(it => cell(it, w[it.s] === it.id ? "つけてる ✓" : USLOTS[it.s], "uriWear", w[it.s] === it.id ? "on" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">まだ持ってないよ。おみせで買ってみよう</p>`)
-    : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : it.o || it.g ? cell(it, it.o ? "おつかいで見つかるかも" : "ガチャで出るよ", "", "lock") : cell(it, `${AC}${it.p}${it.m ? " ・ 期間限定" : it.dx ? " ・ ごうか" : ""}`, "uriBuy", `${bal < it.p ? "poor" : ""} ${it.dx ? "dx" : ""}`)).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
+    : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : it.o || it.g ? cell(it, it.o ? "おつかいで見つかるかも" : `${GACHAS[it.g - 1].n}ガチャで出るよ`, "", "lock") : cell(it, `${AC}${it.p}${it.m ? " ・ 期間限定" : it.dx ? " ・ ごうか" : ""}`, "uriBuy", `${bal < it.p ? "poor" : ""} ${it.dx ? "dx" : ""}`)).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
   openSheetK("ward", `<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
   <div class="wprev"><div class="uri s${u.st}">${uriSvg(u.st, "happy", w)}</div><div class="wbal">${AC} ${bal}こ<small>ふたりのおさいふ</small></div></div>
   ${wardrobeSeg(t)}
@@ -223,11 +223,17 @@ const RITEMS = [
   { id:"o_kinoko", s:"fr",   n:"きのこのランプ", e:"🍄", o:1, b:[-34, -80, 68, 82] },
   { id:"o_map",    s:"deco", n:"ぼうけんのちず", e:"🗺️", o:1, b:[-32, -30, 64, 56] },
   { id:"o_tent",   s:"fl",   n:"ちいさなテント", e:"⛺", o:1, b:[-56, -84, 112, 86] },
-  // どんぐりガチャで出る（g）
-  { id:"g_yume",   s:"wall", n:"ゆめかわストライプ", e:"🦄", g:1 },
-  { id:"g_rainbow",s:"deco", n:"にじのかざり",   e:"🌈", g:1, b:[-58, -46, 116, 70] },
-  { id:"g_bowl",   s:"fr",   n:"きんぎょばち",   e:"🐠", g:1, b:[-30, -66, 60, 68] },
-  { id:"g_cloud",  s:"rug",  n:"くものラグ",     e:"☁️", g:1 },
+  // ノーマルガチャ（g:1）
+  { id:"g_cactus", s:"fr",   n:"サボテン",       e:"🌵", g:1, b:[-28, -72, 56, 74] },
+  { id:"g_mat",    s:"rug",  n:"しかくいマット", e:"🟦", g:1 },
+  // レアガチャ（g:2）
+  { id:"g_yume",   s:"wall", n:"ゆめかわストライプ", e:"🦄", g:2 },
+  { id:"g_rainbow",s:"deco", n:"にじのかざり",   e:"🌈", g:2, b:[-58, -46, 116, 70] },
+  { id:"g_bowl",   s:"fr",   n:"きんぎょばち",   e:"🐠", g:2, b:[-30, -66, 60, 68] },
+  { id:"g_cloud",  s:"rug",  n:"くものラグ",     e:"☁️", g:2 },
+  // 超レアガチャ（g:3）
+  { id:"g_merry",  s:"fl",   n:"メリーゴーランド", e:"🎠", g:3, b:[-58, -124, 116, 126] },
+  { id:"g_aurora", s:"win",  n:"オーロラのまど", e:"🌌", g:3, b:[-46, -44, 92, 90] },
   // ごうかアイテム（dx）
   { id:"dx_cake",    s:"fr",    n:"おおきなケーキ", e:"🎂", p:160, dx:1, b:[-32, -92, 64, 94] },
   { id:"dx_marble",  s:"floor", n:"だいりせきのゆか", e:"🤍", p:180, dx:1 },
@@ -355,6 +361,19 @@ function rItemSvg(id, K){
       <rect x="-50" y="-34" width="100" height="26" rx="9" fill="#fff"/><rect x="-46" y="-48" width="27" height="16" rx="7" fill="#fff" stroke="#efe2e8" stroke-width="1"/><rect x="-16" y="-48" width="27" height="16" rx="7" fill="#fff" stroke="#efe2e8" stroke-width="1"/>
       <path d="M-24 -38h70q8 0 8 10v8q0 6-8 6h-70q-6 0-6-6v-12q0-6 6-6z" fill="#c7b8ef"/>${[[-10, -28], [8, -24], [26, -30], [40, -22]].map(([x, y]) => star(x, y, 3.4, "#fff")).join("")}
       <rect x="-52" y="-9" width="6" height="9" fill="#c99466"/><rect x="46" y="-9" width="6" height="9" fill="#c99466"/>`;
+    case "g_cactus": return `<path d="M-14 0l-3-20h34l-3 20z" fill="#e8a25a"/><rect x="-18" y="-24" width="36" height="6" rx="3" fill="#d48a43"/>
+      <path d="M-7 -36h-7a5 5 0 0 1-5-5v-10M7 -42h7a5 5 0 0 0 5-5v-8" stroke="#6fbb9c" stroke-width="8" stroke-linecap="round" fill="none"/><rect x="-8" y="-64" width="16" height="44" rx="8" fill="#7cc4a4"/>
+      <path d="M-3 -58v30M3 -54v26" stroke="#a9ddc5" stroke-width="1" /><circle cx="0" cy="-66" r="4" fill="#f4a3b8"/><circle cx="0" cy="-66" r="1.5" fill="#fde68a"/>`;
+    case "g_mat": return `<rect x="-72" y="-13" width="144" height="26" rx="5" fill="#bfe1f6"/><rect x="-63" y="-8" width="126" height="16" rx="3" fill="none" stroke="#fff" stroke-width="2"/>${[-1, 1].map(d => Array.from({ length: 6 }, (_, i) => `<path d="M${d * 72} ${-10 + i * 4}h${d * 5}" stroke="#9fc9e6" stroke-width="1.4"/>`).join("")).join("")}`;
+    case "g_merry": { const pony = (x, y, c) => `<path d="M${x} ${y - 22}V${y + 10}" stroke="#f2c94c" stroke-width="2"/><ellipse cx="${x}" cy="${y}" rx="12" ry="7" fill="#fff"/><circle cx="${x + 11}" cy="${y - 7}" r="5.5" fill="#fff"/><path d="M${x + 7} ${y - 12}q-4 4-2 9" stroke="${c}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M${x - 7} ${y + 5}l-3 7M${x + 6} ${y + 5}l3 7" stroke="#fff" stroke-width="3" stroke-linecap="round"/><rect x="${x - 6}" y="${y - 8}" width="10" height="4" rx="1.5" fill="${c}"/>`;
+      return `<ellipse cx="0" cy="-4" rx="56" ry="8" fill="#c7b8ef"/><rect x="-54" y="-12" width="108" height="8" rx="3" fill="#b8a6e6"/><rect x="-2.5" y="-100" width="5" height="88" fill="#f2c94c"/>
+      ${pony(-28, -42, "#f4a3b8")}${pony(24, -52, "#9fd3ee")}
+      <path d="M-56 -94L0 -122L56 -94z" fill="#fff"/>${[-56, -34, -12, 10, 32].map(x => `<path d="M0 -122L${x} -94h11z" fill="#f4a3b8"/>`).join("")}<path d="M-56 -96h112v6q-7 7-14 0q-7 7-14 0q-7 7-14 0q-7 7-14 0q-7 7-14 0q-7 7-14 0q-7 7-14 0q-7 7-14 0z" fill="#fde68a"/>${star(0, -124, 6, "#f2c94c")}`; }
+    case "g_aurora": return `<defs><clipPath id="${K}wc"><rect x="-36" y="-34" width="72" height="66" rx="4"/></clipPath><linearGradient id="${K}au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1e2655"/><stop offset="1" stop-color="#3f3f86"/></linearGradient></defs>
+      <g clip-path="url(#${K}wc)"><rect x="-40" y="-40" width="80" height="80" fill="url(#${K}au)"/>
+      <path d="M-40 -6q14-22 28-8t28-12t28 6v14q-14-8-28 4t-28 4t-28 8z" fill="#7ee0b5" opacity=".55"/><path d="M-40 6q16-16 30-4t26-10t28 4v10q-12-6-28 4t-30 0t-26 6z" fill="#e7a3e8" opacity=".45"/>
+      ${[[-26, -24], [-6, -28], [18, -22], [28, -8], [-30, 16], [8, 20]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.1" fill="#fff"/>`).join("")}<path d="M-40 32q20-10 40-2t40-4v20h-80z" fill="#2a2f5e"/></g>
+      <path d="M-41 -39h82v76h-82zM-36 -34v66h72v-66z" fill="#e8b84a" fill-rule="evenodd"/><rect x="-46" y="36" width="92" height="7" rx="3" fill="#e8b84a"/>${star(-41, -39, 4, "#fff3b0")}${star(41, -39, 4, "#fff3b0")}`;
     case "r_round": return `<ellipse rx="80" ry="14" fill="#f9c6d4"/><ellipse rx="66" ry="10" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/>`;
     case "r_heart": return `<g transform="scale(6.2 1.9) translate(0 -5)"><path d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="#f6a8bd"/></g>`;
     case "r_star": return `<g transform="scale(1 .3)">${star(0, 6, 66, "#fde68a")}${star(0, 6, 50, "#fff3b0")}</g>`;
@@ -403,7 +422,7 @@ function openRoomShop(){
   const list = RITEMS.filter(it => (sl === "all" || it.s === sl) && (rOwned(it) || !it.m || it.m.includes(mon))).sort((a, b) => rank(a) - rank(b));
   const cell = it => {
     const on = room[it.s] === it.id, own = rOwned(it);
-    if (!own && (it.o || it.g)) return `<button class="witem ritem lock" disabled><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${it.o ? "おつかいで見つかるかも" : "ガチャで出るよ"}</small></button>`;
+    if (!own && (it.o || it.g)) return `<button class="witem ritem lock" disabled><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${it.o ? "おつかいで見つかるかも" : `${GACHAS[it.g - 1].n}ガチャで出るよ`}</small></button>`;
     const foot = own ? (on ? "おいてる ✓" : RSLOTS[it.s]) : `${AC}${it.p}${it.m ? " ・ 期間限定" : it.dx ? " ・ ごうか" : ""}`;
     return `<button class="witem ritem ${on ? "on" : ""} ${!own && bal < it.p ? "poor" : ""} ${!own && it.dx ? "dx" : ""}" data-a="${own ? "rmPlace" : "rmBuy"}" data-id="${it.id}"><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
   };
@@ -742,7 +761,7 @@ function viewUri(){
   <div class="tiles">
     ${tile("🎒", "var(--mint-l)", "おつかい", otsuTileSub(), `data-a="otsuOpen"`, otsuBadge())}
     ${tile("🍰", "var(--peach-l)", "おやつやさん", snkToday(me()) ? `きょうは${snackOf(snkToday(me())).e}をあげたよ` : "せいちょうポイントアップ ・ 1日1回", `data-a="snackOpen"`)}
-    ${tile("💊", "#fbeef6", "どんぐりガチャ", `1回 ${AC}${GACHA_P} ・ ${gachaHave()} / ${gachaPool().length} あつめた`, `data-a="gachaOpen"`)}
+    ${tile("💊", "#fbeef6", "どんぐりガチャ", `ノーマル・レア・超レア ・ ${gachaHave()} / ${gachaPool().length}`, `data-a="gachaOpen"`)}
     ${tile("💌", "var(--butter-l)", "えはがき", `${cardsHave()} / ${OTSU_SPOTS.length} まい あつめた`, `data-a="cardsOpen"`)}
   </div>`;
 }

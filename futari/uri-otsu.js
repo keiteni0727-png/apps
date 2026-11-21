@@ -60,7 +60,7 @@ function otsuLines(){
   else if (otsuCanGo()) L.push("おつかい、いってこようか？", "ぼうけんにいきたいぷぎ！");
   if (otsuAway(po)) L.push(`${nameOf(pu)}にたのまれて、${po.dest.n}にいくんだ〜`);
   if (!snkToday(me()) && bal >= SNACKS[0].p) L.push("おやつ、たべたいなあ…", "あまいものたべたいぷぎ〜");
-  if (bal >= GACHA_P && gachaHave() < gachaPool().length) L.push("ガチャ、まわしてみる？");
+  if (bal >= GACHAS[0].p && gachaHave() < gachaPool().length) L.push("ガチャ、まわしてみる？");
   return L;
 }
 
@@ -231,44 +231,50 @@ async function snackBuy(id){
   setTimeout(() => { uriFx(["💕", "✨", `+${s.xp}`], 6); uriBusy = false; render(); uriSay("ごちそうさまぷぎ！"); }, 2400);
 }
 
-/* =============== どんぐりガチャ（ガチャ限定のきせかえ・家具） =============== */
-const GACHA_P = 20, GACHA_BACK = 8;
-const gachaPool = () => [...UITEMS.filter(it => it.g).map(it => ({ k: "w", it })), ...RITEMS.filter(it => it.g).map(it => ({ k: "r", it }))];
+/* =============== どんぐりガチャ（ノーマル・レア・超レアの3台。ガチャ限定のきせかえ・家具） =============== */
+const GACHAS = [
+  { n:"ノーマル", p:10, back:4,  c:"#a9ddc5" },
+  { n:"レア",     p:30, back:12, c:"#f4a3b8" },
+  { n:"超レア",   p:80, back:32, c:"#c7b8ef" }
+];
+const gachaPool = t => [...UITEMS.filter(it => it.g && (!t || it.g === t)).map(it => ({ k: "w", it })), ...RITEMS.filter(it => it.g && (!t || it.g === t)).map(it => ({ k: "r", it }))];
 const gHas = x => x.k === "w" ? owned(x.it) : rOwned(x.it);
-const gachaHave = () => gachaPool().filter(gHas).length;
+const gachaHave = t => gachaPool(t).filter(gHas).length;
 let gBusy = false;
 function gThumb(x){ const st = uriState().st; return x.k === "w" ? `<div class="uri s${st}">${uriSvg(st, "happy", { [x.it.s]: x.it.id })}</div>` : `<div class="rth">${roomThumb(x.it)}</div>`; }
-function gachaMachine(){
+function gachaMachine(t){
   const cols = ["#f9b6c7", "#c7b8ef", "#fde68a", "#a9ddc5", "#9fd3ee", "#f4a3b8"];
-  return `<div class="gmach" id="gmach"><div class="gdome">${Array.from({ length: 11 }, (_, i) => `<i style="left:${8 + (i * 37) % 76}%;top:${38 + (i * 23) % 50}%;background:${cols[i % cols.length]}"></i>`).join("")}</div>
-    <div class="gbody"><div class="gknob"></div><div class="gslot"></div></div></div>`;
+  return `<div class="gmach t${t}" id="gmach" style="--gc:${GACHAS[t - 1].c}"><div class="gdome">${Array.from({ length: 11 }, (_, i) => `<i style="left:${8 + (i * 37) % 76}%;top:${38 + (i * 23) % 50}%;background:${cols[i % cols.length]}"></i>`).join("")}</div>
+    <div class="gbody"><span class="gname">${GACHAS[t - 1].n}</span><div class="gknob"></div><div class="gslot"></div></div></div>`;
 }
 function openGacha(res){
-  const bal = S.pet?.acorns || 0, pool = gachaPool(), have = gachaHave();
+  const t = S.gTier || 1, g = GACHAS[t - 1], bal = S.pet?.acorns || 0, pool = gachaPool(t), have = gachaHave(t);
   openSheetK("gacha", `<h3>💊 どんぐりガチャ<button class="x" data-a="close">×</button></h3>
-    <div class="gstage" id="gstage">${res || gachaMachine()}</div>
-    <button class="btn block" data-a="gachaSpin" ${bal < GACHA_P ? "disabled" : ""}>${res ? "もう1回まわす" : "まわす"}（${AC}${GACHA_P}）</button>
-    <p class="muted otp">${AC} ${bal}こ ・ かぶったら${AC}${GACHA_BACK}こかえってくるよ</p>
-    <div class="lbl2">ガチャのなかみ（${have} / ${pool.length}）${have === pool.length ? " 🎉コンプリート！" : ""}</div>
+    <div class="seg">${GACHAS.map((x, i) => `<button class="${t === i + 1 ? "on" : ""}" data-a="gTier" data-v="${i + 1}">${x.n}<small> ${AC}${x.p}</small></button>`).join("")}</div>
+    <div class="gstage" id="gstage">${res || gachaMachine(t)}</div>
+    <button class="btn block" data-a="gachaSpin" ${bal < g.p ? "disabled" : ""}>${res ? "もう1回まわす" : "まわす"}（${AC}${g.p}）</button>
+    <p class="muted otp">${AC} ${bal}こ ・ かぶったら${AC}${g.back}こかえってくるよ</p>
+    <div class="lbl2">${g.n}ガチャのなかみ（${have} / ${pool.length}）${have === pool.length ? " 🎉コンプリート！" : ""}</div>
     <div class="wgrid">${pool.map(x => `<div class="witem ${gHas(x) ? "" : "lock"}">${gThumb(x)}<b>${gHas(x) ? esc(x.it.n) : "？？？"}</b><small>${x.k === "w" ? USLOTS[x.it.s] : RSLOTS[x.it.s]}</small></div>`).join("")}</div>`);
 }
 async function gachaSpin(){
-  const bal = S.pet?.acorns || 0;
+  const t = S.gTier || 1, g = GACHAS[t - 1], bal = S.pet?.acorns || 0;
   if (gBusy) return;
-  if (bal < GACHA_P) { toast(`どんぐりがあと${GACHA_P - bal}こ足りないよ`); return; }
-  const pool = gachaPool(), x = pool[Math.floor(Math.random() * pool.length)], dup = gHas(x), key = x.k === "w" ? "items" : "ritems";
+  if (bal < g.p) { toast(`どんぐりがあと${g.p - bal}こ足りないよ`); return; }
+  const pool = gachaPool(t), x = pool[Math.floor(Math.random() * pool.length)], dup = gHas(x), key = x.k === "w" ? "items" : "ritems", d = -g.p + (dup ? g.back : 0);
   gBusy = true;
   try {
-    await setDoc(petRef(), { acorns: increment(-GACHA_P + (dup ? GACHA_BACK : 0)), gachaN: increment(1), ...(dup ? {} : { [key]: { [x.it.id]: true } }) }, { merge: true });
-    S.pet = { ...(S.pet || {}), acorns: bal - GACHA_P + (dup ? GACHA_BACK : 0), ...(dup ? {} : { [key]: { ...(S.pet?.[key] || {}), [x.it.id]: true } }) };
+    await setDoc(petRef(), { acorns: increment(d), gachaN: increment(1), ...(dup ? {} : { [key]: { [x.it.id]: true } }) }, { merge: true });
+    S.pet = { ...(S.pet || {}), acorns: bal + d, ...(dup ? {} : { [key]: { ...(S.pet?.[key] || {}), [x.it.id]: true } }) };
   } catch (e) { gBusy = false; toast("まわせませんでした（" + (e.code || e.message) + "）"); return; }
   if (!document.getElementById("gmach")) openGacha();
   document.getElementById("gmach")?.classList.add("spin");
   setTimeout(() => {
     gBusy = false;
     if (!document.getElementById("gstage")) return;
-    openGacha(`<div class="gres ${dup ? "dup" : "new"}"><div class="gcap"><i></i><i></i></div><div class="gitem">${gThumb(x)}</div>
-      <b>${esc(x.it.n)}</b><small>${dup ? `かぶっちゃった… ${AC}${GACHA_BACK}こかえってきたよ` : `${x.k === "w" ? "きせかえ" : "おへや"}でつかえるよ！`}</small></div>`);
+    const sr = t === 3 && !dup;
+    openGacha(`<div class="gres ${dup ? "dup" : "new"} ${sr ? "sr" : ""}">${sr ? `<div class="grays"></div><span class="gsr">超レア！</span>` : ""}<div class="gcap" style="--gc:${g.c}"><i></i><i></i></div><div class="gitem">${gThumb(x)}</div>
+      <b>${esc(x.it.n)}</b><small>${dup ? `かぶっちゃった… ${AC}${g.back}こかえってきたよ` : `${x.k === "w" ? "きせかえ" : "おへや"}でつかえるよ！`}</small></div>`);
     render();
-  }, 1500);
+  }, t === 3 ? 2000 : 1500);
 }

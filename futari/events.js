@@ -80,6 +80,7 @@ document.addEventListener("click", async ev => {
     case "snackOpen": openSnack(); break;
     case "snackBuy": snackBuy(id); break;
     case "gachaOpen": openGacha(); break;
+    case "gTier": if (!gBusy) { S.gTier = +el.dataset.v; openGacha(); } break;
     case "gachaSpin": gachaSpin(); break;
     case "gameStart": gameStart(); break;
     case "gameClose": gameClose(); break;
