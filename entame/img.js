@@ -5,12 +5,18 @@
        imgs/作品ID … 一覧用の小さい画像（長い辺 360px くらい・数十KB）
        imgl/作品ID … 詳細用の大きい画像（長い辺 1200px まで・1MB未満）
    - 画面に出たものだけ読みに行く（一覧はスクロールして見えた行だけ）。読んだ画像はこの端末のメモリに控える
+   - 作品は「縦（ポスター）」と「横（背景）」の2枚を持てる。縦＝img・ドキュメント名は作品ID／横＝imgw・ドキュメント名は「作品ID_w」
+       縦を使う：一覧のサムネ・グリッド・詳細の横並び／横を使う：詳細の上に大きく・番組表のカード（横がなければ縦を切らずに出す）
    詳細での出し方は2通り（設定 → 表示 → 詳細の画像）：top＝上に横長で大きく／side＝ポスターと要点を横並び */
 const K_DIMG = "adb.v3.dimg";
 /* 画像のキー：作品はその作品ID、YouTube は「yt_ID」（imgs・imgl のドキュメント名にもなる） */
 const YT_PRE = "yt_";
 const imgObj = key => (key.startsWith(YT_PRE) ? ytOver[key.slice(YT_PRE.length)] : over[key]);
-const imgSave = (key, img, msg) => (key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img }, msg) : saveTitle(key, { img }, msg));
+const imgSave = (key, img, msg, k = "p") => (key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img }, msg) : saveTitle(key, { [k === "w" ? "imgw" : "img"]: img }, msg));
+/* 縦（p）・横（w）ごとの、保存場所の名前と版の番号 */
+const imgDoc = (id, k) => (k === "w" ? id + "_w" : id);
+const imgVer = (it, k) => (k === "w" ? it.imgw : it.img);
+const IMG_KIND = { p: "縦（ポスター）", w: "横（背景）" };
 /* YouTube の項目を、画像の部品が使える形（id＝キー）にする */
 const ytImgIt = x => ({ ...x, id: YT_PRE + x.id });
 const dimgMode = () => (ls.get(K_DIMG) === "side" ? "side" : "top");
@@ -45,13 +51,18 @@ const dataToBlobUrl = d => {
 };
 
 /* 画像のタグ。控えにあればすぐ表示、なければ空のまま置いて、画面に出たときに読む */
-function imgTag(it, sz, cls) {
-  const v = it.img;
-  const url = imgUrl.get(imgKey(sz, it.id, v)) || (sz === "l" && imgUrl.get(imgKey("s", it.id, v))) || "";
-  return `<img class="${cls}" alt="" decoding="async" data-img="${esc(it.id)}" data-iv="${esc(String(v))}" data-isz="${sz}"${url ? ` src="${url}"` : ""}${url && imgUrl.has(imgKey(sz, it.id, v)) ? ' data-ok="1"' : ""}>`;
+function imgTag(it, sz, cls, k = "p") {
+  const v = imgVer(it, k),
+    id = imgDoc(it.id, k);
+  const url = imgUrl.get(imgKey(sz, id, v)) || (sz === "l" && imgUrl.get(imgKey("s", id, v))) || "";
+  return `<img class="${cls}" alt="" decoding="async" data-img="${esc(id)}" data-iv="${esc(String(v))}" data-isz="${sz}"${url ? ` src="${url}"` : ""}${url && imgUrl.has(imgKey(sz, id, v)) ? ' data-ok="1"' : ""}>`;
 }
+/* 縦長の枠に出す画像：縦がなければ横 */
+const posterTag = (it, sz, cls) => (it.img ? imgTag(it, sz, cls) : it.imgw ? imgTag(it, sz, cls, "w") : "");
+/* 横長の枠に出す画像：横がなければ縦を切らずに（fit） */
+const wideTag = (it, sz, cls) => (it.imgw ? imgTag(it, sz, cls, "w") : it.img ? imgTag(it, sz, cls + " fit") : "");
 /* 一覧の行のサムネ（画像のない作品は灰色の枠） */
-const thumbHtml = it => `<span class="thb${it.img ? "" : " none"}" aria-hidden="true">${it.img ? imgTag(it, "s", "thbi") : ""}</span>`;
+const thumbHtml = it => (h => `<span class="thb${h ? "" : " none"}" aria-hidden="true">${h}</span>`)(posterTag(it, "s", "thbi"));
 
 /* ---------- 読み込み：画面に出た画像だけ、同時に6枚まで ---------- */
 const imgWait = new Map(); // 読み込み中：キー → Promise
@@ -151,12 +162,16 @@ function shrink(im, max, q, limit) {
   return d;
 }
 let imgBusy = false;
-/* 「画像を追加」「変更」：コピーしてある画像があれば、それをそのまま貼る。なければ写真から選ぶかを聞く */
-async function pickImage(id) {
+/* 「画像を追加」「変更」：k（縦 p／横 w）が決まっていなければ先に選ぶ。選んだらコピーしてある画像をそのまま貼る。なければ写真から選ぶかを聞く */
+async function pickImage(id, k) {
   if (imgBusy) return;
+  if (!k) {
+    if (id.startsWith(YT_PRE)) k = "p";
+    else return askImageKind(id);
+  }
   const b = await clipImage();
-  if (b) return setImage(id, b);
-  askImageSource(id);
+  if (b) return setImage(id, b, k);
+  askImageSource(id, k);
 }
 /* クリップボードの画像を取り出す（使えない端末・許可されなかったとき・画像がないときは null） */
 async function clipImage() {
@@ -169,33 +184,48 @@ async function clipImage() {
   } catch (e) {}
   return null;
 }
-/* コピーした画像がないとき：写真から選ぶ（押したその場でファイルを選ぶ画面を開く） */
-function askImageSource(id) {
+/* 小さい確認の枠（縦・横の選択／写真から選ぶ） */
+function imgAsk(label, inner, onPick) {
   closeImgView();
   const v = document.createElement("div");
   v.className = "imgview imgask";
   v.setAttribute("role", "dialog");
   v.setAttribute("aria-modal", "true");
-  v.setAttribute("aria-label", "画像を追加");
-  v.innerHTML = `<div class="iask"><b>コピーした画像がありません</b><p>画像を長押し（パソコンは右クリック）して「コピー」してから、もう一度押すと自動で貼り付けます。</p><div class="ivbar"><button type="button" class="u-btn" data-iv="close">やめる</button><button type="button" class="u-btn pri" data-iv="file">写真から選ぶ</button></div></div>`;
+  v.setAttribute("aria-label", label);
+  v.innerHTML = `<div class="iask">${inner}</div>`;
   v.addEventListener("click", e => {
     const b = e.target.closest("[data-iv]");
     if (!b && e.target.closest(".iask")) return;
     closeImgView();
-    if (b && b.dataset.iv === "file") pickFile(id);
+    if (b && b.dataset.iv !== "close") onPick(b.dataset.iv);
   });
   document.body.appendChild(v);
-  v.querySelector("[data-iv=file]").focus({ preventScroll: true });
+  v.querySelector(".pri,[data-iv]").focus({ preventScroll: true });
 }
-function pickFile(id) {
+/* 縦・横を選ぶ（押したらそのまま貼り付け） */
+function askImageKind(id) {
+  const it = imgObj(id) || {};
+  const btn = k => `<button type="button" class="ikind ${k}" data-iv="${k}"><i aria-hidden="true"></i><span>${IMG_KIND[k]}</span>${imgVer(it, k) ? "<small>登録済み・差し替え</small>" : ""}</button>`;
+  imgAsk("画像を追加", `<b>どちらに貼りますか？</b><div class="ikinds">${btn("p")}${btn("w")}</div><div class="ivbar"><button type="button" class="u-btn" data-iv="close">やめる</button></div>`, k => pickImage(id, k));
+}
+/* コピーした画像がないとき：写真から選ぶ（押したその場でファイルを選ぶ画面を開く） */
+function askImageSource(id, k) {
+  imgAsk(
+    "画像を追加",
+    `<b>コピーした画像がありません</b><p>画像を長押し（パソコンは右クリック）して「コピー」してから、もう一度押すと自動で貼り付けます。</p><div class="ivbar"><button type="button" class="u-btn" data-iv="close">やめる</button><button type="button" class="u-btn pri" data-iv="file">写真から選ぶ</button></div>`,
+    () => pickFile(id, k),
+  );
+}
+function pickFile(id, k) {
   if (imgBusy) return;
   const inp = document.createElement("input");
   inp.type = "file";
   inp.accept = "image/*";
-  inp.onchange = () => inp.files[0] && setImage(id, inp.files[0]);
+  inp.onchange = () => inp.files[0] && setImage(id, inp.files[0], k);
   inp.click();
 }
-async function setImage(id, file) {
+/* k が "auto" のときは画像の形で決める（横に長ければ横） */
+async function setImage(id, file, k = "p") {
   if (!db || !imgObj(id)) return;
   if (!/^image\//.test(file.type || "image/")) return toast("画像のファイルを選んでください");
   imgBusy = true;
@@ -205,37 +235,43 @@ async function setImage(id, file) {
     const small = shrink(im, 360, 0.8, 60e3);
     const large = shrink(im, 1200, 0.82, 700e3);
     URL.revokeObjectURL(url);
+    if (id.startsWith(YT_PRE)) k = "p";
+    else if (k === "auto") k = im.naturalWidth > im.naturalHeight * 1.15 ? "w" : "p";
+    const doc = imgDoc(id, k);
     const v = Date.now();
     /* 先に控えへ入れて、保存の完了を待たずに表示する */
-    imgRemember(imgKey("s", id, v), dataToBlobUrl(small));
-    imgRemember(imgKey("l", id, v), dataToBlobUrl(large));
-    await Promise.all([db.doc(`imgs/${id}`).set({ d: small, v }), db.doc(`imgl/${id}`).set({ d: large, v })]);
-    await imgSave(id, v, "画像を保存しました");
+    imgRemember(imgKey("s", doc, v), dataToBlobUrl(small));
+    imgRemember(imgKey("l", doc, v), dataToBlobUrl(large));
+    await Promise.all([db.doc(`imgs/${doc}`).set({ d: small, v }), db.doc(`imgl/${doc}`).set({ d: large, v })]);
+    await imgSave(id, v, id.startsWith(YT_PRE) ? "画像を保存しました" : `${IMG_KIND[k]}の画像を保存しました`, k);
   } catch (e) {
     fail(e);
   } finally {
     imgBusy = false;
   }
 }
-function removeImage(id) {
+function removeImage(id, k = "p") {
   const it = imgObj(id);
-  if (!it || !it.img) return;
-  imgSave(id, null, "画像を外しました");
-  db.doc(`imgs/${id}`).delete().catch(fail);
-  db.doc(`imgl/${id}`).delete().catch(fail);
+  if (!it || !imgVer(it, k)) return;
+  const doc = imgDoc(id, k);
+  imgSave(id, null, "画像を外しました", k);
+  db.doc(`imgs/${doc}`).delete().catch(fail);
+  db.doc(`imgl/${doc}`).delete().catch(fail);
 }
 /* ゴミ箱から完全に消すときに、画像も消す */
 function removeImageDocs(id) {
   if (!db) return;
-  db.doc(`imgs/${id}`).delete().catch(() => {});
-  db.doc(`imgl/${id}`).delete().catch(() => {});
+  [id, imgDoc(id, "w")].forEach(d => {
+    db.doc(`imgs/${d}`).delete().catch(() => {});
+    db.doc(`imgl/${d}`).delete().catch(() => {});
+  });
 }
 
 /* ---------- 詳細での出し方 ---------- */
 /* 案A：タイトルの上に横長で大きく（番組情報タブだけ） */
 function detailHeroHtml(it) {
-  if (dimgMode() !== "top" || !it.img) return "";
-  return `<button type="button" class="dhero" data-imgview="1" aria-label="画像を大きく表示">${imgTag(it, "l", "dheroi")}</button>`;
+  if (dimgMode() !== "top" || !(it.img || it.imgw)) return "";
+  return `<button type="button" class="dhero" data-imgview="${it.imgw ? "w" : "p"}" aria-label="画像を大きく表示">${wideTag(it, "l", "dheroi")}</button>`;
 }
 /* 案B：番組情報の一番上に、ポスター＋要点 */
 function detailSideHtml(it) {
@@ -248,29 +284,36 @@ function detailSideHtml(it) {
   const vods = (m.media === "stream" ? m.plat : m.vods).map(vlab).join("");
   const per = periodOf(it);
   const poster = it.img
-    ? `<button type="button" class="dpost" data-imgview="1" aria-label="画像を大きく表示">${imgTag(it, "l", "dposti")}</button>`
-    : `<button type="button" class="dpost none" data-imgadd="1" aria-label="画像を追加">${IMG_ICON}<span>＋ 画像</span></button>`;
+    ? `<button type="button" class="dpost" data-imgview="p" aria-label="画像を大きく表示">${imgTag(it, "l", "dposti")}</button>`
+    : `<button type="button" class="dpost none" data-imgadd="${it.imgw ? "p" : ""}" aria-label="画像を追加">${IMG_ICON}<span>＋ 画像</span></button>`;
   return `<div class="dside">${poster}<div class="dsum">${when ? `<b class="dsw">${esc(when)}</b>` : ""}${cour || per ? `<span class="dss">${esc([cour, per].filter(Boolean).join(" ・ "))}</span>` : ""}${wl.length ? `<span class="dss">${wl.filter(e => e.w).length} / ${wl.length}話 視聴</span>` : ""}${vods ? `<span class="labs">${vods}</span>` : ""}</div></div>`;
 }
-/* 「＋ 画像を追加」（案A、または画像がまだない作品） */
-const imgAddChip = it => (it.img || dimgMode() === "side" ? "" : `<button type="button" class="u-chip add" data-imgadd="1">＋ 画像を追加</button>`);
+/* 「＋ 画像を追加」（どちらもない：縦・横を選ぶ）／片方だけある：もう片方を追加（目立たない形） */
+function imgAddChip(it) {
+  if (!it.img && !it.imgw) return dimgMode() === "side" ? "" : `<button type="button" class="u-chip add" data-imgadd="">＋ 画像を追加</button>`;
+  const side = dimgMode() === "side";
+  const k = !it.imgw ? "w" : !it.img && !side ? "p" : "";
+  return k ? `<button type="button" class="u-chip add" data-imgadd="${k}">＋ ${k === "w" ? "横" : "縦"}の画像を追加</button>` : "";
+}
+/* 横の画像を大きく表示する入口（詳細を横並びにしているときなど、横の画像がほかに見えない場合） */
+const imgWideChip = it => (it.imgw && dimgMode() === "side" ? `<button type="button" class="u-chip" data-imgview="w">横の画像</button>` : "");
 
 /* ---------- 大きく表示（変更・外すもここから） ---------- */
-function openImgView(it) {
+function openImgView(it, k = "p") {
   closeImgView();
   const v = document.createElement("div");
   v.className = "imgview";
   v.setAttribute("role", "dialog");
   v.setAttribute("aria-modal", "true");
   v.setAttribute("aria-label", `${it.t} の画像`);
-  v.innerHTML = `<div class="ivbox">${imgTag(it, "l", "ivimg")}</div><div class="ivbar"><button type="button" class="u-btn" data-iv="change">変更</button><button type="button" class="u-btn danger" data-iv="remove">外す</button><button type="button" class="u-btn pri" data-iv="close">閉じる</button></div>`;
+  v.innerHTML = `<div class="ivbox">${imgTag(it, "l", "ivimg", k)}</div><div class="ivbar"><button type="button" class="u-btn" data-iv="change">変更</button><button type="button" class="u-btn danger" data-iv="remove">外す</button><button type="button" class="u-btn pri" data-iv="close">閉じる</button></div>`;
   v.addEventListener("click", e => {
     const b = e.target.closest("[data-iv]");
     if (!b && e.target.closest(".ivimg")) return;
     const a = b ? b.dataset.iv : "close";
     closeImgView();
-    if (a === "change") pickImage(it.id);
-    if (a === "remove") removeImage(it.id);
+    if (a === "change") pickImage(it.id, k);
+    if (a === "remove") removeImage(it.id, k);
   });
   document.body.appendChild(v);
   v.querySelector("[data-iv=close]").focus({ preventScroll: true });
@@ -299,9 +342,9 @@ document.addEventListener("paste", e => {
   if (!f) return;
   e.preventDefault();
   closeImgView();
-  setImage(key, f);
+  setImage(key, f, "auto");
 });
-DETAIL_ACTIONS.push(["[data-imgadd]", (el, it) => pickImage(it.id)], ["[data-imgview]", (el, it) => openImgView(it)]);
+DETAIL_ACTIONS.push(["[data-imgadd]", (el, it) => pickImage(it.id, el.dataset.imgadd || "")], ["[data-imgview]", (el, it) => openImgView(it, el.dataset.imgview === "w" ? "w" : "p")]);
 
 /* ---------- リスト／グリッド（写真とタイトルだけ）の切り替え ---------- */
 const VIEW_IC = {
@@ -314,7 +357,7 @@ const viewTog = (cur, attr) =>
     .join("")}</span>`;
 /* グリッドの1マス：縦長の画像（なければ灰色の枠）とタイトル */
 const gridCell = (it, attr = "data-id", ik = it) =>
-  `<button type="button" class="pcell${it.s === "視聴済み" ? " done" : ""}" ${attr}="${esc(it.id)}"><span class="pimg">${it.img ? imgTag(ik, "s", "pimgi") : `<span class="wc-noimg">${IMG_ICON}</span>`}</span><span class="pttl">${esc(it.t || "（タイトルなし）")}</span></button>`;
+  `<button type="button" class="pcell${it.s === "視聴済み" ? " done" : ""}" ${attr}="${esc(it.id)}"><span class="pimg">${posterTag(ik, "s", "pimgi") || `<span class="wc-noimg">${IMG_ICON}</span>`}</span><span class="pttl">${esc(it.t || "（タイトルなし）")}</span></button>`;
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-lview],[data-yview]");
   if (!b) return;
@@ -328,4 +371,4 @@ document.addEventListener("click", e => {
 const ytThumbHtml = x => thumbHtml(ytImgIt(x));
 /* 詳細：上に横長で大きく（YouTube は横長の画像が多いので、設定に関係なくこの形） */
 const ytHeroHtml = x => (x.img ? `<button type="button" class="dhero" data-imgview="1" aria-label="画像を大きく表示">${imgTag(ytImgIt(x), "l", "dheroi")}</button>` : "");
-const ytImgAddChip = x => (x.img ? "" : `<button type="button" class="u-chip add" data-imgadd="1">＋ 画像を追加</button>`);
+const ytImgAddChip = x => (x.img ? "" : `<button type="button" class="u-chip add" data-imgadd="p">＋ 画像を追加</button>`);

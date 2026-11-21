@@ -1804,6 +1804,15 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .iask b{font-size:var(--fs-l)}
 .iask p{margin:0;font-size:var(--fs-m);color:var(--u-sub);line-height:1.6}
 .iask .ivbar{justify-content:flex-end;margin-top:6px}
+.ikinds{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.ikind{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 8px;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-bg);color:var(--u-ink);font:inherit;font-size:var(--fs-m);font-weight:700;cursor:pointer}
+.ikind:active{background:var(--u-chip)}
+.ikind i{display:block;border:2px solid var(--u-strong);border-radius:4px;background:var(--u-soft)}
+.ikind.p i{width:34px;height:51px}
+.ikind.w i{width:64px;height:36px;margin:7.5px 0}
+.ikind small{font-size:var(--fs-s);font-weight:400;color:var(--u-sub)}
+/* 横の枠に縦の画像を出すとき：切らずに全体を見せる */
+.dheroi.fit,.wc-imgi.fit{object-fit:contain;object-position:center}
 /* ===== 番組表：線のタイムライン（PC・スマホ共通。PCは画像の右に情報、スマホは画像の下に情報） ===== */
 .wcard.v-tl{display:grid;grid-template-columns:56px 14px minmax(0,1fr);grid-template-areas:"time line img" ". line body";column-gap:10px;row-gap:8px;padding:0;background:none;border:0;box-shadow:none;animation:none}
 .v-tl .wc-time{grid-area:time;font-family:var(--u-disp);font-size:var(--fs-2xl);line-height:1;padding-top:2px;color:var(--u-ink)}

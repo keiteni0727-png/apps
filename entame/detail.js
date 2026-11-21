@@ -163,7 +163,7 @@ function renderDetail(it) {
     ${missDetail(it)}
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${detailSideHtml(it)}${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${imgAddChip(it)}${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
+    <div class="links">${imgAddChip(it)}${imgWideChip(it)}${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連放送を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${subPaste ? subPasteHtml(it) : epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div>`;
 }
