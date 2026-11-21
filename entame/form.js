@@ -53,10 +53,10 @@ function songRowsHtml() {
     ${(x.ex || [])
       .map(
         (r, j) =>
-          `<div class="sg-r sg-x" data-sgx="${j}"><span class="sg-rl">ほか</span><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-sp"></span><button type="button" class="u-btn icon sm txt sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
+          `<div class="sg-r sg-x" data-sgx="${j}"><input class="sg-xa" type="number" min="0" inputmode="numeric" value="${r.a ?? ""}" placeholder="最初" aria-label="ほかに使われた最初の話"><span>〜</span><input class="sg-xb" type="number" min="0" inputmode="numeric" value="${r.b ?? ""}" placeholder="最後" aria-label="ほかに使われた最後の話（1話だけなら空）"><span>話</span><span class="sg-sp"></span><button type="button" class="u-btn icon sm txt sg-xdel" data-sgxdel="${k}:${j}" aria-label="このほかの話を消す">×</button></div>`,
       )
       .join("")}
-    <div class="sg-ft"><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="u-chip add sg-exadd" data-sgex="${k}">＋ 範囲を追加</button><button type="button" class="u-btn sm txt danger del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
+    <div class="sg-ft"><button type="button" class="u-chip add sg-exadd" data-sgex="${k}">＋ 話数を追加</button><select class="sg-t" aria-label="種類を変える" title="種類を変える">${SONG_TYPES.map(t => `<option value="${t}" ${t === x.type ? "selected" : ""}>${t}</option>`).join("")}</select><button type="button" class="u-btn sm txt danger del" data-sgdel="${k}" aria-label="この曲を削除">削除</button></div></div></div>`;
   };
   const secs = types
     .map(t => {
@@ -66,7 +66,7 @@ function songRowsHtml() {
         <div class="sgh"><b class="sgn">${t}</b>${l.length ? `<small>${l.length}曲</small>` : ""}<span class="sg-sp"></span>
           ${l.length > 1 ? `<button type="button" class="u-btn sm txt sgfoldall" data-sgfoldall="${t}">${l.some(([, k]) => sgOpen.has(k)) ? "すべてたたむ" : "すべて開く"}</button>` : ""}
           ${l.length ? "" : `<button type="button" class="u-chip add sgadd" data-sgadd="${t}">＋ ${t}を追加</button>`}</div>
-        ${l.length ? l.map(([x, k]) => card(x, k, l.length > 1)).join("") + `<button type="button" class="u-chip add sgnext" data-sgadd="${t}">＋ 次の${t}を追加</button>` : ""}</div>`;
+        ${l.length ? l.map(([x, k]) => card(x, k, l.length > 1)).join("") + `<button type="button" class="u-chip add sgnext" data-sgadd="${t}">＋ ${t}を追加</button>` : ""}</div>`;
     })
     .join("");
   return secs;
