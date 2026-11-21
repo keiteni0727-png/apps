@@ -138,9 +138,10 @@ function formHtml() {
     )}</div></div>`,
     series: `<div class="field full" id="fSeries"><span>シリーズ</span>${ddBtn("ser")}</div>`,
     /* 放送形態：ジャンル映画は出さず「公開（映画館／配信）」だけ。バラエティは TV／配信 の2つ。どのジャンルでも映画なら公開を選べる */
-    /* 放送形態・放送局・配信サイト：PCでは1行に横並び（スマホは縦） */
-    media: `<div class="frow3 full">${f.k === "f" ? "" : `<div class="field" id="fMedia"><span>放送形態</span>${ddBtn("media")}</div>`}
-      ${f.media === "movie" ? `<div class="field"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="u-seg segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}
+    /* 放送形態・放送局・配信サイト：PCでは1行に横並び（スマホは縦）。作品の編集画面では放送形態の下にシリーズ、配信サイトの下に公式サイトを挟むので、前半（mtype）と後半（msite）に分けて持つ */
+    mtype: `<div class="frow3 full">${f.k === "f" ? "" : `<div class="field" id="fMedia"><span>放送形態</span>${ddBtn("media")}</div>`}
+      ${f.media === "movie" ? `<div class="field"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="u-seg segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}</div>`,
+    msite: `<div class="frow3 full">
       ${hasSt(f.media) ? `<div class="field"><span>放送局</span>${ddBtn("st")}</div>` : ""}
       ${f.k === "d" ? `<div class="field" id="fSlot"><span>放送枠</span>${ddBtn("slot")}</div>` : ""}
       ${f.media === "stream" ? `<div class="field"><span>配信サイト</span>${ddBtn("plat")}</div>` : ""}
@@ -186,6 +187,7 @@ function formHtml() {
       return `<div class="field full"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
     })(),
   };
+  P.media = P.mtype + P.msite;
   if (f.only && ONLY_A[f.only]) {
     let [lab, keys] = ONLY_A[f.only];
     /* OP・ED・主題歌の「なし」は見出しの行の右に（曲が1曲もないときだけ） */
@@ -208,9 +210,8 @@ function formHtml() {
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
     <form id="titleF" novalidate>
     ${head}
-    ${sec("放送", P.media + P.vurl + P.from + P.time + P.cours, "", "", "ftbl")}
-    ${sec("曲", P.songs, "", sgNoneBox(), "fsongs")}
-    ${sec("そのほか", P.series + P.url, "", "", "ftbl")}
+    ${sec(`<span class="ilamp onair">ON AIR</span>`, P.mtype + P.series + P.msite + P.url + P.vurl + P.from + P.time + P.cours, "", "", "ftbl")}
+    ${sec(`<span class="ilamp music">MUSIC</span>`, P.songs, "", sgNoneBox(), "fsongs")}
     <div class="ffoot"><button type="button" class="u-btn" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }

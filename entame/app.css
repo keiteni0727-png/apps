@@ -1666,12 +1666,12 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .fxopt button{padding:5px 12px;font-size:var(--fs-m)}
 .fxst button[aria-pressed="true"]{color:#fff;border-color:transparent}
 .fxst button[aria-pressed="true"].s-未視聴{background:var(--st-want)}.fxst button[aria-pressed="true"].s-視聴中{background:var(--st-now)}.fxst button[aria-pressed="true"].s-視聴済み{background:var(--st-done)}.fxst button[aria-pressed="true"].s-見ない{background:var(--st-drop)}
-.fsec.ftbl,.fsec.fsongs{border:0;padding:0;background:none;margin-top:12px}
-.fsec.ftbl h4,.fsec.fsongs h4{margin:0 0 4px;font-size:var(--fs-s);color:var(--u-sub);font-weight:700}
-.ftbl .fgrid{display:block;border:1px solid var(--u-line);border-radius:var(--r-m);background:var(--u-surface)}
+/* 作品の編集：ON AIR・MUSIC の枠（詳細のカードと同じラベル・枠） */
+.fsec.ftbl,.fsec.fsongs{border:1px solid var(--u-line);border-radius:var(--r-l);padding:12px 14px;background:var(--u-surface);margin-top:12px}
+.fsec.ftbl h4,.fsec.fsongs h4{margin:0 0 8px;align-items:center}
+.ftbl .fgrid{display:block;margin:0 -14px -12px}
 .ftbl .frow3{display:contents}
-.ftbl .fgrid>.field,.ftbl .frow3>.field{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;column-gap:8px;row-gap:2px;padding:5px 10px;border-top:1px solid var(--u-line);margin:0}
-.ftbl .fgrid>.field:first-child,.ftbl .frow3:first-child>.field:first-child{border-top:0}
+.ftbl .fgrid>.field,.ftbl .frow3>.field{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;column-gap:8px;row-gap:2px;padding:5px 14px;border-top:1px solid var(--u-line);margin:0}
 .ftbl .fgrid>.field>span:first-child,.ftbl .frow3>.field>span:first-child,.ftbl .field>label.field>span{font-size:var(--fs-s);font-weight:700;color:var(--u-sub);margin:0}
 .ftbl .field>label.field{display:block;padding:0;border:0;margin:0}
 .ftbl .field input:not([type=checkbox]),.ftbl .field select{border-color:transparent;background:transparent;padding:6px 8px;font-size:var(--fs-base)}
@@ -1794,13 +1794,13 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .iask p{margin:0;font-size:var(--fs-m);color:var(--u-sub);line-height:1.6}
 .iask .ivbar{justify-content:flex-end;margin-top:6px}
 /* ===== 番組表：線のタイムライン（PC・スマホ共通。縦長の画像の右に情報） ===== */
-.wcard.v-tl{display:grid;grid-template-columns:56px 14px 76px minmax(0,1fr);grid-template-areas:"time line img body";column-gap:10px;row-gap:8px;padding:0;background:none;border:0;box-shadow:none;animation:none}
+.wcard.v-tl{display:grid;grid-template-columns:56px 14px 90px minmax(0,1fr);grid-template-areas:"time line img body";column-gap:10px;row-gap:8px;padding:0 0 18px;background:none;border:0;box-shadow:none;animation:none}
 .v-tl .wc-time{grid-area:time;font-family:var(--u-disp);font-size:var(--fs-2xl);line-height:1;padding-top:2px;color:var(--u-ink)}
 .v-tl:not(.nx):not(.live) .wc-time{color:var(--u-ink)}
 .v-tl.nx .wc-time{color:var(--u-acct)}
 .v-tl.live .wc-time{color:var(--u-live)}
 .v-tl .wc-line{grid-area:line;position:relative;display:flex;justify-content:center}
-.v-tl .wc-line::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--u-line)}
+.v-tl .wc-line::before{content:"";position:absolute;top:0;bottom:-18px;width:2px;background:var(--u-line)}
 .wline .v-tl:last-child .wc-line::before{bottom:calc(100% - 20px)}
 .v-tl .wc-line i{position:relative;margin-top:9px;width:10px;height:10px;border-radius:50%;background:var(--u-strong);box-shadow:0 0 0 3px var(--u-bg)}
 .v-tl.nx .wc-line i{background:var(--u-accent);box-shadow:0 0 0 3px var(--u-accent2)}
@@ -1816,7 +1816,7 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .v-tl .wc-img .wc-b.live{background:var(--u-live);color:#fff}
 .v-tl .wc-img .wc-b.live i{background:#fff}
 .v-tl .wc-img .wc-b.un{background:var(--u-live);color:#fff}
-.v-tl .wc-body{grid-area:body;min-width:0;min-height:114px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding:0 0 20px}
+.v-tl .wc-body{grid-area:body;min-width:0;min-height:135px;display:flex;flex-direction:column;justify-content:space-between;gap:6px;padding:0}
 .v-tl .wc-main{gap:5px}
 .v-tl .wc-tags{flex-wrap:nowrap;overflow:hidden}
 .v-tl .wc-ttl{font-size:var(--fs-l);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -1836,7 +1836,7 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
   .wpc-side .wt-clock{flex-direction:column;align-items:flex-start;gap:4px;background:var(--u-surface);border:1px solid var(--u-line);border-radius:var(--r-l);padding:16px 18px}
   .wpc-side .wt-clock time{font-size:56px}
   .wpc-side .wt-un{width:100%;box-sizing:border-box;padding:14px 18px}
-  .wcard.v-tl{grid-template-columns:80px 20px 96px minmax(0,1fr);grid-template-areas:"time line img body";column-gap:16px}
+  .wcard.v-tl{grid-template-columns:80px 20px 120px minmax(0,1fr);grid-template-areas:"time line img body";column-gap:16px}
   .v-tl .wc-time{font-size:40px}
   .v-tl .wc-line i{margin-top:13px;width:14px;height:14px;box-shadow:0 0 0 4px var(--u-bg)}
   .v-tl.nx .wc-line i{box-shadow:0 0 0 4px var(--u-accent2)}
@@ -1845,8 +1845,8 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
   .wline .v-tl:last-child .wc-line::before{bottom:calc(100% - 26px)}
   .wline .v-tl:first-child .wc-line::before{top:20px}
   .v-tl{padding-bottom:22px!important}
-  .v-tl .wc-body{height:144px;min-height:0;padding:0;overflow:hidden}
-  .v-tl .wc-img{width:96px;height:144px;aspect-ratio:auto}
+  .v-tl .wc-body{height:180px;min-height:0;padding:0;overflow:hidden}
+  .v-tl .wc-img{width:120px;height:180px;aspect-ratio:auto}
   .v-tl .wc-img .wc-b{left:6px;top:6px}
   .v-tl .wc-ttl{font-size:var(--fs-xl)}
   .wline .v-tl:last-child{padding-bottom:0!important}
@@ -1925,4 +1925,6 @@ html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1f
   .dnext b span{font-weight:500}
   .dnext em{font-style:normal;font-size:var(--fs-s);color:var(--u-sub)}
   .dside .dmiss{margin:0;max-height:none;overflow:visible}
+  /* 公式サイト・配信URLは左の列のボタンにあるので、ON AIRには出さない（スマホは出す） */
+  .dgrid .idl .pcx{display:none}
 }
