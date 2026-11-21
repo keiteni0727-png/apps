@@ -222,7 +222,7 @@ function dateItem(d){
   const left = dayDiff(today(), d.date), p = d.placeId && S.places.find(x => x.id === d.placeId);
   return `<div class="ditem ${left < 0 ? "past" : ""}" data-a="dateOpen" data-id="${d.id}">
     <div class="dd"><small>${+d.date.slice(5, 7)}月</small><b>${+d.date.slice(8, 10)}</b><small>${WD[wdOf(d.date)]}</small></div>
-    <div class="main"><div class="t">${p ? catOf(p.cat).e + " " : ""}${esc(dateTitle(d))}${hasShiori(d) ? `<span class="stag">📝</span>` : ""}</div><div class="s">${esc([d.time, d.memo].filter(Boolean).join(" ・ ")) || "&nbsp;"}</div></div>
+    <div class="main"><div class="t">${p ? iconOf(p).e + " " : ""}${esc(dateTitle(d))}${hasShiori(d) ? `<span class="stag">📝</span>` : ""}</div><div class="s">${esc([d.time, d.memo].filter(Boolean).join(" ・ ")) || "&nbsp;"}</div></div>
     <span class="tag ${left < 0 ? "gray" : left === 0 ? "" : "lav"}">${left < 0 ? "おわり" : left === 0 ? "今日♡" : "あと" + left + "日"}</span>
   </div>`;
 }
@@ -269,7 +269,7 @@ function openDateEdit(id, pre = {}){
   ${d ? `<div class="sec" style="margin-top:4px">予定の内容</div>` : ""}
   <form id="df">
     <label class="f"><span>日にち *</span><input class="in" type="date" name="date" required value="${esc(d?.date || pre.date || today())}" style="min-width:0;width:100%"></label>
-    <label class="f"><span>行き先</span><select class="in" name="pid"><option value="">✏️ 自分で入力する</option>${opts.map(o => `<option value="${o.id}" ${o.id === pid ? "selected" : ""}>${catOf(o.cat).e} ${esc(o.title)}${isBoth(o) ? " ♡" : ""}</option>`).join("")}</select></label>
+    <label class="f"><span>行き先</span><select class="in" name="pid"><option value="">✏️ 自分で入力する</option>${opts.map(o => `<option value="${o.id}" ${o.id === pid ? "selected" : ""}>${iconOf(o).e} ${esc(o.title)}${isBoth(o) ? " ♡" : ""}</option>`).join("")}</select></label>
     <label class="f" id="dtw" ${pid ? 'style="display:none"' : ""}><span>行き先・やること</span><input class="in" name="title" maxlength="60" value="${esc(pid ? "" : d?.title || "")}" placeholder="例：映画を見に行く"></label>
     <label class="f"><span>メモ</span><textarea class="in" name="memo" maxlength="300" placeholder="例：駅に10時集合">${esc(d?.memo)}</textarea></label>
     <div class="err" id="derr"></div>

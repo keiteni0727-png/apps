@@ -44,7 +44,7 @@ function otsuSpotsToday(){
 function otsuDestOf(v){
   const [k, id] = String(v).split(":");
   if (k === "s") { const sp = spotOf(id); return sp && { k: "s", id, n: sp.n, e: sp.e }; }
-  const p = S.places.find(x => x.id === id); return p && { k: "p", id, n: p.title, e: catOf(p.cat).e };
+  const p = S.places.find(x => x.id === id); return p && { k: "p", id, n: p.title, e: iconOf(p).e };
 }
 function otsuTileSub(){
   const o = otsuOf(me());
@@ -83,14 +83,14 @@ function openOtsu(){
     return;
   }
   const sel = S.otsuSel || (S.otsuSel = { d: null, tip: 0 }), bonus = otsuBonus(), cards = S.pet?.cards || {};
-  const places = S.places.filter(p => !p.visited).slice(0, 8);
+  const places = S.places.filter(p => !p.visited && ["go", "eat"].includes(kindOf(p).id)).slice(0, 8);
   const chip = (v, e, n, nw) => `<button class="chip ${sel.d === v ? "on" : ""}" data-a="otsuDest" data-v="${esc(v)}">${e} ${esc(n)}${nw ? `<i class="otnew">NEW</i>` : ""}</button>`;
   openSheetK("otsu", `${head}
     <div class="otaway"><div class="uri s${u.st}">${uriSvg(u.st, "happy", { ...uw(), back: "ryukku" })}</div></div>
     <p class="otmsg">どこにいってくる？</p>
     <div class="lbl2">おまかせ（きょうの行き先）</div>
     <div class="otdest">${otsuSpotsToday().map(sp => chip("s:" + sp.id, sp.e, sp.n, !cards[sp.id])).join("")}</div>
-    ${places.length ? `<div class="lbl2">行きたいリストを下見してもらう</div><div class="otdest">${places.map(p => chip("p:" + p.id, catOf(p.cat).e, p.title)).join("")}</div>` : ""}
+    ${places.length ? `<div class="lbl2">行きたい・食べたいを下見してもらう</div><div class="otdest">${places.map(p => chip("p:" + p.id, iconOf(p).e, p.title)).join("")}</div>` : ""}
     <div class="lbl2">おこづかい（多いほどレアが出やすい）</div>
     <div class="seg">${OTSU_TIPS.map(t => `<button class="${sel.tip === t ? "on" : ""}" data-a="otsuTip" data-v="${t}" ${t > bal ? "disabled" : ""}>${t ? `${AC}${t}` : "なし"}</button>`).join("")}</div>
     <p class="otrare">レアなおみやげが出るかくりつ <b>${Math.round(otsuRare(sel.tip, bonus) * 100)}%</b>${bonus ? `<br><span class="otbonus">✨ きょうはデートボーナス中！</span>` : `<br><small>きょう「行った！」やおもいでのひとこと、デートの予定があるとアップ</small>`}</p>

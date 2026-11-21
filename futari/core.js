@@ -43,6 +43,16 @@ const CATS = [
   { id:"other",  e:"✨", n:"その他",     c:"#f5f0f3" }
 ];
 const catOf = id => CATS.find(c => c.id === id) || CATS[CATS.length - 1];
+/* やりたいことリストの種類（kind がない候補は「行きたい」） */
+const KINDS = [
+  { id:"go",  n:"行きたい", e:"📍", c:"var(--pink-l)",   done:"行った", not:"行ってない", th:"場所の名前",         ph:"例：海の見えるカフェ" },
+  { id:"do",  n:"やりたい", e:"✨", c:"var(--lav-l)",    done:"やった", not:"やってない", th:"やりたいこと",       ph:"例：おそろいのマグを買う" },
+  { id:"eat", n:"食べたい", e:"🍽", c:"var(--butter-l)", done:"食べた", not:"食べてない", th:"食べたいもの・お店", ph:"例：ふわふわパンケーキ" },
+  { id:"see", n:"見たい",   e:"🎬", c:"#e8f1fb",         done:"見た",   not:"見てない",   th:"見たいもの",         ph:"例：話題の映画" }
+];
+const kindOf = p => KINDS.find(k => k.id === (p?.kind || "go")) || KINDS[0];
+/* 一覧などに出すアイコン：行きたいはカテゴリ、それ以外は種類 */
+const iconOf = p => kindOf(p).id === "go" ? catOf(p.cat) : kindOf(p);
 
 /* ---------- ちょっとした道具 ---------- */
 /* ---------- どんぐりアイコン（🌰は栗なので自前で描く） ---------- */
@@ -123,7 +133,7 @@ async function finishEmailLink(email, link){
 const S = {
   user:null, profile:null, room:null, roomId:null, places:[], dates:[], quiz:{}, qa:{}, tickets:[], letters:[], pet:null, needRules:false, tkTab:"got", extraErr:null, subs:[], noteEdit:null,
   calY:null, calM:null, calSel:null, qv:null,
-  tab:"home", cat:"all", who:"all", sort:"new", q:"",
+  tab:"home", kind:"all", cat:"all", who:"all", sort:"new", q:"",
   authMode:"login", busy:false
 };
 const me = () => S.user?.uid;

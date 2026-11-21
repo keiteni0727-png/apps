@@ -478,7 +478,7 @@ function omikuji(day){
   let x = R() * 100, total = "吉"; for (const [n, w] of OMI_TOTAL) { if ((x -= w) < 0) { total = n; break; } }
   const base = { "大吉": 3, "中吉": 2, "小吉": 2, "吉": 1, "末吉": 1 }[total];
   const star = () => Math.max(1, Math.min(5, base + Math.floor(R() * 3)));
-  const places = S.places.filter(p => !p.visited).map(p => p.title);
+  const places = S.places.filter(p => !p.visited && kindOf(p).id === "go").map(p => p.title);
   return { total, love: star(), out: star(), food: star(), item: pick(OMI_ITEMS), dish: pick(OMI_FOODS), spot: places.length ? pick(places) : pick(OMI_SPOTS), fromList: places.length > 0, say: pick(OMI_SAY[total]), adv: pick(OMI_ADV) };
 }
 const omiOpened = uid => S.pet?.omikuji?.[uid] === today();

@@ -57,28 +57,29 @@ function filtered(){
   if (S.who === "both" && !isPaired()) S.who = "all";
   return sortPlaces(S.places.filter(p => !p.visited
     && whoOk(p)
-    && (S.cat === "all" || p.cat === S.cat)
+    && (S.kind === "all" || kindOf(p).id === S.kind)
+    && (S.kind !== "go" || S.cat === "all" || p.cat === S.cat)
     && (!q || [p.title, p.area, p.memo].join(" ").toLowerCase().includes(q))));
 }
 
 function placeCard(p){
-  const c = catOf(p.cat), v = votesOf(p), mine = v.includes(me()), pu = partnerUid();
+  const c = iconOf(p), k = kindOf(p), v = votesOf(p), mine = v.includes(me()), pu = partnerUid();
   const both = isBoth(p);
   return `<div class="place ${both ? "both" : ""}" data-a="open" data-id="${p.id}">
-    ${both ? `<span class="ribbon">ふたりとも行きたい♡</span>` : ""}
+    ${both ? `<span class="ribbon">ふたりとも${k.n}♡</span>` : ""}
     <div class="cat" style="background:${c.c}">${c.e}</div>
     <div class="main">
       <div class="t">${esc(p.title)}</div>
-      <div class="s">${esc([p.area, c.n].filter(Boolean).join(" ・ "))}</div>
-      <div class="who">${pu && v.includes(pu) ? `<span class="tag">${esc(nameOf(pu))}も行きたい♡${loveOf(p, pu) > 1 ? "×" + loveOf(p, pu) : ""}</span>` : ""}${p.by && p.by !== me() && S.room.names?.[p.by] ? `<span class="tag lav">${esc(nameOf(p.by))}が追加</span>` : ""}</div>
+      <div class="s">${esc([p.area, c.n, S.kind === "all" && k.id === "go" ? "行きたい" : ""].filter(Boolean).join(" ・ "))}</div>
+      <div class="who">${pu && v.includes(pu) ? `<span class="tag">${esc(nameOf(pu))}も${k.n}♡${loveOf(p, pu) > 1 ? "×" + loveOf(p, pu) : ""}</span>` : ""}${p.by && p.by !== me() && S.room.names?.[p.by] ? `<span class="tag lav">${esc(nameOf(p.by))}が追加</span>` : ""}</div>
     </div>
-    <button class="heart ${mine ? "on" : ""}" data-a="vote" data-id="${p.id}" aria-label="行きたい">${IC.heart}${mine ? `<span class="hcnt">${loveOf(p, me())}</span>` : ""}</button>
+    <button class="heart ${mine ? "on" : ""}" data-a="vote" data-id="${p.id}" aria-label="${k.n}">${IC.heart}${mine ? `<span class="hcnt">${loveOf(p, me())}</span>` : ""}</button>
   </div>`;
 }
 function listHtml(arr){
   if (!arr.length) {
-    if (!S.places.filter(p => !p.visited).length) return `<div class="empty"><div class="big">🗺️</div><p>まだ候補がありません</p><p>右下の＋ボタンから、行ってみたい場所を追加してね</p></div>`;
-    if (S.who === "both" && !S.q && S.cat === "all") return `<div class="empty"><div class="big">💞</div><p>ふたりとも行きたい場所は、まだありません</p><p>♡ボタンで「行きたい」を選んでみてね</p></div>`;
+    if (!S.places.filter(p => !p.visited).length) return `<div class="empty"><div class="big">🗺️</div><p>まだありません</p><p>右下の＋ボタンから、行きたい場所・やりたいことを追加してね</p></div>`;
+    if (S.who === "both" && !S.q && S.cat === "all") return `<div class="empty"><div class="big">💞</div><p>ふたりとも♡のものは、まだありません</p><p>♡ボタンを押してみてね</p></div>`;
     if (S.who === "new" && !S.q && S.cat === "all") return `<div class="empty"><div class="big">✨</div><p>まだ見ていない候補はありません</p></div>`;
     return `<div class="empty"><div class="big">🔍</div><p>見つかりませんでした</p></div>`;
   }
@@ -93,9 +94,13 @@ function viewList(){
   <div class="seg who">${whos.map(([id, n]) => `<button class="${S.who === id ? "on" : ""}" data-a="who" data-v="${id}">${n}</button>`).join("")}</div>
   <div class="search">${IC.search}<input class="in" id="q" placeholder="名前・エリア・メモでさがす" value="${esc(S.q)}"></div>
   <div class="chips">
+    <button class="chip ${S.kind === "all" ? "on" : ""}" data-a="kind" data-v="all">すべて</button>
+    ${KINDS.map(k => `<button class="chip ${S.kind === k.id ? "on" : ""}" data-a="kind" data-v="${k.id}">${k.e} ${k.n}</button>`).join("")}
+  </div>
+  ${S.kind === "go" ? `<div class="chips">
     <button class="chip ${S.cat === "all" ? "on" : ""}" data-a="cat" data-v="all">すべて</button>
     ${CATS.map(c => `<button class="chip ${S.cat === c.id ? "on" : ""}" data-a="cat" data-v="${c.id}">${c.e} ${c.n}</button>`).join("")}
-  </div>
+  </div>` : ""}
   <div class="bar"><span class="count" id="cnt">${arr.length}件</span>
     <select data-a="sort"><option value="new" ${S.sort === "new" ? "selected" : ""}>新しい順</option><option value="love" ${S.sort === "love" ? "selected" : ""}>♡が多い順</option><option value="old" ${S.sort === "old" ? "selected" : ""}>古い順</option></select>
   </div>
@@ -117,11 +122,11 @@ function viewHome(){
 /* =============== 新しいメニュー構成（きょう・おでかけ・ふたり・ウリ） =============== */
 const OD_TABS = ["cal", "memo", "list"];
 const isOd = () => OD_TABS.includes(S.tab);
-/* おでかけの上の切りかえ［よてい｜おもいで｜行きたい］ */
+/* おでかけの上の切りかえ［よてい｜おもいで｜やりたいこと］ */
 function odSeg(){
   const c = { list: S.places.filter(p => !p.visited).length, cal: S.dates.filter(d => d.date >= today()).length, memo: S.places.filter(p => p.visited).length };
   const nn = S.tab === "memo" ? 0 : notesNew().length;
-  return `<div class="segx">${[["cal", "📅 よてい"], ["memo", "📷 おもいで"], ["list", "📍 行きたい"]].map(([id, n]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${n}<small>${c[id]}</small>${id === "memo" && nn ? `<i class="bdot"></i>` : ""}</button>`).join("")}</div>`;
+  return `<div class="segx">${[["cal", "📅 よてい"], ["memo", "📷 おもいで"], ["list", "✅ やりたいこと"]].map(([id, n]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${n}<small>${c[id]}</small>${id === "memo" && nn ? `<i class="bdot"></i>` : ""}</button>`).join("")}</div>`;
 }
 /* 「ふたり」タブに出す新しいことの数 */
 function futariBadge(){
@@ -227,8 +232,8 @@ function showMatch(ids){
   const fx = document.getElementById("fx");
   fx.innerHTML = `<div class="fx"><div class="box">
     <div class="hearts">💞</div><h2>マッチ！</h2>
-    <p class="muted" style="margin:4px 0 0">${esc(nameOf(me()))}と${esc(nameOf(partnerUid()))}、ふたりとも行きたい場所が見つかったよ</p>
-    ${ps.slice(0, 3).map(p => `<div class="pl">${catOf(p.cat).e} ${esc(p.title)}${p.area ? `<small>${esc(p.area)}</small>` : ""}</div>`).join("")}
+    <p class="muted" style="margin:4px 0 0">${esc(nameOf(me()))}と${esc(nameOf(partnerUid()))}、ふたりとも♡のものが見つかったよ</p>
+    ${ps.slice(0, 3).map(p => `<div class="pl">${iconOf(p).e} ${esc(p.title)}${p.area ? `<small>${esc(p.area)}</small>` : ""}</div>`).join("")}
     ${ps.length > 3 ? `<p class="muted">ほかに ${ps.length - 3}件</p>` : ""}
     <button class="btn block" data-a="fxclose">やったー！</button><div class="gap"></div>
     <button class="btn ghost block" data-a="fxopen" data-id="${ps[0].id}">くわしく見る</button>
@@ -238,10 +243,10 @@ function showMatch(ids){
 
 function viewMemo(){
   const arr = S.places.filter(p => p.visited).sort((a, b) => String(b.visitedAt || "").localeCompare(String(a.visitedAt || "")) || ms(b.updatedAt) - ms(a.updatedAt));
-  if (!arr.length) return `<div class="empty"><div class="big">📷</div><p>行った場所がここにたまっていきます</p><p>候補をひらいて「行った！」を押してね</p></div>`;
+  if (!arr.length) return `<div class="empty"><div class="big">📷</div><p>行った場所・やったことがここにたまっていきます</p><p>やりたいことリストからひらいて「行った！」「やった！」を押してね</p></div>`;
   const prev = S.notesPrev ?? notesSeenAt(), pu = partnerUid();
-  return `<div class="sec">ふたりで行った場所 ・ ${arr.length}件</div><div class="memos">${arr.map(p => {
-    const c = catOf(p.cat), ns = noteList(p);
+  return `<div class="sec">ふたりの思い出 ・ ${arr.length}件</div><div class="memos">${arr.map(p => {
+    const c = iconOf(p), ns = noteList(p);
     const isNew = pu && (p.notes?.[pu]?.at || 0) > prev;
     return `<div class="memo" data-a="open" data-id="${p.id}"><div class="ph ${p.photo ? "img" : ""}" style="background:${p.photo ? `url('${p.photo}')` : c.c}">${c.e}</div><div class="t">${esc(p.title)}${isNew ? `<span class="newmark">NEW</span>` : ""}</div><div class="d">${esc(fmtDate(p.visitedAt))}</div>${
       ns.length ? ns.map(([u, n]) => `<div class="nt">${avHtml(u)}<span>${esc(n.t)}</span></div>`).join("") : p.visitNote ? `<div class="n">${esc(p.visitNote)}</div>` : ""}</div>`;

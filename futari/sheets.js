@@ -5,13 +5,13 @@
 /* =============== シート：詳細 =============== */
 function openDetail(id){
   const p = S.places.find(x => x.id === id); if (!p) return closeSheet();
-  const c = catOf(p.cat), v = votesOf(p), pu = partnerUid();
+  const c = iconOf(p), k = kindOf(p), v = votesOf(p), pu = partnerUid();
   const url = /^https?:\/\//i.test(p.url || "") ? p.url : "";
   openSheet(`
   <div class="detail" data-id="${p.id}">
     <h3><span></span><button class="x" data-a="close">×</button></h3>
     ${p.photo ? `<img class="dphoto" id="dphoto" src="${p.photo}" alt="" data-a="zoom">` : ""}
-    <div class="head"><div class="cat" style="background:${c.c}">${c.e}</div><div><div class="ttl">${esc(p.title)}</div><div class="muted">${esc(c.n)}${p.visited ? " ・ 行った♪" : ""}</div></div></div>
+    <div class="head"><div class="cat" style="background:${c.c}">${c.e}</div><div><div class="ttl">${esc(p.title)}</div><div class="muted">${esc(c.n)}${p.visited ? ` ・ ${k.done}♪` : ""}</div></div></div>
     ${p.visited ? "" : `<div class="votes">
       <div class="vote ${v.includes(me()) ? "on" : ""}"><div class="ic">${v.includes(me()) ? "💗" : "🤍"}</div>${esc(nameOf(me()))}${v.includes(me()) ? `<div class="vn">♡ ${loveOf(p, me())}回</div>` : ""}</div>
       <div class="vote ${pu && v.includes(pu) ? "on" : ""}"><div class="ic">${pu && v.includes(pu) ? "💗" : "🤍"}</div>${pu ? esc(nameOf(pu)) : "（招待待ち）"}${pu && v.includes(pu) ? `<div class="vn">♡ ${loveOf(p, pu)}回</div>` : ""}</div>
@@ -20,16 +20,16 @@ function openDetail(id){
       ${p.area ? `<div><b>エリア</b><span>${esc(p.area)}</span></div>` : ""}
       ${url ? `<div><b>リンク</b><span><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></span></div>` : ""}
       ${p.memo ? `<div><b>メモ</b><span>${esc(p.memo)}</span></div>` : ""}
-      ${p.visited ? `<div><b>行った日</b><span>${esc(fmtDate(p.visitedAt))}</span></div>${p.visitNote ? `<div><b>メモ</b><span>${esc(p.visitNote)}</span></div>` : ""}` : ""}
+      ${p.visited ? `<div><b>${k.done}日</b><span>${esc(fmtDate(p.visitedAt))}</span></div>${p.visitNote ? `<div><b>メモ</b><span>${esc(p.visitNote)}</span></div>` : ""}` : ""}
       <div><b>追加した人</b><span>${esc(nameOf(p.by))}</span></div>
     </div>
     ${p.visited ? notesBlock(p) : ""}
     ${p.visited
       ? `<button class="btn lav block" data-a="visitEdit" data-id="${p.id}">思い出を編集</button><div class="gap"></div>
-         <button class="btn ghost block" data-a="unvisit" data-id="${p.id}">「まだ行ってない」に戻す</button>`
-      : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? "♡ もっと行きたい！（+1）" : "♡ 行きたい！"}</button><div class="gap"></div>
+         <button class="btn ghost block" data-a="unvisit" data-id="${p.id}">「まだ${k.not}」に戻す</button>`
+      : `<button class="btn block" data-a="vote" data-id="${p.id}">${v.includes(me()) ? `♡ もっと${k.n}！（+1）` : `♡ ${k.n}！`}</button><div class="gap"></div>
          ${v.includes(me()) ? `<button class="linkbtn" style="display:block;margin:-2px auto 12px" data-a="voteReset" data-id="${p.id}">わたしの♡をリセット</button>` : ""}
-         <button class="btn mint block" data-a="visit" data-id="${p.id}">行った！</button><div class="gap"></div>
+         <button class="btn mint block" data-a="visit" data-id="${p.id}">${k.done}！</button><div class="gap"></div>
          <button class="btn lav block" data-a="dateAdd" data-pid="${p.id}">📅 デートの予定に入れる</button>`}
     <div class="gap"></div>
     <div class="row"><button class="btn ghost sm" style="flex:1" data-a="edit" data-id="${p.id}">編集</button><button class="btn danger sm" style="flex:1" data-a="del" data-id="${p.id}">削除</button></div>
@@ -40,27 +40,35 @@ function openDetail(id){
 /* =============== シート：追加・編集 =============== */
 function openEdit(id){
   const p = id ? S.places.find(x => x.id === id) : null;
-  let cat = p?.cat || (S.cat !== "all" ? S.cat : "cafe");
+  let cat = p?.cat || (S.cat !== "all" ? S.cat : "cafe"), kind = p?.kind || (S.kind !== "all" ? S.kind : "go");
+  const k0 = KINDS.find(x => x.id === kind);
   openSheet(`
-  <h3>${p ? "候補を編集" : "行きたい場所を追加"}<button class="x" data-a="close">×</button></h3>
+  <h3>${p ? "編集" : "やりたいことリストに追加"}<button class="x" data-a="close">×</button></h3>
   <form id="pf">
-    <label class="f"><span>場所の名前 *</span><input class="in" name="title" maxlength="60" required value="${esc(p?.title)}" placeholder="例：海の見えるカフェ"></label>
-    <span class="muted" style="display:block;margin:0 0 6px 4px;font-size:12px">カテゴリ</span>
-    <div class="catpick">${CATS.map(c => `<button type="button" class="${c.id === cat ? "on" : ""}" data-cat="${c.id}"><b>${c.e}</b>${c.n}</button>`).join("")}</div>
-    <label class="f"><span>エリア</span><input class="in" name="area" maxlength="40" value="${esc(p?.area)}" placeholder="例：岡崎・名古屋"></label>
+    <div class="catpick">${KINDS.map(x => `<button type="button" class="${x.id === kind ? "on" : ""}" data-kind="${x.id}"><b>${x.e}</b>${x.n}</button>`).join("")}</div>
+    <label class="f"><span id="pth">${k0.th} *</span><input class="in" name="title" maxlength="60" required value="${esc(p?.title)}" placeholder="${k0.ph}"></label>
+    <div id="pcatw" ${kind === "go" ? "" : "hidden"}><span class="muted" style="display:block;margin:0 0 6px 4px;font-size:12px">カテゴリ</span>
+    <div class="catpick">${CATS.map(c => `<button type="button" class="${c.id === cat ? "on" : ""}" data-cat="${c.id}"><b>${c.e}</b>${c.n}</button>`).join("")}</div></div>
+    <label class="f" id="pareaw" ${kind === "go" || kind === "eat" ? "" : 'style="display:none"'}><span>エリア</span><input class="in" name="area" maxlength="40" value="${esc(p?.area)}" placeholder="例：岡崎・名古屋"></label>
     <label class="f"><span>リンク（お店のページやInstagramなど）</span><input class="in" name="url" type="url" maxlength="500" value="${esc(p?.url)}" placeholder="https://"></label>
     <label class="f"><span>メモ</span><textarea class="in" name="memo" maxlength="500" placeholder="例：パンケーキが有名！">${esc(p?.memo)}</textarea></label>
-    ${p ? "" : `<label class="row" style="margin:0 4px 14px;font-size:14px"><input type="checkbox" name="love" checked style="width:18px;height:18px;accent-color:#e2809c"> わたしも「行きたい♡」を押しておく</label>`}
+    ${p ? "" : `<label class="row" style="margin:0 4px 14px;font-size:14px"><input type="checkbox" name="love" checked style="width:18px;height:18px;accent-color:#e2809c"> わたしも「♡」を押しておく</label>`}
     <div class="err" id="perr"></div>
     <button class="btn block">${p ? "保存する" : "追加する"}</button>
   </form>`);
   const form = document.getElementById("pf");
   form.querySelectorAll("[data-cat]").forEach(b => b.onclick = () => { cat = b.dataset.cat; form.querySelectorAll("[data-cat]").forEach(x => x.classList.toggle("on", x === b)); });
+  form.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => {
+    kind = b.dataset.kind; const k = KINDS.find(x => x.id === kind);
+    form.querySelectorAll("[data-kind]").forEach(x => x.classList.toggle("on", x === b));
+    document.getElementById("pth").textContent = k.th + " *"; form.elements.title.placeholder = k.ph;
+    document.getElementById("pcatw").hidden = kind !== "go"; document.getElementById("pareaw").style.display = kind === "go" || kind === "eat" ? "" : "none";
+  });
   form.onsubmit = async ev => {
     ev.preventDefault();
     const f = new FormData(form);
     const data = {
-      title: String(f.get("title")).trim().slice(0, 60), cat,
+      title: String(f.get("title")).trim().slice(0, 60), cat, kind,
       area: String(f.get("area") || "").trim().slice(0, 40),
       url: String(f.get("url") || "").trim().slice(0, 500),
       memo: String(f.get("memo") || "").trim().slice(0, 500),
@@ -81,10 +89,10 @@ function openEdit(id){
 function openVisit(id){
   const p = S.places.find(x => x.id === id); if (!p) return;
   openSheet(`
-  <h3>${p.visited ? "思い出を編集" : "行った！"} 📷<button class="x" data-a="close">×</button></h3>
+  <h3>${p.visited ? "思い出を編集" : kindOf(p).done + "！"} 📷<button class="x" data-a="close">×</button></h3>
   <p class="muted" style="margin-top:-6px">${esc(p.title)}</p>
   <form id="vf">
-    <label class="f"><span>行った日</span><input class="in" type="date" name="d" value="${esc(p.visitedAt || today())}" required></label>
+    <label class="f"><span>${kindOf(p).done}日</span><input class="in" type="date" name="d" value="${esc(p.visitedAt || today())}" required></label>
     <label class="f"><span>わたしのひとこと（なくてもOK）</span><textarea class="in" name="n" maxlength="300" placeholder="例：また行きたい！">${esc(p.notes?.[me()]?.t || "")}</textarea></label>
     <span class="muted" style="display:block;margin:0 0 6px 4px;font-size:12px">写真（1枚・なくてもOK）</span>
     <div class="photopick">

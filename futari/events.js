@@ -119,6 +119,7 @@ document.addEventListener("click", async ev => {
       catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); }
       break;
     case "cat": S.cat = el.dataset.v; render(); break;
+    case "kind": S.kind = el.dataset.v; S.cat = "all"; render(); break;
     case "add": openEdit(); break;
     case "open": openDetail(id); break;
     case "edit": openEdit(id); break;
