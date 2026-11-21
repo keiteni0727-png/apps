@@ -136,11 +136,10 @@ function libLabels(i) {
   const m = mediaOf(i);
   const cc = contCours(i);
   const pc =
-    (i.k === "d" && i.slot ? `<span class="lab sl">${esc(i.slot)}</span>` : "") +
     (i.series ? `<span class="lab s pconly">${esc(i.series)}</span>` : "") +
     (cc >= 2 ? `<span class="lab cc pconly">${cc}クール連続</span>` : "");
   const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
-  /* 並び：配信サイト → シリーズ・クール連続 */
+  /* 並び：配信サイト → シリーズ・クール連続（ドラマの放送枠は一覧・番組表には出さない。詳細・編集画面だけ） */
   return sites.map(v => `${vlab(v)}`).join("") + pc;
 }
 /* ライブラリ一覧でタイトルの前に出す種別（TV・映画・OVA・配信）。シリーズや配信サイトのラベルとは別の形・色 */
