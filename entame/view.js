@@ -102,15 +102,21 @@ const courLab = c =>
 const stPill = i =>
   `<span class="pill s-${esc(i.s)}" ${i.s ? "" : "style='background:var(--u-chip);color:var(--u-sub)'"}>${esc(stLabel(i.s || "未設定"))}</span>`;
 const fmtD = d => (d ? d.slice(0, 10).replace(/-/g, "/") : "");
+/* 日付＋曜日：「1979/04/07（土）」（詳細の放送期間・関連作品で使う） */
+const fmtDW = d => {
+  if (!d) return "";
+  const [y, m, dd] = d.slice(0, 10).split("-").map(Number);
+  return y && m && dd ? `${fmtD(d)}（${DOW[(new Date(Date.UTC(y, m - 1, dd)).getUTCDay() + 6) % 7]}）` : fmtD(d);
+};
 function periodOf(it) {
-  if (mediaOf(it).media === "movie" || mediaOf(it).media === "sp") return fmtD(it.from || "");
+  if (mediaOf(it).media === "movie" || mediaOf(it).media === "sp") return fmtDW(it.from || "");
   const eps = episodes(it).filter(e => e.t);
   const last = eps.length ? jst(eps[eps.length - 1].t).day : it.to;
   const first = it.from || (eps.length ? jst(eps[0].t).day : "");
   if (!first) return "";
   /* 全話が同じ日（まとめて配信など）・開始日と終了日が同じなら、日付だけ（「〜」を付けない） */
-  if (last && last === first) return fmtD(first);
-  return fmtD(first) + " 〜 " + (last ? fmtD(last) : "");
+  if (last && last === first) return fmtDW(first);
+  return fmtDW(first) + " 〜 " + (last ? fmtDW(last) : "");
 }
 
 setInterval(() => {

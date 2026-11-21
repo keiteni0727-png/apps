@@ -94,7 +94,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const relb = (it.relb || [])
     .map((r, k) => {
       /* 終了日がなければ開始日だけ（「〜」は付けない） */
-      const per = r.from && !r.to ? fmtD(r.from) : r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${fmtD(r.to)}` : "";
+      const per = r.from && !r.to ? fmtDW(r.from) : r.from || r.to ? `${r.from ? fmtDW(r.from) : ""}〜${fmtDW(r.to)}` : "";
       const name = esc(r.t || "関連作品");
       const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${MEDIA_LAB[r.md] ? `<span class="mtag m-${r.md}">${MEDIA_LAB[r.md]}</span>` : ""}${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="u-btn sm iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
       const sl = r.songs || [];
