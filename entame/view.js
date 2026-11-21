@@ -116,6 +116,8 @@ function periodOf(it) {
   if (!first) return "";
   /* 全話が同じ日（まとめて配信など）・開始日と終了日が同じなら、日付だけ（「〜」を付けない） */
   if (last && last === first) return fmtDW(first);
+  /* OVAで話数の日付も終了日もないときは、発売日だけ（「〜」を付けない） */
+  if (!last && mediaOf(it).media === "ova") return fmtDW(first);
   return fmtDW(first) + " 〜 " + (last ? fmtDW(last) : "");
 }
 
