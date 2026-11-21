@@ -158,13 +158,14 @@ const COMMON_ACTIONS = [
   ["[data-close]", () => close()],
   ["#sbAdd,#hAdd", () => (state.mode === "yt" ? ytOpenForm(null) : openForm(null))],
 ];
-/* スワイプ（共通部品 u-swipe.js）：スマホの番組表で、画面を指に合わせて横に動かし、離すと隣の曜日へ */
+/* スワイプ（共通部品 u-swipe.js）：スマホの番組表で、曜日の見出しと作品カード（.wday）だけを指に合わせて横に動かし、離すと隣の曜日へ。曜日タブなどは動かさない */
 const segBtns = () => [...document.querySelectorAll("#main .wtabs [data-tb]")];
 const segIdx = () => segBtns().findIndex(b => b.getAttribute("aria-selected") === "true");
 uSwipe({
   blocked: () => !!($("#layer").innerHTML || state.fOpen || yst.fp),
   pager: {
     el: "#main",
+    move: "#main .wday",
     block: "input,select,textarea,#ddPop,.fpop,.frow,.fbar,.fsh,.fsum,.bnav,.chips,#subPop,.u-toast",
     can: dir => {
       const i = segIdx();

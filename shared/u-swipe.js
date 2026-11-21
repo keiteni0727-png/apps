@@ -1,7 +1,8 @@
 /* スマホのスワイプ（エンタメ管理・おかね手帳で共通）
    ・メニュー：開いているときは指に合わせて左へ引いて閉じる。左端から（またはページ送りの先頭で）右へ引くと開く
    ・ページ送り（任意）：画面を指にぴったり付けて横に動かし、離すと端まで流して隣の画面を反対側から入れる
-   uSwipe({ sb, scrim, setDrawer(on), edge, blocked(), pager: { el, block, can(dir), go(dir) } })
+   uSwipe({ sb, scrim, setDrawer(on), edge, blocked(), pager: { el, move, block, can(dir), go(dir) } })
+   pager.move（任意）：指に合わせて動かす部分。渡さなければ el 全体を動かす（スワイプを受け付ける範囲は el のまま）
    sb を渡さなければメニューのスワイプはしない（ページ送りだけ） */
 (function () {
   window.uSwipe = function (o) {
@@ -33,15 +34,16 @@
       });
     }
     /* 画面を指にぴったり付けて動かす（薄くしない）。ms を渡すとその時間で滑らかに動かす */
+    const pm = () => q(o.pager.move || o.pager.el);
     function page(x, ms) {
-      const m = q(o.pager.el);
+      const m = pm();
       if (!m) return;
       m.style.transition = ms ? `transform ${ms}ms cubic-bezier(.25,.9,.3,1)` : "none";
       m.style.transform = x ? `translate3d(${x}px,0,0)` : "translate3d(0,0,0)";
       m.style.willChange = "transform";
     }
     function pageClear() {
-      const m = q(o.pager.el);
+      const m = pm();
       if (m) m.style.transition = m.style.transform = m.style.willChange = "";
     }
     /* 離したら：今の画面をそのまま端まで流し、次の画面を反対側から続けて入れる */
