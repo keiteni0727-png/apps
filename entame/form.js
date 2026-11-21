@@ -117,10 +117,20 @@ function formHtml() {
   const dyn = f.cours.filter(c => c !== ALLYEAR);
   const songTypes = f.k === "a" ? ["OP", "ED", "主題歌", "挿入歌"] : ["主題歌", "挿入歌"];
   const sug = courOfDate(f.from);
-  /* 保存してある作品の要確認の項目。その項目の行は項目名を⚠付きの色にする（「なし」にチェックを入れると消える） */
-  const svIt = f.id && items.find(x => x.id === f.id);
-  const miss = svIt ? missingOf(svIt) : [];
-  const fm = (...keys) => (miss.some(x => keys.includes(x.j) || [].concat(x.k).some(k => keys.includes(k))) ? " fmiss" : "");
+  /* 要確認の項目は項目名を⚠付きの色にする。入力中の内容で判定し、入れたら消える（「なし」にチェックを入れても消える）
+     文字の欄（開始日・放送時間・公式サイト・配信URL）は空かどうかを画面側（CSS の fchk）で見る。選ぶ項目・曲・ずれはここで判定（fmiss） */
+  const nf = k => (f.noF || []).includes(k);
+  const sites = f.media === "stream" ? f.plat : f.vods;
+  const vs = vurlSite(f.vurl);
+  const ta = (f.songs || []).filter(x => (x.s || x.st || x.ar || "").trim()).map(songTA);
+  const MS = {
+    st: hasSt(f.media) && !f.stations.length && !nf("st"),
+    vod: !sites.length && !nf(f.media === "stream" ? "plat" : "vods"),
+    cours: !noSched(f.media) && ((!f.cours.length && !nf("cours")) || (!!f.from && courMismatch({ from: f.from, cours: f.cours }))),
+    vurl: !!vs && !sites.some(v => normVod(v) === vs),
+    songs: (!ta.length && !(f.noSongs || []).length) || ta.some(x => !x.st.trim() !== !x.ar.trim()),
+  };
+  const fm = k => (MS[k] ? " fmiss" : "");
   const sec = (title, body, note = "", side = "", cls = "") =>
     `<section class="fsec${cls ? " " + cls : ""}"><h4>${title}${side}${note ? `<span class="hint">${note}</span>` : ""}</h4><div class="fgrid">${body}</div></section>`;
   const P = {
@@ -146,22 +156,21 @@ function formHtml() {
     mtype: `<div class="frow3 full">${f.k === "f" ? "" : `<div class="field" id="fMedia"><span>放送形態</span>${ddBtn("media")}</div>`}
       ${f.media === "movie" ? `<div class="field"${f.k === "f" ? ' id="fMedia"' : ""}><span>公開</span><div class="u-seg segc" role="group" aria-label="公開">${seg("data-frel", [["", "映画館"], ["stream", "配信"]], f.rel || "")}</div></div>` : ""}</div>`,
     mst: `<div class="frow3 full">
-      ${hasSt(f.media) ? `<div class="field${fm("放送局")}"><span>放送局</span>${ddBtn("st")}</div>` : ""}
+      ${hasSt(f.media) ? `<div class="field${fm("st")}"><span>放送局</span>${ddBtn("st")}</div>` : ""}
       ${f.k === "d" ? `<div class="field" id="fSlot"><span>放送枠</span>${ddBtn("slot")}</div>` : ""}</div>`,
     mvod: `<div class="frow3 full">
-      ${f.media === "stream" ? `<div class="field${fm("配信サイト")}"><span>配信サイト</span>${ddBtn("plat")}</div>` : ""}
-      ${f.media !== "stream" ? `<div class="field${fm("配信サイト")}"><span>配信サイト</span>${ddBtn("vods")}</div>` : ""}</div>`,
-    from: `<label class="field${fm("f-from")}"><span>${{ movie: "公開日", ova: "発売日（第1話）", sp: "放送日" }[f.media] || "開始日（第1話）"}</span><span class="dtw"><input id="f-from" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${esc(dtShow(f.from))}"><button type="button" class="dtcal" data-dtcal="f-from" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="f-from"></span></label>`,
+      <div class="field${fm("vod")}"><span>配信サイト</span>${ddBtn(f.media === "stream" ? "plat" : "vods")}${nofBox(f.media === "stream" ? "plat" : "vods")}</div></div>`,
+    from: `<label class="field fchk"><span>${{ movie: "公開日", ova: "発売日（第1話）", sp: "放送日" }[f.media] || "開始日（第1話）"}</span><span class="dtw"><input id="f-from" class="dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" value="${esc(dtShow(f.from))}"><button type="button" class="dtcal" data-dtcal="f-from" aria-label="カレンダーから選ぶ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button><input type="date" class="dtpick" tabindex="-1" aria-hidden="true" data-dtfor="f-from"></span></label>`,
     time:
       noSched(f.media)
         ? ""
-        : `<div class="field${fm("f-time")}"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間" : "放送時間")}</div>`,
+        : `<div class="field fchk"><label class="field" for="f-time"><span>${f.media === "stream" ? "配信時間" : "放送時間"}</span></label><input id="f-time" placeholder="23:30　深夜は 25:00" inputmode="numeric" autocomplete="off" value="${esc(f.time)}">${nofBox("time", f.media === "stream" ? "配信時間" : "放送時間")}</div>`,
     sched: `<div class="field full"><div class="sched" id="schedHint">${schedText()}</div>
         </div>`,
     cours:
       noSched(f.media)
         ? ""
-        : `<div class="field full${fm("coursBox")}"><span>放送クール</span>
+        : `<div class="field full${fm("cours")}"><span>放送クール</span>
         <div class="cours" id="coursBox"><div class="cours-l">${f.cours.includes(ALLYEAR) ? `<span class="tag static">通年</span>` : ""}${dyn.map(c => `<button type="button" class="u-chip tag" data-courdel="${c}" aria-label="${courLabel(c)}を外す">${courLabel(c)}</button>`).join("")}${!f.cours.length ? `<span class="none">未選択</span>` : ""}
           ${sug && !f.cours.includes(sug) && !f.cours.includes(ALLYEAR) ? `<button type="button" class="u-chip add sugbtn" data-courkey="${sug}">＋ ${courLabel(sug)}</button>` : ""}
           ${(() => {
@@ -184,12 +193,12 @@ function formHtml() {
         <div class="field full"><span>放送形態</span><div class="u-seg segc" role="group" aria-label="放送形態">${seg("data-frbm", ["tv", "sp", "movie", "ova", "stream"].map(k => [k, MEDIA_LAB[k]]), f.rbM || "")}</div></div>
         ${dtField("f-rbf", "放送開始", f.rbF)}${dtField("f-rbto", "放送終了", f.rbTo)}
         <div class="field full"><span>主題歌</span><div class="sglist" id="sgList">${songRowsHtml()}</div></div>`,
-    url: `<div class="field full${fm("f-url")}"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
+    url: `<div class="field full fchk"><label class="field" for="f-url"><span>公式サイト</span></label><input id="f-url" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.url)}">${nofBox("url")}</div>`,
     /* 配信URL：配信サイトを選んだときだけ出す（選んだサイトが1つならその名前を見出しに） */
     vurl: (() => {
       const sites = f.media === "stream" ? f.plat : f.vods;
       if (!sites.length && f.only !== "f-vurl") return "";
-      return `<div class="field full${fm("f-vurl")}"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
+      return `<div class="field full fchk${fm("vurl")}"><label class="field" for="f-vurl"><span>${sites.length === 1 ? `${esc(sites[0])}のURL` : "配信URL"}</span></label><input id="f-vurl" type="url" inputmode="url" autocomplete="off" placeholder="https://" value="${esc(f.vurl)}">${nofBox("vurl")}</div>`;
     })(),
   };
   P.media = P.mtype + P.mst + P.mvod;
@@ -216,7 +225,7 @@ function formHtml() {
     <form id="titleF" novalidate>
     ${head}
     ${sec(`<span class="ilamp onair">ON AIR</span>`, P.mtype + P.mst + P.from + P.time + P.cours + P.mvod + P.vurl + P.series + P.url, "", "", "ftbl")}
-    ${sec(`<span class="ilamp music">MUSIC</span>`, P.songs, "", sgNoneBox(), "fsongs" + fm("sgList"))}
+    ${sec(`<span class="ilamp music">MUSIC</span>`, P.songs, "", sgNoneBox(), "fsongs" + fm("songs"))}
     <div class="ffoot"><button type="button" class="u-btn" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -734,3 +743,9 @@ SORT_DONE.sg = () => {
   sgOpen = new Set(old.map((k, i) => (sgOpen.has(k) ? i : -1)).filter(i => i >= 0));
   redrawForm();
 };
+
+/* 作品の編集：ずれのアラート（配信URLなど）が出ている欄は、文字を入れたら消す */
+document.addEventListener("input", e => {
+  const fl = e.target && e.target.closest && e.target.closest("#titleF .fmiss");
+  if (fl && e.target.matches("input:not([type=checkbox])")) fl.classList.remove("fmiss");
+});

@@ -1681,12 +1681,12 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .ftbl .dtw{display:flex;gap:4px}
 .ftbl .dtcal{border:0;background:transparent}
 /* 「なし」のチェック：いつも行の右端に */
-.ftbl .fgrid>.field:has(>.nofl){grid-template-columns:96px minmax(0,1fr) auto}
+.ftbl .fgrid>.field:has(>.nofl),.ftbl .frow3>.field:has(>.nofl){grid-template-columns:96px minmax(0,1fr) auto}
 .ftbl .field>.nofl{grid-column:3;grid-row:1;order:0;font-size:var(--fs-s)}
 .ftbl .field:has(>.nofl input:checked)>label.field+*{display:none}
 /* 要確認の項目：項目名を⚠付きの色に（「なし」にチェックを入れたら消す） */
-.ftbl .fmiss:not(:has(.nofl input:checked))>span:first-child,.ftbl .fmiss:not(:has(.nofl input:checked))>label.field>span{color:var(--u-warn)}
-.ftbl .fmiss:not(:has(.nofl input:checked))>span:first-child::before,.ftbl .fmiss:not(:has(.nofl input:checked))>label.field>span::before{content:"⚠ "}
+.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>span:first-child,.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>label.field>span{color:var(--u-warn)}
+.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>span:first-child::before,.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>label.field>span::before{content:"⚠ "}
 .fsongs.fmiss:not(:has(.sghno input:checked))>h4::after{content:"⚠ 要確認";font-size:var(--fs-s);font-weight:700;color:var(--u-warn);order:1}
 .ftbl .cours{padding:3px 0}
 /* 曲：1曲1行（押すと広がる） */
@@ -1897,7 +1897,8 @@ html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1f
 .vtog .gszb{position:absolute;right:1px;bottom:0;font-size:9px;font-weight:700;line-height:1;color:var(--u-accent)}
 .v-tl .wc-tags>*{flex:none}
 .v-tl .wc-tags .wc-st{white-space:nowrap}
-@media (max-width:599px){.row.thr.yrow .slot{grid-template-columns:44px 56px minmax(0,1fr) auto!important}.row.thr.yrow .thb{width:56px}}
+/* スマホ：ライブラリ・YouTubeの一覧の行には画像を出さない（画像の前の見え方。PCは出す） */
+@media (max-width:599px){.row.thr .thb{display:none}.row.thr .slot,.row.thr.yrow .slot{grid-template-columns:48px minmax(0,1fr) auto!important;align-items:start}}
 /* ===== 作品の詳細（PC・幅900px以上）：左メニューにかぶらないよう一覧の場所の真ん中に出し、左にポスターの列。ON AIRの下にMUSIC（ノートPC・モニター共通） ===== */
 .dside,.dgrid .dside{display:none}
 @media (min-width:900px){

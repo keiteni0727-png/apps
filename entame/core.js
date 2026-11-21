@@ -824,7 +824,8 @@ const MISS_CHECKS = [
   /* 曲の使われた話が、登録されている話数を超えている（OPが1〜30話なのに24話まで、など） */
   { g: "曲", k: "曲の話数", j: "sgList", test: c => c.em > 0 && c.sl.some(x => [x.a, x.b, ...exOf(x).flatMap(r => [r.a, r.b])].some(v => v != null && +v > c.em)) },
   { g: "基本情報", k: "公式サイト", j: "f-url", n: "url", test: c => !(c.i.url || "").trim() },
-  { g: "基本情報", k: "配信URL", j: "f-vurl", n: "vurl", test: c => !(c.i.vurl || "").trim() },
+  /* 配信サイトを「なし」にした作品は配信URLもいらない */
+  { g: "基本情報", k: "配信URL", j: "f-vurl", n: "vurl", test: c => !(c.i.vurl || "").trim() && !nofHas(c.i, c.md === "stream" ? "plat" : "vods") },
   /* 配信URLのサイトが、作品の配信サイトに入っていない（URLからサイトが分かるときだけ） */
   { g: "ずれ", k: "配信URLのずれ", j: "f-vurl", test: c => { const us = vurlSite(c.i.vurl); return !!us && ![...c.m.plat, ...c.m.vods].some(v => normVod(v) === us); } },
 ];
