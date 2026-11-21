@@ -31,7 +31,7 @@ document.addEventListener("click", async ev => {
     case "joinCancel": S.skipInvite = S.invite?.roomId; S.invite = null; route(); break;
     case "recheck": { el.disabled = true; const inv = await findInvite(); if (inv && inv.roomId) renderJoin(inv); else { el.disabled = false; toast("まだ招待は届いていないみたい"); } break; }
     case "tab": {
-      let v = el.dataset.v; if (v === "od") v = S.odLast || "list";
+      let v = el.dataset.v; if (v === "od") v = S.odLast || "cal";
       if (OD_TABS.includes(v)) S.odLast = v;
       if (v === "memo" && S.tab !== "memo") S.notesPrev = notesSeenAt();
       S.tab = v; S.noteEdit = null; render(); window.scrollTo(0, 0); break;

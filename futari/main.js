@@ -115,13 +115,13 @@ function viewHome(){
 }
 
 /* =============== 新しいメニュー構成（きょう・おでかけ・ふたり・ウリ） =============== */
-const OD_TABS = ["list", "cal", "memo"];
+const OD_TABS = ["cal", "memo", "list"];
 const isOd = () => OD_TABS.includes(S.tab);
-/* おでかけの上の切りかえ［行きたい｜よてい｜おもいで］ */
+/* おでかけの上の切りかえ［よてい｜おもいで｜行きたい］ */
 function odSeg(){
   const c = { list: S.places.filter(p => !p.visited).length, cal: S.dates.filter(d => d.date >= today()).length, memo: S.places.filter(p => p.visited).length };
   const nn = S.tab === "memo" ? 0 : notesNew().length;
-  return `<div class="segx">${[["list", "📍 行きたい"], ["cal", "📅 よてい"], ["memo", "📷 おもいで"]].map(([id, n]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${n}<small>${c[id]}</small>${id === "memo" && nn ? `<i class="bdot"></i>` : ""}</button>`).join("")}</div>`;
+  return `<div class="segx">${[["cal", "📅 よてい"], ["memo", "📷 おもいで"], ["list", "📍 行きたい"]].map(([id, n]) => `<button class="${S.tab === id ? "on" : ""}" data-a="tab" data-v="${id}">${n}<small>${c[id]}</small>${id === "memo" && nn ? `<i class="bdot"></i>` : ""}</button>`).join("")}</div>`;
 }
 /* 「ふたり」タブに出す新しいことの数 */
 function futariBadge(){
