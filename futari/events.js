@@ -7,10 +7,10 @@ let pendingDel = null, pendingDate = null, pendingQuiz = null, pendingAnniv = nu
 document.addEventListener("click", async ev => {
   const el = ev.target.closest("[data-a]"); if (!el) return;
   const a = el.dataset.a, id = el.dataset.id;
-  if (a === "ovclose") { if (ev.target === el) closeSheet(); return; }
+  if (a === "ovclose") { if (ev.target === el) { closeSheet(); setTimeout(otsuCheck, 300); } return; }
   if (a === "vote" || a === "open") ev.stopPropagation();
   switch (a) {
-    case "close": closeSheet(); break;
+    case "close": closeSheet(); setTimeout(otsuCheck, 300); break;
     case "reload": location.reload(); break;
     case "mode": S.authMode = el.dataset.v; S.openPw = true; renderLogin(); break;
     case "resend": LOGIN.sent = false; renderLogin(); break;
@@ -70,6 +70,17 @@ document.addEventListener("click", async ev => {
     case "lTab": openLetters(el.dataset.v); break;
     case "letterDel": if (!await askConfirm("おてがみを消しますか？", "送ったおてがみを消します。まだ届いていなければ、相手には届かなくなります。")) break; try { await deleteDoc(doc(db, "rooms", S.roomId, "letters", id)); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
     case "gameOpen": openGame(); break;
+    case "otsuOpen": openOtsu(); break;
+    case "otsuDest": (S.otsuSel ||= { d: null, tip: 0 }).d = el.dataset.v; openOtsu(); break;
+    case "otsuTip": (S.otsuSel ||= { d: null, tip: 0 }).tip = +el.dataset.v; openOtsu(); break;
+    case "otsuGo": el.disabled = true; otsuGo(); break;
+    case "otsuDone": closeSheet(); render(); setTimeout(otsuCheck, 400); break;
+    case "cardsOpen": openCards(); break;
+    case "cardView": openCards(el.dataset.v); break;
+    case "snackOpen": openSnack(); break;
+    case "snackBuy": snackBuy(id); break;
+    case "gachaOpen": openGacha(); break;
+    case "gachaSpin": gachaSpin(); break;
     case "gameStart": gameStart(); break;
     case "gameClose": gameClose(); break;
     case "planDel": { const d = S.dates.find(x => x.id === id); const it = d && (d.plan || [])[+el.dataset.v]; if (!it || !await askConfirm("この予定を消しますか？", `「${esc(((it.tm ? it.tm + " " : "") + (it.tx || "")).trim())}」をしおりから消します。`)) break; saveShiori(id, { plan: (d.plan || []).filter((_, i) => i !== +el.dataset.v) }); break; }

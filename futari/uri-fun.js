@@ -149,17 +149,18 @@ function openWardrobe(tab){
   const t = S.wTab || "have", u = uriState(), w = uw(), bal = S.pet?.acorns || 0, vc = visitedCount(), mon = new Date().getMonth() + 1;
   const sl = S.wSlot || "all", inSl = it => sl === "all" || it.s === sl;
   const have = UITEMS.filter(owned).filter(inSl);
-  const shop = UITEMS.filter(it => !owned(it) && (it.v || !it.m || it.m.includes(mon))).filter(inSl);
+  const rank = it => it.v ? 2 : it.o ? 3 : it.g ? 4 : it.dx ? 1 : 0;
+  const shop = UITEMS.filter(it => !owned(it) && (it.v || !it.m || it.m.includes(mon))).filter(inSl).sort((a, b) => rank(a) - rank(b));
   const cell = (it, foot, act, cls) => `<button class="witem ${cls || ""}" ${act ? `data-a="${act}" data-id="${it.id}"` : "disabled"}><div class="uri">${uriSvg(u.st, "happy", { [it.s]: it.id })}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
   const body = t === "have"
     ? (have.length ? have.map(it => cell(it, w[it.s] === it.id ? "つけてる ✓" : USLOTS[it.s], "uriWear", w[it.s] === it.id ? "on" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">まだ持ってないよ。おみせで買ってみよう</p>`)
-    : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : cell(it, `${AC}${it.p}${it.m ? " ・ 期間限定" : ""}`, "uriBuy", bal < it.p ? "poor" : "")).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
+    : (shop.length ? shop.map(it => it.v ? cell(it, `おでかけ${it.v}か所でもらえる（いま${vc}）`, "", "lock") : it.o || it.g ? cell(it, it.o ? "おつかいで見つかるかも" : "ガチャで出るよ", "", "lock") : cell(it, `${AC}${it.p}${it.m ? " ・ 期間限定" : it.dx ? " ・ ごうか" : ""}`, "uriBuy", `${bal < it.p ? "poor" : ""} ${it.dx ? "dx" : ""}`)).join("") : `<p class="muted" style="grid-column:1/-1;text-align:center">ぜんぶ手に入れたよ！</p>`);
   openSheetK("ward", `<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
   <div class="wprev"><div class="uri s${u.st}">${uriSvg(u.st, "happy", w)}</div><div class="wbal">${AC} ${bal}こ<small>ふたりのおさいふ</small></div></div>
   ${wardrobeSeg(t)}
   <div class="chips">${[["all", "すべて"], ...Object.entries(USLOTS)].map(([k, n]) => `<button class="chip ${sl === k ? "on" : ""}" data-a="wSlot" data-v="${k}">${n}</button>`).join("")}</div>
   <div class="wgrid">${body}</div>
-  <p class="muted" style="text-align:center;font-size:12px">${t === "have" ? "タップでつける・はずす（同じ場所のものは1つまで）" : `${AC}はミニゲーム「どんぐり拾い」でたまるよ。「行った！」を記録すると、おみやげがもらえることも`}</p>`);
+  <p class="muted" style="text-align:center;font-size:12px">${t === "have" ? "タップでつける・はずす（同じ場所のものは1つまで）" : `${AC}はどんぐり拾い・おつかいなどでたまるよ。おつかい・ガチャでしか手に入らないものも`}</p>`);
 }
 /* ---------- うりぼーのおへや ---------- */
 // s:置き場所 p:どんぐり（0は最初から持っている）m:買える月 b:サムネイルの範囲（部品の座標）
@@ -217,10 +218,26 @@ const RITEMS = [
   // ラグ
   { id:"r_round", s:"rug", n:"まるいラグ",   e:"⚪", p:20, b:[-84, -18, 168, 36] },
   { id:"r_heart", s:"rug", n:"ハートのラグ", e:"💗", p:30, b:[-70, -22, 140, 40] },
-  { id:"r_star",  s:"rug", n:"ほしのラグ",   e:"⭐", p:30, b:[-72, -22, 144, 40] }
+  { id:"r_star",  s:"rug", n:"ほしのラグ",   e:"⭐", p:30, b:[-72, -22, 144, 40] },
+  // おつかいで見つかる（o）
+  { id:"o_kinoko", s:"fr",   n:"きのこのランプ", e:"🍄", o:1, b:[-34, -80, 68, 82] },
+  { id:"o_map",    s:"deco", n:"ぼうけんのちず", e:"🗺️", o:1, b:[-32, -30, 64, 56] },
+  { id:"o_tent",   s:"fl",   n:"ちいさなテント", e:"⛺", o:1, b:[-56, -84, 112, 86] },
+  // どんぐりガチャで出る（g）
+  { id:"g_yume",   s:"wall", n:"ゆめかわストライプ", e:"🦄", g:1 },
+  { id:"g_rainbow",s:"deco", n:"にじのかざり",   e:"🌈", g:1, b:[-58, -46, 116, 70] },
+  { id:"g_bowl",   s:"fr",   n:"きんぎょばち",   e:"🐠", g:1, b:[-30, -66, 60, 68] },
+  { id:"g_cloud",  s:"rug",  n:"くものラグ",     e:"☁️", g:1 },
+  // ごうかアイテム（dx）
+  { id:"dx_cake",    s:"fr",    n:"おおきなケーキ", e:"🎂", p:160, dx:1, b:[-32, -92, 64, 94] },
+  { id:"dx_marble",  s:"floor", n:"だいりせきのゆか", e:"🤍", p:180, dx:1 },
+  { id:"dx_castle",  s:"wall",  n:"おしろのかべ",   e:"🏰", p:200, dx:1 },
+  { id:"dx_chand",   s:"deco",  n:"シャンデリア",   e:"✨", p:220, dx:1, b:[-36, -56, 72, 84] },
+  { id:"dx_stained", s:"win",   n:"ステンドグラスのまど", e:"⛪", p:250, dx:1, b:[-46, -52, 92, 100] },
+  { id:"dx_canopy",  s:"fl",    n:"てんがいつきベッド", e:"👸", p:300, dx:1, b:[-64, -116, 128, 118] }
 ];
 const ritemOf = id => RITEMS.find(x => x.id === id);
-const rOwned = it => !it.p || !!S.pet?.ritems?.[it.id];
+const rOwned = it => (!it.p && !it.o && !it.g) || !!S.pet?.ritems?.[it.id];
 const roomNow = () => { const r = { ...RDEF, ...(S.pet?.room || {}) }; Object.keys(r).forEach(k => { if (!ritemOf(r[k])) delete r[k]; }); return r; };
 /* かべがみ・ゆかの模様（defs） */
 function rWallDef(id, K){
@@ -231,6 +248,8 @@ function rWallDef(id, K){
     case "w_lav": return P(24, 24, `<circle cx="6" cy="6" r="2.6" fill="#dcd1f3"/><circle cx="18" cy="18" r="2.6" fill="#dcd1f3"/>`, "#efeafb");
     case "w_wood": return P(80, 20, `<rect y="17" width="80" height="3" fill="#cfa274"/><rect y="0" width="80" height="2" fill="#f2d6b0" opacity=".6"/><ellipse cx="24" cy="9" rx="3" ry="1.6" fill="#d4a97c"/>`, "#e7c398");
     case "w_night": return P(60, 50, `<circle cx="10" cy="12" r="1" fill="#fff"/><circle cx="40" cy="30" r="1.3" fill="#fff6c8"/><circle cx="52" cy="8" r=".8" fill="#fff"/><path d="M25 40l1 2.4l2.4 1l-2.4 1l-1 2.4l-1-2.4l-2.4-1l2.4-1z" fill="#fde68a"/>`, "#3a4278");
+    case "g_yume": return P(40, 40, `<rect width="40" height="10" fill="#fde2ea"/><rect y="10" width="40" height="10" fill="#fff3d6"/><rect y="20" width="40" height="10" fill="#e3f4ec"/><rect y="30" width="40" height="10" fill="#ebe5fb"/><path d="M12 13l1 2.4l2.4 1l-2.4 1l-1 2.4l-1-2.4l-2.4-1l2.4-1z" fill="#fff"/><path d="M30 33l.8 1.8l1.8.8l-1.8.8l-.8 1.8l-.8-1.8l-1.8-.8l1.8-.8z" fill="#fff"/>`, "#fde2ea");
+    case "dx_castle": return P(40, 24, `<rect width="40" height="24" fill="#ebe4f3"/><rect x="1" y="1" width="18" height="10" rx="1.5" fill="#f3eef9"/><rect x="21" y="13" width="18" height="10" rx="1.5" fill="#f3eef9"/><path d="M0 11.5h40M0 23.5h40M20 0v11.5M0 12v11.5M40 12v11.5" stroke="#d2c6e2" stroke-width="1"/>`, "#ebe4f3");
     default: return P(40, 40, ``, "#fbe6ec");
   }
 }
@@ -239,6 +258,7 @@ function rFloorDef(id, K){
   switch (id) {
     case "f_check": return P(28, 28, `<rect width="14" height="14" fill="#fbd3df"/><rect x="14" y="14" width="14" height="14" fill="#fbd3df"/>`, "#fffafb");
     case "f_tatami": return P(90, 30, `<rect width="90" height="30" fill="none" stroke="#a9c27a" stroke-width="1.4"/><rect y="13" width="90" height="4" fill="#6f8f5a" opacity=".55"/>`, "#d5e4ad");
+    case "dx_marble": return P(60, 30, `<path d="M0 0h60v30h-60z" fill="none" stroke="#e6dfe6" stroke-width="1.2"/><path d="M30 0v30" stroke="#e6dfe6" stroke-width="1.2"/><path d="M4 8q8 4 12 0t14 6M36 20q6-6 12-2t10 4" stroke="#d9cfdc" stroke-width=".9" fill="none"/>`, "#faf7f9");
     case "f_carpet": return P(10, 10, `<circle cx="3" cy="3" r="1.2" fill="#d6cbef"/><circle cx="8" cy="8" r="1" fill="#efe9fb"/>`, "#e4dcf6");
     default: return P(64, 24, `<rect y="10" width="64" height="2" fill="#c09068"/><rect y="22" width="64" height="2" fill="#c09068"/><rect x="40" width="1.6" height="11" fill="#c09068"/><rect x="12" y="12" width="1.6" height="11" fill="#c09068"/><rect y="0" width="64" height="3" fill="#ecc69c" opacity=".5"/>`, "#ddb286");
   }
@@ -301,6 +321,40 @@ function rItemSvg(id, K){
     case "gifts": return `<rect x="-28" y="-26" width="32" height="26" rx="3" fill="#f4a3b8"/><rect x="-14" y="-26" width="4" height="26" fill="#fff"/><path d="M-12 -26q-8-8-2-10q4 2 2 10q6-8 10-6q0 6-10 6" fill="none" stroke="#fff" stroke-width="2"/>
       <rect x="6" y="-20" width="22" height="20" rx="3" fill="#bfe1f6"/><rect x="15" y="-20" width="4" height="20" fill="#fde68a"/>
       <rect x="-16" y="-46" width="22" height="20" rx="3" fill="#c7b8ef"/><rect x="-7" y="-46" width="4" height="20" fill="#fff"/><circle cx="-5" cy="-47" r="3" fill="#fde68a"/>`;
+    case "o_kinoko": return `<circle cx="0" cy="-48" r="34" fill="#fff3b0" opacity=".35"/><path d="M-9 0q-3-20 2-36h14q5 16 2 36z" fill="#f3e2c7"/><ellipse cx="0" cy="-1" rx="13" ry="3" fill="#ead2ad"/>
+      <path d="M-32 -34q2-32 32-32q30 0 32 32q-32 7-64 0z" fill="#e86a5c"/><path d="M-32 -34q32 7 64 0q-32 3-64 0z" fill="#c94f45"/>${[[-16, -50, 5], [4, -58, 4.4], [18, -44, 4], [-2, -42, 3]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/>`).join("")}
+      <path d="M22 0q-2-8 1-14h6q3 6 1 14z" fill="#f3e2c7"/><path d="M15 -13q1-11 11-11q10 0 11 11q-11 3-22 0z" fill="#f5a04a"/><circle cx="23" cy="-18" r="1.8" fill="#fff"/>`;
+    case "o_map": return `<path d="M0 -26l-3-4h6z" fill="#a5703f"/><path d="M-28 -22l19 4l18-4l19 4v40l-19-4l-18 4l-19-4z" fill="#f6e7c4"/><path d="M-9 -18v40M9 -22v40" stroke="#e3cc9c" stroke-width="1"/>
+      <path d="M-22 12q8-14 18-6t16-10" stroke="#c9905a" stroke-width="1.6" stroke-dasharray="3 2.4" fill="none"/><path d="M14 -10l6 6M20 -10l-6 6" stroke="#e25b5b" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M-20 -8l4-8l4 8zM-14 -6l3.4-7l3.4 7z" fill="#6fbb9c"/><circle cx="-2" cy="12" r="3" fill="#9fd3ee"/>${star(20, 12, 4, "#f2c94c")}`;
+    case "o_tent": return `<path d="M0 -66v-12" stroke="#a5703f" stroke-width="2"/><path d="M0 -78l12 4l-12 4z" fill="#f4a3b8"/>
+      <path d="M-52 0L0 -66L52 0z" fill="#f2c94c"/><path d="M0 -66L52 0h-14z" fill="#e8b84a"/><path d="M0 -66L-20 0h40z" fill="#5d4e60" opacity=".85"/><path d="M0 -66L-20 0h9z" fill="#f7d77a"/><path d="M0 -66L20 0h-9z" fill="#f7d77a"/>
+      <path d="M-56 2l6-6M56 2l-6-6" stroke="#a5703f" stroke-width="2" stroke-linecap="round"/><circle cx="-6" cy="-8" r="5" fill="#fff3b0" opacity=".9"/>`;
+    case "g_rainbow": return `${[["#f9b6c7", 40], ["#fde68a", 34], ["#a9ddc5", 28], ["#bfe1f6", 22]].map(([c, r]) => `<path d="M${-r} 14A${r} ${r} 0 0 1 ${r} 14" stroke="${c}" stroke-width="6.5" fill="none"/>`).join("")}
+      ${[-42, 42].map(x => `<g transform="translate(${x} 14)"><circle cx="-7" r="7" fill="#fff"/><circle cx="6" r="8" fill="#fff"/><circle cx="0" cy="-6" r="7" fill="#fff"/></g>`).join("")}`;
+    case "g_bowl": return `<rect x="-16" y="-8" width="32" height="8" rx="3" fill="#c99466"/><circle cx="0" cy="-34" r="26" fill="#d9f0fb" opacity=".9"/><path d="M-24 -26a26 26 0 0 0 48 0q-24 6-48 0z" fill="#9fd3ee" opacity=".7"/>
+      <ellipse cx="0" cy="-58" rx="15" ry="3.4" fill="#fff" stroke="#bfe1f6" stroke-width="1.4"/><path d="M-6 -32q8-8 14 0q-6 8-14 0zM-6 -32l-6-5v10z" fill="#f5a04a"/><circle cx="4" cy="-33" r="1.2" fill="#4a3540"/>
+      <circle cx="10" cy="-44" r="2" fill="#fff" opacity=".8"/><circle cx="14" cy="-50" r="1.4" fill="#fff" opacity=".8"/><path d="M-14 -10q2-10-3-16M-10 -10q4-8 0-14" stroke="#6fbb9c" stroke-width="2" fill="none"/><ellipse cx="-12" cy="-46" rx="4" ry="7" fill="#fff" opacity=".5" transform="rotate(25 -12 -46)"/>`;
+    case "g_cloud": return `<g transform="scale(1 .3)">${[[-56, 4, 26], [-28, -12, 32], [4, -16, 34], [34, -8, 30], [60, 6, 24], [0, 14, 40]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#eef4ff"/>`).join("")}<circle cx="-14" cy="0" r="4" fill="#9fb3d9"/><circle cx="14" cy="0" r="4" fill="#9fb3d9"/></g><ellipse cx="-24" cy="2" rx="5" ry="1.6" fill="#fbd3df"/><ellipse cx="24" cy="2" rx="5" ry="1.6" fill="#fbd3df"/>`;
+    case "dx_cake": return `<ellipse cx="0" cy="-2" rx="30" ry="4" fill="#fff" stroke="#efe2e8"/><rect x="-26" y="-30" width="52" height="27" rx="6" fill="#fff5f0"/><path d="M-26 -27q6 8 9 0q4 8 9 0q4 8 9 0q4 8 8 0q4 8 9 0q4 8 9 0v-3h-53z" fill="#f9b6c7"/>
+      <rect x="-18" y="-54" width="36" height="25" rx="5" fill="#fff5f0"/><path d="M-18 -51q5 7 8 0q4 7 8 0q4 7 8 0q4 7 8 0q3 6 4 0v-3h-36z" fill="#c7b8ef"/>
+      ${[-20, -8, 4, 16].map(x => `<path d="M${x} -16q2.5-4 5 0q0 4-2.5 5q-2.5-1-2.5-5z" fill="#e25b5b"/>`).join("")}${[-12, 0, 12].map(x => `<path d="M${x - 2.5} -56q2.5-5 5 0q0 4-2.5 5q-2.5-1-2.5-5z" fill="#e25b5b"/>`).join("")}
+      <rect x="-1.6" y="-72" width="3.2" height="16" rx="1" fill="#9fd3ee"/><path d="M0 -72q-4-6 0-12q4 6 0 12z" fill="#ffb84d"/><circle cx="0" cy="-77" r="7" fill="#fff3b0" opacity=".4"/>`;
+    case "dx_chand": return `<circle cx="0" cy="0" r="30" fill="#fff3b0" opacity=".3"/><path d="M0 -56v34" stroke="#d9a92c" stroke-width="1.6"/><circle cy="-22" r="4" fill="#f2c94c"/>
+      <path d="M-28 -6q14 14 28 0q14 14 28 0" stroke="#e8b84a" stroke-width="3" fill="none"/><path d="M0 -20v14" stroke="#e8b84a" stroke-width="3"/>
+      ${[-28, -14, 0, 14, 28].map(x => `<rect x="${x - 2}" y="-16" width="4" height="10" rx="1" fill="#fff"/><path d="M${x} -16q-3-4 0-8q3 4 0 8z" fill="#ffb84d"/>`).join("")}
+      ${[-21, -7, 7, 21].map(x => `<path d="M${x} 4l-2.6 5l2.6 6l2.6-6z" fill="#d6efff" stroke="#9fd3ee" stroke-width=".6"/>`).join("")}<path d="M0 6l-3 6l3 7l3-7z" fill="#fbd3df" stroke="#f4a3b8" stroke-width=".6"/>`;
+    case "dx_stained": { const cl = ["#f4a3b8", "#9fd3ee", "#fde68a", "#a9ddc5", "#c7b8ef", "#f9b6c7"];
+      return `<defs><clipPath id="${K}wc"><path d="M-32 34V-12a32 32 0 0 1 64 0V34z"/></clipPath></defs>
+      <g clip-path="url(#${K}wc)">${Array.from({ length: 12 }, (_, i) => { const a1 = (i / 12) * Math.PI * 2, a2 = ((i + 1) / 12) * Math.PI * 2; return `<path d="M0 -6L${(Math.cos(a1) * 70).toFixed(1)} ${(-6 + Math.sin(a1) * 70).toFixed(1)}L${(Math.cos(a2) * 70).toFixed(1)} ${(-6 + Math.sin(a2) * 70).toFixed(1)}z" fill="${cl[i % 6]}" stroke="#5d4e60" stroke-width="1.4"/>`; }).join("")}
+      <circle cy="-6" r="13" fill="#fff3b0" stroke="#5d4e60" stroke-width="1.6"/><path transform="translate(0 -10) scale(1.2)" d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="#e2809c"/></g>
+      <path d="M-37 38V-12a37 37 0 0 1 74 0V38zM-32 34V-12a32 32 0 0 1 64 0V34z" fill="#c99466" fill-rule="evenodd"/><rect x="-44" y="36" width="88" height="8" rx="3" fill="#c99466"/>`; }
+    case "dx_canopy": return `<rect x="-58" y="-108" width="5" height="108" rx="2" fill="#e8b84a"/><rect x="53" y="-108" width="5" height="108" rx="2" fill="#e8b84a"/>
+      <path d="M-60 -112h120v8q-10 8-20 0q-10 8-20 0q-10 8-20 0q-10 8-20 0q-10 8-20 0q-10 8-20 0z" fill="#f4a3b8"/><circle cx="-56" cy="-114" r="4" fill="#f2c94c"/><circle cx="56" cy="-114" r="4" fill="#f2c94c"/>
+      <path d="M-56 -104q-6 40 4 62q6 2 8-4q-8-26-4-58z" fill="#fbd3df" opacity=".9"/><path d="M56 -104q6 40-4 62q-6 2-8-4q8-26 4-58z" fill="#fbd3df" opacity=".9"/>
+      <rect x="-50" y="-34" width="100" height="26" rx="9" fill="#fff"/><rect x="-46" y="-48" width="27" height="16" rx="7" fill="#fff" stroke="#efe2e8" stroke-width="1"/><rect x="-16" y="-48" width="27" height="16" rx="7" fill="#fff" stroke="#efe2e8" stroke-width="1"/>
+      <path d="M-24 -38h70q8 0 8 10v8q0 6-8 6h-70q-6 0-6-6v-12q0-6 6-6z" fill="#c7b8ef"/>${[[-10, -28], [8, -24], [26, -30], [40, -22]].map(([x, y]) => star(x, y, 3.4, "#fff")).join("")}
+      <rect x="-52" y="-9" width="6" height="9" fill="#c99466"/><rect x="46" y="-9" width="6" height="9" fill="#c99466"/>`;
     case "r_round": return `<ellipse rx="80" ry="14" fill="#f9c6d4"/><ellipse rx="66" ry="10" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/>`;
     case "r_heart": return `<g transform="scale(6.2 1.9) translate(0 -5)"><path d="M0 3C-1-1-6-1-6 2.5C-6 5.5-2 7.5 0 9.5C2 7.5 6 5.5 6 2.5C6-1 1-1 0 3z" fill="#f6a8bd"/></g>`;
     case "r_star": return `<g transform="scale(1 .3)">${star(0, 6, 66, "#fde68a")}${star(0, 6, 50, "#fff3b0")}</g>`;
@@ -345,11 +399,13 @@ function roomThumb(it){
 function openRoomShop(){
   const u = uriState(), room = roomNow(), bal = S.pet?.acorns || 0, mon = new Date().getMonth() + 1;
   const sl = S.rSlot || "all";
-  const list = RITEMS.filter(it => (sl === "all" || it.s === sl) && (rOwned(it) || !it.m || it.m.includes(mon)));
+  const rank = it => rOwned(it) ? 0 : it.o ? 3 : it.g ? 4 : it.dx ? 2 : 1;
+  const list = RITEMS.filter(it => (sl === "all" || it.s === sl) && (rOwned(it) || !it.m || it.m.includes(mon))).sort((a, b) => rank(a) - rank(b));
   const cell = it => {
     const on = room[it.s] === it.id, own = rOwned(it);
-    const foot = own ? (on ? "おいてる ✓" : RSLOTS[it.s]) : `${AC}${it.p}${it.m ? " ・ 期間限定" : ""}`;
-    return `<button class="witem ritem ${on ? "on" : ""} ${!own && bal < it.p ? "poor" : ""}" data-a="${own ? "rmPlace" : "rmBuy"}" data-id="${it.id}"><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
+    if (!own && (it.o || it.g)) return `<button class="witem ritem lock" disabled><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${it.o ? "おつかいで見つかるかも" : "ガチャで出るよ"}</small></button>`;
+    const foot = own ? (on ? "おいてる ✓" : RSLOTS[it.s]) : `${AC}${it.p}${it.m ? " ・ 期間限定" : it.dx ? " ・ ごうか" : ""}`;
+    return `<button class="witem ritem ${on ? "on" : ""} ${!own && bal < it.p ? "poor" : ""} ${!own && it.dx ? "dx" : ""}" data-a="${own ? "rmPlace" : "rmBuy"}" data-id="${it.id}"><div class="rth">${roomThumb(it)}</div><b>${esc(it.n)}</b><small>${foot}</small></button>`;
   };
   openSheetK("ward", `<h3>🎀 きせかえ・おみせ<button class="x" data-a="close">×</button></h3>
   <div class="rprev"><div class="uroom">${roomSvg(room)}</div><div class="uri s${u.st}">${uriSvg(u.st, "happy", uw())}</div><div class="wbal">${AC} ${bal}こ</div></div>
@@ -681,6 +737,13 @@ function viewUri(){
     ${tile("🏠", "var(--butter-l)", "おへや", nR ? `家具 ${nR}こ おいてる` : "家具・かべがみ", `data-a="roomOpen"`)}
     ${tile(AC, "#f4ead9", "どんぐり拾い", left ? "きょうはまだ ・ 1日1回" : `きょうは${mi.last ?? 0}こ拾ったよ`, `data-a="gameOpen"`, left ? "!" : "")}
     ${tile("📖", "var(--lav-l)", "成長アルバム", `${u.st + 1} / ${USTAGES.length} だんかい`, `data-a="albumOpen"`)}
+  </div>
+  <div class="lbl2">どんぐりをつかう</div>
+  <div class="tiles">
+    ${tile("🎒", "var(--mint-l)", "おつかい", otsuTileSub(), `data-a="otsuOpen"`, otsuBadge())}
+    ${tile("🍰", "var(--peach-l)", "おやつやさん", snkToday(me()) ? `きょうは${snackOf(snkToday(me())).e}をあげたよ` : "せいちょうポイントアップ ・ 1日1回", `data-a="snackOpen"`)}
+    ${tile("💊", "#fbeef6", "どんぐりガチャ", `1回 ${AC}${GACHA_P} ・ ${gachaHave()} / ${gachaPool().length} あつめた`, `data-a="gachaOpen"`)}
+    ${tile("💌", "var(--butter-l)", "えはがき", `${cardsHave()} / ${OTSU_SPOTS.length} まい あつめた`, `data-a="cardsOpen"`)}
   </div>`;
 }
 /* ホーム用の小さいうりぼー */

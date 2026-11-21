@@ -26,6 +26,8 @@ function uriEvents(){
   const cp = S.pet?.coop; if (cp?.total) ev.push({ at: cp.at || 0, who: null, t: `ふたりそろってごはん（これまで${cp.total}日）`, xp: 5 * cp.total });
   const lseen = new Set(); (S.letters || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0)).forEach(l => { const k = l.from + localDay(l.at || 0); if (lseen.has(k) || !mem.includes(l.from)) return; lseen.add(k); add(l.at, l.from, "おてがみをあずけた", 3); });
   Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { const n = (f?.n || 0) - (fb[u] || 0); if (mem.includes(u) && n > 0) ev.push({ at: f.at || dayMs(f.last), who: u, t: n > 1 ? `ごはんをあげた（これまで${n}回）` : "ごはんをあげた", xp: 3 * n }); });
+  Object.entries(S.pet?.snk || {}).forEach(([u, k]) => { if (mem.includes(u) && k?.xp > 0) ev.push({ at: k.at || 0, who: u, t: `おやつをあげた（これまで${k.n || 1}回）`, xp: k.xp }); });
+  Object.entries(S.pet?.otsuN || {}).forEach(([u, n]) => { if (mem.includes(u) && n > 0) ev.push({ at: S.pet?.otsu?.[u]?.back || 0, who: u, t: `おつかいに行った（これまで${n}回）`, xp: 4 * n }); });
   return ev.sort((a, b) => b.at - a.at);
 }
 function uriState(){
@@ -139,7 +141,7 @@ function uriLines(u){
   if (u.fedMe && u.fedHim) L.push("ふたりからごはん、しあわせぷぎ〜");
   if (coopNow().streak >= 3) L.push(`ふたりそろってごはん${coopNow().streak}日れんぞく！`);
   L.push("ぷぎっ！", "なでなでうれしい〜", "えへへ", "ぷぎぷぎ♪", "いっしょにおでかけしたいな");
-  L.push(...uriMoreLines(u));
+  L.push(...uriMoreLines(u), ...otsuLines());
   return L;
 }
 function uriHtml(){
@@ -222,7 +224,11 @@ const UWEAR_LINES = {
   flag:"ふれー！ふれー！ふたりー！", ice:"アイスおいしい〜ひとくちいる？", bouquet:"このおはな、あげる！", hballoon:"ハートのふうせん、とんでかないで〜",
   tsuno:"おにはそと〜！…ぼくはうち！", sakura:"さくら、きれいでしょ", kabuto:"つよくなるぞー！", uchiwa:"ぱたぱた、すずしい〜", pumpkin:"トリック・オア・トリート！",
   bat:"こうもりうりぼーだぞ〜", santa:"いいこにしてた？", tonakai:"サンタさんのおてつだい！", leaf:"はっぱのおみやげ、うれしかった！", camera:"はい、チーズ！",
-  balloon:"ふうせん、もってて〜", omamori:"ふたりがずっとなかよしでいられますように", tiara:"おひめさまきぶん♪", rainbow:"にじのはね、すてきでしょ", wand:"えいっ！しあわせになれ〜！"
+  balloon:"ふうせん、もってて〜", omamori:"ふたりがずっとなかよしでいられますように", tiara:"おひめさまきぶん♪", rainbow:"にじのはね、すてきでしょ", wand:"えいっ！しあわせになれ〜！",
+  acornhat:"どんぐりのきもちになったぷぎ", kinoko:"もりのきのこさんだよ〜", clover:"しあわせのよつば、みつけたの", ryukku:"ぼうけんのじゅんびばっちり！", watage:"ふーってしたら、とんでいくよ",
+  unicorn:"ゆめのくにからきたぷぎ✨", flcrown:"おはなのおひめさま♪", guruguru:"めがまわる〜…じょうだんだよ", scarf:"みずたま、かわいいでしょ", devil:"こあくまうりぼー、いたずらしちゃうぞ",
+  candy:"ぺろぺろ…ひとくちいる？", wataame:"ふわふわあま〜い", goldacorn:"きんのどんぐり、たからものぷぎ！", jewel:"きらきら、まぶしい？", starcrown:"ほしのおうさまぷぎ！",
+  dragon:"がおー！…こわくないよ", royal:"おうさまのおなーりー！"
 };
 function uriMoreLines(u){
   const L = [], h = new Date().getHours(), wd = new Date().getDay(), pu = partnerUid(), pn = pu ? nameOf(pu) : "", mn = nameOf(me());
@@ -350,7 +356,27 @@ const UITEMS = [
   { id:"omamori",  s:"neck", n:"おまもり",       e:"🧧", v:7 },
   { id:"tiara",    s:"head", n:"ティアラ",       e:"💎", v:10 },
   { id:"rainbow",  s:"back", n:"にじのはね",     e:"🌈", v:15 },
-  { id:"wand",     s:"side", n:"ほしのつえ",     e:"🪄", v:20 }
+  { id:"wand",     s:"side", n:"ほしのつえ",     e:"🪄", v:20 },
+  // おつかいで見つかる（o）
+  { id:"acornhat", s:"head", n:"どんぐりぼうし", e:"🌰", o:1 },
+  { id:"kinoko",   s:"head", n:"きのこのぼうし", e:"🍄", o:1 },
+  { id:"clover",   s:"face", n:"よつばのシール", e:"🍀", o:1 },
+  { id:"ryukku",   s:"back", n:"ぼうけんリュック", e:"🎒", o:1 },
+  { id:"watage",   s:"side", n:"たんぽぽのわたげ", e:"🌼", o:1 },
+  // どんぐりガチャで出る（g）
+  { id:"unicorn",  s:"head", n:"ユニコーンのつの", e:"🦄", g:1 },
+  { id:"flcrown",  s:"head", n:"おはなのかんむり", e:"💐", g:1 },
+  { id:"guruguru", s:"face", n:"ぐるぐるメガネ", e:"🌀", g:1 },
+  { id:"scarf",    s:"neck", n:"みずたまスカーフ", e:"🩵", g:1 },
+  { id:"devil",    s:"back", n:"こあくまのはね", e:"😈", g:1 },
+  { id:"candy",    s:"side", n:"ぐるぐるキャンディ", e:"🍭", g:1 },
+  { id:"wataame",  s:"side", n:"わたあめ",       e:"☁️", g:1 },
+  // ごうかアイテム（dx）
+  { id:"goldacorn",s:"side", n:"きんのどんぐり", e:"✨", p:150, dx:1 },
+  { id:"jewel",    s:"neck", n:"ほうせきのネックレス", e:"💠", p:200, dx:1 },
+  { id:"starcrown",s:"head", n:"ほしのかんむり", e:"🌟", p:220, dx:1 },
+  { id:"dragon",   s:"back", n:"ドラゴンのはね", e:"🐉", p:260, dx:1 },
+  { id:"royal",    s:"back", n:"おうさまのマント", e:"👑", p:300, dx:1 }
 ];
 const USLOTS = { head:"あたま", face:"かお", neck:"くび", back:"せなか", side:"もちもの" };
 const itemOf = id => UITEMS.find(x => x.id === id);
@@ -388,6 +414,11 @@ function uriWearSvg(W, g){
     santa: `<path d="M${hx - hrx * .88} ${top + hry * .38}Q${hx - hrx * .2} ${top - 24} ${hx + hrx * 1.05} ${top - 6}Q${hx + hrx * .55} ${top + 2} ${hx + hrx * .88} ${top + hry * .38}z" fill="#e25b5b"/><rect x="${hx - hrx * .95}" y="${top + hry * .3}" width="${hrx * 1.9}" height="7" rx="3.5" fill="#fff"/><circle cx="${hx + hrx * 1.05}" cy="${top - 6}" r="4.8" fill="#fff"/>`,
     tonakai: [-1, 1].map(d => { const x = hx + d * hrx * .42; return `<path d="M${x} ${top + 4}L${x + d * 3} ${top - 15}M${x + d * 1.4} ${top - 5}l${d * 8} -5M${x + d * 2.4} ${top - 11}l${d * -6} -5" stroke="#a5703f" stroke-width="3" stroke-linecap="round" fill="none"/>`; }).join(""),
     leaf: `<path d="M${hx} ${top + 2}q0-8 0-12" stroke="#6fbb9c" stroke-width="2.4" stroke-linecap="round"/><path d="M${hx} ${top - 8}q-11-7-15 3q10 5 15-3z" fill="#8fd1b3"/><path d="M${hx} ${top - 10}q10-9 15 0q-8 6-15 0z" fill="#a9ddc5"/>`,
+    acornhat: `<path d="M${hx - hrx * .82} ${top + hry * .36}Q${hx - hrx * .88} ${top - 10} ${hx} ${top - 11}Q${hx + hrx * .88} ${top - 10} ${hx + hrx * .82} ${top + hry * .36}Q${hx} ${top + hry * .2} ${hx - hrx * .82} ${top + hry * .36}z" fill="#a5703f"/><path d="M${hx - hrx * .82} ${top + hry * .36}Q${hx} ${top + hry * .2} ${hx + hrx * .82} ${top + hry * .36}Q${hx} ${top + hry * .5} ${hx - hrx * .82} ${top + hry * .36}z" fill="#7e5230"/>${[-2, -1, 0, 1, 2].map(i => [0, 1].map(j => `<circle cx="${hx + i * hrx * .3}" cy="${top - 5 + j * 6 + Math.abs(i) * 1.6}" r="1.7" fill="#c99466"/>`).join("")).join("")}<path d="M${hx} ${top - 10}q1-6 6-8" stroke="#6e4b2b" stroke-width="3" stroke-linecap="round" fill="none"/>`,
+    kinoko: `<path d="M${hx - hrx * 1.05} ${top + hry * .32}Q${hx - hrx} ${top - 18} ${hx} ${top - 18}Q${hx + hrx} ${top - 18} ${hx + hrx * 1.05} ${top + hry * .32}Q${hx} ${top + hry * .1} ${hx - hrx * 1.05} ${top + hry * .32}z" fill="#e86a5c"/><circle cx="${hx - hrx * .5}" cy="${top - 6}" r="4" fill="#fff"/><circle cx="${hx + hrx * .15}" cy="${top - 11}" r="3.4" fill="#fff"/><circle cx="${hx + hrx * .62}" cy="${top - 2}" r="3" fill="#fff"/><circle cx="${hx - hrx * .08}" cy="${top}" r="2.2" fill="#fff"/>`,
+    unicorn: flower(hx - hrx * .55, top + 5, "#c7b8ef", .7) + flower(hx + hrx * .55, top + 5, "#f9b6c7", .7) + `<path d="M${hx - 5.5} ${top + 3}L${hx + 1} ${top - 23}L${hx + 6.5} ${top + 3}z" fill="#fde68a" stroke="#f2c94c" stroke-width="1"/><path d="M${hx - 4} ${top - 2}l9-3M${hx - 2.5} ${top - 9}l6.5-2.4M${hx - 1} ${top - 16}l4-1.6" stroke="#f2c94c" stroke-width="1.3"/>`,
+    flcrown: band("#8fd1b3") + Array.from({ length: 5 }, (_, i) => { const t = i / 4; return flower(hx - hrx * .8 + t * hrx * 1.6, top + 5 - Math.sin(t * Math.PI) * 8, ["#f9b6c7", "#c7b8ef", "#fde68a", "#9fd3ee", "#f4a3b8"][i], .72); }).join(""),
+    starcrown: `<path d="M${hx - 18} ${top + 5}l-3-18l9 8l12-15l12 15l9-8l-3 18z" fill="#f2c94c" stroke="#d9a92c" stroke-width="1"/><rect x="${hx - 18}" y="${top + 1}" width="36" height="5" rx="2" fill="#e8b84a"/>${[["#f4a3b8", -12], ["#9fd3ee", -4], ["#a6d9c4", 4], ["#c7b8ef", 12]].map(([c, x]) => `<circle cx="${hx + x}" cy="${top + 3.5}" r="1.8" fill="${c}"/>`).join("")}${star(hx - 21, top - 14, 4.5, "#fff3b0")}${star(hx, top - 22, 6, "#fffbe0")}${star(hx + 21, top - 14, 4.5, "#fff3b0")}`,
     tiara: `<path d="M${hx - 15} ${top + 6}q15-10 30 0" stroke="#d9d0f2" stroke-width="3" fill="none"/><path d="M${hx - 9} ${top + 1}l2-7l2 6zM${hx - 2} ${top - 1}l2-9l2 9zM${hx + 5} ${top}l2-7l2 7z" fill="#d9d0f2"/><circle cx="${hx}" cy="${top - 2}" r="2.4" fill="#f4a3b8"/><circle cx="${hx - 7}" cy="${top + 1}" r="1.6" fill="#9fd3ee"/><circle cx="${hx + 7}" cy="${top + 1}" r="1.6" fill="#9fd3ee"/>`
   };
   const r = e * 1.9 + 1;
@@ -396,7 +427,9 @@ function uriWearSvg(W, g){
     glasses: `<g fill="rgba(255,255,255,.25)" stroke="#7a5a48" stroke-width="1.8"><circle cx="${hx - ex}" cy="${ey}" r="${r}"/><circle cx="${hx + ex}" cy="${ey}" r="${r}"/></g><path d="M${hx - ex + r} ${ey}h${2 * (ex - r)}" stroke="#7a5a48" stroke-width="1.8"/>`,
     hglasses: heart(hx - ex, ey + 1, r / 5.2, "rgba(244,163,184,.55)", 'stroke="#e2809c" stroke-width="1.2"') + heart(hx + ex, ey + 1, r / 5.2, "rgba(244,163,184,.55)", 'stroke="#e2809c" stroke-width="1.2"') + `<path d="M${hx - ex + r * .9} ${ey - 1}h${2 * (ex - r * .9)}" stroke="#e2809c" stroke-width="1.6"/>`,
     monocle: `<circle cx="${hx + ex}" cy="${ey}" r="${r}" fill="rgba(255,255,255,.25)" stroke="#d9a92c" stroke-width="1.8"/><path d="M${hx + ex + r * .7} ${ey + r * .7}q5 10-2 19" stroke="#d9a92c" stroke-width="1" fill="none"/>`,
-    sun: `<rect x="${hx - ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><rect x="${hx + ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><path d="M${hx - ex + r} ${ey - 1}h${2 * (ex - r)}" stroke="#4a3540" stroke-width="2"/><path d="M${hx - ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}M${hx + ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>`
+    sun: `<rect x="${hx - ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><rect x="${hx + ex - r - 1}" y="${ey - r * .8}" width="${2 * r + 2}" height="${r * 1.6}" rx="${r * .6}" fill="#4a3540"/><path d="M${hx - ex + r} ${ey - 1}h${2 * (ex - r)}" stroke="#4a3540" stroke-width="2"/><path d="M${hx - ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}M${hx + ex - r * .5} ${ey - r * .3}l${r * .6} -${r * .3}" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>`,
+    clover: `<g transform="translate(${hx + hrx * .72} ${sy - 2}) scale(.55)">${[0, 90, 180, 270].map(a => `<path transform="rotate(${a})" d="M0 0C-5-3-6-9-2-9C0-9 0-7 0-6C0-7 0-9 2-9C6-9 5-3 0 0z" fill="#7cc4a4"/>`).join("")}<path d="M0 0q4 6 9 8" stroke="#5aa886" stroke-width="2" fill="none"/></g>`,
+    guruguru: [-1, 1].map(d => { const cx = hx + d * ex; return `<circle cx="${cx}" cy="${ey}" r="${r + .6}" fill="rgba(255,255,255,.88)" stroke="#7a5a48" stroke-width="1.8"/><path d="M${cx} ${ey}m${r * .2} 0a${r * .2} ${r * .2} 0 0 1 ${-r * .4} 0a${r * .4} ${r * .4} 0 0 1 ${r * .8} 0a${r * .6} ${r * .6} 0 0 1 ${-r * 1.2} 0a${r * .8} ${r * .8} 0 0 1 ${r * 1.6} 0" stroke="#7a5a48" stroke-width="1.1" fill="none" stroke-linecap="round"/>`; }).join("") + `<path d="M${hx - ex + r} ${ey}h${2 * (ex - r)}" stroke="#7a5a48" stroke-width="1.8"/>`
   };
   // 鼻や口より手前に描くもの
   const FF = {
@@ -412,14 +445,20 @@ function uriWearSvg(W, g){
     lei: arc(8, (x, y, i) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="${["#f9b6c7", "#fde68a", "#c7b8ef", "#a6d9c4"][i % 4]}"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.2" fill="#fff"/>`),
     necklace: arc(9, (x, y) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.2" fill="#fff" stroke="#eadbe2" stroke-width=".8"/>`) + heart(hx, ny + 6, .5, "#f4a3b8"),
     camera: `<path d="M${hx - hrx * .62} ${ny - 6}L${hx - 6} ${ny + 3}M${hx + hrx * .62} ${ny - 6}L${hx + 6} ${ny + 3}" stroke="#9580d0" stroke-width="2"/><rect x="${hx - 9}" y="${ny + 1}" width="18" height="12" rx="3" fill="#5d4e60"/><circle cx="${hx}" cy="${ny + 7}" r="3.6" fill="#b8a6e6" stroke="#fff" stroke-width="1.3"/><rect x="${hx + 3}" y="${ny - 1}" width="4" height="3" rx="1" fill="#5d4e60"/>`,
-    omamori: `<path d="M${hx - hrx * .55} ${ny - 7}Q${hx} ${ny + 4} ${hx + hrx * .55} ${ny - 7}" stroke="#f2c94c" stroke-width="1.6" fill="none"/><rect x="${hx - 5.5}" y="${ny - 1}" width="11" height="14" rx="2.5" fill="#e25b5b"/><rect x="${hx - 3}" y="${ny + 3}" width="6" height="6" rx="1" fill="#f2c94c" opacity=".85"/>`
+    omamori: `<path d="M${hx - hrx * .55} ${ny - 7}Q${hx} ${ny + 4} ${hx + hrx * .55} ${ny - 7}" stroke="#f2c94c" stroke-width="1.6" fill="none"/><rect x="${hx - 5.5}" y="${ny - 1}" width="11" height="14" rx="2.5" fill="#e25b5b"/><rect x="${hx - 3}" y="${ny + 3}" width="6" height="6" rx="1" fill="#f2c94c" opacity=".85"/>`,
+    scarf: `<path d="M${hx - hrx * .82} ${ny - 6}q${hrx * .82} 10 ${hrx * 1.64} 0l-1 7q${-hrx * .82} 9 ${-hrx * 1.62} 0z" fill="#9fd3ee"/><path d="M${hx - 8} ${ny + 2}l8 13l8-13z" fill="#8cc8e8"/>${[[-.6, -2], [-.25, 1], [.15, 1.5], [.5, -1], [0, 7]].map(([k, y]) => `<circle cx="${hx + k * hrx}" cy="${ny + y}" r="1.4" fill="#fff"/>`).join("")}`,
+    jewel: arc(9, (x, y) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#f2c94c"/>`) + `<path d="M${hx} ${ny + 1}l-6.5 6l6.5 9l6.5-9z" fill="#9fd3ee" stroke="#5fa9d6" stroke-width="1"/><path d="M${hx - 6.5} ${ny + 7}h13M${hx} ${ny + 1}v15" stroke="#d6efff" stroke-width=".8"/>${star(hx + 7, ny + 1, 2.4, "#fff")}`
   };
   const B = {
     cape: `<path d="M${hx - hrx * .7} ${ny - 4}Q${hx - brx - 12} ${by + bry * .6} ${hx - brx - 8} 111L${hx + brx + 8} 111Q${hx + brx + 12} ${by + bry * .6} ${hx + hrx * .7} ${ny - 4}z" fill="#e25b5b"/><path d="M${hx - brx - 8} 111L${hx + brx + 8} 111" stroke="#c94a4a" stroke-width="2"/>`,
     butterfly: wings(`<ellipse cx="11" cy="-7" rx="12" ry="8.5" fill="#c7b8ef" transform="rotate(-25 11 -7)"/><ellipse cx="9" cy="7" rx="7.5" ry="6" fill="#fbd3df" transform="rotate(20 9 7)"/><circle cx="12" cy="-8" r="2.6" fill="#fff" opacity=".7"/>`),
     angel: wings(`<path d="M0 0q15-15 26-6q-4 3-8 3q7 3 5 7q-5 1-9-1q2 5-2 7q-7-2-12-10z" fill="#fff" stroke="#eadbe2" stroke-width="1"/>`),
     bat: wings(`<path d="M0 0q9-13 24-11q-3 4-1 9q-5-1-7 3q-4-2-6 2q-3-3-10-3z" fill="#7d66b8"/>`),
-    rainbow: wings(["#f9b6c7", "#ffe08a", "#a6d9c4", "#9fd3ee"].map((c, i) => `<path d="M0 ${i * 4}q${15 - i} ${-17 + i * 2} ${28 - i * 3} ${-8 + i * 2}" stroke="${c}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`).join(""))
+    rainbow: wings(["#f9b6c7", "#ffe08a", "#a6d9c4", "#9fd3ee"].map((c, i) => `<path d="M0 ${i * 4}q${15 - i} ${-17 + i * 2} ${28 - i * 3} ${-8 + i * 2}" stroke="${c}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`).join("")),
+    ryukku: `<rect x="${hx - brx - 6}" y="${by - bry * .75}" width="${2 * brx + 12}" height="${bry * 1.5}" rx="11" fill="#e8a25a"/><rect x="${hx - brx - 6}" y="${by - bry * .1}" width="${2 * brx + 12}" height="5" fill="#d48a43"/><ellipse cx="${hx}" cy="${by - bry * .8}" rx="${brx + 9}" ry="6" fill="#a6d9c4"/><path d="M${hx - brx - 5} ${by - bry * .8}h${2 * brx + 10}" stroke="#8fcbb2" stroke-width="1.2"/>`,
+    devil: wings(`<path d="M0 0q6-16 22-16q-4 5-2 9q-6-1-8 4q-4-3-7 1q-2-2-5 2z" fill="#5d4e60"/><path d="M2 -2q6-11 16-12" stroke="#9580d0" stroke-width="1.2" fill="none"/>`),
+    dragon: wings(`<path d="M0 0q4-22 30-26q-3 7 0 12q-7-1-9 5q-5-3-8 3q-4-3-7 2q-3-2-6 4z" fill="#7cc4a4"/><path d="M0 0q8-16 30-26M2 -2l19-7M2 0l13 0" stroke="#5aa886" stroke-width="1.4" fill="none"/><circle cx="30" cy="-26" r="1.8" fill="#f2c94c"/>`),
+    royal: `<path d="M${hx - hrx * .7} ${ny - 4}Q${hx - brx - 13} ${by + bry * .6} ${hx - brx - 9} 110L${hx + brx + 9} 110Q${hx + brx + 13} ${by + bry * .6} ${hx + hrx * .7} ${ny - 4}z" fill="#b33a5a"/><path d="M${hx - brx - 10} 108h${2 * brx + 20}v5h${-2 * brx - 20}z" fill="#fff"/>${Array.from({ length: 6 }, (_, i) => `<circle cx="${hx - brx - 4 + i * (2 * brx + 8) / 5}" cy="110.5" r="1" fill="#4a3540"/>`).join("")}<path d="M${hx - hrx * .72} ${ny - 5}q${hrx * .72} 8 ${hrx * 1.44} 0" stroke="#f2c94c" stroke-width="3" fill="none" stroke-linecap="round"/>`
   };
   const SIDE = {
     flag: `<path d="M${sx} ${by + 12}V${by - 24}" stroke="#a5703f" stroke-width="2" stroke-linecap="round"/><path d="M${sx} ${by - 24}l15 5l-15 6z" fill="#f4a3b8"/>${heart(sx + 5, by - 18, .35, "#fff")}`,
@@ -428,7 +467,11 @@ function uriWearSvg(W, g){
     balloon: `<path d="M${hx + brx * .7} ${by - 4}Q${hx + brx + 10} ${by - 30} 103 37" stroke="#b8a6e6" stroke-width="1.2" fill="none"/><ellipse cx="103" cy="25" rx="9.5" ry="11.5" fill="#f4a3b8"/><ellipse cx="99.5" cy="20" rx="2.6" ry="3.6" fill="#fff" opacity=".6"/><path d="M101 36.5h4l-2 2.5z" fill="#e2809c"/>`,
     hballoon: `<path d="M${hx + brx * .7} ${by - 4}Q${hx + brx + 10} ${by - 30} 103 36" stroke="#b8a6e6" stroke-width="1.2" fill="none"/>${heart(103, 26, 1.7, "#f08a9a")}<ellipse cx="98.5" cy="22" rx="2" ry="3" fill="#fff" opacity=".6"/>`,
     uchiwa: `<path d="M${sx} ${by + 12}V${by - 6}" stroke="#a5703f" stroke-width="2.2" stroke-linecap="round"/><circle cx="${sx}" cy="${by - 14}" r="10" fill="#fff" stroke="#9fd3ee" stroke-width="1.5"/><path d="M${sx - 7} ${by - 12}q3-4 7 0t7 0" stroke="#9fd3ee" stroke-width="2" fill="none"/>${flower(sx + 2, by - 18, "#f9c4d2", .45)}`,
-    wand: `<path d="M${sx - 2} ${by + 12}L${sx + 3} ${by - 14}" stroke="#c7b8ef" stroke-width="2.4" stroke-linecap="round"/>${star(sx + 4, by - 19, 8, "#f2c94c")}${star(sx - 7, by - 24, 2.5, "#fbcfe8")}${star(sx + 13, by - 8, 2, "#fde68a")}`
+    wand: `<path d="M${sx - 2} ${by + 12}L${sx + 3} ${by - 14}" stroke="#c7b8ef" stroke-width="2.4" stroke-linecap="round"/>${star(sx + 4, by - 19, 8, "#f2c94c")}${star(sx - 7, by - 24, 2.5, "#fbcfe8")}${star(sx + 13, by - 8, 2, "#fde68a")}`,
+    watage: `<path d="M${sx} ${by + 12}Q${sx - 3} ${by - 6} ${sx + 2} ${by - 18}" stroke="#6fbb9c" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="${sx + 2}" cy="${by - 27}" r="11" fill="#fff" opacity=".5"/>${Array.from({ length: 14 }, (_, i) => { const a = i / 14 * Math.PI * 2, x = sx + 2 + Math.cos(a) * 10, y = by - 27 + Math.sin(a) * 10; return `<path d="M${sx + 2} ${by - 27}L${x.toFixed(1)} ${y.toFixed(1)}" stroke="#fff" stroke-width=".9"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#fff"/>`; }).join("")}<circle cx="${sx + 2}" cy="${by - 27}" r="2" fill="#e8d9a6"/>`,
+    candy: `<path d="M${sx} ${by + 12}V${by - 12}" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="${sx}" cy="${by - 20}" r="10" fill="#f9b6c7"/><path d="M${sx} ${by - 20}a1.6 1.6 0 0 1 3 0a3.4 3.4 0 0 1-6 .6a5.4 5.4 0 0 1 9-1a7.4 7.4 0 0 1-12 2" stroke="#e2809c" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M${sx} ${by - 9}l-5-3v6zM${sx} ${by - 9}l5-3v6z" fill="#9fd3ee"/>`,
+    wataame: `<path d="M${sx} ${by + 12}V${by - 12}" stroke="#f3e2c7" stroke-width="2.4" stroke-linecap="round"/>${[[-5, -20, 7], [5, -21, 7], [0, -27, 8], [0, -15, 6], [-7, -27, 5], [7, -28, 5]].map(([x, y, r]) => `<circle cx="${sx + x}" cy="${by + y}" r="${r}" fill="#fbd3df"/>`).join("")}<ellipse cx="${sx - 3}" cy="${by - 29}" rx="3" ry="2" fill="#fff" opacity=".7"/>`,
+    goldacorn: acornSvg(true).replace("<svg ", `<svg x="${sx - 10}" y="${by - 30}" width="20" height="24" `) + star(sx + 10, by - 30, 3, "#fff3b0") + star(sx - 10, by - 20, 2.2, "#fde68a")
   };
   return {
     back: (W.back && B[W.back]) || "",

@@ -8,6 +8,7 @@ function render(){
   const qta = document.querySelector(".qaform textarea"), qkeep = qta ? { v: qta.value, f: document.activeElement === qta } : null;
   renderMain();
   uriCheckEvolve();
+  otsuCheck();
   if (qkeep) { const n = document.querySelector(".qaform textarea"); if (n) { n.value = qkeep.v; if (qkeep.f) n.focus(); } }
 }
 function renderMain(){
