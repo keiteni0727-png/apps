@@ -1896,6 +1896,19 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .ygrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 @media (min-width:900px){.ygrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
 .ygrid .pimg{aspect-ratio:16/9}
+/* グリッドの大きさ：小・大（中は上の今までの大きさ） */
+html[data-gsz="s"] .pgrid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:12px 8px}
+html[data-gsz="l"] .pgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+html[data-gsz="s"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+@media (min-width:900px){
+  html[data-gsz="s"] .pgrid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:16px 10px}
+  html[data-gsz="l"] .pgrid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+  html[data-gsz="s"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+}
+.vtog button{position:relative}
+.vtog .gszb{position:absolute;right:1px;bottom:0;font-size:9px;font-weight:700;line-height:1;color:var(--u-accent)}
 .v-tl .wc-tags>*{flex:none}
 .v-tl .wc-tags .wc-st{white-space:nowrap}
 @media (max-width:599px){.row.thr.yrow .slot{grid-template-columns:44px 56px minmax(0,1fr) auto!important}.row.thr.yrow .thb{width:56px}}
