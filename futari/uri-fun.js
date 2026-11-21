@@ -543,7 +543,7 @@ const GAME_SEC = 30, GAME_REWARD_N = 1, GAME_REWARD_MAX = 80, GAME_VER = 2;
 function gameInfo(uid){ const g = S.pet?.game?.[uid] || {}, td = g.day === today() && g.v === GAME_VER; return { best: g.best || 0, plays: td ? (g.plays || 0) : 0, last: td ? (g.last ?? null) : null }; }
 function gameRank(s){ return s >= 120 ? "S" : s >= 80 ? "A" : s >= 45 ? "B" : "C"; }
 let G = null;
-function svgImg(svg){ const im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.includes("xmlns=") ? svg : svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" ')); return im; }
+function svgImg(svg){ const im = new Image(); im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim().replace(/^<svg (?![^>]*xmlns=)/, '<svg xmlns="http://www.w3.org/2000/svg" ')); return im; }
 // いがぐり（とげとげの緑のイガ）
 function iguSvg(){
   let sp = "";
@@ -747,15 +747,20 @@ function gameClose(){ if (G) G.run = false; G = null; closeSheet(); render(); }
 function viewUri(){
   if (S.needRules) return `<div class="card"><p class="muted">うりぼーを使うには、Firebaseのルール更新が必要です</p></div>`;
   uriSouvCheck();
-  const mi = gameInfo(me()), left = Math.max(0, GAME_REWARD_N - mi.plays), w = Object.values(uw()).map(itemOf).filter(Boolean), r = roomNow();
+  const mi = gameInfo(me()), left = Math.max(0, GAME_REWARD_N - mi.plays), ji = jumpInfo(me()), w = Object.values(uw()).map(itemOf).filter(Boolean), r = roomNow();
   const nR = ["deco", "fl", "fr", "rug"].filter(k => r[k]).length, u = uriState();
   const tile = (ic, bg, n, sub, act, badge) => `<div class="tile" ${act}>${badge ? `<span class="badge">${badge}</span>` : ""}<div class="ic" style="background:${bg}">${ic}</div><b>${n}</b><small>${sub}</small></div>`;
   return `<div class="utab">${uriHtml()}</div>
   <div class="tiles">
     ${tile("🎀", "var(--pink-l)", "きせかえ", w.length ? w.map(x => x.e).join("") + " つけてる" : "もちもの・おみせ", `data-a="wardrobeHave"`)}
     ${tile("🏠", "var(--butter-l)", "おへや", nR ? `家具 ${nR}こ おいてる` : "家具・かべがみ", `data-a="roomOpen"`)}
-    ${tile(AC, "#f4ead9", "どんぐり拾い", left ? "きょうはまだ ・ 1日1回" : `きょうは${mi.last ?? 0}こ拾ったよ`, `data-a="gameOpen"`, left ? "!" : "")}
+    ${tile("🧸", "#fdecea", "あそぶ", toyTileSub(), `data-a="toysOpen"`, TOYS.some(t => toyOwned(t.id)) && !playedToday(me()) ? "!" : "")}
     ${tile("📖", "var(--lav-l)", "成長アルバム", `${u.st + 1} / ${USTAGES.length} だんかい`, `data-a="albumOpen"`)}
+  </div>
+  <div class="lbl2">ミニゲーム（どんぐりがもらえる）</div>
+  <div class="tiles">
+    ${tile(AC, "#f4ead9", "どんぐり拾い", left ? "きょうはまだ ・ 1日1回" : `きょうは${mi.last ?? 0}こ拾ったよ`, `data-a="gameOpen"`, left ? "!" : "")}
+    ${tile("🦘", "var(--mint-l)", "うりぼージャンプ", ji.plays ? `きょうは${ji.last ?? 0}ことったよ` : "きょうはまだ ・ 1日1回", `data-a="jumpOpen"`, ji.plays ? "" : "!")}
   </div>
   <div class="lbl2">どんぐりをつかう</div>
   <div class="tiles">

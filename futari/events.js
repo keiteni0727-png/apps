@@ -71,6 +71,13 @@ document.addEventListener("click", async ev => {
     case "letterDel": if (!await askConfirm("おてがみを消しますか？", "送ったおてがみを消します。まだ届いていなければ、相手には届かなくなります。")) break; try { await deleteDoc(doc(db, "rooms", S.roomId, "letters", id)); toast("消しました"); } catch (e) { toast("消せませんでした（" + (e.code || e.message) + "）"); } break;
     case "gameOpen": openGame(); break;
     case "otsuOpen": openOtsu(); break;
+    case "toysOpen": openToys(); break;
+    case "toyBuy": toyBuy(id); break;
+    case "toyPlay": toyPlay(id); break;
+    case "bubPop": bubPop(el); break;
+    case "jumpOpen": openJump(); break;
+    case "jumpStart": jumpStart(); break;
+    case "jumpClose": jumpClose(); break;
     case "otsuDest": (S.otsuSel ||= { d: null, tip: 0 }).d = el.dataset.v; openOtsu(); break;
     case "otsuTip": (S.otsuSel ||= { d: null, tip: 0 }).tip = +el.dataset.v; openOtsu(); break;
     case "otsuGo": el.disabled = true; otsuGo(); break;

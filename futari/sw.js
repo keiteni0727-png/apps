@@ -1,5 +1,5 @@
 /* オフラインでも開けるようにする。中身は「まずネットから、だめなら前回の控え」 */
-const CACHE = "futari-20261121a";
+const CACHE = "futari-20261121b";
 const SHELL = [
   "./",
   "app.css",
@@ -10,6 +10,7 @@ const SHELL = [
   "uri.js",
   "uri-fun.js",
   "uri-otsu.js",
+  "uri-play.js",
   "couple.js",
   "quiz.js",
   "sheets.js",

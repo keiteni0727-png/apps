@@ -27,6 +27,7 @@ function uriEvents(){
   const lseen = new Set(); (S.letters || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0)).forEach(l => { const k = l.from + localDay(l.at || 0); if (lseen.has(k) || !mem.includes(l.from)) return; lseen.add(k); add(l.at, l.from, "おてがみをあずけた", 3); });
   Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { const n = (f?.n || 0) - (fb[u] || 0); if (mem.includes(u) && n > 0) ev.push({ at: f.at || dayMs(f.last), who: u, t: n > 1 ? `ごはんをあげた（これまで${n}回）` : "ごはんをあげた", xp: 3 * n }); });
   Object.entries(S.pet?.snk || {}).forEach(([u, k]) => { if (mem.includes(u) && k?.xp > 0) ev.push({ at: k.at || 0, who: u, t: `おやつをあげた（これまで${k.n || 1}回）`, xp: k.xp }); });
+  Object.entries(S.pet?.play || {}).forEach(([u, k]) => { if (mem.includes(u) && k?.n > 0) ev.push({ at: k.at || 0, who: u, t: `おもちゃであそんだ（これまで${k.n}日）`, xp: TOY_XP * k.n }); });
   Object.entries(S.pet?.otsuN || {}).forEach(([u, n]) => { if (mem.includes(u) && n > 0) ev.push({ at: S.pet?.otsu?.[u]?.back || 0, who: u, t: `おつかいに行った（これまで${n}回）`, xp: 4 * n }); });
   return ev.sort((a, b) => b.at - a.at);
 }
