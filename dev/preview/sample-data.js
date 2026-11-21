@@ -103,5 +103,24 @@
   y("y5", { t: "パズル100問チャレンジ", a: "P-P", g: "P-P", s: "", up: "2026-11-10", n: 3 });
 
   const master = { all: { series: ["アトリエ", "受付係", "火曜ドラマ"], seriesMain: { 火曜ドラマ: "d" }, slots: ["月9", "日曜劇場"], _at: AT } };
-  window.PREVIEW_DATA = { titles, progress, master, yt };
+  /* ---- 作品の画像（架空のポスター。img.js と同じ持ち方：titles には版の番号だけ、画像は imgs・imgl に） ---- */
+  const imgs = {},
+    imgl = {};
+  const poster = (id, bg, fg, w = 600, h = 900) => {
+    const t = titles[id].t;
+    const stars = Array.from({ length: 14 }, (_, k) => `<circle cx="${(k * 137) % w}" cy="${(k * 89) % (h * 0.55)}" r="${2 + (k % 3)}" fill="${fg}" opacity=".7"/>`).join("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="${bg}"/>${stars}<circle cx="${w * 0.5}" cy="${h * 0.42}" r="${Math.min(w, h) * 0.26}" fill="${fg}" opacity=".9"/><rect y="${h * 0.7}" width="${w}" height="${h * 0.3}" fill="#000" opacity=".28"/><text x="${w / 2}" y="${h * 0.86}" font-family="sans-serif" font-weight="700" font-size="${Math.round(w / 13)}" fill="#fff" text-anchor="middle">${t}</text></svg>`;
+    const d = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    imgs[id] = { d, v: 1 };
+    imgl[id] = { d, v: 1 };
+    titles[id].img = 1;
+  };
+  poster("a1", "#3b5d93", "#f6d58b");
+  poster("a2", "#2d3448", "#e05a47");
+  poster("a3", "#6b4e8a", "#f2b8d8");
+  poster("a4", "#8a5a3c", "#f3e2b8", 960, 540);
+  poster("a5", "#1f4f66", "#7fd3e6");
+  poster("a7", "#4a6f8a", "#f8e3a3");
+  poster("m1", "#22305a", "#ffd36b");
+  window.PREVIEW_DATA = { titles, progress, master, yt, imgs, imgl };
 })();

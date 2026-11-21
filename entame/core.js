@@ -429,6 +429,7 @@ function dropAutoSp() {
     if (!o || o.media !== "sp" || !p || !Array.isArray(p.eps) || p.eps.length !== 1 || p.eps[0].n !== "SP") return;
     delete prog[id];
     removeDoc("progress", id).catch(fail);
+    removeImageDocs(id);
   });
 }
 /* ゴミ箱：削除した作品は deleted（削除した日時）を付けて30日残し、過ぎたら完全に削除する（最新のデータが届いたあと1回だけ） */
