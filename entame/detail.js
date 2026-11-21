@@ -114,7 +114,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
           return `${head}<div class="imsg ${SG_CLS[t] || ""}"><span class="imn">${st.trim() ? `『${esc(st)}』` : un("曲名 未設定")}${ar.trim() ? `<span class="iarn">${esc(ar)}</span>` : ""}</span>${rg ? `<span class="ima"><span class="ieps"><span class="iep inum">${esc(rg)}</span></span></span>` : ""}</div>`;
         })
         .join("");
-      return `<div class="irb">${hd}${rows || `<p class="inos">${un("主題歌 未登録")}</p>`}</div>`;
+      return `<div class="irb">${hd}${rows}</div>`; // 曲がなければタイトル・放送期間だけ
     })
     .join("");
   /* 関連作品は小見出しの下に、1作品ずつ薄い背景の枠で囲む */
