@@ -504,7 +504,10 @@ async function initStore() {
     s => {
       syncMark("titles", s);
       over = docsOf(s);
-      if (s.fromCache === false) purgeTrash("titles");
+      if (s.fromCache === false) {
+        purgeTrash("titles");
+        cleanWideImages();
+      }
       got.titles = true;
       done();
     },

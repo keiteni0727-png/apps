@@ -5,37 +5,11 @@
        imgs/作品ID … 一覧用の小さい画像（長い辺 360px くらい・数十KB）
        imgl/作品ID … 詳細用の大きい画像（長い辺 1200px まで・1MB未満）
    - 画面に出たものだけ読みに行く（一覧はスクロールして見えた行だけ）。読んだ画像はこの端末のメモリに控える
-   - 作品は「縦（ポスター）」と「横（背景）」の2枚を持てる。縦＝img・ドキュメント名は作品ID／横＝imgw・ドキュメント名は「作品ID_w」
-       縦を使う：一覧のサムネ・グリッド・詳細の横並び／横を使う：詳細の上に大きく・番組表のカード（横がなければ縦を切らずに出す）
-   詳細ではタイトルの上に横長で大きく出す */
+   - 画像は作品ごとに縦長（ポスター）1枚。一覧のサムネ・グリッド・番組表のカード・PCの詳細の左に出す */
 /* 画像のキー：作品はその作品ID、YouTube は「yt_ID」（imgs・imgl のドキュメント名にもなる） */
 const YT_PRE = "yt_";
 const imgObj = key => (key.startsWith(YT_PRE) ? ytOver[key.slice(YT_PRE.length)] : over[key]);
-/* dim：元画像の寸法「幅x高さ」（外すときは null） */
-const imgSave = (key, img, msg, k = "p", dim = null) =>
-  key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img, imgd: dim }, msg) : saveTitle(key, k === "w" ? { imgw: img, imgwd: dim } : { img, imgd: dim }, msg);
-/* 縦（p）・横（w）ごとの、保存場所の名前と版の番号 */
-const imgDoc = (id, k) => (k === "w" ? id + "_w" : id);
-const imgVer = (it, k) => (k === "w" ? it.imgw : it.img);
-const IMG_KIND = { p: "縦（ポスター）", w: "横（背景）" };
-/* 推奨の寸法：縦＝2:3・幅1000px以上／横＝16:9・幅1280px以上。外れていれば理由を返す */
-const IMG_REC = { p: { r: 2 / 3, w: 1000, ratio: "2:3", ex: "1000×1500" }, w: { r: 16 / 9, w: 1280, ratio: "16:9", ex: "1280×720" } };
-function imgIssue(k, w, h) {
-  const c = IMG_REC[k];
-  const out = [];
-  if (Math.abs(w / h / c.r - 1) > 0.02) out.push(`縦横比が${c.ratio}ではありません`);
-  if (w < c.w) out.push("推奨より小さい画像です");
-  return out;
-}
-/* 画像を大きく表示した画面の、元の寸法とアラート */
-function imgInfoHtml(it, k, yt) {
-  const d = /^(\d+)x(\d+)$/.exec((k === "w" ? it.imgwd : it.imgd) || "");
-  if (!d) return `<div class="ivinfo">元の寸法：記録なし（貼り直すと表示）</div>`;
-  const w = +d[1],
-    h = +d[2];
-  const bad = yt ? [] : imgIssue(k, w, h);
-  return `<div class="ivinfo${bad.length ? " warn" : ""}">${bad.length ? '<b aria-hidden="true">⚠</b>' : ""}元の寸法：${w}×${h}${bad.length ? `<small>${bad.join("・")}（推奨：${IMG_REC[k].ex}（${IMG_REC[k].ratio}）以上）</small>` : ""}</div>`;
-}
+const imgSave = (key, img, msg) => (key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img }, msg) : saveTitle(key, { img }, msg));
 /* YouTube の項目を、画像の部品が使える形（id＝キー）にする */
 const ytImgIt = x => ({ ...x, id: YT_PRE + x.id });
 const IMG_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`;
@@ -69,16 +43,13 @@ const dataToBlobUrl = d => {
 };
 
 /* 画像のタグ。控えにあればすぐ表示、なければ空のまま置いて、画面に出たときに読む */
-function imgTag(it, sz, cls, k = "p") {
-  const v = imgVer(it, k),
-    id = imgDoc(it.id, k);
+function imgTag(it, sz, cls) {
+  const v = it.img,
+    id = it.id;
   const url = imgUrl.get(imgKey(sz, id, v)) || (sz === "l" && imgUrl.get(imgKey("s", id, v))) || "";
   return `<img class="${cls}" alt="" decoding="async" data-img="${esc(id)}" data-iv="${esc(String(v))}" data-isz="${sz}"${url ? ` src="${url}"` : ""}${url && imgUrl.has(imgKey(sz, id, v)) ? ' data-ok="1"' : ""}>`;
 }
-/* 縦長の枠に出す画像：縦がなければ横 */
-const posterTag = (it, sz, cls) => (it.img ? imgTag(it, sz, cls) : it.imgw ? imgTag(it, sz, cls, "w") : "");
-/* 横長の枠に出す画像：横がなければ縦を切らずに（fit） */
-const wideTag = (it, sz, cls) => (it.imgw ? imgTag(it, sz, cls, "w") : it.img ? imgTag(it, sz, cls + " fit") : "");
+const posterTag = (it, sz, cls) => (it.img ? imgTag(it, sz, cls) : "");
 /* 一覧の行のサムネ（画像のない作品は灰色の枠） */
 const thumbHtml = it => (h => `<span class="thb${h ? "" : " none"}" aria-hidden="true">${h}</span>`)(posterTag(it, "s", "thbi"));
 
@@ -180,16 +151,12 @@ function shrink(im, max, q, limit) {
   return d;
 }
 let imgBusy = false;
-/* 「画像を追加」「変更」：k（縦 p／横 w）が決まっていなければ先に選ぶ。選んだらコピーしてある画像をそのまま貼る。なければ写真から選ぶかを聞く */
-async function pickImage(id, k) {
+/* 画像の枠を押したとき・「変更」：コピーしてある画像をそのまま貼る。なければ写真から選ぶかを聞く */
+async function pickImage(id) {
   if (imgBusy) return;
-  if (!k) {
-    if (id.startsWith(YT_PRE)) k = "p";
-    else return askImageKind(id);
-  }
   const b = await clipImage();
-  if (b) return setImage(id, b, k);
-  askImageSource(id, k);
+  if (b) return setImage(id, b);
+  askImageSource(id);
 }
 /* クリップボードの画像を取り出す（使えない端末・許可されなかったとき・画像がないときは null） */
 async function clipImage() {
@@ -202,7 +169,7 @@ async function clipImage() {
   } catch (e) {}
   return null;
 }
-/* 小さい確認の枠（縦・横の選択／写真から選ぶ） */
+/* 小さい確認の枠（写真から選ぶ） */
 function imgAsk(label, inner, onPick) {
   closeImgView();
   const v = document.createElement("div");
@@ -220,30 +187,23 @@ function imgAsk(label, inner, onPick) {
   document.body.appendChild(v);
   v.querySelector(".pri,[data-iv]").focus({ preventScroll: true });
 }
-/* 縦・横を選ぶ（押したらそのまま貼り付け） */
-function askImageKind(id) {
-  const it = imgObj(id) || {};
-  const btn = k => `<button type="button" class="ikind ${k}" data-iv="${k}"><i aria-hidden="true"></i><span>${IMG_KIND[k]}</span>${imgVer(it, k) ? "<small>登録済み・差し替え</small>" : ""}</button>`;
-  imgAsk("画像を追加", `<b>どちらに貼りますか？</b><div class="ikinds">${btn("p")}${btn("w")}</div><div class="ivbar"><button type="button" class="u-btn" data-iv="close">やめる</button></div>`, k => pickImage(id, k));
-}
 /* コピーした画像がないとき：写真から選ぶ（押したその場でファイルを選ぶ画面を開く） */
-function askImageSource(id, k) {
+function askImageSource(id) {
   imgAsk(
     "画像を追加",
     `<b>コピーした画像がありません</b><p>画像を長押し（パソコンは右クリック）して「コピー」してから、もう一度押すと自動で貼り付けます。</p><div class="ivbar"><button type="button" class="u-btn" data-iv="close">やめる</button><button type="button" class="u-btn pri" data-iv="file">写真から選ぶ</button></div>`,
-    () => pickFile(id, k),
+    () => pickFile(id),
   );
 }
-function pickFile(id, k) {
+function pickFile(id) {
   if (imgBusy) return;
   const inp = document.createElement("input");
   inp.type = "file";
   inp.accept = "image/*";
-  inp.onchange = () => inp.files[0] && setImage(id, inp.files[0], k);
+  inp.onchange = () => inp.files[0] && setImage(id, inp.files[0]);
   inp.click();
 }
-/* k が "auto" のときは画像の形で決める（横に長ければ横） */
-async function setImage(id, file, k = "p") {
+async function setImage(id, file) {
   if (!db || !imgObj(id)) return;
   if (!/^image\//.test(file.type || "image/")) return toast("画像のファイルを選んでください");
   imgBusy = true;
@@ -253,121 +213,76 @@ async function setImage(id, file, k = "p") {
     const small = shrink(im, 360, 0.8, 60e3);
     const large = shrink(im, 1200, 0.82, 700e3);
     URL.revokeObjectURL(url);
-    if (id.startsWith(YT_PRE)) k = "p";
-    else if (k === "auto") k = im.naturalWidth > im.naturalHeight * 1.15 ? "w" : "p";
-    const doc = imgDoc(id, k);
+    const doc = id;
     const v = Date.now();
     /* 先に控えへ入れて、保存の完了を待たずに表示する */
     imgRemember(imgKey("s", doc, v), dataToBlobUrl(small));
     imgRemember(imgKey("l", doc, v), dataToBlobUrl(large));
     await Promise.all([db.doc(`imgs/${doc}`).set({ d: small, v }), db.doc(`imgl/${doc}`).set({ d: large, v })]);
-    await imgSave(id, v, id.startsWith(YT_PRE) ? "画像を保存しました" : `${IMG_KIND[k]}の画像を保存しました`, k, `${im.naturalWidth}x${im.naturalHeight}`);
+    await imgSave(id, v, "画像を保存しました");
   } catch (e) {
     fail(e);
   } finally {
     imgBusy = false;
   }
 }
-function removeImage(id, k = "p") {
+function removeImage(id) {
   const it = imgObj(id);
-  if (!it || !imgVer(it, k)) return;
-  const doc = imgDoc(id, k);
-  imgSave(id, null, "画像を外しました", k);
-  db.doc(`imgs/${doc}`).delete().catch(fail);
-  db.doc(`imgl/${doc}`).delete().catch(fail);
+  if (!it || !it.img) return;
+  imgSave(id, null, "画像を外しました");
+  db.doc(`imgs/${id}`).delete().catch(fail);
+  db.doc(`imgl/${id}`).delete().catch(fail);
 }
 /* ゴミ箱から完全に消すときに、画像も消す */
 function removeImageDocs(id) {
   if (!db) return;
-  [id, imgDoc(id, "w")].forEach(d => {
-    db.doc(`imgs/${d}`).delete().catch(() => {});
-    db.doc(`imgl/${d}`).delete().catch(() => {});
-  });
+  db.doc(`imgs/${id}`).delete().catch(() => {});
+  db.doc(`imgl/${id}`).delete().catch(() => {});
+}
+/* 横画像・推奨寸法の機能をなくしたときの後片付け（2026-11-21）：横画像（imgs・imgl の「作品ID_w」）と作品データの印（imgw・imgwd・imgwy・寸法の記録 imgd）を消す。
+   最新のデータが届いたあとに1回だけ。印のある作品がなくなれば何もしない */
+const WIDE_KEYS = ["imgw", "imgwd", "imgwy", "imgd"];
+let wideCleaned = false;
+function cleanWideImages() {
+  if (wideCleaned || !db) return;
+  wideCleaned = true;
+  Object.keys(over)
+    .filter(id => over[id] && WIDE_KEYS.some(k => k in over[id]))
+    .forEach(id => {
+      const o = over[id],
+        rest = { ...o };
+      WIDE_KEYS.forEach(k => delete rest[k]);
+      over[id] = rest;
+      db.doc(`titles/${id}`).set(rest).catch(e => console.warn(e));
+      if (!("imgw" in o || "imgwd" in o || "imgwy" in o)) return;
+      db.doc(`imgs/${id}_w`).delete().catch(() => {});
+      db.doc(`imgl/${id}_w`).delete().catch(() => {});
+    });
 }
 
-/* ---------- 詳細での出し方 ---------- */
-/* タイトルの上に横の画像を大きく（番組情報タブだけ。縦の画像はここには出さない）
-   映す位置（上下）は作品ごとに imgwy（0＝いちばん上〜100＝いちばん下、％）。「位置を調整」でドラッグして保存 */
-const imgPosY = it => (typeof it.imgwy === "number" ? it.imgwy : 30);
-function detailHeroHtml(it) {
-  if (!it.imgw) return "";
-  const img = imgTag(it, "l", "dheroi", "w").replace("<img ", `<img style="object-position:center ${imgPosY(it)}%" `);
-  return `<div class="dheroW"><button type="button" class="dhero" data-imgview="w" aria-label="画像を大きく表示">${img}</button><button type="button" class="u-btn sm dhpos" data-imgpos="1">位置を調整</button></div>`;
-}
-/* 位置の調整：画像を上下にドラッグ →「保存」／「やめる」 */
-function startImgPos(el, it) {
-  const wrap = el.closest(".dheroW"),
-    btn = wrap && wrap.querySelector(".dhero"),
-    img = wrap && wrap.querySelector(".dheroi");
-  if (!img || !img.naturalWidth) return toast("画像の読み込み中です");
-  const over = (wrap.clientWidth * img.naturalHeight) / img.naturalWidth - wrap.clientHeight;
-  if (over <= 1) return toast("この画像は上下に動かせる余白がありません");
-  const y0 = imgPosY(it);
-  let y = y0,
-    sy = null,
-    sv = 0;
-  wrap.classList.add("adj");
-  wrap.insertAdjacentHTML("beforeend", `<div class="dhadj"><span>ドラッグして位置を調整</span><button type="button" class="u-btn sm" data-ipc="0">やめる</button><button type="button" class="u-btn sm pri" data-ipc="1">保存</button></div>`);
-  const bar = wrap.querySelector(".dhadj");
-  const down = e => {
-    sy = e.clientY;
-    sv = y;
-    btn.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  };
-  const move = e => {
-    if (sy === null) return;
-    y = Math.max(0, Math.min(100, sv - ((e.clientY - sy) / over) * 100));
-    img.style.objectPosition = `center ${y}%`;
-  };
-  const up = () => (sy = null);
-  /* 調整中は画像を押しても大きく表示しない */
-  const block = e => (e.stopPropagation(), e.preventDefault());
-  btn.addEventListener("pointerdown", down);
-  btn.addEventListener("pointermove", move);
-  btn.addEventListener("pointerup", up);
-  btn.addEventListener("pointercancel", up);
-  btn.addEventListener("click", block, true);
-  bar.addEventListener("click", e => {
-    const b = e.target.closest("[data-ipc]");
-    e.stopPropagation();
-    if (!b) return;
-    btn.removeEventListener("pointerdown", down);
-    btn.removeEventListener("pointermove", move);
-    btn.removeEventListener("pointerup", up);
-    btn.removeEventListener("pointercancel", up);
-    btn.removeEventListener("click", block, true);
-    wrap.classList.remove("adj");
-    bar.remove();
-    const v = Math.round(y * 10) / 10;
-    if (b.dataset.ipc === "1" && v !== y0) saveTitle(it.id, { imgwy: v }, "画像の位置を保存しました");
-    else img.style.objectPosition = `center ${y0}%`;
-  });
-}
-/* 画像のボタン：どちらもない→「＋ 画像を追加」（縦・横を選ぶ）／ないほうは「＋ 縦・横の画像を追加」／
-   縦は詳細の上に出ないので、あれば「縦の画像」（大きく表示・変更・外す） */
-function imgAddChip(it) {
-  if (!it.img && !it.imgw) return `<button type="button" class="u-chip add" data-imgadd="">＋ 画像を追加</button>`;
-  const add = k => `<button type="button" class="u-chip add" data-imgadd="${k}">＋ ${k === "w" ? "横" : "縦"}の画像を追加</button>`;
-  return (it.img ? `<button type="button" class="u-chip" data-imgview="p">縦の画像</button>` : add("p")) + (it.imgw ? "" : add("w"));
-}
+/* ---------- 詳細での出し方（PCの左の列） ---------- */
+/* 縦の画像。画像がなければ押すと貼り付け、あれば押すと大きく表示（変更・外すはそこから） */
+const posterSlot = it =>
+  it.img
+    ? `<button type="button" class="dpimg" data-imgview="1" aria-label="画像を大きく表示">${imgTag(it, "l", "dpimgi")}</button>`
+    : `<button type="button" class="dpimg none" data-imgadd="1" aria-label="画像を貼り付け">${IMG_ICON}<span>押して画像を貼り付け</span></button>`;
 
 /* ---------- 大きく表示（変更・外すもここから） ---------- */
-function openImgView(it, k = "p") {
+function openImgView(it) {
   closeImgView();
   const v = document.createElement("div");
   v.className = "imgview";
   v.setAttribute("role", "dialog");
   v.setAttribute("aria-modal", "true");
   v.setAttribute("aria-label", `${it.t} の画像`);
-  v.innerHTML = `<div class="ivbox">${imgTag(it, "l", "ivimg", k)}</div>${imgInfoHtml(it, k, it.id.startsWith(YT_PRE))}<div class="ivbar"><button type="button" class="u-btn" data-iv="change">変更</button><button type="button" class="u-btn danger" data-iv="remove">外す</button><button type="button" class="u-btn pri" data-iv="close">閉じる</button></div>`;
+  v.innerHTML = `<div class="ivbox">${imgTag(it, "l", "ivimg")}</div><div class="ivbar"><button type="button" class="u-btn" data-iv="change">変更</button><button type="button" class="u-btn danger" data-iv="remove">外す</button><button type="button" class="u-btn pri" data-iv="close">閉じる</button></div>`;
   v.addEventListener("click", e => {
     const b = e.target.closest("[data-iv]");
     if (!b && e.target.closest(".ivimg")) return;
     const a = b ? b.dataset.iv : "close";
     closeImgView();
-    if (a === "change") pickImage(it.id, k);
-    if (a === "remove") removeImage(it.id, k);
+    if (a === "change") pickImage(it.id);
+    if (a === "remove") removeImage(it.id);
   });
   document.body.appendChild(v);
   v.querySelector("[data-iv=close]").focus({ preventScroll: true });
@@ -396,9 +311,9 @@ document.addEventListener("paste", e => {
   if (!f) return;
   e.preventDefault();
   closeImgView();
-  setImage(key, f, "auto");
+  setImage(key, f);
 });
-DETAIL_ACTIONS.push(["[data-imgpos]", (el, it) => startImgPos(el, it)], ["[data-imgadd]", (el, it) => pickImage(it.id, el.dataset.imgadd || "")], ["[data-imgview]", (el, it) => openImgView(it, el.dataset.imgview === "w" ? "w" : "p")]);
+DETAIL_ACTIONS.push(["[data-imgadd]", (el, it) => pickImage(it.id)], ["[data-imgview]", (el, it) => openImgView(it)]);
 
 /* ---------- リスト／グリッド（写真とタイトルだけ）の切り替え ---------- */
 const VIEW_IC = {

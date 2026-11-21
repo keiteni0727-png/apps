@@ -350,8 +350,8 @@ function weekCard(i, dayKey, isNext, onAir, preferBack) {
     : spUnseen(i)
       ? `<button type="button" class="u-btn pri wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
       : "";
-  /* 線のタイムライン：時刻・線と点・横長の画像・情報（PCは画像の右に、画像の高さに収める／スマホは画像の下に） */
-  const img = wideTag(i, "l", "wc-imgi") || `<span class="wc-noimg">${IMG_ICON}</span>`;
+  /* 線のタイムライン：時刻・線と点・縦長の画像（ポスター）・情報（PC・スマホとも画像の右に、画像の高さに収める） */
+  const img = posterTag(i, "s", "wc-imgi") || `<span class="wc-noimg">${IMG_ICON}</span>`;
   return `<div class="wcard v-tl${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
     <span class="wc-time">${time}</span>
     <span class="wc-line" aria-hidden="true"><i></i></span>
