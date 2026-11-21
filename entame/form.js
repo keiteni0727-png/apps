@@ -207,7 +207,7 @@ function formHtml() {
     /* OP・ED・主題歌の「なし」は見出しの行の右に（曲が1曲もないときだけ） */
     const sgNone = f.only === "sgList" ? sgNoneBox() : "";
     return `<div class="hdrow"><h3 class="onlyh"><small>${esc(f.t)}</small>${lab}を編集</h3>${sgNone}<button class="u-btn icon sm soft close" type="button" data-back="1" aria-label="戻る">✕</button></div>
-    <form id="titleF" novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
+    <form id="titleF"${upcoming(f) ? ' class="fup"' : ""} novalidate><div class="fgrid only">${keys.map(k => P[k]).join("")}</div>
     <div class="ffoot">${f.only === "relb" && f.rbK !== "new" ? `<button type="button" class="u-btn sm txt danger delsm" id="rbDel" aria-label="この関連作品を削除">削除</button>` : ""}<button type="button" class="u-btn" data-back="1">キャンセル</button><button class="u-btn pri primary" type="submit">保存する</button></div></form>`;
   }
   /* 上：タイトル、その下にジャンル・ステータス（色付きの札。押すと選択肢が開く） */
@@ -222,7 +222,7 @@ function formHtml() {
     <div class="fchips"><button type="button" class="u-chip fchip ${ck[2]}" data-fx="kind" aria-expanded="${f.fx === "kind"}" aria-label="ジャンル：${ck[1]}">${ck[1]}${DD_CHEV}</button><button type="button" class="u-chip fchip s-${esc(f.s)}" data-fx="status" aria-expanded="${f.fx === "status"}" aria-label="ステータス：${esc(stLabel(f.s))}">${esc(stLabel(f.s))}${DD_CHEV}</button></div>
     ${f.fx === "kind" ? `<div class="u-seg segc fxopt" role="group" aria-label="ジャンル">${seg("data-fk", KINDS, f.k)}</div>` : ""}${f.fx === "status" ? `<div class="u-seg segc fxopt fxst" role="group" aria-label="ステータス">${seg("data-fs", STATUSES.map(x => [x, stLabel(x), "s-" + x]), f.s)}</div>` : ""}</div>`;
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
-    <form id="titleF" novalidate>
+    <form id="titleF"${upcoming(f) ? ' class="fup"' : ""} novalidate>
     ${head}
     ${sec(`<span class="ilamp onair">ON AIR</span>`, P.mtype + P.mst + P.from + P.time + P.cours + P.mvod + P.vurl + P.series + P.url, "", "", "ftbl")}
     ${sec(`<span class="ilamp music">MUSIC</span>`, P.songs, "", sgNoneBox(), "fsongs" + fm("songs"))}
@@ -744,6 +744,10 @@ SORT_DONE.sg = () => {
   redrawForm();
 };
 
+/* 作品の編集：開始日を未来日にしたら⚠を消す（fup。入力中の欄は描き直さない） */
+document.addEventListener("input", e => {
+  if (form && e.target && e.target.id === "f-from") $("#titleF")?.classList.toggle("fup", upcoming({ from: e.target.value }));
+});
 /* 作品の編集：ずれのアラート（配信URLなど）が出ている欄は、文字を入れたら消す */
 document.addEventListener("input", e => {
   const fl = e.target && e.target.closest && e.target.closest("#titleF .fmiss");

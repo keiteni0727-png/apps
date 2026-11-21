@@ -38,7 +38,7 @@ function nextIdx(eps) {
 function epWarn(it) {
   const subA = it.k === "a" && missingOf(it).some(x => x.k === "サブタイトル");
   const dc = epDateCheck(it);
-  const gd = epGapDup(episodes(it), it.gapOk);
+  const gd = epGD(it, episodes(it));
   return (e, i) => ({ n: !epVal(e.n) && !e.sp, s: subA && !(e.sub || "").trim(), d: dc.eps[i] || null, gap: gd.gap.get(i) || null, dup: gd.dup.has(i) });
 }
 const warnAny = x => x.n || x.s || x.d || x.gap || x.dup;
@@ -166,7 +166,7 @@ let erMore = false; // 話数の編集の「その他」を開いているか
 function epEditorHtml(it) {
   const l = epEdit.list;
   const A = it.k === "a";
-  const gd = epGapDup(l, it.gapOk);
+  const gd = epGD(it, l);
   const n = l.length;
   /* 上の操作：貼り付け・1話追加・その他（まとめて追加・日付・並べ替え） */
   const more = erMore

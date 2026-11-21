@@ -1686,9 +1686,9 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .ftbl .field>.nofl{grid-column:3;grid-row:1;order:0;font-size:var(--fs-s)}
 .ftbl .field:has(>.nofl input:checked)>label.field+*{display:none}
 /* 要確認の項目：項目名を⚠付きの色に（「なし」にチェックを入れたら消す） */
-.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>span:first-child,.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>label.field>span{color:var(--u-warn)}
-.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>span:first-child::before,.ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>label.field>span::before{content:"⚠ "}
-.fsongs.fmiss:not(:has(.sghno input:checked))>h4::after{content:"⚠ 要確認";font-size:var(--fs-s);font-weight:700;color:var(--u-warn);order:1}
+#titleF:not(.fup) .ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>span:first-child,#titleF:not(.fup) .ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>label.field>span{color:var(--u-warn)}
+#titleF:not(.fup) .ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>span:first-child::before,#titleF:not(.fup) .ftbl :is(.fmiss,.fchk:has(input:placeholder-shown)):not(:has(.nofl input:checked))>label.field>span::before{content:"⚠ "}
+#titleF:not(.fup) .fsongs.fmiss:not(:has(.sghno input:checked))>h4::after{content:"⚠ 要確認";font-size:var(--fs-s);font-weight:700;color:var(--u-warn);order:1}
 .ftbl .cours{padding:3px 0}
 /* 曲：1曲1行（押すと広がる） */
 .fsongs .fgrid{gap:8px}

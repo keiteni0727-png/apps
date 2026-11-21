@@ -729,7 +729,7 @@ function epDateCheck(it) {
   const md = mediaOf(it).media;
   const l = episodes(it);
   const out = { eps: l.map(() => null), start: "", dowN: 0, n: 0 };
-  if (md === "movie") return out;
+  if (md === "movie" || upcoming(it)) return out;
   const ds = l.map(e => (e.t ? jst(e.t).day : ""));
   const dated = ds.filter(Boolean);
   if (!dated.length) return out;
@@ -767,6 +767,10 @@ function epDateCheck(it) {
   return out;
 }
 const todayStr = () => new Date(Date.now() + 540 * 60000).toISOString().slice(0, 10);
+/* 開始日が今日より後（放送前）の作品は、要確認を全部出さない（一覧・詳細・絞り込み・話数タブ・話数の編集・作品の編集）。開始日になったら出る */
+const upcoming = i => !!i && (normDate(String(i.from || "").slice(0, 10)) || "") > todayStr();
+/* 話数の抜け・重複（放送前の作品は見ない） */
+const epGD = (it, l) => (upcoming(it) ? { gap: new Map(), dup: new Set() } : epGapDup(l, it.gapOk));
 /* 最初のクールが、開始日（または2週間後）の季節と合っているか（9月末スタートの秋アニメなど） */
 function courMismatch(i) {
   const cs = coursOf(i).filter(c => /^\d{4}/.test(c) && c !== ALLYEAR);
@@ -833,11 +837,11 @@ const MISS_CHECKS = [
   /* 話数の抜け（1・2・4話…）・重複（同じ話数が2つ）。数字の話数だけ見る（5.5話などは抜けに数えない） */
   { g: "話数", k: "話数の抜け", test: c => c.gd.gap.size > 0 },
   { g: "話数", k: "話数の重複", test: c => c.gd.dup.size > 0 },
-  /* ステータスのずれ：視聴中なのにチェック0話／未視聴なのにチェックあり／放送前なのに視聴済み */
+  /* ステータスのずれ：視聴中なのにチェック0話／未視聴なのにチェックあり */
   {
     g: "ずれ",
     k: "ステータスのずれ",
-    test: ({ i, eps }) => (i.s === "視聴中" && watchable(eps).length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)) || (i.s === "視聴済み" && i.from && i.from.slice(0, 10) > todayStr()),
+    test: ({ i, eps }) => (i.s === "視聴中" && watchable(eps).length && !eps.some(e => e.w)) || (i.s === "未視聴" && eps.some(e => e.w)),
   },
   { g: "基本情報", k: ["開始日", "公開日", "発売日", "放送日"], j: "f-from", test: c => !c.i.from && ({ movie: "公開日", ova: "発売日", sp: "放送日" }[c.md] || "開始日") },
   { g: "基本情報", k: ["放送時間", "配信時間"], j: "f-time", n: "time", test: c => !c.ns && !(c.i.time || "").trim() && (c.md === "stream" ? "配信時間" : "放送時間") },
@@ -873,13 +877,14 @@ function missCtx(i) {
     ns: noSched(m.media),
     eps,
     sl,
-    gd: epGapDup(eps, i.gapOk),
+    gd: epGD(i, eps),
     em: Math.max(0, ...nums),
     ta: sl.filter(x => (x.s || "").trim()).map(x => ({ st: songTA(x).st.trim(), ar: songTA(x).ar.trim() })),
   };
 }
 /* 作品の要確認の項目：[{k, j, n, ns}] */
 function missingOf(i) {
+  if (upcoming(i)) return [];
   const c = missCtx(i),
     nf = i.noF || [];
   const out = [];
