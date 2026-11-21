@@ -93,7 +93,8 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   /* 関連作品：見出し（タイトル・放送期間）の下に、OP・EDなどの小見出し。小見出しは最初たたんだ状態で、押すと開く（開いた種類はアプリを開いている間覚える） */
   const relb = (it.relb || [])
     .map((r, k) => {
-      const per = r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${r.to ? fmtD(r.to) : ""}` : "";
+      /* 終了日がなければ開始日だけ（「〜」は付けない） */
+      const per = r.from && !r.to ? fmtD(r.from) : r.from || r.to ? `${r.from ? fmtD(r.from) : ""}〜${fmtD(r.to)}` : "";
       const name = esc(r.t || "関連作品");
       const hd = `<div class="irbh"><span class="irbtx"><span class="irbn">${MEDIA_LAB[r.md] ? `<span class="mtag m-${r.md}">${MEDIA_LAB[r.md]}</span>` : ""}${name}</span>${per ? `<span class="irbd inum">${esc(per)}</span>` : ""}</span><button type="button" class="u-btn sm iedit" data-jump="relb" data-rbk="${k}" aria-label="${name}を編集">編集</button></div>`;
       const sl = r.songs || [];
