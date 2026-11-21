@@ -444,7 +444,7 @@ function buildPatch(f) {
     t,
     s: f.s,
     dow: isMovie || (f.noF || []).includes("time") || !f.from ? -1 : dowOfDate(f.from),
-    time: isMovie ? "" : (f.time || "").trim().replace("：", ":"),
+    time: isMovie ? "" : (normHM(f.time) ?? (f.time || "").trim()),
     from: f.from || "",
     media: f.media,
     rel: f.media === "movie" && f.rel === "stream" ? "stream" : "",
@@ -506,6 +506,12 @@ async function submitForm() {
   if (!t) {
     $("#f-t").focus();
     toast("タイトルを入れてください");
+    return;
+  }
+  /* 放送時間：「1900」なども「19:00」にそろえる。読めない入力は保存しない */
+  if (normHM(f.time) === null && $("#f-time")) {
+    $("#f-time").focus();
+    toast("時刻は 24:30 のように入力してください");
     return;
   }
   const patch = buildPatch(f);

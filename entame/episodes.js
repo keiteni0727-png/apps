@@ -437,10 +437,8 @@ function saveEpOne(it) {
   x.x = !!r.querySelector(".e1-xc")?.checked;
   const j = jst(x.t);
   /* 時刻：「24:30」「2430」→「24:30」。空欄は時刻なし。変えたときだけ書き換える */
-  const tv = zen(r.querySelector(".e1-tm").value.trim()).replace(/：/g, ":");
-  const tm = /^(\d{1,2}):?(\d{2})$/.exec(tv);
-  if (tv && (!tm || +tm[1] > 29 || +tm[2] > 59)) return toast("時刻は 24:30 のように入力してください");
-  const hmNew = tm ? `${+tm[1]}:${tm[2]}` : "";
+  const hmNew = normHM(r.querySelector(".e1-tm").value);
+  if (hmNew === null) return toast("時刻は 24:30 のように入力してください");
   const timeCh = hmNew !== (j && !x.nt ? j.hm : "");
   if (!day) x.t = 0;
   else if (!j || j.day !== day) {

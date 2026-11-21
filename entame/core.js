@@ -217,7 +217,13 @@ function rebuild() {
   items = Object.entries(over)
     .filter(([, o]) => o && typeof o.t === "string" && !o.deleted)
     .sort(byOrder)
-    .map(([id, o]) => ({ id, k: "a", s: "", dow: -1, time: "", from: "", series: "", url: "", ...o }));
+    .map(([id, o]) => {
+      const x = { id, k: "a", s: "", dow: -1, time: "", from: "", series: "", url: "", ...o };
+      /* 「1900」のように保存されている古い放送時間も「19:00」として扱う */
+      const h = normHM(x.time);
+      if (h) x.time = h;
+      return x;
+    });
   buildEras();
 }
 
@@ -536,6 +542,16 @@ async function initStore() {
 /* ---------- 話数（放送日時は「分」で持つ。日本時間の深夜25時台は前日扱い） ---------- */
 const NOWMIN = () => Math.floor(Date.now() / 60000);
 const WEEK = 7 * 1440;
+/* 時刻をそろえる（番組の放送時間・話数の時刻で共通）：「1900」「19：00」「１９００」→「19:00」、「2430」→「24:30」。空は ""、読めなければ null */
+const normHM = s => {
+  const v = String(s || "")
+    .trim()
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/：/g, ":");
+  if (!v) return "";
+  const m = /^(\d{1,2}):?(\d{2})$/.exec(v);
+  return m && +m[1] <= 29 && +m[2] <= 59 ? `${+m[1]}:${m[2]}` : null;
+};
 function dayTimeToT(day, hm) {
   // 放送日＋「25:23」のような時刻（日本時間）→ 1970年からの分（世界時）
   if (!day) return 0;
