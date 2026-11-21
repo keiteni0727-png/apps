@@ -419,9 +419,10 @@ const viewTog = (cur, attr) =>
       return `<button type="button" ${attr}="${v}" aria-pressed="${cur === v}" aria-label="${g ? `大きさ：${GSZ_L[gsz()]}（押すと切り替え）` : l + "で表示"}" title="${g ? "押すと大きさを切り替え" : l}">${VIEW_IC[v]}${g ? `<small class="gszb">${GSZ_L[gsz()]}</small>` : ""}</button>`;
     })
     .join("")}</span>`;
-/* グリッドの1マス：縦長の画像（なければ灰色の枠）とタイトル */
+/* グリッドの1マス：縦長の画像（なければ灰色の枠）とタイトル。作品は画像の左上に放送形態（TV・映画など）のラベル */
+const gridMtag = (it, attr) => (attr === "data-id" ? (l => (l ? `<span class="mtag m-${l[1]}">${l[0]}</span>` : ""))(mediaLabOf(it)) : "");
 const gridCell = (it, attr = "data-id", ik = it) =>
-  `<button type="button" class="pcell${it.s === "視聴済み" ? " done" : ""}" ${attr}="${esc(it.id)}"><span class="pimg">${posterTag(ik, "s", "pimgi") || `<span class="wc-noimg">${IMG_ICON}</span>`}</span><span class="pttl">${esc(it.t || "（タイトルなし）")}</span></button>`;
+  `<button type="button" class="pcell${it.s === "視聴済み" ? " done" : ""}" ${attr}="${esc(it.id)}"><span class="pimg">${gridMtag(it, attr)}${posterTag(ik, "s", "pimgi") || `<span class="wc-noimg">${IMG_ICON}</span>`}</span><span class="pttl">${esc(it.t || "（タイトルなし）")}</span></button>`;
 document.addEventListener("click", e => {
   const b = e.target.closest && e.target.closest("[data-lview],[data-yview]");
   if (!b) return;

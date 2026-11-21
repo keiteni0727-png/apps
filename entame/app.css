@@ -1897,6 +1897,7 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 .ygrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 @media (min-width:900px){.ygrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}}
 .ygrid .pimg{aspect-ratio:16/9}
+.pimg .mtag{position:absolute;left:5px;top:5px;z-index:1;margin:0;vertical-align:0}
 /* グリッドの大きさ：小・大（中は上の今までの大きさ） */
 html[data-gsz="s"] .pgrid{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:12px 8px}
 html[data-gsz="l"] .pgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
