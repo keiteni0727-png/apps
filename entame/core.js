@@ -128,6 +128,7 @@ if (!(SUBS[state.mode] || ["all"]).includes(state.sub)) state.sub = "all";
 if (typeof state.vod !== "string") state.vod = "";
 if (typeof state.slot !== "string") state.slot = "";
 state.unOnly = !!state.unOnly;
+if (state.view !== "grid") state.view = "list";
 state.missOnly = !!state.missOnly;
 if (typeof state.missKey !== "string") state.missKey = "";
 /* 今の一覧のジャンル：all＝すべて、a＝アニメ、d＝ドラマ（映画では実写映画も）、x＝アニメ以外 */
@@ -135,6 +136,7 @@ const curKind = () => (state.mode === "a" || state.mode === "d" ? state.mode : S
 const saveUI = () =>
   ls.set(K_UI, {
     mode: state.mode,
+    view: state.view,
     sub: state.sub,
     vod: state.vod,
     slot: state.slot,
@@ -429,7 +431,6 @@ function dropAutoSp() {
     if (!o || o.media !== "sp" || !p || !Array.isArray(p.eps) || p.eps.length !== 1 || p.eps[0].n !== "SP") return;
     delete prog[id];
     removeDoc("progress", id).catch(fail);
-    removeImageDocs(id);
   });
 }
 /* ゴミ箱：削除した作品は deleted（削除した日時）を付けて30日残し、過ぎたら完全に削除する（最新のデータが届いたあと1回だけ） */
@@ -443,6 +444,8 @@ function trashGone(col, id) {
     delete prog[id];
     removeDoc("progress", id).catch(fail);
   }
+  /* 画像も消す（作品は作品ID、YouTube は yt_ID） */
+  removeImageDocs(col === "yt" ? "yt_" + id : id);
 }
 function purgeTrash(col) {
   if (purged[col] || !db) return;

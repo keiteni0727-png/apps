@@ -7,6 +7,12 @@
    - 画面に出たものだけ読みに行く（一覧はスクロールして見えた行だけ）。読んだ画像はこの端末のメモリに控える
    詳細での出し方は2通り（設定 → 表示 → 詳細の画像）：top＝上に横長で大きく／side＝ポスターと要点を横並び */
 const K_DIMG = "adb.v3.dimg";
+/* 画像のキー：作品はその作品ID、YouTube は「yt_ID」（imgs・imgl のドキュメント名にもなる） */
+const YT_PRE = "yt_";
+const imgObj = key => (key.startsWith(YT_PRE) ? ytOver[key.slice(YT_PRE.length)] : over[key]);
+const imgSave = (key, img, msg) => (key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img }, msg) : saveTitle(key, { img }, msg));
+/* YouTube の項目を、画像の部品が使える形（id＝キー）にする */
+const ytImgIt = x => ({ ...x, id: YT_PRE + x.id });
 const dimgMode = () => (ls.get(K_DIMG) === "side" ? "side" : "top");
 const IMG_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`;
 
@@ -190,7 +196,7 @@ function pickFile(id) {
   inp.click();
 }
 async function setImage(id, file) {
-  if (!db || !over[id]) return;
+  if (!db || !imgObj(id)) return;
   if (!/^image\//.test(file.type || "image/")) return toast("画像のファイルを選んでください");
   imgBusy = true;
   toast("画像を縮小して保存しています…");
@@ -204,7 +210,7 @@ async function setImage(id, file) {
     imgRemember(imgKey("s", id, v), dataToBlobUrl(small));
     imgRemember(imgKey("l", id, v), dataToBlobUrl(large));
     await Promise.all([db.doc(`imgs/${id}`).set({ d: small, v }), db.doc(`imgl/${id}`).set({ d: large, v })]);
-    await saveTitle(id, { img: v }, "画像を保存しました");
+    await imgSave(id, v, "画像を保存しました");
   } catch (e) {
     fail(e);
   } finally {
@@ -212,9 +218,9 @@ async function setImage(id, file) {
   }
 }
 function removeImage(id) {
-  const it = over[id];
+  const it = imgObj(id);
   if (!it || !it.img) return;
-  saveTitle(id, { img: null }, "画像を外しました");
+  imgSave(id, null, "画像を外しました");
   db.doc(`imgs/${id}`).delete().catch(fail);
   db.doc(`imgl/${id}`).delete().catch(fail);
 }
@@ -286,12 +292,40 @@ document.addEventListener(
 );
 /* パソコン：詳細を開いているときに Ctrl+V（⌘V）でも貼れる（入力欄の中は除く） */
 document.addEventListener("paste", e => {
-  if (!openId || !over[openId] || !$("#layer .sheet:not(.form) #sheetIn")) return;
+  const key = ytOpen && $("#layer .sheet:not(.form) #ytIn") ? YT_PRE + ytOpen : openId && over[openId] && $("#layer .sheet:not(.form) #sheetIn") ? openId : "";
+  if (!key) return;
   if (e.target && e.target.closest && e.target.closest("input,textarea,[contenteditable]")) return;
   const f = [...((e.clipboardData && e.clipboardData.files) || [])].find(x => /^image\//.test(x.type));
   if (!f) return;
   e.preventDefault();
   closeImgView();
-  setImage(openId, f);
+  setImage(key, f);
 });
 DETAIL_ACTIONS.push(["[data-imgadd]", (el, it) => pickImage(it.id)], ["[data-imgview]", (el, it) => openImgView(it)]);
+
+/* ---------- リスト／グリッド（写真とタイトルだけ）の切り替え ---------- */
+const VIEW_IC = {
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><rect x="3.5" y="4.5" width="3" height="3" rx=".6"/><rect x="3.5" y="10.5" width="3" height="3" rx=".6"/><rect x="3.5" y="16.5" width="3" height="3" rx=".6"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/></svg>',
+};
+const viewTog = (cur, attr) =>
+  `<span class="vtog" role="group" aria-label="表示のしかた">${[["list", "リスト"], ["grid", "グリッド"]]
+    .map(([v, l]) => `<button type="button" ${attr}="${v}" aria-pressed="${cur === v}" aria-label="${l}で表示" title="${l}">${VIEW_IC[v]}</button>`)
+    .join("")}</span>`;
+/* グリッドの1マス：縦長の画像（なければ灰色の枠）とタイトル */
+const gridCell = (it, attr = "data-id", ik = it) =>
+  `<button type="button" class="pcell${it.s === "視聴済み" ? " done" : ""}" ${attr}="${esc(it.id)}"><span class="pimg">${it.img ? imgTag(ik, "s", "pimgi") : `<span class="wc-noimg">${IMG_ICON}</span>`}</span><span class="pttl">${esc(it.t || "（タイトルなし）")}</span></button>`;
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("[data-lview],[data-yview]");
+  if (!b) return;
+  if (b.dataset.lview) state.view = b.dataset.lview;
+  else if (typeof ytSetView === "function") ytSetView(b.dataset.yview);
+  render();
+});
+
+/* ---------- YouTube ---------- */
+/* 一覧の行のサムネ（横長） */
+const ytThumbHtml = x => thumbHtml(ytImgIt(x));
+/* 詳細：上に横長で大きく（YouTube は横長の画像が多いので、設定に関係なくこの形） */
+const ytHeroHtml = x => (x.img ? `<button type="button" class="dhero" data-imgview="1" aria-label="画像を大きく表示">${imgTag(ytImgIt(x), "l", "dheroi")}</button>` : "");
+const ytImgAddChip = x => (x.img ? "" : `<button type="button" class="u-chip add" data-imgadd="1">＋ 画像を追加</button>`);

@@ -64,6 +64,9 @@
   );
   add("a5", { k: "a", t: "深海図書館", s: "未視聴", dow: 2, time: "22:00", from: "2026-10-08", media: "stream", plat: ["Netflix"], cours: ["2026秋"] }, weekly("2026-10-08", "17:00", 10, 0));
   add("a6", { k: "a", t: "おしごと日和", s: "見ない", dow: 1, time: "21:54", from: "2026-10-07", media: "tv", stations: ["NHK"], cours: ["2026秋"] }, weekly("2026-10-07", "21:54", 13, 1));
+  /* 金曜（今日）にも数本（番組表のタイムラインの見本） */
+  add("a14", { k: "a", t: "放課後ロボット部", s: "視聴中", dow: 4, time: "18:25", from: "2026-10-02", media: "tv", stations: ["NHK Eテレ"], vods: ["U-NEXT"], cours: ["2026秋"] }, weekly("2026-10-02", "18:25", 12, 6));
+  add("d5", { k: "d", t: "金曜の夜はカレーを", s: "視聴中", dow: 4, time: "21:00", from: "2026-10-09", media: "tv", stations: ["TBS"], vods: ["TVer"], cours: ["2026秋"] }, weekly("2026-10-09", "21:00", 10, 5));
   /* ---- アニメ：前のクール・過去 ---- */
   add(
     "a7",
@@ -121,6 +124,19 @@
   poster("a4", "#8a5a3c", "#f3e2b8", 960, 540);
   poster("a5", "#1f4f66", "#7fd3e6");
   poster("a7", "#4a6f8a", "#f8e3a3");
+  poster("d5", "#7a3b2e", "#f6c177", 960, 540);
   poster("m1", "#22305a", "#ffd36b");
+  /* YouTube（横長。imgs・imgl のドキュメント名は yt_ID） */
+  const ytPoster = (id, bg, fg) => {
+    const t = yt[id].t;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540"><rect width="960" height="540" fill="${bg}"/><circle cx="740" cy="200" r="150" fill="${fg}" opacity=".85"/><rect x="0" y="380" width="960" height="160" fill="#000" opacity=".3"/><text x="40" y="480" font-family="sans-serif" font-weight="700" font-size="56" fill="#fff">${t}</text></svg>`;
+    const d = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    imgs["yt_" + id] = { d, v: 1 };
+    imgl["yt_" + id] = { d, v: 1 };
+    yt[id].img = 1;
+  };
+  ytPoster("y1", "#3a2a4a", "#e07a5f");
+  ytPoster("y2", "#1f5a4a", "#f2cc8f");
+  ytPoster("y3", "#22222e", "#9d8df1");
   window.PREVIEW_DATA = { titles, progress, master, yt, imgs, imgl };
 })();
