@@ -291,6 +291,14 @@ async function saveTitle(id, patch, msg) {
   const o = { ...(over[id] || {}), ...patch };
   over[id] = o;
   rebuild();
+  /* 放送時間を入れた・変えた：時刻が未入力の話に入れる */
+  const it = "time" in patch && items.find(x => x.id === id);
+  const l = it ? episodes(it) : null;
+  const n = l ? fillEpTime(it, l) : 0;
+  if (n) {
+    saveEps(it, l, `${msg || "保存しました"}（${n}話に時刻を入れました）`);
+    msg = "";
+  }
   render();
   if (openId === id && !epEdit) refreshSheet();
   if (msg) toast(msg);

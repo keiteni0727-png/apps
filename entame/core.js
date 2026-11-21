@@ -477,6 +477,7 @@ async function initStore() {
     dropAutoSp();
     calcLastAt();
     rebuild();
+    fillEpTimesAll();
     render();
     if (openId && !epEdit) refreshSheet();
   };
@@ -565,6 +566,36 @@ function dayTimeToT(day, hm) {
 const hasTime = it => mins(it.time) < 9999;
 // 時刻なしの日付は 0:00 UTC（日本時間 9:00）で持っているので、時刻としては出さない
 const noTime = (e, it) => e.nt || (e.t % 1440 === 0 && !(it && mins(it.time) === 540));
+/* 番組に放送時間があるとき、日付だけ入っていて時刻が未入力の話に番組の放送時間を入れる（入れた話の数を返す）。
+   日付のない話・時刻が入っている話はそのまま */
+function fillEpTime(it, list) {
+  if (!hasTime(it)) return 0;
+  let n = 0;
+  list.forEach(e => {
+    if (!e.t || !noTime(e, it)) return;
+    e.t = dayTimeToT(jst(e.t).day, it.time);
+    e.nt = false;
+    n++;
+  });
+  return n;
+}
+/* 最新のデータが届いたあと1回だけ：登録済みの作品にも同じように入れる（話数リストだけ書きかえ、視聴チェックは触らない） */
+let epTimeFilled = false;
+function fillEpTimesAll() {
+  if (epTimeFilled || !db || !isSynced()) return;
+  epTimeFilled = true;
+  items.forEach(it => {
+    const p = prog[it.id];
+    if (!hasWMap(p) || !Array.isArray(p.eps)) return;
+    const l = episodes(it);
+    if (!fillEpTime(it, l)) return;
+    const at = Date.now();
+    const eps = progDoc(l).eps;
+    prog[it.id] = { ...p, eps, _at: at };
+    lastAt = at;
+    db.doc(`progress/${it.id}`).update({ eps, _at: at }).catch(fail);
+  });
+}
 const epWhen = (e, it, withYear) => {
   const j = jst(e.t);
   if (!j) return "";

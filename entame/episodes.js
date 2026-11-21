@@ -206,6 +206,7 @@ async function saveEps(it, list, msg) {
     if (openId === it.id && !epEdit) refreshSheet();
     return;
   }
+  fillEpTime(it, list);
   msg = applyAutoStatus(it, list, msg);
   const p = progDoc(list);
   prog[it.id] = p;
