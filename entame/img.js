@@ -11,11 +11,31 @@
 /* 画像のキー：作品はその作品ID、YouTube は「yt_ID」（imgs・imgl のドキュメント名にもなる） */
 const YT_PRE = "yt_";
 const imgObj = key => (key.startsWith(YT_PRE) ? ytOver[key.slice(YT_PRE.length)] : over[key]);
-const imgSave = (key, img, msg, k = "p") => (key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img }, msg) : saveTitle(key, { [k === "w" ? "imgw" : "img"]: img }, msg));
+/* dim：元画像の寸法「幅x高さ」（外すときは null） */
+const imgSave = (key, img, msg, k = "p", dim = null) =>
+  key.startsWith(YT_PRE) ? ytSave(key.slice(YT_PRE.length), { img, imgd: dim }, msg) : saveTitle(key, k === "w" ? { imgw: img, imgwd: dim } : { img, imgd: dim }, msg);
 /* 縦（p）・横（w）ごとの、保存場所の名前と版の番号 */
 const imgDoc = (id, k) => (k === "w" ? id + "_w" : id);
 const imgVer = (it, k) => (k === "w" ? it.imgw : it.img);
 const IMG_KIND = { p: "縦（ポスター）", w: "横（背景）" };
+/* 推奨の寸法：縦＝2:3・幅1000px以上／横＝16:9・幅1280px以上。外れていれば理由を返す */
+const IMG_REC = { p: { r: 2 / 3, w: 1000, ratio: "2:3", ex: "1000×1500" }, w: { r: 16 / 9, w: 1280, ratio: "16:9", ex: "1280×720" } };
+function imgIssue(k, w, h) {
+  const c = IMG_REC[k];
+  const out = [];
+  if (Math.abs(w / h / c.r - 1) > 0.02) out.push(`縦横比が${c.ratio}ではありません`);
+  if (w < c.w) out.push("推奨より小さい画像です");
+  return out;
+}
+/* 画像を大きく表示した画面の、元の寸法とアラート */
+function imgInfoHtml(it, k, yt) {
+  const d = /^(\d+)x(\d+)$/.exec((k === "w" ? it.imgwd : it.imgd) || "");
+  if (!d) return `<div class="ivinfo">元の寸法：記録なし（貼り直すと表示）</div>`;
+  const w = +d[1],
+    h = +d[2];
+  const bad = yt ? [] : imgIssue(k, w, h);
+  return `<div class="ivinfo${bad.length ? " warn" : ""}">${bad.length ? '<b aria-hidden="true">⚠</b>' : ""}元の寸法：${w}×${h}${bad.length ? `<small>${bad.join("・")}（推奨：${IMG_REC[k].ex}（${IMG_REC[k].ratio}）以上）</small>` : ""}</div>`;
+}
 /* YouTube の項目を、画像の部品が使える形（id＝キー）にする */
 const ytImgIt = x => ({ ...x, id: YT_PRE + x.id });
 const IMG_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`;
@@ -241,7 +261,7 @@ async function setImage(id, file, k = "p") {
     imgRemember(imgKey("s", doc, v), dataToBlobUrl(small));
     imgRemember(imgKey("l", doc, v), dataToBlobUrl(large));
     await Promise.all([db.doc(`imgs/${doc}`).set({ d: small, v }), db.doc(`imgl/${doc}`).set({ d: large, v })]);
-    await imgSave(id, v, id.startsWith(YT_PRE) ? "画像を保存しました" : `${IMG_KIND[k]}の画像を保存しました`, k);
+    await imgSave(id, v, id.startsWith(YT_PRE) ? "画像を保存しました" : `${IMG_KIND[k]}の画像を保存しました`, k, `${im.naturalWidth}x${im.naturalHeight}`);
   } catch (e) {
     fail(e);
   } finally {
@@ -287,7 +307,7 @@ function openImgView(it, k = "p") {
   v.setAttribute("role", "dialog");
   v.setAttribute("aria-modal", "true");
   v.setAttribute("aria-label", `${it.t} の画像`);
-  v.innerHTML = `<div class="ivbox">${imgTag(it, "l", "ivimg", k)}</div><div class="ivbar"><button type="button" class="u-btn" data-iv="change">変更</button><button type="button" class="u-btn danger" data-iv="remove">外す</button><button type="button" class="u-btn pri" data-iv="close">閉じる</button></div>`;
+  v.innerHTML = `<div class="ivbox">${imgTag(it, "l", "ivimg", k)}</div>${imgInfoHtml(it, k, it.id.startsWith(YT_PRE))}<div class="ivbar"><button type="button" class="u-btn" data-iv="change">変更</button><button type="button" class="u-btn danger" data-iv="remove">外す</button><button type="button" class="u-btn pri" data-iv="close">閉じる</button></div>`;
   v.addEventListener("click", e => {
     const b = e.target.closest("[data-iv]");
     if (!b && e.target.closest(".ivimg")) return;
