@@ -261,7 +261,7 @@ function cleanWideImages() {
 }
 
 /* ---------- 詳細での出し方（PCの左の列） ---------- */
-/* 縦の画像（スマホ・iPadはタイトルの左の .dtimg に同じ動きで出す）。画像がなければ押すと貼り付け、あれば押すと大きく表示（変更・外すはそこから） */
+/* 縦の画像。画像がなければ押すと貼り付け、あれば押すと大きく表示（変更・外すはそこから） */
 const posterSlot = it =>
   it.img
     ? `<button type="button" class="dpimg" data-imgview="1" aria-label="画像を大きく表示">${imgTag(it, "l", "dpimgi")}</button>`
