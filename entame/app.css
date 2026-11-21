@@ -1778,10 +1778,19 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 @media (min-width:900px){.row.thr .slot{grid-template-columns:62px 44px minmax(0,1fr) auto!important}.thb{width:44px}}
 /* 詳細 案A：上に横長の画像（番組情報タブだけ） */
 /* 詳細の上部画像：枠の端から端まで、高さは抑える（スマホ 約150px／PC 約300px）。少し上寄りで切り取る。押すと大きく表示 */
-.dhero{display:block;width:calc(100% + 32px);height:150px;margin:0 -16px;padding:0;border:0;background:var(--u-chip);overflow:hidden;cursor:zoom-in}
+.dheroW{position:relative;margin:0 -16px}
+.dhero{display:block;width:100%;height:150px;margin:0;padding:0;border:0;background:var(--u-chip);overflow:hidden;cursor:zoom-in}
+/* 位置を調整：PCはマウスを乗せたときだけ、スマホは常に表示 */
+.dhpos{position:absolute;right:10px;bottom:10px;opacity:.92;background:rgba(0,0,0,.55);color:#fff;border-color:transparent;backdrop-filter:blur(4px)}
+@media (hover:hover){.dhpos{opacity:0;transition:opacity .15s}.dheroW:hover .dhpos{opacity:1}}
+.dheroW.adj .dhpos{display:none}
+.dheroW.adj .dhero{cursor:ns-resize;touch-action:none}
+.dheroW.adj .dheroi{pointer-events:none;user-select:none;-webkit-user-drag:none}
+.dhadj{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:6px}
+.dhadj span{background:rgba(0,0,0,.55);color:#fff;font-size:var(--fs-s);padding:5px 9px;border-radius:var(--r-s)}
 .dheroi{display:block;width:100%;height:100%;object-fit:cover;object-position:center 30%}
-.sheet.t-ep .dhero{display:none}
-@media (max-width:600px){.dhero{width:calc(100% + 28px);margin:0 -14px}}
+.sheet.t-ep .dheroW{display:none}
+@media (max-width:600px){.dheroW{margin:0 -14px}}
 @media (min-width:900px){.dhero{height:300px}}
 /* 詳細 案B：ポスター＋要点 */
 /* 画像を大きく表示 */

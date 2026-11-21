@@ -286,10 +286,63 @@ function removeImageDocs(id) {
 }
 
 /* ---------- 詳細での出し方 ---------- */
-/* タイトルの上に横の画像を大きく（番組情報タブだけ。縦の画像はここには出さない） */
+/* タイトルの上に横の画像を大きく（番組情報タブだけ。縦の画像はここには出さない）
+   映す位置（上下）は作品ごとに imgwy（0＝いちばん上〜100＝いちばん下、％）。「位置を調整」でドラッグして保存 */
+const imgPosY = it => (typeof it.imgwy === "number" ? it.imgwy : 30);
 function detailHeroHtml(it) {
   if (!it.imgw) return "";
-  return `<button type="button" class="dhero" data-imgview="w" aria-label="画像を大きく表示">${imgTag(it, "l", "dheroi", "w")}</button>`;
+  const img = imgTag(it, "l", "dheroi", "w").replace("<img ", `<img style="object-position:center ${imgPosY(it)}%" `);
+  return `<div class="dheroW"><button type="button" class="dhero" data-imgview="w" aria-label="画像を大きく表示">${img}</button><button type="button" class="u-btn sm dhpos" data-imgpos="1">位置を調整</button></div>`;
+}
+/* 位置の調整：画像を上下にドラッグ →「保存」／「やめる」 */
+function startImgPos(el, it) {
+  const wrap = el.closest(".dheroW"),
+    btn = wrap && wrap.querySelector(".dhero"),
+    img = wrap && wrap.querySelector(".dheroi");
+  if (!img || !img.naturalWidth) return toast("画像の読み込み中です");
+  const over = (wrap.clientWidth * img.naturalHeight) / img.naturalWidth - wrap.clientHeight;
+  if (over <= 1) return toast("この画像は上下に動かせる余白がありません");
+  const y0 = imgPosY(it);
+  let y = y0,
+    sy = null,
+    sv = 0;
+  wrap.classList.add("adj");
+  wrap.insertAdjacentHTML("beforeend", `<div class="dhadj"><span>ドラッグして位置を調整</span><button type="button" class="u-btn sm" data-ipc="0">やめる</button><button type="button" class="u-btn sm pri" data-ipc="1">保存</button></div>`);
+  const bar = wrap.querySelector(".dhadj");
+  const down = e => {
+    sy = e.clientY;
+    sv = y;
+    btn.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+  const move = e => {
+    if (sy === null) return;
+    y = Math.max(0, Math.min(100, sv - ((e.clientY - sy) / over) * 100));
+    img.style.objectPosition = `center ${y}%`;
+  };
+  const up = () => (sy = null);
+  /* 調整中は画像を押しても大きく表示しない */
+  const block = e => (e.stopPropagation(), e.preventDefault());
+  btn.addEventListener("pointerdown", down);
+  btn.addEventListener("pointermove", move);
+  btn.addEventListener("pointerup", up);
+  btn.addEventListener("pointercancel", up);
+  btn.addEventListener("click", block, true);
+  bar.addEventListener("click", e => {
+    const b = e.target.closest("[data-ipc]");
+    e.stopPropagation();
+    if (!b) return;
+    btn.removeEventListener("pointerdown", down);
+    btn.removeEventListener("pointermove", move);
+    btn.removeEventListener("pointerup", up);
+    btn.removeEventListener("pointercancel", up);
+    btn.removeEventListener("click", block, true);
+    wrap.classList.remove("adj");
+    bar.remove();
+    const v = Math.round(y * 10) / 10;
+    if (b.dataset.ipc === "1" && v !== y0) saveTitle(it.id, { imgwy: v }, "画像の位置を保存しました");
+    else img.style.objectPosition = `center ${y0}%`;
+  });
 }
 /* 画像のボタン：どちらもない→「＋ 画像を追加」（縦・横を選ぶ）／ないほうは「＋ 縦・横の画像を追加」／
    縦は詳細の上に出ないので、あれば「縦の画像」（大きく表示・変更・外す） */
@@ -345,7 +398,7 @@ document.addEventListener("paste", e => {
   closeImgView();
   setImage(key, f, "auto");
 });
-DETAIL_ACTIONS.push(["[data-imgadd]", (el, it) => pickImage(it.id, el.dataset.imgadd || "")], ["[data-imgview]", (el, it) => openImgView(it, el.dataset.imgview === "w" ? "w" : "p")]);
+DETAIL_ACTIONS.push(["[data-imgpos]", (el, it) => startImgPos(el, it)], ["[data-imgadd]", (el, it) => pickImage(it.id, el.dataset.imgadd || "")], ["[data-imgview]", (el, it) => openImgView(it, el.dataset.imgview === "w" ? "w" : "p")]);
 
 /* ---------- リスト／グリッド（写真とタイトルだけ）の切り替え ---------- */
 const VIEW_IC = {
@@ -371,5 +424,5 @@ document.addEventListener("click", e => {
 /* 一覧の行のサムネ（横長） */
 const ytThumbHtml = x => thumbHtml(ytImgIt(x));
 /* 詳細：上に横長で大きく（YouTube は横長の画像が多いので、設定に関係なくこの形） */
-const ytHeroHtml = x => (x.img ? `<button type="button" class="dhero" data-imgview="1" aria-label="画像を大きく表示">${imgTag(ytImgIt(x), "l", "dheroi")}</button>` : "");
+const ytHeroHtml = x => (x.img ? `<div class="dheroW"><button type="button" class="dhero" data-imgview="1" aria-label="画像を大きく表示">${imgTag(ytImgIt(x), "l", "dheroi")}</button></div>` : "");
 const ytImgAddChip = x => (x.img ? "" : `<button type="button" class="u-chip add" data-imgadd="p">＋ 画像を追加</button>`);
