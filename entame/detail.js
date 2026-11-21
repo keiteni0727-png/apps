@@ -29,7 +29,7 @@ const rbUnfold = new Set();
 /* 外部リンクのアイコン（公式サイト＝外に開く、配信＝再生） */
 const IC_EXT = `<svg class="iic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const IC_PLAY = `<svg class="iic ply" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M6.5 5.2v5.6L11 8z" fill="#fff"/></svg>`;
-/* PCの詳細の左の列：ポスター・進み具合・配信／公式サイトのボタン・次に見る話・要確認（スマホでは出さない） */
+/* PCの詳細の左の列：ポスター・進み具合・配信／公式サイトのボタン・次に見る話・要確認（スマホでは出さない。スマホはタイトルの左に小さく出す＝renderDetail の .dtimg） */
 function detailSide(it, { eps, w, nx, noEp }) {
   const wn = watchable(eps).length;
   const prog = eps.length && !noEp ? `<div class="dprog"><span class="dpn"><b>${w}</b> / ${wn}話</span><span class="dpbar"><i style="width:${Math.round((w / (wn || 1)) * 100)}%"></i></span></div>` : "";
@@ -173,8 +173,8 @@ function renderDetail(it) {
     busy = !!(epEdit || arcEdit || subPaste || epOne != null);
   const navB = (d, lab, ic) => `<button type="button" class="u-btn icon sm dnav" data-dnav="${d}" aria-label="${lab}" title="${lab}${TOUCH ? "" : `（${d < 0 ? "←" : "→"}キー）`}" ${nv[d < 0 ? 0 : 1] && !busy ? "" : "disabled"}>${ic}</button>`;
   return `<div class="dgrid">${detailSide(it, { eps, w, nx, noEp })}<div class="dmain"><div class="dhead"><div class="hdrow"><div class="meta">${kindTag(it)}${(l => (l ? `<button type="button" class="dmt mtag m-${l[1]}" data-jump="fMedia" title="放送形態を変える">${l[0]}</button>` : ""))(mediaLabOf(it))}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品", CHEV(-1))}${navB(1, "次の作品", CHEV(1))}<button type="button" class="u-btn sm" id="editItem" aria-label="作品を編集">編集</button><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div></div>
-    <h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
-    <div class="dm-top">${missDetail(it)}</div>
+    <div class="dtit">${it.img ? `<button type="button" class="dtimg" data-imgview="1" aria-label="画像を大きく表示">${imgTag(it, "l", "dtimgi")}</button>` : ""}<div class="dtc"><h3>${esc(it.t)}<button type="button" class="tcopy" id="copyTitle" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>
+    <div class="dm-top">${missDetail(it)}</div></div></div>
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
     <div class="links">${noEp ? `<button type="button" class="u-chip add epadd" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-chip add epadd" data-jump="relb" data-rbk="new">＋ 関連作品を追加</button><button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
