@@ -34,6 +34,7 @@ const yst = Object.assign(
     grp: "genre",
     missOnly: false,
     missKey: "",
+    view: "list",
   },
   ls.get("adb.v3.yt") || {},
   { q: "", fSub: "", qOpen: false },
@@ -53,7 +54,11 @@ const saveYtUI = () =>
     grp: yst.grp,
     missOnly: yst.missOnly,
     missKey: yst.missKey,
+    view: yst.view,
   });
+const ytSetView = v => (yst.view = v === "grid" ? "grid" : "list");
+/* グリッド（写真とタイトルだけ）か、ふつうのリストか */
+const ytBox = l => (yst.view === "grid" ? `<div class="pgrid ygrid">${l.map(x => gridCell(x, "data-yt", ytImgIt(x))).join("")}</div>` : `<div class="slots">${l.map(ytRow).join("")}</div>`);
 /* 再生リスト＝データベースの yt の各ドキュメント */
 function ytRebuild() {
   ytItems = Object.entries(ytOver)
@@ -144,8 +149,8 @@ function ytMissDetail(x) {
 function ytRow(x) {
   const pw = +x.pw || 0,
     n = +x.n || 0;
-  return `<div class="row yrow lst ls-${esc(ytSt(x) || UNSEEN)}${/視聴済み/.test(x.s) ? " done" : ""}"><button class="slot" type="button" data-yt="${x.id}">
-    <span class="time">${x.up ? `${+x.up.slice(5, 7)}/${+x.up.slice(8, 10)}<small>${x.up.slice(0, 4)}</small>` : ""}</span>
+  return `<div class="row yrow lst thr ls-${esc(ytSt(x) || UNSEEN)}${/視聴済み/.test(x.s) ? " done" : ""}"><button class="slot" type="button" data-yt="${x.id}">
+    <span class="time">${x.up ? `${+x.up.slice(5, 7)}/${+x.up.slice(8, 10)}<small>${x.up.slice(0, 4)}</small>` : ""}</span>${ytThumbHtml(x)}
     <span class="ttl"><strong>${esc(x.t)}</strong><span class="meta"><span class="pmob">${ytPill(ytSt(x))}</span>${ytGenreLab(x)}${n ? `<span class="lab">全${n}本</span>` : ""}${x.dur ? `<span class="lab">${esc(x.dur)}</span>` : ""}${ytMissBadge(x)}</span>
       ${pw && n ? `<span class="next"><span class="ybar"><i style="width:${Math.min(100, (pw / n) * 100)}%"></i></span><span>${pw}/${n}本</span></span>` : ""}</span>
     <span class="pwide">${ytPill(ytSt(x))}</span></button>
@@ -188,7 +193,7 @@ function ytGenreGroups(list) {
         const l = by.get(k).sort(ytSortFn());
         const key = "ytg:" + k;
         const title = !c ? "ジャンル未設定" : g ? `${c}・${g}` : c;
-        return `<section class="cgroup">${gHead(key, title, l.length + "本")}${collapsed.has(key) ? "" : `<div class="slots">${l.map(ytRow).join("")}</div>`}</section>`;
+        return `<section class="cgroup">${gHead(key, title, l.length + "本")}${collapsed.has(key) ? "" : ytBox(l)}</section>`;
       })
       .join("")
   );
@@ -259,7 +264,7 @@ function renderYt() {
   return `${searching ? fshSearch({ id: "ytq", ph: "動画タイトル・投稿者で検索", q: yst.q, a: "data-ytqtog" }) : ""}
     <div class="fwrap">${searching ? "" : fshBar({ a: YA, n: conds.length, open: yst.fp === "all", srtOn: yst.sort !== "new" || yst.grp !== "genre", srtOpen: yst.fp === "sort", srtLab: srt[1] })}${ytPopHtml({ sort: sBody })}</div>
     ${fshSum(conds, YA)}
-    ${fshCount(list.length, "本", yst.q)}
+    ${fshCount(list.length, "本", yst.q).replace("</p>", viewTog(yst.view, "data-yview") + "</p>")}
     <div id="fshBox">${sheet}</div>
     ${
       !list.length
@@ -267,14 +272,13 @@ function renderYt() {
         : yst.grp !== "year"
           ? ytGenreGroups(list)
           : yst.sort === "title" || yst.sort === "added"
-            ? `<section class="cgroup"><div class="slots">${list
-                .sort(
+            ? `<section class="cgroup">${ytBox(
+                list.sort(
                   yst.sort === "title"
                     ? (a, b) => String(a.t).localeCompare(String(b.t), "ja")
                     : (a, b) => String(b.added || "").localeCompare(String(a.added || "")),
-                )
-                .map(ytRow)
-                .join("")}</div></section>`
+                ),
+              )}</section>`
             : bulkBtns(keys) +
               (yst.sort === "old" ? [...years].sort((a, b) => (a === "?" ? 1 : b === "?" ? -1 : a - b)) : years)
                 .map(y => {
@@ -287,7 +291,7 @@ function renderYt() {
                         : String(b.up || "").localeCompare(String(a.up || "")),
                     );
                   const key = "yt:" + y;
-                  return `<section class="cgroup">${gHead(key, y === "?" ? "初回投稿日不明" : `${y}年`, l.length + "本")}${collapsed.has(key) ? "" : `<div class="slots">${l.map(ytRow).join("")}</div>`}</section>`;
+                  return `<section class="cgroup">${gHead(key, y === "?" ? "初回投稿日不明" : `${y}年`, l.length + "本")}${collapsed.has(key) ? "" : ytBox(l)}</section>`;
                 })
                 .join("")
     }

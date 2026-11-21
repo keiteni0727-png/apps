@@ -320,7 +320,7 @@ function weekEpLine(i, e, onAir) {
   const pre = onAir ? "放送中" : !aired(e) ? "次回" : e.w ? "放送済" : "未視聴";
   return `<span class="wc-ep"><em class="p-${pre}">${pre}：</em>${esc(e.n)}${e.sub ? `「${esc(e.sub)}」` : ""}</span>`;
 }
-function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
+function weekCard(i, dayKey, isNext, onAir, preferBack) {
   const eps = episodes(i);
   const { back } = nextInfo(i);
   /* 進み具合は見ない話（配信にない総集編など）を除いて数える */
@@ -338,45 +338,25 @@ function weekCard(i, dayKey, isNext, onAir, preferBack, v = "row") {
       : back.length
         ? `<span class="wc-b un">未視聴${back.length > 1 ? ` ${back.length}話` : ""}</span>`
         : "";
-  const per = periodOf(i);
-  const foot = v === "hero" ? coursOf(i).map(c => courLab(c)).join("") + (per ? `<span class="wc-per">${esc(per)}</span>` : "") : "";
   /* 視聴ボタン：未視聴があれば「○話を見た」 */
   const tick = back[0]
     ? `<button type="button" class="u-btn pri wc-tick" data-tick="${i.id}" aria-label="${esc(i.t)} ${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を視聴済にする">${esc(epVal(back[0].n) ? epVal(back[0].n) + "話" : back[0].n)}を見た</button>`
     : spUnseen(i)
       ? `<button type="button" class="u-btn pri wc-tick" data-spdone="${i.id}" aria-label="${esc(i.t)}を視聴済にする">見た</button>`
       : "";
-  /* PCの曜日の列：どのカードも同じ高さ（ラベルは1行・タイトルと話は2行まで、下端に視聴ボタンか状態） */
-  if (v === "col") {
-    const sites = [...new Set([...(m.media === "stream" ? m.plat : []), ...m.vods])];
-    const more = sites.length - 1;
-    const okMsg = !eps.length ? (isSp(i) ? "放送前" : "話数未登録") : w === wn ? "全話視聴済" : "放送済みは視聴済";
-    return `<div class="wcard v-col${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
-      <button type="button" class="wc-main" data-id="${i.id}">
-        <span class="wc-row1"><span class="wc-time">${time}</span>${st ? `<span class="wc-st">${esc(st)}</span>` : ""}${badge}</span>
-        <span class="wc-tags">${kindTag(i)}${fin ? FIN : ""}${sites[0] ? vlab(sites[0]) : ""}${more > 0 ? `<span class="wc-more">ほか${more}</span>` : ""}</span>
-        <span class="wc-ttl">${esc(i.t)}</span>
-        ${weekEpLine(i, e, onAir)}
-      </button>
-      ${tick || `<span class="wc-okmsg">${okMsg}</span>`}
-    </div>`;
-  }
-  const pips =
-    v === "hero" && eps.length && eps.length <= 26
-      ? `<span class="wc-pips" aria-hidden="true">${eps.map(x => `<i class="${x.w ? "w" : x === e ? "c" : ""}"></i>`).join("")}</span>`
-      : "";
-  return `<div class="wcard v-${v}${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
-    <div class="wc-rail"><span class="wc-time">${time}</span></div>
+  /* 線のタイムライン：時刻・線と点・横長の画像・情報（PCは画像の右に、画像の高さに収める／スマホは画像の下に） */
+  const img = i.img ? imgTag(i, "l", "wc-imgi") : `<span class="wc-noimg">${IMG_ICON}</span>`;
+  return `<div class="wcard v-tl${onAir ? " live" : isNext ? " nx" : ""}${back.length ? " un" : ""}">
+    <span class="wc-time">${time}</span>
+    <span class="wc-line" aria-hidden="true"><i></i></span>
+    <button type="button" class="wc-img" data-id="${i.id}" tabindex="-1" aria-hidden="true">${img}${badge}</button>
     <div class="wc-body">
       <button type="button" class="wc-main" data-id="${i.id}">
-        <span class="wc-tags">${badge}<span class="wc-htime">${time}${i.dow < 0 ? "" : "〜"}</span>${kindTag(i)}${fin ? FIN : ""}${libLabels(i)}${st ? `<span class="wc-st">${esc(st)}</span>` : ""}</span>
+        <span class="wc-tags">${kindTag(i)}${fin ? FIN : ""}${libLabels(i)}${st ? `<span class="wc-st">${esc(st)}</span>` : ""}</span>
         <span class="wc-ttl">${esc(i.t)}</span>
         ${weekEpLine(i, e, onAir)}
-        ${pips}
-        ${eps.length ? `<span class="wc-prog"><span class="wc-bar"><i style="width:${Math.round((w / (wn || 1)) * 100)}%"></i></span><span class="wc-cnt">${w}/${wn}話 視聴済</span></span>` : ""}
-        ${foot || (v === "hero" && missingOf(i).length) ? `<span class="wc-foot pconly">${foot}${missBadge(i)}</span>` : ""}
       </button>
-      ${tick}
+      <div class="wc-foot2">${eps.length ? `<span class="wc-prog"><span class="wc-bar"><i style="width:${Math.round((w / (wn || 1)) * 100)}%"></i></span><span class="wc-cnt">${w}/${wn}話</span></span>` : ""}${tick}</div>
     </div>
   </div>`;
 }
@@ -401,25 +381,19 @@ function renderWeek() {
   }
   weekSig = g.map(x => x.k + ":" + x.list.map(i => i.id).join(",")).join("|") + "#" + [...liveIds].join(",") + "#" + nxId;
   const pc = IS_PC();
-  const card = (x, i, preferBack, v) => {
+  const card = (x, i, preferBack) => {
     const key = i.id + "@" + x.k;
-    return weekCard(i, x.day && !preferBack ? dkey(x.day) : null, key === nxId, liveIds.has(key), preferBack, v);
+    return weekCard(i, x.day && !preferBack ? dkey(x.day) : null, key === nxId, liveIds.has(key), preferBack);
   };
-  /* 上に大きく出す1枚：放送中、なければ（PCだけ）次に始まる番組 */
-  const heroKey = [...liveIds][0] || (pc ? nxId : null);
-  let hero = "";
-  if (heroKey && !state.unOnly) {
-    const [hid, hk] = heroKey.split("@");
-    const hx = gAll.find(x => x.k === hk);
-    const hi = hx && hx.list.find(i => i.id === hid);
-    if (hi) hero = card(hx, hi, false, "hero");
-  }
-  let h = `<div class="wtop${hero && pc ? " has-hero" : ""}" id="clock">${hero && pc ? hero : ""}<div class="wtop-side">${weekTopHtml()}</div></div>`;
+  /* PC：左に1日のタイムライン、右に時計と未視聴。スマホ：上に時計と未視聴、その下に1日のタイムライン（どちらも曜日タブで1日ずつ） */
+  const top = `<div class="wtop"><div class="wtop-side" id="clock">${weekTopHtml()}</div></div>`;
+  const wrap = body => (pc ? `<div class="wpc"><div class="wpc-main">${body}</div><aside class="wpc-side">${top}</aside></div>` : top + body);
   if (!g.length) {
-    h += state.unOnly
-      ? `<p class="empty">未視聴の作品はありません。</p>`
-      : `<p class="empty">放送中の視聴中の作品はありません。アニメ・ドラマのライブラリで作品を開き「視聴中」にすると、放送期間中はここに曜日ごとに並びます。</p>`;
-    return h;
+    return wrap(
+      state.unOnly
+        ? `<p class="empty">未視聴の作品はありません。</p>`
+        : `<p class="empty">放送中の視聴中の作品はありません。アニメ・ドラマのライブラリで作品を開き「視聴中」にすると、放送期間中はここに曜日ごとに並びます。</p>`,
+    );
   }
   /* 未視聴だけ：曜日に関係なく1つにまとめる（未視聴の多い順） */
   if (state.unOnly) {
@@ -427,40 +401,15 @@ function renderWeek() {
     const l = [];
     g.forEach(x => x.list.forEach(i => !seen.has(i.id) && (seen.add(i.id), l.push([x, i]))));
     l.sort((a, b) => nextInfo(b[1]).back.length - nextInfo(a[1]).back.length);
-    h += `<section class="wday"><div class="wdayhd"><h2>未視聴のある作品</h2><small>${l.length}本</small></div><div class="wgrid wun">${l.map(([x, i]) => card(x, i, true, "row")).join("")}</div></section>`;
-    return h;
+    return wrap(`<section class="wday"><div class="wdayhd"><h2>未視聴のある作品</h2><small>${l.length}本</small></div><div class="wline">${l.map(([x, i]) => card(x, i, true)).join("")}</div></section>`);
   }
-  /* PC：1週間を曜日ごとの列で。曜日が決まっていない作品は下にまとめる */
-  if (pc) {
-    const first = g.find(x => x.day);
-    const t0 = new Date(t0Today());
-    const start = first && first.day.getTime() < t0.getTime() ? first.day : t0;
-    const cols = [];
-    for (let k = 0; k < 7; k++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + k);
-      const x = g.find(y => y.day && dkey(y.day) === dkey(d)) || { k: String(d.getTime()), day: d, list: [] };
-      const isT = d.getTime() === t0.getTime();
-      const sub = isT ? "今日" : d.getTime() === t0.getTime() + 86400e3 ? "明日" : `${d.getDate()}`;
-      const dot = x.list.some(i => nextInfo(i).back.length || spUnseen(i));
-      cols.push(
-        `<section class="wcol${isT ? " today" : ""}" aria-label="${DOW[(d.getDay() + 6) % 7]}曜日"><div class="wcol-hd"><small>${sub}</small><b>${DOW[(d.getDay() + 6) % 7]}</b>${dot ? '<i class="wdot" aria-label="未視聴あり"></i>' : ""}</div>${x.list.map(i => card(x, i, false, "col")).join("") || `<p class="wcol-none">なし</p>`}</section>`,
-      );
-    }
-    h += `<div class="wcols">${cols.join("")}</div>`;
-    const free = g.find(x => x.k === "free");
-    if (free) h += `<section class="wday"><div class="wdayhd"><h2>曜日が決まっていない作品</h2><small>${free.list.length}本</small></div><div class="wgrid wun">${free.list.map(i => card(free, i, false, "row")).join("")}</div></section>`;
-    return h;
-  }
-  /* スマホ：上の曜日タブで1日ずつ。放送中を上に大きく、その下はタイムライン */
-  h += `<div class="wtabs" role="tablist" aria-label="曜日">${weekDayTabs()
+  const tabs = `<div class="wtabs" role="tablist" aria-label="曜日">${weekDayTabs()
     .map(([v, , , on, html]) => `<button type="button" role="tab" data-tb="${esc(v)}" aria-selected="${on}">${html}</button>`)
     .join("")}</div>`;
   const cur = g.find(x => x.k === state.wday) || g[0];
-  const heroHere = hero && heroKey.split("@")[1] === cur.k;
-  const rest = cur.list.filter(i => !(heroHere && i.id === heroKey.split("@")[0]));
-  h += `<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div>${heroHere ? hero : ""}${rest.length ? `${heroHere ? `<div class="wsub">このあと・見のがし</div>` : ""}<div class="wline">${rest.map(i => card(cur, i, false, "row")).join("")}</div>` : ""}</section>`;
-  return h;
+  return wrap(
+    `${tabs}<section class="wday"><div class="wdayhd"><h2>${dayName(cur)}</h2>${cur.day ? `<span>${cur.day.getMonth() + 1}/${cur.day.getDate()}（${DOW[(cur.day.getDay() + 6) % 7]}）</span>` : `<span>曜日が決まっていない作品</span>`}<small>${cur.list.length}本</small></div><div class="wline">${cur.list.map(i => card(cur, i, false)).join("")}</div></section>`,
+  );
 }
 function filtered() {
   let list = items.filter(i => ofKind(i) && vodOk(i) && slotOk(i) && typeOk(i) && courOk(i) && seriesOk(i) && sfOk(i) && eraOk(i) && missOk(i));
@@ -560,7 +509,10 @@ function groupedHtml(list) {
     out = "",
     rest = 0;
   const ck = keys.map(k => "tv:" + k);
-  if (state.grp === "none") return list.slice(0, state.limit).map(i => slotRow(i)).reduce((a, r) => a + r, `<div class="slots">`) + `</div>` + (list.length > state.limit ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
+  /* グリッド表示（写真とタイトルだけ）か、ふつうのリストか */
+  const grid = state.view === "grid";
+  const box = l => (grid ? `<div class="pgrid">${l.map(i => gridCell(i)).join("")}</div>` : `<div class="slots">${l.map(i => slotRow(i)).join("")}</div>`);
+  if (state.grp === "none") return box(list.slice(0, state.limit)) + (list.length > state.limit ? `<button type="button" class="u-btn wide more" id="more">さらに表示（残り${list.length - state.limit}件）</button>` : "");
   for (const k of keys) {
     const l = g.get(k);
     const key = "tv:" + k;
@@ -575,7 +527,7 @@ function groupedHtml(list) {
     const shown = l.slice(0, budget);
     budget -= shown.length;
     rest += l.length - shown.length;
-    out += `<section class="cgroup">${gHead(key, groupTitle(k), l.length + "作品")}<div class="slots">${shown.map(i => slotRow(i)).join("")}</div></section>`;
+    out += `<section class="cgroup">${gHead(key, groupTitle(k), l.length + "作品")}${box(shown)}</section>`;
   }
   return (
     bulkBtns(ck) +
@@ -609,7 +561,7 @@ function renderList() {
   return `${searching ? fSearchHtml() : ""}
     <div class="fwrap">${searching ? "" : fBarHtml()}${fPopHtml(panel ? panel() : "")}</div>
     ${fSumHtml()}
-    ${fshCount(list.length, "件", state.q)}
+    ${fshCount(list.length, "件", state.q).replace("</p>", viewTog(state.view, "data-lview") + "</p>")}
     <div id="fshBox">${fSheetHtml()}</div>
     ${list.length ? groupedHtml(list) : `<p class="empty">${state.q ? `「${esc(state.q)}」に一致する作品はありません。` : "条件に合う作品はありません。"}</p>`}`;
 }

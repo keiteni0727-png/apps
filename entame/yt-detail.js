@@ -44,10 +44,10 @@ function ytDetailHtml(x) {
   const c = ytCat(x),
     sb = ytGrp(x);
   const gBtn = c ? `<button type="button" class="dmt lab s" data-jump="yfGenre" title="ジャンルを変える">${c}${sb ? `・${esc(sb)}` : ""}</button>` : "";
-  return `<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="u-btn sm" id="ytEdit" aria-label="再生リストを編集">編集</button><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div></div>
+  return `${ytHeroHtml(x)}<div class="dhead ydhead"><div class="hdrow"><div class="meta"><span class="kind yauth">${esc(x.a || "YouTube")}</span>${gBtn}${stBtn}</div><div class="hdrow">${navB(-1, "前の作品")}${navB(1, "次の作品")}<button type="button" class="u-btn sm" id="ytEdit" aria-label="再生リストを編集">編集</button><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div></div>
     <h3>${esc(x.t)}<button type="button" class="tcopy" id="ytCopy" aria-label="タイトルをコピー" title="タイトルをコピー"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></h3>${ytMissDetail(x)}</div>
     <div class="ydbody">${info}${prog}
-    <div class="links"><button type="button" class="u-btn sm txt danger delsm" id="ytDel">削除</button></div></div>`;
+    <div class="links">${ytImgAddChip(x)}<button type="button" class="u-btn sm txt danger delsm" id="ytDel">削除</button></div></div>`;
 }
 /* 前・次の作品：詳細を開いた画面に出ていた並び（作品の詳細と同じ） */
 let ytNavIds = [];
@@ -536,3 +536,5 @@ const YT_DETAIL_ACTIONS = [
     },
   ],
 ];
+/* 画像（img.js）：「＋ 画像を追加」と、画像を押して大きく表示 */
+YT_DETAIL_ACTIONS.push(["[data-imgadd]", (el, x) => pickImage(YT_PRE + x.id)], ["[data-imgview]", (el, x) => openImgView(ytImgIt(x))]);
