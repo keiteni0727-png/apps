@@ -266,17 +266,17 @@ function removeImageDocs(id) {
 }
 
 /* ---------- 詳細での出し方 ---------- */
-/* タイトルの上に横長で大きく（番組情報タブだけ） */
+/* タイトルの上に横の画像を大きく（番組情報タブだけ。縦の画像はここには出さない） */
 function detailHeroHtml(it) {
-  if (!it.img && !it.imgw) return "";
-  return `<button type="button" class="dhero" data-imgview="${it.imgw ? "w" : "p"}" aria-label="画像を大きく表示">${wideTag(it, "l", "dheroi")}</button>`;
+  if (!it.imgw) return "";
+  return `<button type="button" class="dhero" data-imgview="w" aria-label="画像を大きく表示">${imgTag(it, "l", "dheroi", "w")}</button>`;
 }
-/* 画像のボタン：どちらもない→「＋ 画像を追加」（縦・横を選ぶ）／片方だけ→もう片方を追加／両方ある→上には横が出るので「縦の画像」（大きく表示・変更・外す） */
+/* 画像のボタン：どちらもない→「＋ 画像を追加」（縦・横を選ぶ）／ないほうは「＋ 縦・横の画像を追加」／
+   縦は詳細の上に出ないので、あれば「縦の画像」（大きく表示・変更・外す） */
 function imgAddChip(it) {
   if (!it.img && !it.imgw) return `<button type="button" class="u-chip add" data-imgadd="">＋ 画像を追加</button>`;
-  if (it.img && it.imgw) return `<button type="button" class="u-chip" data-imgview="p">縦の画像</button>`;
-  const k = it.img ? "w" : "p";
-  return `<button type="button" class="u-chip add" data-imgadd="${k}">＋ ${k === "w" ? "横" : "縦"}の画像を追加</button>`;
+  const add = k => `<button type="button" class="u-chip add" data-imgadd="${k}">＋ ${k === "w" ? "横" : "縦"}の画像を追加</button>`;
+  return (it.img ? `<button type="button" class="u-chip" data-imgview="p">縦の画像</button>` : add("p")) + (it.imgw ? "" : add("w"));
 }
 
 /* ---------- 大きく表示（変更・外すもここから） ---------- */
