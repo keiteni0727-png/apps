@@ -94,7 +94,6 @@ let setPage = "",
   setEdit = false; // 「編集」を押したときだけ削除ボタンを出す
 const SET_IC = {
   theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
-  img: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/>',
   series: '<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',
   stations: '<path d="M4 10a8 8 0 0 1 16 0M7.5 11a4.5 4.5 0 0 1 9 0"/><circle cx="12" cy="12" r="1.5"/><path d="M12 13.5V21"/>',
   slots: '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h4"/>',
@@ -124,7 +123,7 @@ function settingsHtml() {
   const tl = trashList().length;
   return `<div class="hdrow"><h3>設定</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
     <div class="setsec">表示</div>
-    <div class="setgrp"><div class="setrow static">${setIc("theme")}<span class="setl">テーマ</span><div class="u-seg hseg3 setthm3" role="radiogroup" aria-label="テーマ">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" role="radio" data-setthm="${v}" aria-selected="${th === v}" aria-checked="${th === v}">${l}</button>`).join("")}</div></div><div class="setrow static">${setIc("img")}<span class="setl">詳細の画像</span><div class="u-seg hseg2 setthm3" role="radiogroup" aria-label="詳細の画像">${[["top", "上に大きく"], ["side", "横に並べる"]].map(([v, l]) => `<button type="button" role="radio" data-setdimg="${v}" aria-selected="${dimgMode() === v}" aria-checked="${dimgMode() === v}">${l}</button>`).join("")}</div></div></div>
+    <div class="setgrp"><div class="setrow static">${setIc("theme")}<span class="setl">テーマ</span><div class="u-seg hseg3 setthm3" role="radiogroup" aria-label="テーマ">${[["auto", "自動"], ["light", "ライト"], ["dark", "ダーク"]].map(([v, l]) => `<button type="button" role="radio" data-setthm="${v}" aria-selected="${th === v}" aria-checked="${th === v}">${l}</button>`).join("")}</div></div></div>
     <div class="setsec">選択肢の管理</div>
     <div class="setgrp">${MKEYS.map(([k, l]) => row(k, l, M(k).length)).join("")}</div>
     <div class="setsec">データ</div>
@@ -399,14 +398,6 @@ const SETTINGS_ACTIONS = [
     "[data-setthm]",
     el => {
       U.setTheme(el.dataset.setthm);
-      refreshSettings();
-    },
-  ],
-  /* 詳細の画像：上に大きく（案A）／ポスターと要点を横に並べる（案B）。この端末だけの設定 */
-  [
-    "[data-setdimg]",
-    el => {
-      ls.set(K_DIMG, el.dataset.setdimg);
       refreshSettings();
     },
   ],

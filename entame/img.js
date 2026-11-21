@@ -7,8 +7,7 @@
    - 画面に出たものだけ読みに行く（一覧はスクロールして見えた行だけ）。読んだ画像はこの端末のメモリに控える
    - 作品は「縦（ポスター）」と「横（背景）」の2枚を持てる。縦＝img・ドキュメント名は作品ID／横＝imgw・ドキュメント名は「作品ID_w」
        縦を使う：一覧のサムネ・グリッド・詳細の横並び／横を使う：詳細の上に大きく・番組表のカード（横がなければ縦を切らずに出す）
-   詳細での出し方は2通り（設定 → 表示 → 詳細の画像）：top＝上に横長で大きく／side＝ポスターと要点を横並び */
-const K_DIMG = "adb.v3.dimg";
+   詳細ではタイトルの上に横長で大きく出す */
 /* 画像のキー：作品はその作品ID、YouTube は「yt_ID」（imgs・imgl のドキュメント名にもなる） */
 const YT_PRE = "yt_";
 const imgObj = key => (key.startsWith(YT_PRE) ? ytOver[key.slice(YT_PRE.length)] : over[key]);
@@ -19,7 +18,6 @@ const imgVer = (it, k) => (k === "w" ? it.imgw : it.img);
 const IMG_KIND = { p: "縦（ポスター）", w: "横（背景）" };
 /* YouTube の項目を、画像の部品が使える形（id＝キー）にする */
 const ytImgIt = x => ({ ...x, id: YT_PRE + x.id });
-const dimgMode = () => (ls.get(K_DIMG) === "side" ? "side" : "top");
 const IMG_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/></svg>`;
 
 /* 読んだ画像の控え：「s:作品ID:版」→ blob の URL（同じ画像は何度描き直しても読み直さない） */
@@ -268,35 +266,18 @@ function removeImageDocs(id) {
 }
 
 /* ---------- 詳細での出し方 ---------- */
-/* 案A：タイトルの上に横長で大きく（番組情報タブだけ） */
+/* タイトルの上に横長で大きく（番組情報タブだけ） */
 function detailHeroHtml(it) {
-  if (dimgMode() !== "top" || !(it.img || it.imgw)) return "";
+  if (!it.img && !it.imgw) return "";
   return `<button type="button" class="dhero" data-imgview="${it.imgw ? "w" : "p"}" aria-label="画像を大きく表示">${wideTag(it, "l", "dheroi")}</button>`;
 }
-/* 案B：番組情報の一番上に、ポスター＋要点 */
-function detailSideHtml(it) {
-  if (dimgMode() !== "side") return "";
-  const when = [it.dow >= 0 ? DOW[it.dow] + "曜 " : "", it.time || ""].join("").trim();
-  const cour = coursOf(it).map(courLabel).join("・");
-  const eps = episodes(it),
-    wl = watchable(eps);
-  const m = mediaOf(it);
-  const vods = (m.media === "stream" ? m.plat : m.vods).map(vlab).join("");
-  const per = periodOf(it);
-  const poster = it.img
-    ? `<button type="button" class="dpost" data-imgview="p" aria-label="画像を大きく表示">${imgTag(it, "l", "dposti")}</button>`
-    : `<button type="button" class="dpost none" data-imgadd="${it.imgw ? "p" : ""}" aria-label="画像を追加">${IMG_ICON}<span>＋ 画像</span></button>`;
-  return `<div class="dside">${poster}<div class="dsum">${when ? `<b class="dsw">${esc(when)}</b>` : ""}${cour || per ? `<span class="dss">${esc([cour, per].filter(Boolean).join(" ・ "))}</span>` : ""}${wl.length ? `<span class="dss">${wl.filter(e => e.w).length} / ${wl.length}話 視聴</span>` : ""}${vods ? `<span class="labs">${vods}</span>` : ""}</div></div>`;
-}
-/* 「＋ 画像を追加」（どちらもない：縦・横を選ぶ）／片方だけある：もう片方を追加（目立たない形） */
+/* 画像のボタン：どちらもない→「＋ 画像を追加」（縦・横を選ぶ）／片方だけ→もう片方を追加／両方ある→上には横が出るので「縦の画像」（大きく表示・変更・外す） */
 function imgAddChip(it) {
-  if (!it.img && !it.imgw) return dimgMode() === "side" ? "" : `<button type="button" class="u-chip add" data-imgadd="">＋ 画像を追加</button>`;
-  const side = dimgMode() === "side";
-  const k = !it.imgw ? "w" : !it.img && !side ? "p" : "";
-  return k ? `<button type="button" class="u-chip add" data-imgadd="${k}">＋ ${k === "w" ? "横" : "縦"}の画像を追加</button>` : "";
+  if (!it.img && !it.imgw) return `<button type="button" class="u-chip add" data-imgadd="">＋ 画像を追加</button>`;
+  if (it.img && it.imgw) return `<button type="button" class="u-chip" data-imgview="p">縦の画像</button>`;
+  const k = it.img ? "w" : "p";
+  return `<button type="button" class="u-chip add" data-imgadd="${k}">＋ ${k === "w" ? "横" : "縦"}の画像を追加</button>`;
 }
-/* 横の画像を大きく表示する入口（詳細を横並びにしているときなど、横の画像がほかに見えない場合） */
-const imgWideChip = it => (it.imgw && dimgMode() === "side" ? `<button type="button" class="u-chip" data-imgview="w">横の画像</button>` : "");
 
 /* ---------- 大きく表示（変更・外すもここから） ---------- */
 function openImgView(it, k = "p") {
