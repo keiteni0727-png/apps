@@ -116,9 +116,11 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       return `<div class="irb">${hd}${rows || `<p class="inos">${un("主題歌 未登録")}</p>`}</div>`;
     })
     .join("");
+  /* 関連作品は小見出しの下に、1作品ずつ薄い背景の枠で囲む */
+  const relbBox = relb ? `<div class="irbs"><div class="irbl">関連作品</div>${relb}</div>` : "";
   /* 曲が1曲もなくてもカードは出す（「編集」ボタンから登録できるように） */
   const noS = !songs && ((it.noSongs || []).length ? nn("OP・ED・主題歌 なし") : un("未登録"));
-  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>`}${relb}</div>`;
+  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>`}${relbBox}</div>`;
 }
 /* 前・次の矢印（文字だと丸の中で上下左右にずれるので図形で描く） */
 const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="${d < 0 ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

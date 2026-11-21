@@ -1488,7 +1488,9 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .setv .sv+.svat{margin-left:8px}
 /* 関連作品（旧作・再放送など）：MUSICの中に点線で区切って表示 */
 .epadd+.epadd{margin-left:10px}
-.irb{border-top:1px dashed var(--u-line);margin-top:8px;padding-top:8px;display:flex;flex-direction:column;gap:4px}
+.irbs{margin-top:12px;padding-top:10px;border-top:1px solid var(--u-line);display:flex;flex-direction:column;gap:8px}
+.irbl{font-size:var(--fs-xs);font-weight:800;letter-spacing:.06em;color:var(--u-sub)}
+.irb{background:var(--u-soft);border-radius:var(--r-m);padding:8px 10px;display:flex;flex-direction:column;gap:4px}
 .irbh{display:flex;align-items:flex-start;gap:8px;min-width:0}
 .irbtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-top:4px}
 .irbn{font-size:var(--fs-base);font-weight:800;color:var(--u-ink);overflow-wrap:anywhere}
