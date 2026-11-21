@@ -2,6 +2,10 @@
 /* ウリログ：Firebase につないで起動する（いちばん最後に読み込む）
    ファイルの分け方：core.js（共通の道具・状態）→ 各機能 → events.js（ボタン）→ boot.js（Firebase につないで起動）
    どのファイルの関数・変数も、ほかのファイルからそのまま使える（ふつうの <script> で順に読み込む） */
+/* オフラインでも開けて、開くたびに最新の画面を取りにいく（sw.js） */
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
 (async () => {
   /* ---------- Firebaseの設定がまだのとき ---------- */
   if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_HERE") {
