@@ -1680,8 +1680,14 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .ftbl .fdd{min-height:34px;border-color:transparent;background:transparent;font-size:var(--fs-base);padding:3px 6px 3px 8px}
 .ftbl .dtw{display:flex;gap:4px}
 .ftbl .dtcal{border:0;background:transparent}
-.ftbl .nofl{grid-column:1;font-size:var(--fs-xs)}
-.ftbl .nofl:not(:has(input:checked)){display:none}
+/* 「なし」のチェック：いつも行の右端に */
+.ftbl .fgrid>.field:has(>.nofl){grid-template-columns:96px minmax(0,1fr) auto}
+.ftbl .field>.nofl{grid-column:3;grid-row:1;order:0;font-size:var(--fs-s)}
+.ftbl .field:has(>.nofl input:checked)>label.field+*{display:none}
+/* 要確認の項目：項目名を⚠付きの色に（「なし」にチェックを入れたら消す） */
+.ftbl .fmiss:not(:has(.nofl input:checked))>span:first-child,.ftbl .fmiss:not(:has(.nofl input:checked))>label.field>span{color:var(--u-warn)}
+.ftbl .fmiss:not(:has(.nofl input:checked))>span:first-child::before,.ftbl .fmiss:not(:has(.nofl input:checked))>label.field>span::before{content:"⚠ "}
+.fsongs.fmiss:not(:has(.sghno input:checked))>h4::after{content:"⚠ 要確認";font-size:var(--fs-s);font-weight:700;color:var(--u-warn);order:1}
 .ftbl .cours{padding:3px 0}
 /* 曲：1曲1行（押すと広がる） */
 .fsongs .fgrid{gap:8px}
@@ -1702,7 +1708,7 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 /* 「なし」（曲が1曲もないとき、見出しの右） */
 .sghno{display:inline-flex;align-items:center;gap:5px;font-size:var(--fs-m);font-weight:700;color:var(--u-sub);white-space:nowrap}
 .sghno input{width:16px;height:16px;margin:0}
-.fsec h4 .sghno{margin-left:12px}
+.fsec h4 .sghno{margin-left:auto;order:2;font-size:var(--fs-s)}
 .fsec h4:has(.sghno){justify-content:flex-start}
 .ined .hdrow .sghno{margin:0 auto 0 12px}
 /* 1曲のカード：見出しの行（⠿・曲名とアーティスト・使った話・開く印） */
