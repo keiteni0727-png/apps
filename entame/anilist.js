@@ -39,6 +39,14 @@
     return d.Media;
   }
 
+  /* 作品詳細の SERIES 用：その作品と、直接つながっているアニメ（放送時期・小さい画像つき） */
+  const NODE = `id type format status title{native romaji english} synonyms seasonYear startDate{year month day} coverImage{medium}`;
+  async function rels(id) {
+    const d = await gql(`query($id:Int){Media(id:$id){${NODE} relations{edges{relationType node{${NODE}}}}}}`, { id });
+    const m = d.Media;
+    return { cur: m, list: (m.relations?.edges || []).filter(e => e.node.type === "ANIME").map(e => ({ ...e.node, rel: e.relationType })) };
+  }
+
   /* 今のクールと次のクール（日本時間）。冬＝1〜3月、春＝4〜6月、夏＝7〜9月、秋＝10〜12月 */
   const SEASON_EN = ["WINTER", "SPRING", "SUMMER", "FALL"];
   function seasonsNow(now = Date.now()) {
@@ -75,5 +83,5 @@
     return r.blob();
   }
 
-  globalThis.AL = { gql, search, detail, upcoming, image, seasonsNow };
+  globalThis.AL = { gql, search, detail, rels, upcoming, image, seasonsNow };
 })();

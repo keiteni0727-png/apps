@@ -55,7 +55,35 @@ function detailSide(it, { eps, w, nx, noEp }) {
   const nl = nx && (epVal(nx.n) ? epVal(nx.n) + "話" : nx.n);
   const when = nx ? epWhen(nx, it) : "";
   const next = nx && !noEp ? `<button type="button" class="dnext" data-dtab="ep"><small>次に見る</small><b>${esc(nl)}${nx.sub ? `<span>「${esc(nx.sub)}」</span>` : ""}</b>${when ? `<em class="inum">${esc(when)}</em>` : ""}</button>` : "";
-  return `<aside class="dside">${posterSlot(it)}${prog}${vod || off ? `<div class="dpbs">${vod}${off}</div>` : ""}${next}${missDetail(it)}</aside>`;
+  return `<aside class="dside">${posterSlot(it)}${prog}${vod || off ? `<div class="dpbs">${vod}${off}</div>` : ""}${next}${missDetail(it)}${chkHtml(it)}</aside>`;
+}
+/* ---------- 確認チェック（PCの左の列・一時的な機能。設定で消せる） ----------
+   1作品ずつ内容を確かめるためのチェックリスト。チェックは作品データの chk（項目キーの配列）に保存。
+   go＝押したときに開く場所（ON AIR・MUSICの編集、AniListで確認、話数タブ）、ks＝その項目に関係する要確認 */
+function chkItems(it) {
+  const md = mediaOf(it).media;
+  const per = md === "movie" ? "公開日" : md === "ova" ? "発売日" : md === "sp" ? "放送日・放送時間" : "放送期間・放送時間";
+  return [
+    it.k === "a" && { k: "al", lab: "AniListで確認（画像・更新内容）", go: 'data-alcheck="1"', ks: [] },
+    { k: "per", lab: per, go: 'data-chkgo="onair"', ks: ["開始日", "公開日", "発売日", "放送日", "放送時間", "配信時間", "放送クール", "クールのずれ"] },
+    { k: "url", lab: "公式サイト", go: 'data-chkgo="onair"', ks: ["公式サイト"] },
+    { k: "vod", lab: "配信サイト・配信URL", go: 'data-chkgo="onair"', ks: ["配信サイト", "配信URL", "配信URLのずれ"] },
+    { k: "song", lab: "主題歌（あり・なし）", go: 'data-chkgo="sgList"', ks: ["OP・ED・主題歌", "アーティスト", "曲名", "曲の話数"] },
+    { k: "ep", lab: "話数リスト（しょぼいカレンダーで確認）", go: 'data-dtab="ep"', goLab: "話数へ", ks: ["話数", "サブタイトル", "話数の表記", "日付の確認", "話数の抜け", "話数の重複", "未チェックの話"] },
+  ].filter(Boolean);
+}
+function chkHtml(it) {
+  if (master.chkOff) return "";
+  const l = chkItems(it),
+    on = new Set(it.chk || []),
+    ms = missingOf(it);
+  const n = l.filter(x => on.has(x.k)).length;
+  const row = x => {
+    const w = ms.filter(m => x.ks.includes(m.k)).map(m => m.k);
+    const syo = x.k === "ep" ? `<a class="chsyo" href="https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t)}" target="_blank" rel="noopener">しょぼいカレンダーで「${esc(it.t)}」を検索 ↗</a>` : "";
+    return `<div class="chr${on.has(x.k) ? " done" : ""}"><button type="button" class="chcb" role="checkbox" aria-checked="${on.has(x.k)}" data-chk="${x.k}" aria-label="${esc(x.lab)}">${on.has(x.k) ? "✓" : ""}</button><span class="cht">${esc(x.lab)}${w.length ? `<small>⚠ ${esc(w.join("・"))}</small>` : ""}</span><button type="button" class="chgo" ${x.go}>${x.goLab || "開く"} ›</button>${syo}</div>`;
+  };
+  return `<div class="chk"><div class="chh">✓ 確認チェック<small>${n === l.length ? "確認済み" : `${n} / ${l.length}`}</small></div><div class="chbar"><i style="width:${Math.round((n / l.length) * 100)}%"></i></div>${l.map(row).join("")}<div class="chft">設定の「確認チェック」で消せます</div></div>`;
 }
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
@@ -99,7 +127,8 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
       return u;
     }
   };
-  rows.push(row("シリーズ", it.series ? `<button type="button" class="ilnk" data-series="${esc(it.series)}">${esc(it.series)}<span class="ilar" aria-hidden="true">›</span></button>` : nofHas(it, "ser") ? nn("なし") : un("未設定")));
+  /* アニメのシリーズは下の SERIES の枠に出す（AniListのつながりと一緒に） */
+  if (it.k !== "a") rows.push(row("シリーズ", it.series ? `<button type="button" class="ilnk" data-series="${esc(it.series)}">${esc(it.series)}<span class="ilar" aria-hidden="true">›</span></button>` : nofHas(it, "ser") ? nn("なし") : un("未設定")));
   /* 公式サイト・配信URLはタイトルの下（PCは左の列）のボタンで開く。ここには要確認のときだけ行を出す */
   if (ms.some(x => x.k === "公式サイト")) rows.push(row("公式サイト", un("未設定"), "", "", ["公式サイト"]));
   if (ms.some(x => x.k === "配信URL" || x.k === "配信URLのずれ"))
@@ -169,7 +198,7 @@ function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   /* 曲が1曲もなくてもカードは出す（「編集」ボタンから登録できるように） */
   const noSm = ms.find(x => x.k === "OP・ED・主題歌");
   const noS = !songs && ((it.noSongs || []).length ? nn("OP・ED・主題歌 なし") : `${un("未登録")}${noSm ? wnMark("r:曲") : ""}`);
-  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>${noSm ? wnNote("r:曲", wnText(it, noSm)) : ""}`}${relbBox}</div>`;
+  return bc + `<div class="icard imusic"><div class="ich"><span class="ilamp music">MUSIC</span>${songRows.nowN != null ? `<span class="inow">${songRows.nowN}話で流れた曲</span>` : ""}${edB("sgList", "OP・ED・主題歌")}</div>${songs || `<p class="inos">${noS}</p>${noSm ? wnNote("r:曲", wnText(it, noSm)) : ""}`}${relbBox}</div>${it.k === "a" && typeof seriesCardHtml === "function" ? seriesCardHtml(it) : ""}`;
 }
 /* 前・次の矢印（文字だと丸の中で上下左右にずれるので図形で描く） */
 const CHEV = d => `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="${d < 0 ? "M10 3 5 8l5 5" : "M6 3l5 5-5 5"}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -392,6 +421,58 @@ const DETAIL_ACTIONS = [
       const k = el.dataset.rbtfold;
       if (rbUnfold.has(k)) rbUnfold.delete(k);
       else rbUnfold.add(k);
+      refreshSheet();
+    },
+  ],
+  /* 確認チェック：チェックを付ける・外す */
+  [
+    "[data-chk]",
+    (el, it) => {
+      const k = el.dataset.chk,
+        s = new Set(it.chk || []);
+      if (s.has(k)) s.delete(k);
+      else s.add(k);
+      const all = chkItems(it).every(x => s.has(x.k));
+      saveTitle(it.id, { chk: [...s] }, all ? "確認済みにしました" : "");
+    },
+  ],
+  /* 確認チェック・SERIES の「開く」：本文のカードの「編集」と同じ場所で編集する（左の列の中に出さない） */
+  [
+    "[data-chkgo]",
+    (el, it) => {
+      const t = el.dataset.chkgo;
+      const b = [...document.querySelectorAll(`#sheetIn .dmain [data-jump="${t}"]`)].find(x => x.offsetParent !== null);
+      if (b) b.click();
+      else openForm(it, t);
+    },
+  ],
+  /* SERIES：登録済みの作品にシリーズを付ける・変える */
+  [
+    "[data-serset]",
+    el => {
+      const id = el.dataset.serset,
+        name = el.dataset.sername;
+      saveTitle(id, { series: name }, `「${(over[id] && over[id].t) || ""}」をシリーズ「${name}」にしました`);
+    },
+  ],
+  /* SERIES：未登録の作品を AniList の情報で追加（シリーズは開いている作品と同じ） */
+  [
+    "[data-alreladd]",
+    (el, it) => {
+      const id = +el.dataset.alreladd;
+      close();
+      openForm(null);
+      form.k = "a";
+      alReset();
+      redrawForm();
+      alPick(id, { series: it.series || "" });
+    },
+  ],
+  ["[data-relopen]", el => openDetail(el.dataset.relopen)],
+  [
+    "[data-alrelre]",
+    (el, it) => {
+      alRelCache.delete(it.al);
       refreshSheet();
     },
   ],

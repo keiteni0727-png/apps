@@ -107,6 +107,7 @@ const SET_IC = {
   size: '<ellipse cx="12" cy="5.5" rx="8" ry="2.5"/><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>',
   dev: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
   speed: '<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-5"/>',
+  chk: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
   out: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
 };
 const setIc = k => `<svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SET_IC[k]}</svg>`;
@@ -130,7 +131,7 @@ function settingsHtml() {
     <div class="setsec">選択肢の管理</div>
     <div class="setgrp">${MKEYS.map(([k, l]) => row(k, l, M(k).length)).join("")}</div>
     <div class="setsec">データ</div>
-    <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}</div>
+    <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}<div class="setrow static">${setIc("chk")}<span class="setl">確認チェック<small class="setsm">PCの作品詳細</small></span><div class="u-seg hseg3 setthm3" role="radiogroup" aria-label="確認チェック">${[["0", "表示"], ["1", "消す"]].map(([v, l]) => `<button type="button" role="radio" data-chkoff="${v}" aria-selected="${!!master.chkOff === (v === "1")}" aria-checked="${!!master.chkOff === (v === "1")}">${l}</button>`).join("")}</div></div></div>
     <div class="setsec">アカウント</div>
     <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv">${saveNoteHtml()}</span></div>${usageRows()}<button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
 }
@@ -424,6 +425,16 @@ const SETTINGS_ACTIONS = [
     el => {
       U.setTheme(el.dataset.setthm);
       refreshSettings();
+    },
+  ],
+  /* 確認チェック（一時的な機能）を出す・消す。チェックした内容は作品に残る */
+  [
+    "[data-chkoff]",
+    el => {
+      master.chkOff = el.dataset.chkoff === "1";
+      saveMaster();
+      refreshSettings();
+      render();
     },
   ],
   ["[data-logout]", () => doLogout()],

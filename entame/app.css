@@ -2025,3 +2025,49 @@ html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1f
 .dtb.vod .iic.ply circle{fill:var(--u-surface)}
 .dtb.vod .iic.ply path{fill:var(--u-ink)}
 @media (min-width:900px){.dtbtns{display:none}}
+
+/* ===== 作品詳細：SERIES（アプリのシリーズ＋AniListのつながり） ===== */
+.ilamp.series{background:#2b6fd6}
+.iser .ich{flex-wrap:wrap;gap:8px}
+.iser .sern{font-size:var(--fs-l);font-weight:800}
+.serlk{border:0;background:none;padding:0;color:var(--u-acct);font:inherit;font-size:var(--fs-s);font-weight:700;cursor:pointer}
+.serbtn{flex:none;border:1px solid var(--u-accent);background:none;color:var(--u-acct);border-radius:var(--r-s);padding:2px 8px;font:inherit;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;cursor:pointer}
+.serbtn.pri{background:var(--u-accent);color:var(--u-on);padding:4px 11px;font-size:var(--fs-s)}
+.sertag{flex:none;font-size:var(--fs-xs);font-weight:700;padding:2px 7px;border-radius:var(--r-s);background:var(--u-chip);color:var(--u-sub);white-space:nowrap}
+.sertag.ok{background:var(--u-ok2);color:var(--u-ok)}
+.sertag.w{background:var(--u-warn2);color:var(--u-warn)}
+.sertag.cur{background:var(--u-accent2);color:var(--u-acct)}
+.sersub{font-size:var(--fs-xs);font-weight:700;color:var(--u-sub);margin:8px 0 2px;padding-top:8px;border-top:1px solid var(--u-line)}
+.sermsg{margin:6px 0 2px;font-size:var(--fs-s);color:var(--u-sub);display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.sertl{position:relative;padding-left:20px}
+.sertl::before{content:"";position:absolute;left:6px;top:10px;bottom:10px;width:2px;background:var(--u-line)}
+.serit{position:relative;display:flex;align-items:center;gap:10px;padding:6px 0}
+.serit::before{content:"";position:absolute;left:-19px;width:10px;height:10px;border-radius:var(--r-full);background:var(--u-surface);border:2px solid var(--u-sub)}
+.serit.has::before{background:var(--u-ok);border-color:var(--u-ok)}
+.serit.cur::before{background:var(--u-accent);border-color:var(--u-accent)}
+.serim{flex:none;width:28px;height:40px;border-radius:4px;overflow:hidden;background:var(--u-chip)}
+.serim img{display:block;width:100%;height:100%;object-fit:cover}
+.sertx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.sertx b,.sertt{font-size:var(--fs-m);font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.sertt{border:0;background:none;padding:0;color:inherit;font-family:inherit;text-align:left;cursor:pointer}
+@media (hover:hover){.sertt:hover{text-decoration:underline}}
+.sertx small{font-size:var(--fs-xs);color:var(--u-sub)}
+.serr{flex:none;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:5px;max-width:55%}
+.sergl{font-size:var(--fs-xs);font-weight:700;color:var(--u-sub);margin:8px 0 0}
+
+/* ===== 確認チェック（PCの作品詳細の左の列・一時的な機能） ===== */
+.chk{border:1px solid var(--u-line);border-radius:var(--r-m);padding:9px 10px 7px}
+.chh{display:flex;align-items:center;font-size:var(--fs-s);font-weight:800}
+.chh small{margin-left:auto;color:var(--u-sub);font-weight:700}
+.chbar{height:4px;margin:7px 0 2px;border-radius:var(--r-full);background:var(--u-line);overflow:hidden}
+.chbar i{display:block;height:100%;background:var(--u-ok)}
+.chr{display:grid;grid-template-columns:18px minmax(0,1fr) auto;column-gap:8px;align-items:start;padding:6px 0;border-top:1px solid var(--u-line);font-size:var(--fs-s)}
+.chr:first-of-type{border-top:0}
+.chcb{width:17px;height:17px;margin-top:1px;padding:0;border:1.5px solid var(--u-sub);border-radius:4px;background:none;color:var(--u-on);font:900 11px/1 var(--u-num);display:grid;place-items:center;cursor:pointer}
+.chr.done .chcb{background:var(--u-ok);border-color:var(--u-ok)}
+.chr.done .cht{color:var(--u-sub);text-decoration:line-through}
+.cht small{display:block;margin-top:1px;color:var(--u-warn);font-size:var(--fs-xs);text-decoration:none}
+.chgo{border:0;background:none;padding:0;color:var(--u-acct);font:inherit;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;cursor:pointer}
+.chsyo{grid-column:2/-1;margin-top:6px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--r-s);background:var(--u-chip);color:var(--u-ink);font-size:var(--fs-xs);font-weight:700;text-align:center;text-decoration:none;overflow-wrap:anywhere}
+.chft{margin-top:4px;font-size:var(--fs-xs);color:var(--u-sub);text-align:right}
+.setsm{display:block;font-size:var(--fs-xs);color:var(--u-sub);font-weight:500}

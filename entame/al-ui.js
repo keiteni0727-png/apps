@@ -514,3 +514,70 @@ const AL_NOTE_ACTIONS = [
     },
   ],
 ];
+
+/* ---------- 作品詳細：SERIES（アプリのシリーズ＋AniListのつながり） ----------
+   開いた作品の AniList のつながり（直接つながっているアニメ）を放送順に並べ、
+   アプリに登録済みの作品は、開いた作品と同じシリーズが付いているかを1作品ずつ見る。
+   つながりは作品を開いたときに AniList から読み、アプリを開いている間だけ覚える（保存はしない） */
+const AL_REL_LAB = { PREQUEL: "前の作品", SEQUEL: "続編", PARENT: "本編", SIDE_STORY: "外伝", ALTERNATIVE: "別バージョン", SPIN_OFF: "スピンオフ", SUMMARY: "総集編", COMPILATION: "総集編" };
+const AL_MAIN = new Set(["PREQUEL", "SEQUEL"]);
+const alRelCache = new Map(); // AniList の作品番号 → { cur, list } / "busy" / "err"
+async function alRelLoad(id) {
+  if (alRelCache.has(id)) return;
+  alRelCache.set(id, "busy");
+  try {
+    alRelCache.set(id, await AL.rels(id));
+  } catch (e) {
+    console.warn("AniList", e);
+    alRelCache.set(id, "err");
+  }
+  const it = openId && items.find(x => x.id === openId);
+  if (it && it.al === id) refreshSheet();
+}
+/* AniList の作品 → アプリに登録済みのアニメ（作品番号が同じ → 番号のない作品はタイトルが同じ） */
+function alOwnOf(n) {
+  const anime = items.filter(i => i.k === "a");
+  const byId = anime.find(i => i.al === n.id);
+  if (byId) return byId;
+  const ns = alNames(n);
+  return anime.find(i => !i.al && ns.includes(alNorm(i.t))) || null;
+}
+const alKeyOf = n => alYmd(n.startDate) || (n.seasonYear ? `${n.seasonYear}-00-00` : "9999");
+function seriesCardHtml(it) {
+  const ser = it.series || "";
+  const head = `<div class="ich"><span class="ilamp series">SERIES</span>${
+    ser
+      ? `<b class="sern">${esc(ser)}</b><button type="button" class="serlk" data-series="${esc(ser)}">このシリーズの作品一覧 ›</button>`
+      : `<span class="sertag w">シリーズ未登録</span><button type="button" class="serbtn" data-chkgo="fSeries">シリーズを登録</button>`
+  }<button type="button" class="u-btn sm iedit" data-jump="fSeries" aria-label="シリーズを編集">編集</button></div>`;
+  let body;
+  if (!it.al) body = `<p class="sermsg">AniListとまだつながっていません<button type="button" class="serbtn" data-alcheck="1">AniListで確認</button></p>`;
+  else {
+    const r = alRelCache.get(it.al);
+    if (!r) alRelLoad(it.al);
+    if (!r || r === "busy") body = `<p class="sermsg">AniListから読み込み中…</p>`;
+    else if (r === "err") body = `<p class="sermsg">AniListから読み込めませんでした<button type="button" class="serbtn" data-alrelre="1">もう一度</button></p>`;
+    else {
+      const row = (n, cur) => {
+        const own = cur ? it : alOwnOf(n);
+        const yr = n.seasonYear || n.startDate?.year;
+        const sub = [AL_FMT[n.format] || n.format, yr ? `${yr}年` : "", cur ? "" : AL_REL_LAB[n.rel] || ""].filter(Boolean).join("・");
+        const btn = (id, name, lab) => `<button type="button" class="serbtn" data-serset="${esc(id)}" data-sername="${esc(name)}">${esc(lab)}</button>`;
+        let right;
+        if (cur) right = `<span class="sertag cur">この作品</span>`;
+        else if (!own) right = `<span class="sertag">未登録</span><button type="button" class="serbtn pri" data-alreladd="${n.id}">登録する</button>`;
+        else if (!ser) right = own.series ? `<span class="sertag ok">登録済み・シリーズ「${esc(own.series)}」</span>${btn(it.id, own.series, "この作品にも付ける")}` : `<span class="sertag">登録済み・シリーズなし</span>`;
+        else if (own.series === ser) right = `<span class="sertag ok">登録済み・シリーズ同じ</span>`;
+        else if (!own.series) right = `<span class="sertag w">登録済み・シリーズ未登録</span>${btn(own.id, ser, `「${ser}」を付ける`)}`;
+        else right = `<span class="sertag w">登録済み・別のシリーズ「${esc(own.series)}」</span>${btn(own.id, ser, `「${ser}」に変える`)}`;
+        const name = esc(cur ? it.t : alTitle(n));
+        const im = n.coverImage?.medium ? `<img src="${esc(n.coverImage.medium)}" alt="" loading="lazy" onerror="this.remove()">` : "";
+        return `<div class="serit${cur ? " cur" : own ? " has" : ""}"><span class="serim">${im}</span><span class="sertx">${own && !cur ? `<button type="button" class="sertt" data-relopen="${esc(own.id)}">${name}</button>` : `<b>${name}</b>`}<small>${esc(sub)}</small></span><span class="serr">${right}</span></div>`;
+      };
+      const main = [{ ...r.cur, _cur: 1 }, ...r.list.filter(n => AL_MAIN.has(n.rel))].sort((a, b) => (alKeyOf(a) < alKeyOf(b) ? -1 : alKeyOf(a) > alKeyOf(b) ? 1 : 0));
+      const other = r.list.filter(n => !AL_MAIN.has(n.rel) && AL_REL_LAB[n.rel]).sort((a, b) => (alKeyOf(a) < alKeyOf(b) ? -1 : 1));
+      body = `<div class="sertl">${main.map(n => row(n, !!n._cur)).join("")}${other.length ? `<div class="sergl">外伝・別バージョンなど</div>${other.map(n => row(n, false)).join("")}` : ""}</div>`;
+    }
+  }
+  return `<div class="icard iser">${head}<div class="sersub">AniListのつながり（放送順）</div>${body}</div>`;
+}
