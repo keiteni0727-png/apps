@@ -94,8 +94,12 @@ function epListHtml(it, eps) {
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
     const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
     const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="u-btn sm tlok" data-gapadd="${wn.gap[0]}-${wn.gap[1]}">話数を追加</button><button type="button" class="u-btn sm tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.na ? `<b class="epskip">未放送</b>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" class="u-btn sm tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
-    const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
+    /* 要確認は「!」だけ出し、押すと補足（理由と「問題なし」）が開く */
+    const notes = [wn.n ? "数字以外の古い書き方の話数です。話数を入れ直すか「文字で入力」にしてください" : "", why2, wn.s ? "サブタイトルが未入力です" : ""].filter(Boolean);
+    const ek = "e:" + i;
+    const okB = wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" data-gapok="${i}">問題なし</button>` : "";
+    const meta = `<span class="tlmeta"><b class="tln">${esc(nlab)}</b>${whenTx ? `<span>${whenTx}</span>` : ""}${e.na ? `<b class="epskip">未放送</b>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : ""}${notes.length ? wnMark(ek) : ""}</span>${notes.length ? wnNote(ek, `<p>${notes.map(esc).join("<br>")}${okB}</p>`) : ""}`;
+    const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">サブタイトル未入力</span>` : "";
     return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}"${e.x ? " disabled" : ""} aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
 
@@ -134,7 +138,7 @@ function epListHtml(it, eps) {
     ? `<div class="epmenu" role="menu"><button type="button" role="menuitem" id="allAired">放送済みの話を全部チェック</button>${w ? `<button type="button" role="menuitem" id="clearAll">チェックを全部外す</button>` : ""}<button type="button" role="menuitem" id="arcOpenEd">${arcs.length ? "編（〇〇編）を編集" : "編（〇〇編）を登録"}</button></div>`
     : "";
   return `<div class="ephead"><div class="prog"><i style="width:${(w / wt) * 100}%"></i></div>${A ? `<button type="button" class="u-btn sm ephb ephp" id="spOpen" aria-label="各話リストを貼り付け">${PASTE_IC}貼り付け</button>` : ""}<button type="button" class="u-btn sm ephb" id="epEditBtn">話数を編集</button><button type="button" class="u-btn icon sm ephb ephm" id="epMenuBtn" aria-haspopup="menu" aria-expanded="${epMenu}" aria-label="そのほかの操作">…</button>${menu}</div>
-    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>押すと最初の話へ</span></button>` : ""}${fixBar}${arcBar}<div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
+    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>押すと最初の話へ</span></button>` : ""}${it.s === "視聴済み" && !upcoming(it) && eps.some(e => !done(e)) ? `<div class="wnn eptop"><p>視聴済みですが、チェックしていない話があります</p></div>` : ""}${fixBar}${arcBar}<div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */
 function epRef(it, list, i) {
