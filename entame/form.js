@@ -222,6 +222,7 @@ function formHtml() {
     <div class="fchips"><button type="button" class="u-chip fchip ${ck[2]}" data-fx="kind" aria-expanded="${f.fx === "kind"}" aria-label="ジャンル：${ck[1]}">${ck[1]}${DD_CHEV}</button><button type="button" class="u-chip fchip s-${esc(f.s)}" data-fx="status" aria-expanded="${f.fx === "status"}" aria-label="ステータス：${esc(stLabel(f.s))}">${esc(stLabel(f.s))}${DD_CHEV}</button></div>
     ${f.fx === "kind" ? `<div class="u-seg segc fxopt" role="group" aria-label="ジャンル">${seg("data-fk", KINDS, f.k)}</div>` : ""}${f.fx === "status" ? `<div class="u-seg segc fxopt fxst" role="group" aria-label="ステータス">${seg("data-fs", STATUSES.map(x => [x, stLabel(x), "s-" + x]), f.s)}</div>` : ""}</div>`;
   return `<div class="hdrow"><h3>${f.id ? "作品を編集" : "作品を追加"}</h3><button class="u-btn icon sm soft close" type="button" data-close aria-label="閉じる">✕</button></div>
+    ${typeof alBoxHtml === "function" ? alBoxHtml() : ""}
     <form id="titleF"${upcoming(f) ? ' class="fup"' : ""} novalidate>
     ${head}
     ${sec(`<span class="ilamp onair">ON AIR</span>`, P.mtype + P.mst + P.from + P.time + P.cours + P.mvod + P.vurl + P.series + P.url, "", "", "ftbl")}
@@ -341,7 +342,8 @@ function openForm(it, target, el) {
       cours: [...coursOf(it)],
       cy: yearOf(it) || y,
     };
-  } else
+  } else {
+    if (typeof alReset === "function") alReset();
     form = {
       id: null,
       k: state.mode === "s" ? "r" : state.mode === "m" ? (state.sub === "a" ? "a" : "f") : state.mode === "d" ? "d" : "a",
@@ -363,6 +365,7 @@ function openForm(it, target, el) {
       cours: [],
       cy: y,
     };
+  }
   /* 関連作品の編集：主題歌の欄はその関連作品の曲に入れ替えて開く（保存も関連作品にだけ書く） */
   if (it && target === "relb") {
     const k = el && el.dataset && el.dataset.rbk != null ? el.dataset.rbk : "new";
@@ -557,8 +560,12 @@ async function submitForm() {
   }
   const id = "u" + Date.now().toString(36);
   patch.added = Date.now();
+  /* AniListから入れたとき：AniListの作品番号も持つ（続編のお知らせで使う）。話数と画像は追加したあとに保存 */
+  const al = f.al;
+  if (al) patch.al = al.id;
   close();
   await saveTitle(id, patch, "追加しました");
+  if (al && typeof alAfterAdd === "function") alAfterAdd(id, al);
 }
 /* ポップアップ表示中は背景を固定する（共通部品 U.lock） */
 const TOUCH = U.TOUCH;

@@ -16,6 +16,8 @@ const SHELL = [
   "yt.js",
   "yt-detail.js",
   "lists.js",
+  "anilist.js",
+  "al-ui.js",
   "events.js",
   "helpers.js",
   "boot.js",

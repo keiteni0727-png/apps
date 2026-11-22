@@ -1,6 +1,6 @@
 /* ===================== エンタメ管理：土台 =====================
    決まった値・画面の状態・作品データの組み立て・保存（Firebase）・マスタ・話数・未入力チェック。
-   ファイルの読み込み順：core → view → filters → paste → detail → episodes → epaste → dropdown → form → settings → yt → yt-detail → lists → events → helpers → boot（最後に起動） */
+   ファイルの読み込み順：core → view → filters → paste → detail → episodes → epaste → dropdown → form → settings → yt → yt-detail → lists → anilist → al-ui → events → helpers → boot（最後に起動） */
 
 const DOW = ["月", "火", "水", "木", "金", "土", "日"];
 /* 左メニュー */

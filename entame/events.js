@@ -183,6 +183,7 @@ matchMedia("(max-width:899px)").addEventListener("change", () => {
   if (state.mode === "w") render();
 });
 const CLICK_HANDLERS = [
+  e => typeof onAlClick === "function" && onAlClick(e),
   onDDClick,
   e => runActions(SHELL_ACTIONS, e),
   onSettingsClick,

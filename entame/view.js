@@ -300,7 +300,7 @@ function weekTopHtml() {
   const unI = items.filter(i => ofKind(i) && i.s === "視聴中" && onAirNow(i) && nextInfo(i).back.length);
   const unE = unI.reduce((n, i) => n + nextInfo(i).back.length, 0);
   return `<div class="wt-clock"><time datetime="${d.toISOString()}">${hm}</time><span>${date}</span></div>
-    <button type="button" class="wt-un${state.unOnly ? " on" : ""}" data-unsw aria-pressed="${state.unOnly}"${unI.length || state.unOnly ? "" : " disabled"}><span class="wt-l">未視聴</span><b>${unI.length}<small>作品</small> ${unE}<small>話</small></b><span class="wt-go">${state.unOnly ? "✕ 曜日に戻る" : unI.length ? "まとめて見る ›" : "なし"}</span></button>`;
+    <button type="button" class="wt-un${state.unOnly ? " on" : ""}" data-unsw aria-pressed="${state.unOnly}"${unI.length || state.unOnly ? "" : " disabled"}><span class="wt-l">未視聴</span><b>${unI.length}<small>作品</small> ${unE}<small>話</small></b><span class="wt-go">${state.unOnly ? "✕ 曜日に戻る" : unI.length ? "まとめて見る ›" : "なし"}</span></button>${typeof alNoteBtn === "function" ? alNoteBtn() : ""}`;
 }
 /* カード1枚：時間（左の列）、ラベル（状態・ジャンル・配信サイト・放送局）、タイトル、その日の話、進み具合、視聴ボタン
    v＝"row"：スマホのタイムライン・PCの曜日の列の1件 ／ "hero"：放送中・次の放送を大きく（上に1枚） */
@@ -368,6 +368,8 @@ function weekCard(i, dayKey, isNext, onAir, preferBack) {
   </div>`;
 }
 function renderWeek() {
+  /* 新作・続編のお知らせ：1日1回だけ AniList に確認（終わったら上の札を描き直す） */
+  if (typeof alRefresh === "function" && isSynced()) setTimeout(() => alRefresh(), 0);
   const g = weekGroups();
   const gAll = weekGroupsAll();
   const nowMs = Date.now();
