@@ -3,7 +3,12 @@
    ファイルの分け方：core.js（共通の道具・状態）→ 各機能 → events.js（ボタン）→ boot.js（Firebase につないで起動）
    どのファイルの関数・変数も、ほかのファイルからそのまま使える（ふつうの <script> で順に読み込む） */
 /* =============== ふたりで育てるうり坊 =============== */
-const USTAGES = [[0, "ミニうりぼー"], [20, "よちよちうりぼー"], [50, "ちびうりぼー"], [100, "うりぼー"], [180, "やんちゃうりぼー"], [300, "わかウリ"], [450, "つよウリ"], [650, "もりのぬし"], [900, "そらのウリ"], [1200, "でんせつのウリ"]];
+const USTAGES1 = [[0, "ミニうりぼー"], [20, "よちよちうりぼー"], [50, "ちびうりぼー"], [100, "うりぼー"], [180, "やんちゃうりぼー"], [300, "わかウリ"], [450, "つよウリ"], [650, "もりのぬし"], [900, "そらのウリ"], [1200, "でんせつのウリ"]];
+/* 2代目（1代目が産んだ赤ちゃん）：8段階。1日にせいちょうできるのは G2_CAP まで */
+const USTAGES2 = [[0, "ねんねうりぼー"], [40, "よちよちうりぼー"], [120, "とてとてうりぼー"], [260, "ぴょこみみうりぼー"], [500, "もこもこうりぼー"], [900, "わたげうりぼー"], [1600, "さくらうりぼー"], [2800, "にじいろうりぼー"]];
+const GEN2_AT = new Date("2026-11-23T00:00:00+09:00").getTime(), G2_CAP = 30;
+const uriGen = () => S.pet?.g2 ? 2 : 1;
+const ust = () => uriGen() === 2 ? USTAGES2 : USTAGES1;
 const UFOODS = ["🍠", "🌰", "🍎", "🥕", "🍄"];
 const dayMs = s => new Date(ymd(s)).getTime();
 /* これまでの記録から「ごはん」の記録を作る */
@@ -32,9 +37,11 @@ function uriEvents(){
   return ev.sort((a, b) => b.at - a.at);
 }
 function uriState(){
-  const ev = uriEvents(), xp = ev.reduce((a, e) => a + e.xp, 0);
-  let st = 0; USTAGES.forEach(([n], i) => { if (xp >= n) st = i; });
-  const next = USTAGES[st + 1]?.[0], cur = USTAGES[st][0];
+  const ev = uriEvents(), raw = ev.reduce((a, e) => a + e.xp, 0), L = ust();
+  const days = uriGen() === 2 ? g2Days(raw) : null, xp = days ? days.reduce((a, [, n]) => a + n, 0) : raw;
+  const tx = days ? (days.find(([d]) => d === today())?.[1] || 0) : 0;
+  let st = 0; L.forEach(([n], i) => { if (xp >= n) st = i; });
+  const next = L[st + 1]?.[0], cur = L[st][0];
   const t = today(), last = ev.length ? ev[0].at : 0;
   const idle = last ? Math.max(0, dayDiff(localDay(last), t)) : 1;
   const fedMe = S.pet?.feeds?.[me()]?.last === t, pu = partnerUid(), fedHim = pu && S.pet?.feeds?.[pu]?.last === t;
@@ -43,8 +50,38 @@ function uriState(){
   const h = new Date().getHours();
   let mood = energy <= 50 ? "sad" : !fedMe ? "hungry" : (fedHim || !pu) ? "happy" : "normal";
   if ((h >= 23 || h < 6) && !S.uriAwake) mood = "sleep";
-  return { ev, xp, st, next, cur, energy, mood, fedMe, fedHim, idle };
+  return { ev, raw, xp, tx, st, next, cur, energy, mood, fedMe, fedHim, idle };
 }
+/* 2代目のせいちょう：日ごとに「その日のごはんの合計（1代目からの通算）」を記録しておき、
+   前の日より増えた分を 1日 G2_CAP まで足していく。記録はどちらのスマホからでも同じ値になる */
+function g2Days(raw){
+  const g = S.pet?.g2 || {}, e = { ...(g.e || {}) }, t = today();
+  e[t] = Math.max(e[t] || 0, raw);
+  let prev = g.base || 0; const out = [];
+  Object.keys(e).sort().forEach(d => { if (d > t) return; const v = e[d]; out.push([d, Math.max(0, Math.min(G2_CAP, v - prev))]); prev = Math.max(prev, v); });
+  return out;
+}
+/* きょうの合計を保存（増えたときだけ） */
+let g2Saved = "";
+function uriG2Track(raw){
+  const g = S.pet?.g2; if (!g || !S.roomId) return;
+  const t = today(), k = S.roomId + t + raw;
+  if (raw <= (g.e?.[t] || 0) || g2Saved === k) return;
+  g2Saved = k; S.pet.g2 = { ...g, e: { ...(g.e || {}), [t]: raw } };
+  setDoc(petRef(), { g2: { e: { [t]: raw } } }, { merge: true }).catch(() => { g2Saved = ""; });
+}
+/* 11/23 0:00 をすぎて最初に開いたとき、1代目をアルバムにのこして2代目（赤ちゃん）を生む */
+let g2Tried = null;
+function uriG2Birth(){
+  if (Date.now() < GEN2_AT || !S.pet?.bornAt || S.pet.g2 || g2Tried === S.roomId || S.needRules) return;
+  g2Tried = S.roomId;
+  const u = uriState(), now = Date.now();
+  const val = { g1: { name: S.pet.name || "ウリ", st: u.st, xp: u.xp, bornAt: S.pet.bornAt, endAt: now }, g2: { bornAt: now, base: u.raw, e: {} } };
+  S.pet = { ...S.pet, ...val };
+  setDoc(petRef(), val, { merge: true }).catch(() => {});
+}
+/* 開いたまま 0:00 をむかえたときも生まれるように */
+if (Date.now() < GEN2_AT && GEN2_AT - Date.now() < 864e5 * 3) setTimeout(() => { if (S.room) render(); }, GEN2_AT - Date.now() + 1500);
 /* はじめて開いたとき、うり坊を生まれたてにする（それまでのごはんの回数は「生まれる前」の分として差し引く） */
 let uriBirthTried = null;
 function uriBirth(roomId){
@@ -62,9 +99,14 @@ function uriCheckEvolve(){
   clearTimeout(uriEvoT);
   uriEvoT = setTimeout(() => {
     if (!S.pet?.bornAt || !S.roomId || S.needRules || uriEvoOn) return;
-    const st = uriState().st, k = "uriSt2_" + S.roomId;
+    uriG2Birth();
+    const u0 = uriState(), st = u0.st, g2 = uriGen() === 2, k = (g2 ? "uriG2St_" : "uriSt2_") + S.roomId;
+    if (g2) uriG2Track(u0.raw);
     let seen = null;
-    try { seen = localStorage.getItem(k); } catch (e) { return; }
+    try {
+      if (g2 && !localStorage.getItem("uriG2Born_" + S.roomId)) { localStorage.setItem("uriG2Born_" + S.roomId, "1"); localStorage.setItem(k, String(st)); uriBirthShow(); return; }
+      seen = localStorage.getItem(k);
+    } catch (e) { return; }
     if (seen === null) { try { localStorage.setItem(k, String(st)); } catch (e) {} return; }
     if (st <= +seen) return;
     try { localStorage.setItem(k, String(st)); } catch (e) {}
@@ -96,8 +138,8 @@ function uriEvolveShow(from, to){
     T.push(setTimeout(() => {
       o.classList.remove("charge"); o.classList.add("done"); clearInterval(pts); doneAt = Date.now();
       show(to, "happy", false); U().classList.add("pop");
-      msg.innerHTML = `おめでとう！<br>${nm}は <b>${esc(USTAGES[to][1])}</b> に<br>しんかした！`;
-      o.querySelector(".ebox").insertAdjacentHTML("afterend", `<div class="estep">${to + 1} / ${USTAGES.length} だんかいめ</div>`);
+      msg.innerHTML = `おめでとう！<br>${nm}は <b>${esc(ust()[to][1])}</b> に<br>しんかした！`;
+      o.querySelector(".ebox").insertAdjacentHTML("afterend", `<div class="estep">${to + 1} / ${ust().length} だんかいめ</div>`);
       ["✨", "🌸", "⭐", "💖", "🎉", "🌰"].forEach(e => { for (let j = 0; j < 4; j++) { const c = document.createElement("span"); c.className = "econf"; c.textContent = e; c.style.left = Math.random() * 95 + "%"; c.style.animationDelay = (Math.random() * 1.2) + "s"; o.appendChild(c); setTimeout(() => c.remove(), 4500); } });
     }, 220));
   };
@@ -105,7 +147,7 @@ function uriEvolveShow(from, to){
   const close = () => {
     T.forEach(clearTimeout); clearInterval(pts); o.remove(); uriEvoOn = false;
     const e2 = document.getElementById("uri"); if (e2) { const u2 = uriState(); e2.className = `uri s${u2.st} ${u2.mood === "sleep" ? "sleep" : "idle"}`; e2.innerHTML = uriSvg(u2.st, u2.mood, uw()); }
-    uriSay(`${USTAGES[to][1]}になったぷぎ！これからもよろしくね`);
+    uriSay(`${ust()[to][1]}になったぷぎ！これからもよろしくね`);
   };
   o.addEventListener("click", e => {
     e.stopPropagation();
@@ -115,8 +157,61 @@ function uriEvolveShow(from, to){
     T.forEach(clearTimeout); T.length = 0; reveal();
   });
 }
+/* 1代目が赤ちゃんを産む演出（全画面）。それぞれのスマホで1回だけ。名前がまだなら、ここで決める */
+function uriBirthShow(){
+  uriEvoOn = true;
+  const g1 = S.pet?.g1 || {}, pn = esc(g1.name || "ウリ");
+  const o = document.createElement("div"); o.className = "evo birth";
+  o.innerHTML = `<div class="erays"></div><div class="eglow"></div>
+    <div class="emsg" id="emsg">…おや？<br>${pn}のようすが…！</div>
+    <div class="ebox"><div class="uri bpar" id="bpar">${uriSvg(g1.st ?? 9, "normal", null, 1)}</div><div class="uri bbaby" id="bbaby">${uriSvg(0, "sleep", null, 2)}</div></div>
+    <div class="bname" id="bname"></div>
+    <div class="etap">タップでとじる</div><div class="eflash"></div>`;
+  document.body.appendChild(o);
+  const msg = o.querySelector("#emsg"), par = o.querySelector("#bpar"), baby = o.querySelector("#bbaby"), T = [];
+  const at = (ms, f) => T.push(setTimeout(f, ms));
+  const hearts = setInterval(() => { if (!o.classList.contains("charge")) return; const h = document.createElement("span"); h.className = "bheart"; h.textContent = ["💕", "💗", "✨"][Math.floor(Math.random() * 3)]; h.style.left = (30 + Math.random() * 40) + "%"; o.appendChild(h); setTimeout(() => h.remove(), 2200); }, 160);
+  at(1400, () => { o.classList.add("charge"); par.innerHTML = uriSvg(g1.st ?? 9, "shy", null, 1); });
+  let doneAt = 0;
+  const reveal = () => {
+    o.querySelector(".eflash").classList.add("on");
+    T.push(setTimeout(() => {
+      o.classList.remove("charge"); o.classList.add("done"); clearInterval(hearts); doneAt = Date.now();
+      par.innerHTML = uriSvg(g1.st ?? 9, "happy", null, 1); baby.classList.add("pop");
+      msg.innerHTML = `${pn}に<br><b>あかちゃん</b>がうまれた！`;
+      ["💖", "🍼", "✨", "🌸", "⭐"].forEach(e => { for (let j = 0; j < 4; j++) { const c = document.createElement("span"); c.className = "econf"; c.textContent = e; c.style.left = Math.random() * 95 + "%"; c.style.animationDelay = (Math.random() * 1.2) + "s"; o.appendChild(c); setTimeout(() => c.remove(), 4500); } });
+      T.push(setTimeout(() => { baby.innerHTML = uriSvg(0, "happy", null, 2); nameBox(); }, 1600));
+    }, 220));
+  };
+  const nameBox = () => {
+    const b = o.querySelector("#bname"), nm = S.pet?.g2?.name;
+    b.innerHTML = nm ? `なまえは <b>${esc(nm)}</b> だよ<br><small>${pn}はアルバムで見まもってるよ</small>`
+      : `<form id="bnf"><div>あかちゃんに なまえをつけてね</div><input class="in" name="n" maxlength="12" placeholder="なまえ" required><button class="btn">きめる</button></form><small>${pn}はアルバムで見まもってるよ</small>`;
+    b.classList.add("on");
+    const f = b.querySelector("#bnf"); if (!f) return;
+    f.addEventListener("click", e => e.stopPropagation());
+    f.onsubmit = async ev => {
+      ev.preventDefault(); const n = String(f.n.value || "").trim().slice(0, 12); if (!n) return;
+      S.pet.g2 = { ...S.pet.g2, name: n };
+      setDoc(petRef(), { g2: { name: n } }, { merge: true }).catch(e => toast("保存できませんでした（" + (e.code || e.message) + "）"));
+      nameBox();
+    };
+  };
+  at(3400, reveal);
+  const close = () => {
+    T.forEach(clearTimeout); clearInterval(hearts); o.remove(); uriEvoOn = false; render();
+    uriSay("はじめましてぷぃ！よろしくね");
+  };
+  o.addEventListener("click", e => {
+    e.stopPropagation();
+    if (doneAt) { if (Date.now() - doneAt > 2000) close(); return; }
+    if (o.querySelector(".eflash.on")) return;
+    T.forEach(clearTimeout); T.length = 0; reveal();
+  });
+}
+const uriBornAt = () => uriGen() === 2 ? S.pet.g2.bornAt : S.pet?.bornAt;
 function localDay(at){ const d = new Date(at); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
-const uriName = () => S.pet?.name || "ウリ";
+const uriName = () => uriGen() === 2 ? (S.pet.g2.name || "あかちゃん") : (S.pet?.name || "ウリ");
 function uriLines(u){
   const L = [], pu = partnerUid(), n = nextDate();
   if (u.mood === "sleep") return ["むにゃ…", "すやすや…", "zzz…ぷぎ…"];
@@ -151,7 +246,7 @@ function uriHtml(){
   const pct = u.next ? Math.round((u.xp - u.cur) / (u.next - u.cur) * 100) : 100;
   uriCoopFx();
   return `<div class="card uricard" id="uricard">
-    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())} ✎</button><span class="tag lav">${esc(USTAGES[u.st][1])}</span><span class="uacorn">${AC} ${S.pet?.acorns || 0}こ</span></div>
+    <div class="uhead"><button class="nm" data-a="uriName">${esc(uriName())} ✎</button><span class="tag lav">${esc(ust()[u.st][1])}</span><span class="uacorn">${AC} ${S.pet?.acorns || 0}こ</span></div>
     ${uriSeason().ban ? `<div class="uban">${esc(uriSeason().ban)}</div>` : ""}
     <div class="ustage ${roomNow().fl ? "hasfl" : ""}" id="ustage"><div class="uroom">${roomSvg()}</div>${uriDecoHtml()}<div class="ububble" id="ububble">${esc(S.uriSay || (lettersIn().length ? "おてがみあずかってるぷぎ！" : u.mood === "sleep" ? "すやすや…" : uriSpecial() ? uriSeason().line : u.st === 0 && u.xp < 5 ? "ぷぃ…（うまれたて）" : u.mood === "sad" ? "さみしかったぷぎ…" : !u.fedMe ? "おなかすいたぷぎ〜" : "ぷぎっ！"))}</div>
       <div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri" data-a="uriTap">${uriSvg(u.st, u.mood, uw())}</div></div>
@@ -272,26 +367,27 @@ async function uriFeed(btn){
 }
 function openUriInfo(){
   const u = uriState();
-  const log = u.ev.slice(0, 10);
+  const log = (uriGen() === 2 ? u.ev.filter(e => e.at >= S.pet.g2.bornAt) : u.ev).slice(0, 10);
   openSheet(`<h3>${esc(uriName())}のようす<button class="x" data-a="close">×</button></h3>
   <div class="card" style="text-align:center">
     <div style="font-size:13px;color:var(--muted)">いまのすがた</div>
-    <div style="font-size:18px;font-weight:700;color:var(--pink-d)">${esc(USTAGES[u.st][1])}</div>
-    <div class="muted">これまでのごはん ${u.xp}${u.next ? ` ・ 次のすがたまで あと${u.next - u.xp}` : " ・ さいごまで育ったよ！"}</div>
-    ${S.pet?.bornAt ? `<div class="muted" style="font-size:12px">${esc(fmtShort(localDay(S.pet.bornAt)))}にうまれたよ（${dayDiff(localDay(S.pet.bornAt), today()) + 1}日目）</div>` : ""}
+    <div style="font-size:18px;font-weight:700;color:var(--pink-d)">${esc(ust()[u.st][1])}</div>
+    <div class="muted">せいちょう ${u.xp}${u.next ? ` ・ 次のすがたまで あと${u.next - u.xp}` : " ・ さいごまで育ったよ！"}</div>
+    ${uriGen() === 2 ? `<div class="muted" style="font-size:12px">きょうのせいちょう ${u.tx} / ${G2_CAP}（1日${G2_CAP}まで）</div>` : ""}
+    ${uriBornAt() ? `<div class="muted" style="font-size:12px">${esc(fmtShort(localDay(uriBornAt())))}にうまれたよ（${dayDiff(localDay(uriBornAt()), today()) + 1}日目）</div>` : ""}
   </div>
   <div class="sec">ごはんになること</div>
   <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10<br>🤝 ふたりともごはんをあげた日 +5<br>💌 おてがみをあずける +3（1日1回ぶん）</div>
   <div class="sec">さいきんのごはん</div>
   <div class="card" style="padding:4px 16px">${log.length ? log.map(e => `<div class="ulog"><div class="main">${e.who ? esc(nameOf(e.who)) + "：" : "ふたりで："}${esc(e.t)}<small>${e.at ? esc(fmtShort(localDay(e.at))) : ""}</small></div><b>+${e.xp}</b></div>`).join("") : `<p class="muted">まだありません</p>`}</div>
-  <p class="muted" style="text-align:center;font-size:12px">何日もかまわないと、げんきが減ってしょんぼりします。</p>`);
+  <p class="muted" style="text-align:center;font-size:12px">${uriGen() === 2 ? `せいちょうは1日${G2_CAP}まで。` : ""}何日もかまわないと、げんきが減ってしょんぼりします。</p>`);
 }
 function openUriName(){
   openSheet(`<h3>なまえをつける<button class="x" data-a="close">×</button></h3>
   <form id="unf"><label class="f"><span>うり坊のなまえ</span><input class="in" name="n" maxlength="12" value="${esc(uriName())}" required></label><button class="btn block">決める</button></form>`);
   document.getElementById("unf").onsubmit = async ev => {
     ev.preventDefault(); const n = String(ev.target.n.value || "").trim().slice(0, 12); if (!n) return;
-    try { await setDoc(doc(db, "rooms", S.roomId, "meta", "pet"), { name: n }, { merge: true }); S.pet = { ...(S.pet || {}), name: n }; closeSheet(); render(); uriSay(`${n}になったぷぎ！うれしい！`); }
+    try { if (uriGen() === 2) { await setDoc(petRef(), { g2: { name: n } }, { merge: true }); S.pet.g2 = { ...S.pet.g2, name: n }; } else { await setDoc(petRef(), { name: n }, { merge: true }); S.pet = { ...(S.pet || {}), name: n }; } closeSheet(); render(); uriSay(`${n}になったぷぎ！うれしい！`); }
     catch (e) { toast(e.code === "permission-denied" ? "保存できませんでした。Firebaseのルール更新が必要です" : "保存できませんでした（" + (e.code || e.message) + "）"); }
   };
 }

@@ -777,3 +777,25 @@ header.hd2 .iconbtn{align-self:center}
 @keyframes tyoyo{from{transform:translateY(-40px)}to{transform:translateY(30px) rotate(180deg)}}
 .tplush{left:calc(50% + 40px);bottom:20px;font-size:40px;animation:lpop .4s ease}
 .jgame{background:linear-gradient(180deg,#dff0fb 0,#fdf8f4 70%)}
+/* 赤ちゃん誕生の演出・2代目のアルバム */
+.evo.birth{background:radial-gradient(circle at 50% 45%,#8a5a7c 0,#3a2440 72%)}
+.evo.birth .ebox{display:flex;align-items:flex-end;justify-content:center;gap:2px}
+.evo.birth .ebox .uri{transform:none;margin-bottom:24px}
+.evo.birth .bpar{width:160px;height:160px}
+.evo.birth .bbaby{width:88px;height:88px;opacity:0;transform-origin:50% 100%}
+.evo.birth .bbaby.pop{opacity:1;animation:bpop .8s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bpop{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:scale(1)}}
+.evo .bheart{position:absolute;bottom:38%;font-size:20px;animation:bheart 2.1s ease-out forwards;pointer-events:none}
+@keyframes bheart{0%{opacity:0;transform:translateY(0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translateY(-180px) scale(1.2)}}
+.evo .bname{min-height:96px;font-size:15px;line-height:1.7;opacity:0;transition:opacity .5s}
+.evo .bname.on{opacity:1}
+.evo .bname b{color:#fde68a;font-size:19px}
+.evo .bname small{display:block;font-size:12px;opacity:.8;margin-top:6px}
+.evo .bname form{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;align-items:center}
+.evo .bname form div{width:100%}
+.evo .bname .in{width:150px;text-align:center}
+.asub{font-size:12px;font-weight:700;color:var(--lav-d,#8a76c9);margin:0 0 6px}
+.ag1{display:flex;align-items:center;gap:12px}
+.ag1 .uri{width:72px;height:72px;flex:none;cursor:default}
+.ag1 .main{display:flex;flex-direction:column;gap:2px}
+.ag1 small{font-size:11px;color:var(--muted)}

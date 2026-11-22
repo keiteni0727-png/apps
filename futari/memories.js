@@ -68,6 +68,18 @@ const UPARTS = [
   { c:"#f5f2fa", d:"#d8cfe6", hr:[28,25], hy:44, br:[47,30], L:16, e:4.4, sn:[15,10.5],so:18,ear:1.05,sp:0, lt:"#ffffff", tk:.9 },
   { c:"#f0bd55", d:"#c48d2c", hr:[28,25], hy:44, br:[48,31], L:17, e:4.4, sn:[16,11], so:18, ear:1.05,sp:0, lt:"#fff1c4", tk:1.3 }
 ];
+/* 2代目（赤ちゃんから育てなおし・8段階）：小物は使わず、体つき・毛・耳・しっぽ・色だけで成長を見せる。ずっと丸くて小さいまま
+   sc:しましまの色（配列なら1本ずつ色を変える） */
+const UPARTS2 = [
+  { c:"#f0d2b0", d:"#d2ae8a", hr:[35,32], hy:66, br:[22,15], L:1,  e:7,   sn:[9,6.2],   so:12, ear:.45, sp:.7 },
+  { c:"#e2b68c", d:"#c09068", hr:[33,30], hy:61, br:[23,15], L:6,  e:6.6, sn:[10,7],    so:13, ear:.62, sp:1 },
+  { c:"#cf9a6c", d:"#a9764c", hr:[32.5,29.5], hy:58, br:[28,18], L:10, e:6.4, sn:[11,7.5], so:13, ear:.72, sp:1.25 },
+  { c:"#c68d62", d:"#9f6c46", hr:[32,29], hy:57, br:[29,19], L:10, e:6.3, sn:[11,7.5],  so:13, ear:1.15, sp:1.2 },
+  { c:"#d9b08c", d:"#b38a68", hr:[32,29], hy:57, br:[30,20], L:10, e:6.3, sn:[11,7.5],  so:13, ear:1,   sp:1, lt:"#fff6ea" },
+  { c:"#e9cfb4", d:"#c9ab8f", hr:[32,29], hy:57, br:[30,21], L:10, e:6.3, sn:[11,7.5],  so:13, ear:1,   sp:1, lt:"#ffffff" },
+  { c:"#f6c3cf", d:"#dc9fae", hr:[32,29], hy:57, br:[30,21], L:10, e:6.5, sn:[11,7.5],  so:13, ear:1,   sp:1.3, lt:"#ffffff" },
+  { c:"#f5d38c", d:"#d6ac5e", hr:[32,29], hy:56, br:[31,21], L:11, e:6.5, sn:[11,7.5],  so:13, ear:1.05, sp:1.4, lt:"#fffaf0", sc:["#f9b6c7", "#fde68a", "#a9ddc5", "#bfe1f6", "#d7c8f5"] }
+];
 /* 色を明るく（f>0）・暗く（f<0）する。立体の陰影づけに使う */
 function uShade(hex, f){
   const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(f > 0 ? v + (255 - v) * f : v * (1 + f)));
@@ -82,8 +94,10 @@ const uPuffy = id => `<filter id="${id}" x="-20%" y="-20%" width="140%" height="
   <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
   <feComposite in="m" in2="s2" operator="arithmetic" k2="1" k3=".5" result="o"/>
   <feComposite in="o" in2="SourceAlpha" operator="in"/></filter>`;
-function uriSvg(stage, mood, wear){
-  const st = Math.max(0, Math.min(UPARTS.length - 1, stage | 0)), P = UPARTS[st];
+/* gen：1＝1代目 / 2＝2代目（省略したら今育てている子） */
+function uriSvg(stage, mood, wear, gen){
+  gen = gen || uriGen();
+  const UP = gen === 2 ? UPARTS2 : UPARTS, st = Math.max(0, Math.min(UP.length - 1, stage | 0)), P = UP[st];
   const K = "u" + (uriSvg.n = (uriSvg.n || 0) + 1); // 1枚ごとに別のID（同じ画面に何体いても混ざらない）
   const [hx, hy0] = [60, P.hy], [hrx, hry] = P.hr, [brx, bry] = P.br;
   const hy = hy0, ground = 112, by = ground - P.L + 3 - bry;
@@ -99,14 +113,14 @@ function uriSvg(stage, mood, wear){
   else if (mood === "happy" || mood === "eat" || mood === "shy") eyes = `<path d="M${hx-ex-w} ${ey+1}q${w} ${-w*1.2} ${w*2} 0M${hx+ex-w} ${ey+1}q${w} ${-w*1.2} ${w*2} 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
   else if (mood === "sleep") eyes = `<path d="M${hx-ex-w} ${ey}q${w} ${w*.9} ${w*2} 0M${hx+ex-w} ${ey}q${w} ${w*.9} ${w*2} 0" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
   else {
-    const r = P.e, big = st <= 2;
+    const r = P.e, big = st <= 2 || gen === 2;
     eyes = [hx - ex, hx + ex].map(x => nEye(x) + (big ? `<circle cx="${x + r*.05}" cy="${ey - r*.62}" r="${r*.13}" fill="#fff" opacity=".8"/>` : "")).join("");
   }
   let brows = mood === "sad" ? `<path d="M${hx-ex-8} ${ey-10}l9 3M${hx+ex+8} ${ey-10}l-9 3" stroke="#7a5a48" stroke-width="2.4" stroke-linecap="round"/>` : "";
   const tear = mood === "sad" ? `<path d="M${hx-ex-3} ${ey+6}q-2 5 0 7q3 0 2-4z" fill="#9fd3ee"/>` : "";
   const sweat = mood === "hungry" ? `<path d="M${hx+hrx-4} ${ey-14}q4 6 0 9q-4-3 0-9z" fill="#9fd3ee"/>` : "";
   const my = sy + P.sn[1] + 4;
-  const paci = st === 0 && mood !== "eat" && mood !== "sad";
+  const paci = gen !== 2 && st === 0 && mood !== "eat" && mood !== "sad";
   const chO = mood === "shy" ? .95 : .55, chR = mood === "shy" ? 8 : 6.5, chC = mood === "shy" ? "#f08a9a" : "#f4a3b8";
   const mouth = mood === "surprise" ? `<ellipse cx="${hx}" cy="${my + 1}" rx="3.6" ry="4.4" fill="#8a4c4c"/>`
     : mood === "dizzy" ? `<path d="M${hx-7} ${my}q1.75-3 3.5 0t3.5 0t3.5 0t3.5 0" stroke="#8a4c4c" stroke-width="2" fill="none" stroke-linecap="round"/>`
@@ -198,8 +212,39 @@ function uriSvg(stage, mood, wear){
       + `<path d="M${hx-15} ${top+3}l-2-17l8 8l9-13l9 13l8-8l-2 17z" fill="#f2c94c" stroke="#c9992c" stroke-width="1.2"/><rect x="${hx-15}" y="${top-1}" width="30" height="4" fill="#e3ad32"/><circle cx="${hx}" cy="${top-3}" r="3" fill="#e2809c"/><circle cx="${hx-9}" cy="${top}" r="2" fill="#8fd1b3"/><circle cx="${hx+9}" cy="${top}" r="2" fill="#bfe1f6"/>`;
     neck = `<path d="M${hx-8} ${hy+hry-4}l8 10l8-10" stroke="#d9534f" stroke-width="3" fill="none"/><circle cx="${hx}" cy="${hy+hry+8}" r="6" fill="#f2c94c" stroke="#c9992c" stroke-width="1.2"/>${sparkle(hx, hy + hry + 8, 4.5, "#fff")}`;
   }
+  let furK = "", furB = "", furC = "", furH = ""; // 毛（立体フィルターをかけず体になじませる）
+  if (gen === 2) { // 2代目：小物なし。体つき・毛・耳・しっぽ・色で成長
+    back = acc = neck = headTop = deco = ""; if (mood !== "sad") brows = "";
+    const lt2 = P.lt || light, blur = `filter="url(#${K}f)"`;
+    const tuft2 = (k, c = P.d) => `<path transform="translate(${hx} ${top+3}) scale(${k}) translate(${-hx} ${-(top+3)})" d="M${hx-1} ${top+3}q-4-8 2-10q-3 5 3 8q0-6 5-6q-4 4-2 8z" fill="${c}"/>`;
+    const tail = (k, heart) => `<g transform="translate(${hx+brx-3} ${by-bry*.2}) scale(${k})"><path d="M0 0q9-2 9-9q0-5-5-4q-4 1-1 5" stroke="${P.d}" stroke-width="3" fill="none" stroke-linecap="round"/>${heart ? `<path d="M3.4 -8.4c-1.6-2.4-5-1-3.6 1.6l3.6 3.4l3.6-3.4c1.4-2.6-2-4-3.6-1.6z" fill="#f08a9a"/>` : ""}</g>`;
+    const earTuft = c => [-1, 1].map(d => `<path d="M${hx + d*hrx*.62 - d*1} ${top - 9*P.ear + 2}l${d*1} -9l${d*3} 7z" fill="${c}"/>`).join("");
+    const cheekF = (k, c) => [-1, 1].map(d => [[0, -2, 5], [d * 1.6, 5, 5], [d * -.5, 11, 4.4]].map(([dx, dy, r]) => `<circle cx="${hx + d * (hrx - 3) + dx * k}" cy="${hy + 3 + dy * k}" r="${r * k}" fill="${c}"/>`).join("")).join("");
+    const ruff = (c, r0 = 4.6) => Array.from({ length: 16 }, (_, i) => { const t = i / 16 * Math.PI * 2; return `<circle cx="${(hx + Math.cos(t) * (hrx + 1)).toFixed(1)}" cy="${(hy + Math.sin(t) * (hry + 1)).toFixed(1)}" r="${r0}" fill="${c}"/>`; }).join("");
+    const chest = (k, c) => `<g opacity=".88" ${blur}><ellipse cx="${hx}" cy="${by + bry*.35}" rx="${brx*.5*k}" ry="${bry*.75*k}" fill="${c}"/></g>`;
+    const fluff = (c, n = 14) => Array.from({ length: n }, (_, i) => { const t = -Math.PI * (1.05 + .9 * i / (n - 1)), x = hx + Math.cos(t) * (brx + 1), y = by + Math.sin(t) * (bry + 1); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.6" fill="${c}"/>`; }).join("");
+    const wings = c => [-1, 1].map(d => `<g transform="translate(${hx + d * (brx - 6)} ${by - bry * .4}) scale(${d * .55} .55)" fill="${c}" stroke="#e3c98a" stroke-width="1.6" stroke-linejoin="round"><path d="M-4 4Q-2-30 14-46Q20-40 18-32Q26-34 24-24Q30-24 26-14Q30-10 22-4Q14 6-4 8z"/></g>`).join("");
+    const starEye = (x, r) => `<circle cx="${x}" cy="${ey}" r="${r*.62}" fill="#7a5a8c" opacity=".5"/>${sparkle(x, ey + r*.1, r*.62, "#fff")}<circle cx="${x + r*.34}" cy="${ey - r*.42}" r="${r*.3}" fill="#fff"/>`;
+    const normalEyes = !["happy", "eat", "shy", "sleep", "wink", "dizzy", "surprise"].includes(mood);
+    const stars = () => { if (normalEyes) eyes += [hx - ex, hx + ex].map(x => starEye(x, P.e)).join(""); };
+    // 虹色のしましま（頭と体）
+    const rainbow = cs => ({
+      h: `<g clip-path="url(#${K}hc)" opacity=".75">${[-.55, -.18, .18, .55].map((k, i) => `<path d="M${hx + hrx*k - 2.6} ${top-2}q${-k*5} ${hry*.5} 0 ${hry*.75}h5.2q${-k*5} ${-hry*.25} 0 ${-hry*.75}z" fill="${cs[i]}"/>`).join("")}</g>`,
+      b: `<g opacity=".7">${[-.72, -.36, 0, .36, .72].map((k, i) => `<path d="M${hx + brx*k - 2.6} ${by - bry}q${-k*6} ${bry} 0 ${bry*2}h5.2q${-k*6} ${-bry} 0 ${-bry*2}z" fill="${cs[i]}"/>`).join("")}</g>` });
+    if (st === 0) { headTop = tuft2(.5); deco = sparkle(16, 46, 4, "#fde68a") + sparkle(104, 74, 3.4, "#fbcfe8"); }
+    if (st === 1) { headTop = tuft2(.9); back = tail(.75); }
+    if (st === 2) { headTop = tuft2(1.25); back = tail(1); }
+    if (st === 3) { headTop = tuft2(1.35) + earTuft(P.d); back = tail(1.05); furB = cheekF(.8, uShade(P.c, -.2)); }
+    if (st === 4) { headTop = tuft2(1.4) + earTuft(P.d); back = tail(1.1); furB = cheekF(1, uShade(P.c, -.12)); furC = chest(1.15, lt2); }
+    if (st === 5) { headTop = tuft2(1.5, "#fff8ee") + earTuft("#fff8ee"); furK = fluff("#e9d2b8"); back = tail(1.15); furB = ruff("#efd9bf", 5.4); furC = chest(1.2, lt2); }
+    if (st === 6) { headTop = tuft2(1.5, "#fff") + earTuft("#fff"); furK = fluff("#f4c0cd"); back = tail(1.2, true); furB = ruff("#f8cdd8", 5.6); furC = chest(1.2, lt2); stars();
+      deco = sparkle(14, 36, 4.5, "#fbcfe8") + sparkle(106, 30, 4, "#c7b8ef") + sparkle(108, 84, 3, "#fde68a"); }
+    if (st === 7) { const rb = rainbow(P.sc); headTop = tuft2(1.6, "#fff6d8") + earTuft("#fff6d8"); furK = fluff("#f3d38e", 16); back = wings("#ffffff") + tail(1.25, true); furB = ruff("#f9dc9a", 5.8); furC = rb.b + chest(.8, lt2); furH = rb.h; stars();
+      deco = `<circle cx="60" cy="66" r="54" fill="#fff4c4" opacity=".6" ${blur}/>` + sparkle(12, 30, 6, "#f2c94c") + sparkle(108, 24, 5, "#f9b6c7") + sparkle(12, 90, 4, "#c7b8ef") + sparkle(108, 88, 4.5, "#f2c94c"); }
+  }
   const WR = wear || {};
-  if (WR.head) { headTop = st === 5 ? maneC("#5a3a26") : st === 6 ? maneC("#3d2618", 1.3) : ""; if (st === 4 || st === 8) acc = ""; }
+  if (WR.head && gen === 2) headTop = "";
+  else if (WR.head) { headTop = st === 5 ? maneC("#5a3a26") : st === 6 ? maneC("#3d2618", 1.3) : ""; if (st === 4 || st === 8) acc = ""; }
   if (WR.neck) neck = "";
   if (WR.back) back = "";
   const wz = uriWearSvg(WR, { hx, hy, hrx, hry, top, ey, ex, e: P.e, by, brx, bry, sy, sn: P.sn });
@@ -222,17 +267,17 @@ function uriSvg(stage, mood, wear){
       ${uPuffy(K + "p")}
     </defs>
     <ellipse cx="60" cy="${ground}" rx="${Math.max(28, brx * 1.05)}" ry="7" fill="url(#${K}g)"/>
-    ${deco}${W2(back)}${W2(wz.back)}
+    ${deco}${furK}${W2(back)}${W2(wz.back)}
     ${legX.map(x => `<rect x="${x - legW/2}" y="${ground - P.L - 6}" width="${legW}" height="${P.L + 6}" rx="${legW/2}" fill="url(#${K}l)"/><rect x="${x - legW/2}" y="${ground - 4.5}" width="${legW}" height="4.5" rx="2.2" fill="${uShade(D, -.45)}" opacity=".8"/>`).join("")}
     <ellipse cx="${hx}" cy="${by}" rx="${brx}" ry="${bry}" fill="url(#${K}b)"/>
-    <g clip-path="url(#${K}bc)">
+    <g clip-path="url(#${K}bc)">${furC}
       <ellipse cx="${hx}" cy="${by + bry*.42}" rx="${brx*.55}" ry="${bry*.5}" fill="${light}" opacity=".5" ${soft}/>
       <ellipse cx="${hx - brx*.5}" cy="${by - bry*.5}" rx="${brx*.24}" ry="${bry*.16}" fill="#fff" opacity=".35" ${soft}/>
       <ellipse cx="${hx}" cy="${hy + hry - 1}" rx="${hrx*.95}" ry="${hry*.32}" fill="#3a2230" opacity=".28" ${soft}/>
     </g>
-    ${ear(hx - hrx * .62, false)}${ear(hx + hrx * .62, true)}
+    ${furB}${ear(hx - hrx * .62, false)}${ear(hx + hrx * .62, true)}
     <ellipse cx="${hx}" cy="${hy}" rx="${hrx}" ry="${hry}" fill="url(#${K}h)"/>
-    ${sp}
+    ${sp}${furH}
     <g clip-path="url(#${K}hc)"><ellipse cx="${hx - hrx*.36}" cy="${top + hry*.36}" rx="${hrx*.34}" ry="${hry*.2}" fill="#fff" opacity=".42" ${soft}/><ellipse cx="${hx + hrx*.15}" cy="${hy + hry*1.02}" rx="${hrx*.9}" ry="${hry*.22}" fill="#3a2230" opacity=".14" ${soft}/></g>
     ${W2(neck)}${W2(headTop)}${W2(acc)}
     <ellipse cx="${hx-hrx*.68}" cy="${sy-1}" rx="${chR}" ry="${chR*.65}" fill="${chC}" opacity="${chO}" ${soft}/><ellipse cx="${hx+hrx*.68}" cy="${sy-1}" rx="${chR}" ry="${chR*.65}" fill="${chC}" opacity="${chO}" ${soft}/>

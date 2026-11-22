@@ -58,16 +58,24 @@ function uriSouvCheck(){
 
 /* ---------- 成長アルバム ---------- */
 function uriStageDates(){
-  const ev = uriEvents().slice().sort((a, b) => a.at - b.at); let x = 0; const out = { 0: S.pet?.bornAt };
-  ev.forEach(e => { const b = x; x += e.xp; USTAGES.forEach(([n], i) => { if (i > 0 && b < n && x >= n && !out[i]) out[i] = e.at || Date.now(); }); });
+  const L = ust(), out = {};
+  if (uriGen() === 2) { // 2代目：日ごとのせいちょうから
+    out[0] = S.pet.g2.bornAt; let x = 0;
+    g2Days(uriState().raw).forEach(([d, n]) => { const b = x; x += n; L.forEach(([v], i) => { if (i > 0 && b < v && x >= v && !out[i]) out[i] = new Date(d + "T12:00:00").getTime(); }); });
+    return out;
+  }
+  const ev = uriEvents().slice().sort((a, b) => a.at - b.at); let x = 0; out[0] = S.pet?.bornAt;
+  ev.forEach(e => { const b = x; x += e.xp; L.forEach(([n], i) => { if (i > 0 && b < n && x >= n && !out[i]) out[i] = e.at || Date.now(); }); });
   return out;
 }
 function albumHtml(){
-  const u = uriState(), dts = uriStageDates();
-  const born = S.pet?.bornAt;
+  const u = uriState(), dts = uriStageDates(), L = ust(), g1 = uriGen() === 2 ? S.pet.g1 : null;
+  const born = uriBornAt(), md = at => esc(fmtShort(localDay(at)).replace(/\(.\)/, ""));
   return `<div class="card"><h2>📖 成長アルバム<button class="linkbtn" style="margin-left:auto;padding:0;font-weight:400" data-a="uriInfo">ごはんの記録 ›</button></h2>
-  <div class="ustages">${USTAGES.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st + 1 ? "？？？" : esc(nm)}<br>${i <= u.st && dts[i] ? esc(fmtShort(localDay(dts[i])).replace(/\(.\)/, "")) : i > u.st ? `あと${n - u.xp}` : "—"}</div>`).join("")}</div>
-  ${born ? `<p class="muted" style="text-align:center;font-size:12px;margin:0">${esc(fmtShort(localDay(born)))}にうまれて、きょうで${dayDiff(localDay(born), today()) + 1}日目</p>` : ""}</div>`;
+  ${g1 ? `<div class="asub">2代目 ${esc(uriName())}</div>` : ""}
+  <div class="ustages">${L.map(([n, nm], i) => `<div class="${i > u.st ? "lock" : ""} ${i === u.st ? "on" : ""}"><div class="uri">${uriSvg(i, "happy")}</div>${i > u.st + 1 ? "？？？" : esc(g1 ? nm.replace("うりぼー", "") : nm)}<br>${i <= u.st && dts[i] ? md(dts[i]) : i > u.st ? `あと${n - u.xp}` : "—"}</div>`).join("")}</div>
+  ${born ? `<p class="muted" style="text-align:center;font-size:12px;margin:0">${esc(fmtShort(localDay(born)))}にうまれて、きょうで${dayDiff(localDay(born), today()) + 1}日目</p>` : ""}</div>
+  ${g1 ? `<div class="card ag1"><div class="uri">${uriSvg(g1.st ?? 9, "happy", null, 1)}</div><div class="main"><div class="asub" style="margin:0">1代目</div><b>${esc(g1.name || "ウリ")}</b><small>${esc(USTAGES1[g1.st ?? 9][1])}まで育ったよ</small><small>${md(g1.bornAt)} 〜 ${md(g1.endAt)}（${dayDiff(localDay(g1.bornAt), localDay(g1.endAt)) + 1}日間）</small></div></div>` : ""}`;
 }
 
 /* ---------- 伝言係（おてがみ） ---------- */
@@ -755,7 +763,7 @@ function viewUri(){
     ${tile("🎀", "var(--pink-l)", "きせかえ", w.length ? w.map(x => x.e).join("") + " つけてる" : "もちもの・おみせ", `data-a="wardrobeHave"`)}
     ${tile("🏠", "var(--butter-l)", "おへや", nR ? `家具 ${nR}こ おいてる` : "家具・かべがみ", `data-a="roomOpen"`)}
     ${tile("🧸", "#fdecea", "あそぶ", toyTileSub(), `data-a="toysOpen"`, TOYS.some(t => toyOwned(t.id)) && !playedToday(me()) ? "!" : "")}
-    ${tile("📖", "var(--lav-l)", "成長アルバム", `${u.st + 1} / ${USTAGES.length} だんかい`, `data-a="albumOpen"`)}
+    ${tile("📖", "var(--lav-l)", "成長アルバム", `${u.st + 1} / ${ust().length} だんかい`, `data-a="albumOpen"`)}
   </div>
   <div class="lbl2">ミニゲーム（どんぐりがもらえる）</div>
   <div class="tiles">
@@ -778,7 +786,7 @@ function uriMiniHtml(){
   return `<div class="card uricard umini" data-a="tab" data-v="uri">
     <div class="umrow">
       <div class="ustage" id="ustage"><div class="uri s${u.st} ${u.mood === "sleep" ? "sleep" : "idle"}" id="uri">${uriSvg(u.st, u.mood, uw())}</div></div>
-      <div class="main"><div class="uhead"><b class="nm">${esc(uriName())}</b><span class="tag lav">${esc(USTAGES[u.st][1])}</span></div>
+      <div class="main"><div class="uhead"><b class="nm">${esc(uriName())}</b><span class="tag lav">${esc(ust()[u.st][1])}</span></div>
         <div class="umsay" id="ububble">${esc(S.uriSay || say)}</div>
         <div class="ubar"><span>げんき</span><div class="tr"><i style="width:${u.energy}%"></i></div></div>
       </div><span class="go">›</span>
