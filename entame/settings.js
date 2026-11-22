@@ -104,6 +104,9 @@ const SET_IC = {
   bk: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
   trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
   save: '<path d="M7 18a5 5 0 1 1 .9-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/><path d="m9.5 13.5 2 2 3.5-4"/>',
+  size: '<ellipse cx="12" cy="5.5" rx="8" ry="2.5"/><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/>',
+  dev: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  speed: '<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-5"/>',
   out: '<path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11"/>',
 };
 const setIc = k => `<svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SET_IC[k]}</svg>`;
@@ -129,7 +132,29 @@ function settingsHtml() {
     <div class="setsec">データ</div>
     <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}</div>
     <div class="setsec">アカウント</div>
-    <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv">${saveNoteHtml()}</span></div><button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
+    <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv">${saveNoteHtml()}</span></div>${usageRows()}<button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
+}
+/* ---------- 使用量（設定のアカウント）：データ量・端末の保存容量・起動の速さ ---------- */
+const fmtB = b => (b >= 1048576 ? `${(b / 1048576).toFixed(1)}MB` : `${Math.max(1, Math.round(b / 1024))}KB`);
+function usageRows() {
+  const live = o => Object.values(o || {}).filter(x => x && !x.deleted);
+  const ti = live(over),
+    yt = live(ytOver);
+  const epN = Object.values(prog).reduce((a, p) => a + (Array.isArray(p && p.eps) ? p.eps.length : 0), 0);
+  const imgN = [...ti, ...yt].filter(x => x.img).length;
+  /* 作品・話数・YouTube の文字データの大きさ（画像は別に保存していて、ここには入らない） */
+  const bytes = new Blob([JSON.stringify([over, prog, ytOver])]).size;
+  const sec = t => (t ? `${(t / 1000).toFixed(1)}秒` : "—");
+  /* 端末の保存容量は読み取りに少しかかるので、出してから書き込む */
+  if (navigator.storage && navigator.storage.estimate)
+    navigator.storage
+      .estimate()
+      .then(e => {
+        const el = $("#setDev");
+        if (el) el.textContent = fmtB(e.usage || 0);
+      })
+      .catch(() => {});
+  return `<div class="setrow static">${setIc("size")}<span class="setl">データ</span><span class="setv">作品${ti.length + yt.length}・${epN}話・画像${imgN}枚／${fmtB(bytes)}</span></div><div class="setrow static">${setIc("dev")}<span class="setl">端末の保存容量</span><span class="setv" id="setDev">—</span></div><div class="setrow static">${setIc("speed")}<span class="setl">起動</span><span class="setv">表示 ${sec(bootT.show)}・最新 ${sec(bootT.sync)}</span></div>`;
 }
 /* ---------- ゴミ箱：削除した作品（アニメ・ドラマなどとYouTube）。30日間は戻せる ---------- */
 let trashOpen = false,

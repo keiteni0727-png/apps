@@ -335,6 +335,7 @@ function mergeDoc(col, id, patch) {
 /* ---------- 同期：最新のデータ（fromCache=false）が届くまで「同期中」。裏から戻ったときのつなぎ直しは U.sync が行う ---------- */
 var syncOk = { titles: false, progress: false };
 const isSynced = () => syncOk.titles && syncOk.progress;
+const bootT = { show: 0, sync: 0 };
 /* 話数の編集など、リストをまとめて保存するものは同期中は止める（視聴チェックは話ごとに保存するので止めない） */
 function syncBlock() {
   if (isSynced()) return false;
@@ -496,8 +497,11 @@ async function initStore() {
   /* fromCache＝端末に残っていた古いデータ。最新（fromCache=false）が届いたら同期完了 */
   const syncMark = (k, s) => {
     const ok = s.fromCache === false;
+    /* 起動の速さ（設定に表示）：最初に画面に出せた時間・最新データが届いた時間 */
+    if (!bootT.show) bootT.show = performance.now();
     if (syncOk[k] !== ok) {
       syncOk[k] = ok;
+      if (ok && isSynced() && !bootT.sync) bootT.sync = performance.now();
       updateSaveNote();
     }
   };
