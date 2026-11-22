@@ -620,7 +620,7 @@ function episodes(it) {
   const ks = m ? epKeys(p.eps) : null;
   return p.eps.map((e, i) => {
     const v = m ? +m[ks[i]] || 0 : e.w ? +e.wt || 1 : 0;
-    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp, x: !!e.x, go: e.go || 0 };
+    return { n: e.n || "", sub: e.s || "", t: e.t || 0, w: v > 0, nt: !!e.nt, wt: v > 1 ? v : 0, sp: !!e.sp, x: !!e.x, na: !!e.na, go: e.go || 0 };
   });
 }
 /* 話数リストまるごとの保存用の中身（eps の w・wt は前の版の画面が開いたままの端末のための控え。読むときは w の印を使う） */
@@ -631,7 +631,8 @@ function progDoc(list) {
     if (e.w) w[ks[i]] = e.wt || 1;
   });
   return {
-    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.x ? { x: 1 } : {}), ...(e.go && e.go === e.t ? { go: e.go } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
+    /* 未放送の話（na）は日付を持たない */
+    eps: list.map(e => ({ n: e.n, s: e.sub || "", t: e.na ? 0 : e.t || 0, ...(e.nt ? { nt: 1 } : {}), ...(e.sp ? { sp: 1 } : {}), ...(e.x ? { x: 1 } : {}), ...(e.na ? { na: 1 } : {}), ...(e.go && e.go === e.t ? { go: e.go } : {}), ...(e.w ? { w: 1 } : {}), ...(e.w && e.wt ? { wt: e.wt } : {}) })),
     w,
   };
 }

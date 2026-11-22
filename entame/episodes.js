@@ -88,13 +88,13 @@ function epListHtml(it, eps) {
     const v = epVal(e.n);
     const nlab = v ? `${v}話` : e.n;
     const when = epWhen(e, it, true);
-    const whenTx = when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
+    const whenTx = e.na ? "" : when ? `${when}${fut ? " 放送予定" : " 放送"}` : "";
     const st = e.x ? " skip" : e.w ? " seen" : fut ? " future" : " unseen";
     const wn = warnOf(e, i);
     const why = wn.d ? Object.keys(wn.d).map(k => (k === "start" ? `開始日（${fmtD(normDate(it.from || ""))}）と違います` : k === "dow" ? `放送曜日（${"日月火水木金土"[new Date(normDate(it.from || "")).getUTCDay()]}）と1日ずれています` : DATE_WHY[k])).join("・") : "";
     const why2 = [why, wn.dup ? "同じ話数がほかにもあります" : ""].filter(Boolean).join("・");
     const gapRow = wn.gap ? `<div class="tlgap" role="listitem"><span>⚠ ${wn.gap[0] === wn.gap[1] ? `${wn.gap[0]}話` : `${wn.gap[0]}〜${wn.gap[1]}話`}がありません</span><button type="button" class="u-btn sm tlok" data-gapadd="${wn.gap[0]}-${wn.gap[1]}">話数を追加</button><button type="button" class="u-btn sm tlok" data-gapnok="${wn.gap[0]}-${wn.gap[1]}">問題なし</button></div>` : "";
-    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" class="u-btn sm tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
+    const meta = `<span class="tlmeta"><b class="tln${wn.n || wn.dup ? " tlbad" : ""}">${wn.n || wn.dup ? "⚠ " : ""}${esc(nlab)}</b>${whenTx ? `<span${wn.d ? ' class="tldbad"' : ""}>${wn.d ? "⚠ " : ""}${whenTx}</span>` : ""}${e.na ? `<b class="epskip">未放送</b>` : ""}${e.x ? `<b class="epskip">見ない話</b>` : !e.w && !fut ? `<b class="epun">未視聴</b>` : ""}${why2 ? `<span class="tlwhy">${why2}${wn.d && (wn.d.gap || wn.d.rev || wn.d.dow) ? `<button type="button" class="u-btn sm tlok" data-gapok="${i}">問題なし</button>` : ""}</span>` : ""}</span>`;
     const ttl = A && e.sub ? `<span class="tlt">${esc(e.sub)}</span>` : wn.s ? `<span class="tlt tlmiss">⚠ サブタイトル未入力</span>` : "";
     return gapRow + `<div class="tl${st}${i === nx ? " next" : ""}${v ? "" : " sp"}${warnAny(wn) ? " warn" : ""}" role="listitem" id="epr-${i}"><button type="button" class="tlm" role="checkbox" aria-checked="${e.w}"${e.x ? " disabled" : ""} aria-label="${esc(nlab)}${A && e.sub ? " " + esc(e.sub) : ""}を見た" data-ep="${i}"><i class="tll" aria-hidden="true"></i><span class="tld" aria-hidden="true">${e.w ? TL_CHK : ""}</span></button><div class="tlb">${meta}${ttl}</div><button type="button" class="epe" data-epone="${i}" aria-label="${esc(nlab)}を編集" title="この話だけ編集">✎</button></div>`;
   };
@@ -148,11 +148,11 @@ function epRef(it, list, i) {
 function epOneHtml(it, e, i) {
   const A = it.k === "a";
   const j = jst(e.t);
-  return `<div class="epw e1${A ? "" : " nosub"}${e.w ? " seen" : ""}" role="listitem" data-e1="${i}">
+  return `<div class="epw e1${A ? "" : " nosub"}${e.w ? " seen" : ""}${e.na ? " na" : ""}" role="listitem" data-e1="${i}">
     ${epNumInput("e1-n", e.n, e.sp)}
     ${A ? `<input class="e1-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}
     <span class="e1-dt"><input class="e1-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, episodes(it), i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><input class="e1-tm" type="text" inputmode="numeric" autocomplete="off" placeholder="24:30" value="${j && !e.nt ? j.hm : ""}" aria-label="放送時刻（例：24:30）"></span>
-    <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><label class="e1-x" title="配信にない総集編など。視聴チェックの対象にしない"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話</span></label><button type="button" class="u-btn sm" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
+    <div class="e1-b"><button type="button" class="u-btn sm txt danger e1-del" id="e1Del">削除</button><label class="e1-x" title="配信にない総集編など。視聴チェックの対象にしない"><input type="checkbox" class="e1-xc" ${e.x ? "checked" : ""}><span>見ない話</span></label><label class="e1-x e1-na" title="放送されなかった話（配信・円盤のみなど）。放送日・時刻を入れない"><input type="checkbox" class="e1-nac" ${e.na ? "checked" : ""}><span>未放送</span></label><button type="button" class="u-btn sm" id="e1Cancel">キャンセル</button><button type="button" class="u-btn sm pri" id="e1Save">保存</button></div></div>`;
 }
 const TL_CHK = `<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`;
 /* 話数の入力欄：1つの文字の欄。数字（「3」「第3話」など）なら「3話」、それ以外（SP・総集編など）は書いたとおりの名前にする（parseEpIn）
@@ -186,7 +186,7 @@ function epEditorHtml(it) {
           const gapRow = g ? `<div class="ergap"><span>⚠ ${g[0] === g[1] ? `${g[0]}話` : `${g[0]}〜${g[1]}話`}がありません</span><button type="button" data-ergap="${g[0]}-${g[1]}">追加</button></div>` : "";
           return (
             gapRow +
-            `<div class="er${e.moved ? " moved" : ""}${gd.dup.has(i) ? " dup" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}${epNumInput("er-n", e.n, e.sp)}${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}<input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）"><button type="button" class="u-btn icon sm txt del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button>${gd.dup.has(i) ? `<span class="erwhy">⚠ 同じ話数がほかにもあります</span>` : ""}</div>`
+            `<div class="er${e.moved ? " moved" : ""}${gd.dup.has(i) ? " dup" : ""}" data-er="${i}" data-sortrow>${GRIP("ep")}${epNumInput("er-n", e.n, e.sp)}${A ? `<input class="er-s" value="${esc(e.sub)}" placeholder="サブタイトル" aria-label="サブタイトル" autocomplete="off">` : ""}${e.na ? `<span class="er-na">未放送</span>` : `<input class="er-d dtx" type="text" inputmode="numeric" autocomplete="off" placeholder="2018/08/25" data-ref="${epRef(it, l, i)}" value="${j ? dtShow(j.day) : ""}" aria-label="放送日（例：2018/08/25）">`}<button type="button" class="u-btn icon sm txt del" data-erdel="${i}" aria-label="${esc(e.n)}を削除">✕</button>${gd.dup.has(i) ? `<span class="erwhy">⚠ 同じ話数がほかにもあります</span>` : ""}</div>`
           );
         })
         .join("")
@@ -429,16 +429,19 @@ function saveEpOne(it) {
     return refreshSheet();
   }
   const dI = r.querySelector(".e1-d");
-  const day = normDate(dI.value, dI.dataset.ref);
+  const na = !!r.querySelector(".e1-nac")?.checked;
+  const day = na ? "" : normDate(dI.value, dI.dataset.ref);
   if (day === null) return toast("日付は 2018/08/25 のように入力してください");
   const nv = r.querySelector(".e1-n").value.trim();
   if (nv) Object.assign(x, parseEpIn(nv));
   const s = r.querySelector(".e1-s");
   if (s) x.sub = s.value.trim();
   x.x = !!r.querySelector(".e1-xc")?.checked;
+  x.na = na;
+  if (na) x.t = 0;
   const j = jst(x.t);
   /* 時刻：「24:30」「2430」→「24:30」。空欄は時刻なし。変えたときだけ書き換える */
-  const hmNew = normHM(r.querySelector(".e1-tm").value);
+  const hmNew = na ? "" : normHM(r.querySelector(".e1-tm").value);
   if (hmNew === null) return toast("時刻は 24:30 のように入力してください");
   const timeCh = hmNew !== (j && !x.nt ? j.hm : "");
   if (!day) x.t = 0;

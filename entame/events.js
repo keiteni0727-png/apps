@@ -301,6 +301,13 @@ const CHANGE_ACTIONS = [
       render();
     },
   ],
+  /* 1話だけ編集：「未放送」を付けたら放送日・時刻の欄を消す */
+  [
+    ".e1-nac",
+    t => {
+      t.closest(".e1")?.classList.toggle("na", t.checked);
+    },
+  ],
   /* 話数の編集：日付を変えたら、その後の話も1週間おきにずらす（時刻はそれぞれのまま） */
   [
     ".er-d",
@@ -318,9 +325,11 @@ const CHANGE_ACTIONS = [
       if (!l[i].t) l[i].nt = !hasTime(it);
       const t0 = dayTimeToT(day, hm);
       l.forEach(x => (x.moved = false));
-      for (let k = i; k < l.length; k++) {
+      /* 未放送の話は飛ばす（日付を入れず、週も数えない） */
+      for (let k = i, wk = 0; k < l.length; k++) {
+        if (l[k].na) continue;
         const keep = l[k].t ? jst(l[k].t).hm : hm;
-        l[k].t = t0 + WEEK * (k - i) - (mins(hm) - mins(keep));
+        l[k].t = t0 + WEEK * wk++ - (mins(hm) - mins(keep));
         l[k].moved = k > i;
       }
       refreshEditor();
