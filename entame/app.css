@@ -2074,3 +2074,16 @@ html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1f
 .chgo{border:0;background:none;padding:0;color:var(--u-acct);font:inherit;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;cursor:pointer}
 .chsyo{grid-column:2/-1;margin-top:6px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--r-s);background:var(--u-chip);color:var(--u-ink);font-size:var(--fs-xs);font-weight:700;text-align:center;text-decoration:none;overflow-wrap:anywhere}
 .setsm{display:block;font-size:var(--fs-xs);color:var(--u-sub);font-weight:500}
+
+/* スマホ幅：作品詳細の上の段（ジャンル・放送形態・視聴ステータス｜← → 編集 ✕）を必ず1行に収める（「バラエティ」など長いジャンルでも折り返さない） */
+@media (max-width:430px){
+  .dhead>.hdrow{gap:4px}
+  .dhead .hdrow>.meta{flex-wrap:nowrap;min-width:0;gap:4px}
+  .dhead .hdrow>.hdrow{flex:none;gap:4px}
+  .dhead .meta .kind,.dhead .meta .dmt,.dhead .meta .pill.dst{font-size:var(--fs-xs)}
+  .dhead .meta .kind{padding-left:6px;padding-right:6px}
+  .dhead .meta .dmt{padding-left:5px;padding-right:6px}
+  .dhead .meta .pill.dst{padding-left:7px;padding-right:6px;gap:2px}
+  .dhead .hdrow>.hdrow .u-btn.icon.sm{width:30px}
+  .dhead .hdrow>.hdrow #editItem{padding:0 9px}
+}
