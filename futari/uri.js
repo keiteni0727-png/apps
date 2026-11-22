@@ -15,7 +15,7 @@ const dayMs = s => new Date(ymd(s)).getTime();
 function uriEvents(){
   // 生まれた時（bornAt）より前の記録は数えない。rec は「記録した時刻」
   const born = S.pet?.bornAt || Date.now(), fb = S.pet?.feedBase || {};
-  const ev = [], mem = S.room?.members || [], add = (at, who, t, xp, rec) => { if ((rec ?? at ?? 0) >= born) ev.push({ at: at || 0, who, t, xp }); };
+  const ev = [], mem = S.room?.members || [], add = (at, who, t, xp, rec, ng) => { if ((rec ?? at ?? 0) >= born) ev.push({ at: at || 0, who, t, xp, ng }); };
   Object.entries(S.qa || {}).forEach(([d, q]) => {
     const a = Object.entries(q.a || {}).filter(([u]) => mem.includes(u));
     a.forEach(([u, x]) => add(x.at || dayMs(d), u, "今日の質問に答えた", 5));
@@ -23,11 +23,11 @@ function uriEvents(){
   });
   S.places.forEach(p => {
     if (p.visited) { const at = p.visitedAt ? dayMs(p.visitedAt) : ms(p.updatedAt); add(at, null, `${p.title}に行った`, 20, Math.max(at, p.updatedAt ? ms(p.updatedAt) : 0)); }
-    if (isBoth(p)) add(ms(p.updatedAt || p.createdAt), null, `${p.title}でマッチ`, 5);
-    Object.entries(p.notes || {}).forEach(([u, n]) => { if (mem.includes(u) && n?.t) add(n.at, u, `${p.title}にひとこと`, 5); });
+    if (isBoth(p)) add(ms(p.updatedAt || p.createdAt), null, `${p.title}でマッチ`, 5, undefined, 1);
+    Object.entries(p.notes || {}).forEach(([u, n]) => { if (mem.includes(u) && n?.t) add(n.at, u, `${p.title}にひとこと`, 5, undefined, 1); });
   });
-  S.dates.forEach(d => add(ms(d.createdAt), d.by, "デートの予定を入れた", 5));
-  S.tickets.forEach(t => { add(t.at, t.from, `「${t.t}」を贈った`, 3); if (t.status === "done") add(t.doneAt, t.from, `「${t.t}」をかなえた`, 10); });
+  S.dates.forEach(d => add(ms(d.createdAt), d.by, "デートの予定を入れた", 5, undefined, 1));
+  S.tickets.forEach(t => { add(t.at, t.from, `「${t.t}」を贈った`, 3, undefined, 1); if (t.status === "done") add(t.doneAt, t.from, `「${t.t}」をかなえた`, 10, undefined, 1); });
   const cp = S.pet?.coop; if (cp?.total) ev.push({ at: cp.at || 0, who: null, t: `ふたりそろってごはん（これまで${cp.total}日）`, xp: 5 * cp.total });
   const lseen = new Set(); (S.letters || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0)).forEach(l => { const k = l.from + localDay(l.at || 0); if (lseen.has(k) || !mem.includes(l.from)) return; lseen.add(k); add(l.at, l.from, "おてがみをあずけた", 3); });
   Object.entries(S.pet?.feeds || {}).forEach(([u, f]) => { const n = (f?.n || 0) - (fb[u] || 0); if (mem.includes(u) && n > 0) ev.push({ at: f.at || dayMs(f.last), who: u, t: n > 1 ? `ごはんをあげた（これまで${n}回）` : "ごはんをあげた", xp: 3 * n }); });
@@ -37,8 +37,9 @@ function uriEvents(){
   return ev.sort((a, b) => b.at - a.at);
 }
 function uriState(){
-  const ev = uriEvents(), raw = ev.reduce((a, e) => a + e.xp, 0), L = ust();
-  const days = uriGen() === 2 ? g2Days(raw) : null, xp = days ? days.reduce((a, [, n]) => a + n, 0) : raw;
+  // raw：2代目のせいちょうに数えるものの合計（ng＝2代目では数えない：チケット・マッチ・デートの予定・ひとこと）
+  const ev = uriEvents(), all = ev.reduce((a, e) => a + e.xp, 0), raw = ev.reduce((a, e) => a + (e.ng ? 0 : e.xp), 0), L = ust();
+  const days = uriGen() === 2 ? g2Days(raw) : null, xp = days ? days.reduce((a, [, n]) => a + n, 0) : all;
   const tx = days ? (days.find(([d]) => d === today())?.[1] || 0) : 0;
   let st = 0; L.forEach(([n], i) => { if (xp >= n) st = i; });
   const next = L[st + 1]?.[0], cur = L[st][0];
@@ -367,7 +368,7 @@ async function uriFeed(btn){
 }
 function openUriInfo(){
   const u = uriState();
-  const log = (uriGen() === 2 ? u.ev.filter(e => e.at >= S.pet.g2.bornAt) : u.ev).slice(0, 10);
+  const log = (uriGen() === 2 ? u.ev.filter(e => e.at >= S.pet.g2.bornAt && !e.ng) : u.ev).slice(0, 10);
   openSheet(`<h3>${esc(uriName())}のようす<button class="x" data-a="close">×</button></h3>
   <div class="card" style="text-align:center">
     <div style="font-size:13px;color:var(--muted)">いまのすがた</div>
@@ -377,7 +378,7 @@ function openUriInfo(){
     ${uriBornAt() ? `<div class="muted" style="font-size:12px">${esc(fmtShort(localDay(uriBornAt())))}にうまれたよ（${dayDiff(localDay(uriBornAt()), today()) + 1}日目）</div>` : ""}
   </div>
   <div class="sec">ごはんになること</div>
-  <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10<br>🤝 ふたりともごはんをあげた日 +5<br>💌 おてがみをあずける +3（1日1回ぶん）</div>
+  <div class="card" style="padding:8px 16px;font-size:13px;line-height:1.9">${uriGen() === 2 ? `🍠 ごはんをあげる（1日1回ずつ）+3<br>🤝 ふたりともごはんをあげた日 +5<br>🍰 おやつ（1日1回ずつ）+3〜8<br>🧸 おもちゃであそぶ（1日1回）+4 ・ 🧺 おつかい +4<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>💌 おてがみをあずける +3（1日1回ぶん）<br>📷 「行った！」 +20` : `🍠 ごはんをあげる（1日1回ずつ）+3<br>💭 今日の質問に答える +5（ふたりとも答えたら +5）<br>📷 「行った！」 +20 ・ 💬 おもいでにひとこと +5<br>📅 デートの予定を入れる +5 ・ 💞 マッチ +5<br>🎟 チケットを贈る +3 ・ かなえる +10<br>🤝 ふたりともごはんをあげた日 +5<br>💌 おてがみをあずける +3（1日1回ぶん）`}</div>
   <div class="sec">さいきんのごはん</div>
   <div class="card" style="padding:4px 16px">${log.length ? log.map(e => `<div class="ulog"><div class="main">${e.who ? esc(nameOf(e.who)) + "：" : "ふたりで："}${esc(e.t)}<small>${e.at ? esc(fmtShort(localDay(e.at))) : ""}</small></div><b>+${e.xp}</b></div>`).join("") : `<p class="muted">まだありません</p>`}</div>
   <p class="muted" style="text-align:center;font-size:12px">${uriGen() === 2 ? `せいちょうは1日${G2_CAP}まで。` : ""}何日もかまわないと、げんきが減ってしょんぼりします。</p>`);

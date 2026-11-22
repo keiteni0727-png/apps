@@ -198,11 +198,11 @@ function openCards(id){
 
 /* =============== おやつやさん（1日1回・せいちょうポイントが増える） =============== */
 const SNACKS = [
-  { id:"cookie",  n:"どんぐりクッキー",     e:"🍪", p:10, xp:5,  say:"さくさく〜！もういちまい！" },
-  { id:"pudding", n:"とろけるプリン",       e:"🍮", p:20, xp:10, say:"ぷるぷる〜とろける〜" },
-  { id:"cake",    n:"いちごのショートケーキ", e:"🍰", p:35, xp:18, say:"いちご、さいごにとっておくの" },
-  { id:"parfait", n:"もりのパフェ",         e:"🍨", p:50, xp:26, say:"しあわせのあじぷぎ〜！" },
-  { id:"mont",    n:"とくせいモンブラン",   e:"🌰", p:80, xp:42, say:"ほっぺがおちちゃうぷぎ！！" }
+  { id:"cookie",  n:"どんぐりクッキー",     e:"🍪", p:10, xp:3,  say:"さくさく〜！もういちまい！" },
+  { id:"pudding", n:"とろけるプリン",       e:"🍮", p:20, xp:4, say:"ぷるぷる〜とろける〜" },
+  { id:"cake",    n:"いちごのショートケーキ", e:"🍰", p:35, xp:5, say:"いちご、さいごにとっておくの" },
+  { id:"parfait", n:"もりのパフェ",         e:"🍨", p:50, xp:6, say:"しあわせのあじぷぎ〜！" },
+  { id:"mont",    n:"とくせいモンブラン",   e:"🌰", p:80, xp:8, say:"ほっぺがおちちゃうぷぎ！！" }
 ];
 const snackOf = id => SNACKS.find(x => x.id === id) || SNACKS[0];
 const snkToday = uid => { const k = S.pet?.snk?.[uid]; return k?.last === today() ? k.id : null; };
