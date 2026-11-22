@@ -227,6 +227,7 @@ function formHtml() {
     ${head}
     ${sec(`<span class="ilamp onair">ON AIR</span>`, P.mtype + P.mst + P.from + P.time + P.cours + P.mvod + P.vurl + P.series + P.url, "", "", "ftbl")}
     ${sec(`<span class="ilamp music">MUSIC</span>`, P.songs, "", sgNoneBox(), "fsongs" + fm("songs"))}
+    ${f.id ? `<div class="links"><button type="button" class="u-chip add epadd" data-relbadd="1">＋ 関連作品を追加</button></div>` : ""}
     <div class="ffoot"><button type="button" class="u-btn" data-close>キャンセル</button><button class="u-btn pri primary" type="submit">${f.id ? "保存する" : "追加する"}</button></div>
     </form>`;
 }
@@ -395,6 +396,11 @@ function inlineAnchor(target, el) {
   if (!el || !el.isConnected) {
     const l = [...document.querySelectorAll(`#sheetIn [data-jump="${target}"]`)];
     el = l.find(x => x.offsetParent !== null) || l[0];
+    /* 関連作品の追加（編集画面のボタンから）：MUSICの枠のすぐ下に出す */
+    if (target === "relb" && (!el || !el.dataset.rbk || el.dataset.rbk !== "new")) {
+      const m = [...document.querySelectorAll("#sheetIn .icard.imusic")].find(x => x.offsetParent !== null);
+      if (m) return m;
+    }
   }
   if (!el) return null;
   /* 未入力アラート（上に固定の見出しの中）から開いたときは、見出しの中ではなく見出しのすぐ下に出す。
@@ -422,7 +428,7 @@ function openInlineForm(target, el) {
   const box = $("#formIn");
   const sh = box.closest(".sheet");
   if (anc.classList.contains("dhead") && sh) sh.scrollTop = 0;
-  else if (inCard && sh) {
+  else if ((inCard || target === "relb") && sh) {
     /* 編集画面の上端を、上に固定の見出しのすぐ下に合わせる（長い編集画面でも一番下へ飛ばない） */
     const hd = sh.querySelector(".dhead");
     const top = sh.getBoundingClientRect().top + (hd ? hd.getBoundingClientRect().height : 0) + 8;
@@ -580,6 +586,18 @@ const formEdit = (fn, after) => el => {
   if (after) after();
 };
 const FORM_ACTIONS = [
+  /* 関連作品を追加：編集中の内容を保存して詳細に戻り、関連作品の入力欄を開く（タイトル未入力などで保存できなければ編集画面のまま） */
+  [
+    "[data-relbadd]",
+    async () => {
+      if (!form || !form.id) return;
+      const id = form.id;
+      await submitForm();
+      if ($("#titleF")) return;
+      const it = items.find(x => x.id === id);
+      if (it && openId === id) openForm(it, "relb");
+    },
+  ],
   [
     "#rbDel",
     el => {
