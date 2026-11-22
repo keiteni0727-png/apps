@@ -11,12 +11,14 @@ let last = 0;
 globalThis.fetch = async (url, opt = {}) => {
   const key = `${url}\n${opt.body || ""}`;
   const isAL = String(url).includes("anilist.co");
+  const isJK = String(url).includes("jikan.moe");
   for (let k = 0; k < 5; k++) {
     if (isAL) {
       const wait = last + 2200 - Date.now();
       if (wait > 0) await sleep(wait);
       last = Date.now();
     }
+    if (isJK) await sleep(1200);
     const r = await realFetch(url, opt);
     if (r.status === 429) {
       const s = +(r.headers.get("retry-after") || 30);
@@ -56,7 +58,8 @@ async function img(url) {
         const d = await AL.detail(top.id);
         await img(d.coverImage.large);
         try {
-          await AL.themes(top.id);
+          const th = await AL.themes(d.idMal);
+          console.log("  主題歌", th.map(x => `${x.type} ${x.st} / ${x.ar} (${x.eps})`).join(" | "));
         } catch (e) {
           console.log("themes NG", e.message);
         }
@@ -75,7 +78,7 @@ async function img(url) {
     try {
       const d = await AL.detail(m.id);
       await img(d.coverImage.large);
-      await AL.themes(m.id).catch(() => {});
+      await AL.themes(d.idMal).catch(e => console.log("themes NG", e.message));
     } catch (e) {
       console.log("NG detail", m.id, e.message);
     }

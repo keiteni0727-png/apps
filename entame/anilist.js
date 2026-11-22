@@ -1,10 +1,9 @@
-/* ===================== AniList・AnimeThemes から作品の情報を取る（画面には触らない） =====================
-   ・AniList（https://anilist.co）：作品の検索・話数・各話の放送日時・縦画像・公式サイト・続編などのつながり・今季／来季の新作
-   ・AnimeThemes（https://animethemes.moe）：OP・ED の曲名・アーティスト・使われた話
-   どちらも無料・登録なしで使える（AniList は1分に30回くらいまで）。AniList にあるのはアニメだけ（ドラマは対象外）。放送局・サブタイトルは取れない */
+/* ===================== AniList から作品の情報を取る（画面には触らない） =====================
+   AniList（https://anilist.co）：作品の検索・放送日時・縦画像・公式サイト・配信のリンク・続編などのつながり・今季／来季の新作。
+   無料・登録なしで使える（1分に30回くらいまで）。あるのはアニメだけ（ドラマは対象外）。放送局・サブタイトルは取れない。
+   主題歌は Jikan（https://jikan.moe ・MyAnimeList の情報）から */
 (() => {
   const AL_URL = "https://graphql.anilist.co";
-  const AT_URL = "https://api.animethemes.moe";
 
   async function gql(query, variables) {
     const r = await fetch(AL_URL, {
@@ -17,7 +16,7 @@
     return j.data;
   }
 
-  const BASE = `id title{native romaji english} synonyms format status episodes duration season seasonYear
+  const BASE = `id idMal title{native romaji english} synonyms format status episodes duration season seasonYear
     startDate{year month day} endDate{year month day} coverImage{large medium} countryOfOrigin isAdult`;
   const REL = `relations{edges{relationType node{id type format title{native romaji english} synonyms}}}`;
 
@@ -70,24 +69,34 @@
     return [...out.values()];
   }
 
-  /* OP・ED（AnimeThemes）。AniList の作品番号で探す。曲名・アーティストはローマ字や英語のことが多い */
-  async function themes(alId) {
-    const u = `${AT_URL}/anime?filter[has]=resources&filter[site]=AniList&filter[external_id]=${alId}&include=animethemes.animethemeentries,animethemes.song.artists`;
-    const r = await fetch(u, { headers: { Accept: "application/json" } });
-    if (!r.ok) throw new Error(`AnimeThemes ${r.status}`);
-    const j = await r.json();
-    const a = (j.anime || [])[0];
-    if (!a) return [];
-    return (a.animethemes || [])
-      .filter(t => t.type === "OP" || t.type === "ED")
-      .map(t => ({
-        type: t.type,
-        seq: t.sequence || 1,
-        st: (t.song && t.song.title) || "",
-        ar: ((t.song && t.song.artists) || []).map(x => x.name).join(", "),
-        eps: [...new Set((t.animethemeentries || []).map(e => e.episodes).filter(Boolean))].join(", "),
-      }))
-      .sort((p, q) => (p.type === q.type ? p.seq - q.seq : p.type === "OP" ? -1 : 1));
+  /* OP・ED（Jikan＝MyAnimeList の情報）。MyAnimeList の作品番号（AniList の idMal）で引く。
+     返ってくる形：「1: "Yuusha (勇者)" by YOASOBI (eps 1-12)」→ { type, st, ar, eps: "1-12" } */
+  const JK_URL = "https://api.jikan.moe/v4";
+  const jp = s => /[\u3040-\u30ff\u4e00-\u9fff]/.test(s);
+  /* 「ローマ字 (日本語)」なら日本語の方を使う */
+  const pickJa = s => {
+    const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(s.trim());
+    return m && jp(m[2]) && !jp(m[1]) ? m[2].trim() : s.trim();
+  };
+  function parseTheme(type, raw) {
+    let s = String(raw || "").replace(/^\s*#?\d+\s*:\s*/, "");
+    let eps = "";
+    const e = /\((?:eps?|episodes?)\s*([^)]*)\)\s*$/i.exec(s);
+    if (e) {
+      eps = e[1].replace(/\s+/g, "");
+      s = s.slice(0, e.index).trim();
+    }
+    const q = /^"(.*)"\s*(?:by\s+(.*))?$/.exec(s) || /^(.*?)\s+by\s+(.*)$/.exec(s);
+    const st = q ? q[1] : s,
+      ar = q && q[2] ? q[2] : "";
+    return { type, st: pickJa(st), ar: pickJa(ar), eps };
+  }
+  async function themes(malId) {
+    if (!malId) return [];
+    const r = await fetch(`${JK_URL}/anime/${malId}/themes`, { headers: { Accept: "application/json" } });
+    if (!r.ok) throw new Error(`Jikan ${r.status}`);
+    const d = (await r.json()).data || {};
+    return [...(d.openings || []).map(x => parseTheme("OP", x)), ...(d.endings || []).map(x => parseTheme("ED", x))].filter(x => x.st);
   }
 
   /* 画像を取り出す（貼り付けと同じ流れで縮小して保存するため） */
