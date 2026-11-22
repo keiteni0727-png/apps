@@ -469,6 +469,14 @@ const DETAIL_ACTIONS = [
     },
   ],
   ["[data-relopen]", el => openDetail(el.dataset.relopen)],
+  /* SERIES：AniListのつながりを開く・たたむ */
+  [
+    "[data-serrelfold]",
+    () => {
+      serRelOpen = !serRelOpen;
+      refreshSheet();
+    },
+  ],
   [
     "[data-alrelre]",
     (el, it) => {

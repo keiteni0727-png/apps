@@ -544,6 +544,8 @@ function alOwnOf(n) {
   return anime.find(i => !i.al && ns.includes(alNorm(i.t))) || null;
 }
 const alKeyOf = n => alYmd(n.startDate) || (n.seasonYear ? `${n.seasonYear}-00-00` : "9999");
+/* SERIES の「AniListのつながり」を開いているか（最初はたたむ・作品をまたいで同じ状態） */
+let serRelOpen = false;
 function seriesCardHtml(it) {
   const ser = it.series || "";
   const head = `<div class="ich"><span class="ilamp series">SERIES</span>${
@@ -552,7 +554,8 @@ function seriesCardHtml(it) {
       : `<span class="sertag w">シリーズ未登録</span><button type="button" class="serbtn" data-chkgo="fSeries">シリーズを登録</button>`
   }<button type="button" class="u-btn sm iedit" data-jump="fSeries" aria-label="シリーズを編集">編集</button></div>`;
   let body;
-  if (!it.al) body = `<p class="sermsg">AniListとまだつながっていません<button type="button" class="serbtn" data-alcheck="1">AniListで確認</button></p>`;
+  if (!serRelOpen) body = "";
+  else if (!it.al) body = `<p class="sermsg">AniListとまだつながっていません<button type="button" class="serbtn" data-alcheck="1">AniListで確認</button></p>`;
   else {
     const r = alRelCache.get(it.al);
     if (!r) alRelLoad(it.al);
@@ -580,5 +583,7 @@ function seriesCardHtml(it) {
       body = `<div class="sertl">${main.map(n => row(n, !!n._cur)).join("")}${other.length ? `<div class="sergl">外伝・別バージョンなど</div>${other.map(n => row(n, false)).join("")}` : ""}</div>`;
     }
   }
-  return `<div class="icard iser">${head}<div class="sersub">AniListのつながり（放送順）</div>${body}</div>`;
+  const rc = it.al && alRelCache.get(it.al);
+  const cnt = rc && typeof rc === "object" ? `<small>${1 + rc.list.filter(n => AL_MAIN.has(n.rel) || AL_REL_LAB[n.rel]).length}作品</small>` : "";
+  return `<div class="icard iser">${head}<button type="button" class="sersub" data-serrelfold="1" aria-expanded="${serRelOpen}"><span>AniListのつながり（放送順）</span>${cnt}${FOLD_IC}</button>${body}</div>`;
 }
