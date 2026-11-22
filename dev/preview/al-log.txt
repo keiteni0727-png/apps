@@ -57,6 +57,12 @@ themes NG AnimeThemes 403
 名探偵コナン 劇場版 → 
 HUNTER×HUNTER → HUNTER×HUNTER / HUNTER×HUNTER OVA / HUNTER×HUNTER (2011)
 themes NG AnimeThemes 403
+フリーレン → 葬送のフリーレン / 葬送のフリーレン ～●●の魔法～ / 葬送のフリーレン 第2期
+themes NG AnimeThemes 403
+薬屋 → 薬屋のひとりごと / 猫猫のひとりごと / 猫猫のひとりごと ～USJを調査せよ！～
+themes NG AnimeThemes 403
+アオのハコ → アオのハコ / アオのハコ Season２
+themes NG AnimeThemes 403
 upcoming 304
 with relations 189
-done 144 responses 331 images
+done 149 responses 334 images
