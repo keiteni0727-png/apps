@@ -250,9 +250,9 @@ function alChkHtml() {
     body = `<div class="alc-hit"><span class="alx-im">${m.coverImage?.medium ? `<img src="${esc(m.coverImage.medium)}" alt="" onerror="this.remove()">` : ""}</span><span class="alx-tx"><small>AniListの作品</small><b>${esc(alTitle(m))}</b><small class="alx-meta">${esc(alSub(m))}</small></span><button type="button" class="u-btn sm txt" data-alc="other">違う作品</button></div>
       ${
         diff.length
-          ? `<div class="alc-tbl"><div class="alc-hd"><span>項目</span><span>今</span><span>AniList</span><span>更新しない</span></div>${diff
+          ? `<div class="alc-tbl"><div class="alc-hd"><span>項目</span><span>今</span><span>AniList</span><span>更新する</span></div>${diff
               .map(
-                r => `<label class="alc-r${r.skip ? " skip" : ""}"><span class="alc-k">${esc(r.lab)}</span><span class="alc-c${r.cur ? "" : " none"}${alIsUrl(r) ? " u" : ""}">${esc(alShow(r, r.cur) || "未入力")}</span><span class="alc-n${alIsUrl(r) ? " u" : ""}">${esc(alShow(r, r.nv))}</span><span class="alc-x"><input type="checkbox" data-alcskip="${r.k}" ${r.skip ? "checked" : ""} aria-label="${esc(r.lab)}を更新しない"></span></label>`,
+                r => `<label class="alc-r${r.skip ? " skip" : ""}"><span class="alc-k">${esc(r.lab)}</span><span class="alc-c${r.cur ? "" : " none"}${alIsUrl(r) ? " u" : ""}">${esc(alShow(r, r.cur) || "未入力")}</span><span class="alc-n${alIsUrl(r) ? " u" : ""}">${esc(alShow(r, r.nv))}</span><span class="alc-x"><input type="checkbox" data-alcskip="${r.k}" ${r.skip ? "" : "checked"} aria-label="${esc(r.lab)}を更新する"></span></label>`,
               )
               .join("")}</div>`
           : `<p class="alx-msg">AniListと違う項目はありません</p>`
@@ -311,7 +311,7 @@ async function alChkSearch() {
   alC.step = "pick";
   alChkDraw();
 }
-/* 更新する：チェックを付けていない違う項目だけ書きかえ、AniList の作品番号を持つ */
+/* 更新する：チェックを付けた違う項目だけ書きかえ、AniList の作品番号を持つ */
 async function alChkApply() {
   const it = items.find(x => x.id === alC.id);
   if (!it) return;
@@ -385,7 +385,8 @@ document.addEventListener("change", e => {
   const k = e.target && e.target.dataset && e.target.dataset.alcskip;
   if (!k || !alC || !alC.rows) return;
   const r = alC.rows.find(x => x.k === k);
-  if (r) r.skip = e.target.checked;
+  /* チェックを付けた項目だけ更新する（skip＝チェックなし） */
+  if (r) r.skip = !e.target.checked;
   alChkDraw();
 });
 

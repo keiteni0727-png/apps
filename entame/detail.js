@@ -62,14 +62,14 @@ function detailSide(it, { eps, w, nx, noEp }) {
    go＝押したときに開く場所（ON AIR・MUSICの編集、AniListで確認、話数タブ）、ks＝その項目に関係する要確認 */
 function chkItems(it) {
   const md = mediaOf(it).media;
-  const per = md === "movie" ? "公開日" : md === "ova" ? "発売日" : md === "sp" ? "放送日・放送時間" : "放送期間・放送時間";
+  const per = md === "movie" ? "公開" : md === "ova" ? "発売" : md === "sp" ? "放送日" : "放送期間";
   return [
-    it.k === "a" && { k: "al", lab: "AniListで確認（画像・更新内容）", go: 'data-alcheck="1"', ks: [] },
+    it.k === "a" && { k: "al", lab: "AniListで確認", go: 'data-alcheck="1"', ks: [] },
     { k: "per", lab: per, go: 'data-chkgo="onair"', ks: ["開始日", "公開日", "発売日", "放送日", "放送時間", "配信時間", "放送クール", "クールのずれ"] },
     { k: "url", lab: "公式サイト", go: 'data-chkgo="onair"', ks: ["公式サイト"] },
     { k: "vod", lab: "配信サイト・配信URL", go: 'data-chkgo="onair"', ks: ["配信サイト", "配信URL", "配信URLのずれ"] },
-    { k: "song", lab: "主題歌（あり・なし）", go: 'data-chkgo="sgList"', ks: ["OP・ED・主題歌", "アーティスト", "曲名", "曲の話数"] },
-    { k: "ep", lab: "話数リスト（しょぼいカレンダーで確認）", go: 'data-dtab="ep"', goLab: "話数へ", ks: ["話数", "サブタイトル", "話数の表記", "日付の確認", "話数の抜け", "話数の重複", "未チェックの話"] },
+    { k: "song", lab: "主題歌", go: 'data-chkgo="sgList"', ks: ["OP・ED・主題歌", "アーティスト", "曲名", "曲の話数"] },
+    { k: "ep", lab: "話数リスト", go: 'data-dtab="ep"', goLab: "話数へ", ks: ["話数", "サブタイトル", "話数の表記", "日付の確認", "話数の抜け", "話数の重複", "未チェックの話"] },
   ].filter(Boolean);
 }
 function chkHtml(it) {
@@ -80,10 +80,10 @@ function chkHtml(it) {
   const n = l.filter(x => on.has(x.k)).length;
   const row = x => {
     const w = ms.filter(m => x.ks.includes(m.k)).map(m => m.k);
-    const syo = x.k === "ep" ? `<a class="chsyo" href="https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t)}" target="_blank" rel="noopener">しょぼいカレンダーで「${esc(it.t)}」を検索 ↗</a>` : "";
+    const syo = x.k === "ep" ? `<a class="chsyo" href="https://cal.syoboi.jp/find?kw=${encodeURIComponent(it.t)}" target="_blank" rel="noopener" title="しょぼいカレンダーで「${esc(it.t)}」を検索">しょぼいカレンダー ↗</a>` : "";
     return `<div class="chr${on.has(x.k) ? " done" : ""}"><button type="button" class="chcb" role="checkbox" aria-checked="${on.has(x.k)}" data-chk="${x.k}" aria-label="${esc(x.lab)}">${on.has(x.k) ? "✓" : ""}</button><span class="cht">${esc(x.lab)}${w.length ? `<small>⚠ ${esc(w.join("・"))}</small>` : ""}</span><button type="button" class="chgo" ${x.go}>${x.goLab || "開く"} ›</button>${syo}</div>`;
   };
-  return `<div class="chk"><div class="chh">✓ 確認チェック<small>${n === l.length ? "確認済み" : `${n} / ${l.length}`}</small></div><div class="chbar"><i style="width:${Math.round((n / l.length) * 100)}%"></i></div>${l.map(row).join("")}<div class="chft">設定の「確認チェック」で消せます</div></div>`;
+  return `<div class="chk"><div class="chh">✓ 確認チェック<small>${n === l.length ? "確認済み" : `${n} / ${l.length}`}</small></div><div class="chbar"><i style="width:${Math.round((n / l.length) * 100)}%"></i></div>${l.map(row).join("")}</div>`;
 }
 function infoCards(it, { md, ns, mv, stv, cs, songRows }) {
   const un = t => `<span class="unset">${t}</span>`;
