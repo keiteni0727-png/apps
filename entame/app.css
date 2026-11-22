@@ -1751,7 +1751,8 @@ select.sg-t{height:30px;width:auto;max-width:120px;cursor:pointer;-webkit-appear
 /* 挿入歌がまだないときの「＋ 挿入歌を追加」（OP・EDなどの「＋追加」と同じ札） */
 .sgins{margin-top:2px}
 /* 作品の詳細の下の「＋ 関連作品を追加」「＋ 話数を追加」：目立たないグレーの点線 */
-.u-chip.add.epadd{color:var(--u-sub);border-color:var(--u-strong)}
+/* 詳細の一番下の左のボタン（AniListで確認・話数を追加）も同じ見た目。削除は右端 */
+.u-chip.add.epadd,.u-chip.add.dlb{color:var(--u-sub);border-color:var(--u-strong)}
 /* 貼り付け：上の説明 */
 .sp-how{margin:0 0 8px;font-size:var(--fs-s)}
 /* ===== 各話リストの貼り付け：話数タブの「貼り付け」ボタンと、スマホの確認画面 ===== */
