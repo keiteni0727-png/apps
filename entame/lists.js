@@ -242,9 +242,4 @@ const LIST_ACTIONS = [
     },
   ],
 ];
-document.addEventListener("input", e => {
-  if (e.target.id !== "lq") return;
-  lui.q = e.target.value;
-  state.limit = 200;
-  if (!e.isComposing) render();
-});
+

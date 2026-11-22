@@ -387,27 +387,13 @@ const INPUT_ACTIONS = [
       m.textContent = v && v !== t.value.trim() ? "→ " + v : "";
     },
   ],
-  /* 検索（日本語の変換中は待つ） */
+  /* 検索窓：どれも同じ動き（下の SEARCHES）。日本語の変換中は待ち、確定したら絞り込む */
   [
-    "#mq",
+    "#q,#ytq,#lq,#mq",
     (t, e) => {
-      setQ = t.value;
-      if (!e.isComposing) refreshSettings(false);
-    },
-  ],
-  [
-    "#ytq",
-    (t, e) => {
-      yst.q = t.value;
-      if (!e.isComposing) searchSoon();
-    },
-  ],
-  [
-    "#q",
-    (t, e) => {
-      state.q = t.value;
-      state.limit = 200;
-      if (!e.isComposing) searchSoon();
+      const s = SEARCHES[t.id];
+      s.set(t.value);
+      if (!e.isComposing) s.run();
     },
   ],
   /* 話数の編集：話数・サブタイトル */
@@ -431,23 +417,27 @@ document.addEventListener("input", e => runInputs(INPUT_ACTIONS, e));
 document.addEventListener("change", e => {
   if (epEdit && e.target.classList && e.target.classList.contains("er-n")) refreshEditor();
 });
+/* 検索窓の共通の動き：set＝入れた文字を覚える、run＝少し待って描き直す、clear＝消して閉じる（キャンセル・Esc） */
+const SEARCHES = {
+  q: { set: v => ((state.q = v), (state.limit = 200)), run: () => searchSoon(), clear: () => $("[data-qtog='0']")?.click() },
+  ytq: { set: v => (yst.q = v), run: () => searchSoon(), clear: () => $("[data-ytqtog='0']")?.click() },
+  lq: { set: v => ((lui.q = v), (state.limit = 200)), run: () => searchSoon(), clear: () => $("[data-lqtog='0']")?.click() },
+  mq: { set: v => (setQ = v), run: () => searchSoon(() => refreshSettings(false)), clear: () => $("[data-mqclr]")?.click() },
+};
 let sTimer = 0;
-function searchSoon() {
+function searchSoon(fn = render) {
   clearTimeout(sTimer);
-  sTimer = setTimeout(render, 120);
+  sTimer = setTimeout(fn, 120);
 }
 /* 変換を確定した直後の時刻。Safari などは確定の Enter が「変換中ではない Enter」として届くので、その Enter を見分ける */
 let compEndAt = 0;
 document.addEventListener("compositionend", e => {
   compEndAt = Date.now();
-  if (e.target.id === "q") {
-    state.q = e.target.value;
-    state.limit = 200;
-    searchSoon();
-  }
-  if (e.target.id === "ytq") {
-    yst.q = e.target.value;
-    searchSoon();
+  /* 検索窓：変換を確定したら絞り込む（確定のあとに文字の入力が届かないブラウザがあるため） */
+  const s = SEARCHES[e.target.id];
+  if (s) {
+    s.set(e.target.value);
+    s.run();
   }
 });
 /* キー：Enter（日本語の変換中は除く）で決定、Escで取り消し・閉じる */
@@ -507,9 +497,8 @@ const KEY_ACTIONS = [
       return true;
     },
   ],
-  ["#q", (t, e) => (e.key === "Escape" ? ($("[data-qtog='0']")?.click(), true) : false)],
-  ["#lq", (t, e) => (e.key === "Escape" ? ($("[data-lqtog='0']")?.click(), true) : false)],
-  ["#ytq", (t, e) => (e.key === "Escape" ? ($("[data-ytqtog='0']")?.click(), true) : false)],
+  /* 検索窓：Esc でキャンセル（消して閉じる） */
+  ["#q,#ytq,#lq,#mq", (t, e) => (e.key === "Escape" && !imeEnter(e) && (t.id !== "mq" || t.value) ? (SEARCHES[t.id].clear(), true) : false)],
   [".e1 input", enterEsc(() => $("#e1Save")?.click(), () => $("#e1Cancel")?.click())],
   [null, (t, e) => (e.key === "Escape" && form && form.inline ? closeInlineForm() : false)],
   [null, (t, e) => (e.key === "Escape" && yform && yform.inline ? ytCloseInline() || true : false)],

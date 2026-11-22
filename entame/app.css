@@ -508,7 +508,8 @@ input[type=date]::-webkit-date-and-time-value{text-align:left}
 /* 設定（マスタ） */
 .sheet.setsheet{max-width:640px;height:min(640px,calc(100% - 48px));display:flex;flex-direction:column;overflow:hidden}
 
-.mq{margin-bottom:8px}
+.mqbox{padding-block:0;margin-bottom:8px}
+.mqbox .u-input{flex:1;min-width:0}
 .mlist{border:1px solid var(--u-line);border-radius:var(--r-l);overflow:hidden;max-height:52vh;overflow-y:auto;overscroll-behavior:none}
 .mrow2{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;background:var(--u-surface);gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--u-line)}
 .mrow2:first-child{border-top:0}
