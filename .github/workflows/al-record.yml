@@ -4,7 +4,7 @@ name: AniList記録
 on:
   push:
     branches: ["claude/anilist-fixtures"]
-    paths: ["dev/preview/al-queries.txt", ".github/workflows/al-record.yml"]
+    paths: ["dev/preview/al-queries.txt", "entame/anilist.js", ".github/workflows/al-record.yml"]
 
 permissions:
   contents: write

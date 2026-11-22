@@ -35,7 +35,7 @@
     const d = await gql(
       `query($id:Int){Media(id:$id){${BASE} ${REL}
         externalLinks{site url type language}
-        airingSchedule(perPage:300){nodes{episode airingAt}}}}`,
+        airingSchedule(perPage:50){nodes{episode airingAt}}}}`,
       { id },
     );
     return d.Media;
