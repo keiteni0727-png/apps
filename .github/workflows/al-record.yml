@@ -1,0 +1,34 @@
+# 確認用：AniList・AnimeThemes の本物の返事を記録して、このブランチに保存する（main では動かない）
+name: AniList記録
+
+on:
+  push:
+    branches: ["claude/anilist-fixtures"]
+    paths: ["dev/preview/al-queries.txt", ".github/workflows/al-record.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: CORS の確認
+        run: |
+          curl -s -o /dev/null -D - -X OPTIONS https://graphql.anilist.co -H "Origin: https://keiteni0727-png.github.io" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" | grep -i "access-control" > dev/preview/al-cors.txt || true
+          echo "--- animethemes" >> dev/preview/al-cors.txt
+          curl -s -o /dev/null -D - "https://api.animethemes.moe/anime?page[size]=1" -H "Origin: https://keiteni0727-png.github.io" | grep -i "access-control" >> dev/preview/al-cors.txt || true
+          echo "--- cover image" >> dev/preview/al-cors.txt
+          curl -s -o /dev/null -D - "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx154587-qQTzQnEJJ3oB.jpg" -H "Origin: https://keiteni0727-png.github.io" | grep -i "access-control\|HTTP/" >> dev/preview/al-cors.txt || true
+          cat dev/preview/al-cors.txt
+      - name: 記録
+        run: AL_QUERIES="$(tr '\n' '|' < dev/preview/al-queries.txt)" node dev/preview/al-record.js | tee dev/preview/al-log.txt
+      - name: 保存
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f dev/preview/al-fixtures.json dev/preview/al-cors.txt dev/preview/al-log.txt
+          git commit -m "AniListの記録" && git push || true
