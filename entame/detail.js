@@ -574,22 +574,6 @@ const DETAIL_ACTIONS = [
   ],
   [null, (el, it, e) => !!arcEdit && runActions(ARC_ACTIONS, e, it)],
   /* 編の見出し：開く／たたむ */
-  /* 日付のアラート：曜日のずれた話を1日ずらす（時刻はそのまま） */
-  [
-    "#epFixDow",
-    (el, it) => {
-      const dc = epDateCheck(it);
-      const l = episodes(it);
-      let n = 0;
-      dc.eps.forEach((x, i) => {
-        if (x && x.dow && l[i].t) {
-          l[i].t += x.dow * 1440;
-          n++;
-        }
-      });
-      if (n) saveEps(it, l, `${n}話の日付を1日ずらしました`);
-    },
-  ],
   /* 日付のアラート：日付の逆転・半年以上の空きが問題ない話を確認済みにする（その話の日付を変えるまで） */
   [
     "[data-gapok]",
@@ -599,52 +583,6 @@ const DETAIL_ACTIONS = [
       if (!e || !e.t) return;
       e.go = e.t;
       saveEps(it, l, `${epVal(e.n) ? epVal(e.n) + "話" : e.n}の日付を確認済みにしました`);
-    },
-  ],
-  /* 曜日のずれをまとめて「問題なし」に（途中で放送曜日・時間帯が変わった作品など） */
-  [
-    "#epDowOk",
-    (el, it) => {
-      const l = episodes(it),
-        dc = epDateCheck(it);
-      let n = 0;
-      l.forEach((e, i) => {
-        if (dc.eps[i] && dc.eps[i].dow && e.t) {
-          e.go = e.t;
-          n++;
-        }
-      });
-      if (n) saveEps(it, l, `曜日のずれ${n}話を問題なしにしました`);
-    },
-  ],
-  /* 日付のアラート：開始日を1話の日付にする（毎週の曜日も合わせる） */
-  [
-    "#epFixStart",
-    (el, it) => {
-      const d = epDateCheck(it).start;
-      if (!d) return;
-      const o = over[it.id] || {};
-      saveTitle(it.id, { from: d, ...((o.dow ?? -1) >= 0 ? { dow: dowOfDate(d) } : {}) }, `開始日を${fmtD(d)}にしました`);
-    },
-  ],
-  /* 日付のアラート：話数リストを開始日に合わせる（1話を開始日にして、ほかの話も同じ日数ずらす。日付のない話はそのまま） */
-  [
-    "#epShiftStart",
-    (el, it) => {
-      const d = epDateCheck(it).start,
-        f = normDate(it.from || "");
-      if (!d || !f) return;
-      const g = dayNo(f) - dayNo(d);
-      if (!g) return;
-      const l = episodes(it);
-      let n = 0;
-      l.forEach(e => {
-        if (!e.t) return;
-        if (e.go && e.go === e.t) e.go += g * 1440;
-        e.t += g * 1440;
-        n++;
-      });
-      if (n) saveEps(it, l, `${n}話の日付を${Math.abs(g)}日${g > 0 ? "後" : "前"}にずらしました`);
     },
   ],
   /* 要確認の最初の話へ（たたんだ編の中なら開いてから） */

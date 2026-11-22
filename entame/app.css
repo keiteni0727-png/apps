@@ -1504,8 +1504,6 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .ffoot button{white-space:nowrap}
 
 /* 話数タブ：日付のアラート */
-.epfix{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
-.epfix button{border:1px solid var(--u-danger);background:var(--u-surface);color:var(--u-danger);border-radius:var(--r-m);padding:6px 10px;font:inherit;font-size:var(--fs-m);font-weight:700;cursor:pointer}
 .tlmeta .tlok{margin-left:8px}
 
 /* ===== 絞り込みシート：項目の一覧と選択肢 =====
@@ -1670,8 +1668,8 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .fsec.ftbl h4,.fsec.fsongs h4{margin:0 0 8px;align-items:center}
 .ftbl .fgrid{display:block;margin:0 -14px -12px}
 .ftbl .frow3{display:contents}
-.ftbl .fgrid>.field,.ftbl .frow3>.field{display:grid;grid-template-columns:96px minmax(0,1fr);align-items:center;column-gap:8px;row-gap:2px;padding:5px 14px;border-top:1px solid var(--u-line);margin:0}
-.ftbl .fgrid>.field>span:first-child,.ftbl .frow3>.field>span:first-child,.ftbl .field>label.field>span{font-size:var(--fs-s);font-weight:700;color:var(--u-sub);margin:0}
+.ftbl .fgrid>.field,.ftbl .frow3>.field{display:grid;grid-template-columns:128px minmax(0,1fr);align-items:center;column-gap:8px;row-gap:2px;padding:5px 14px;border-top:1px solid var(--u-line);margin:0}
+.ftbl .fgrid>.field>span:first-child,.ftbl .frow3>.field>span:first-child,.ftbl .field>label.field>span{font-size:var(--fs-s);font-weight:700;color:var(--u-sub);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ftbl .field>label.field{display:block;padding:0;border:0;margin:0}
 .ftbl .field input:not([type=checkbox]),.ftbl .field select{border-color:transparent;background:transparent;padding:6px 8px;font-size:var(--fs-base)}
 .ftbl .field input:not([type=checkbox]):focus{border-color:var(--u-accent);background:var(--u-surface)}
@@ -1680,7 +1678,7 @@ select#arcJump{-webkit-appearance:none;appearance:none;padding-right:26px!import
 .ftbl .dtw{display:flex;gap:4px}
 .ftbl .dtcal{border:0;background:transparent}
 /* 「なし」のチェック：いつも行の右端に */
-.ftbl .fgrid>.field:has(>.nofl),.ftbl .frow3>.field:has(>.nofl){grid-template-columns:96px minmax(0,1fr) auto}
+.ftbl .fgrid>.field:has(>.nofl),.ftbl .frow3>.field:has(>.nofl){grid-template-columns:128px minmax(0,1fr) auto}
 .ftbl .field>.nofl{grid-column:3;grid-row:1;order:0;font-size:var(--fs-s)}
 .ftbl .field:has(>.nofl input:checked)>label.field+*{display:none}
 /* 要確認の項目：項目名を⚠付きの色に（「なし」にチェックを入れたら消す） */

@@ -58,11 +58,6 @@ function epListHtml(it, eps) {
   const arcs = arcsOf(it);
   const warnOf = epWarn(it);
   const warnN = eps.filter((e, i) => warnAny(warnOf(e, i))).length;
-  const dc = epDateCheck(it);
-  /* 日付のアラートを直すボタン：曜日のずれ（まとめて1日ずらす）・開始日を1話の日付に合わせる */
-  const fixDow = dc.dowN ? `<button type="button" id="epFixDow">曜日を放送日に合わせる（${dc.dowN}話を1日ずらす）</button><button type="button" id="epDowOk">曜日のずれ${dc.dowN}話を全部問題なしにする</button>` : "";
-  const fixStart = dc.start && !dc.eps[0]?.dow ? `<button type="button" id="epFixStart">開始日を1話の日付（${fmtD(dc.start)}）に合わせる</button><button type="button" id="epShiftStart">話数リストを開始日（${fmtD(normDate(it.from || ""))}）に合わせる</button>` : "";
-  const fixBar = fixDow || fixStart ? `<div class="epfix">${fixDow}${fixStart}</div>` : "";
   const arcOfNum = e => {
     const n = epNum(e.n);
     return n == null ? null : arcs.findIndex(r => n >= r.a && (r.b == null || n <= r.b));
@@ -138,7 +133,7 @@ function epListHtml(it, eps) {
     ? `<div class="epmenu" role="menu"><button type="button" role="menuitem" id="allAired">放送済みの話を全部チェック</button>${w ? `<button type="button" role="menuitem" id="clearAll">チェックを全部外す</button>` : ""}<button type="button" role="menuitem" id="arcOpenEd">${arcs.length ? "編（〇〇編）を編集" : "編（〇〇編）を登録"}</button></div>`
     : "";
   return `<div class="ephead"><div class="prog"><i style="width:${(w / wt) * 100}%"></i></div>${A ? `<button type="button" class="u-btn sm ephb ephp" id="spOpen" aria-label="各話リストを貼り付け">${PASTE_IC}貼り付け</button>` : ""}<button type="button" class="u-btn sm ephb" id="epEditBtn">話数を編集</button><button type="button" class="u-btn icon sm ephb ephm" id="epMenuBtn" aria-haspopup="menu" aria-expanded="${epMenu}" aria-label="そのほかの操作">…</button>${menu}</div>
-    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>押すと最初の話へ</span></button>` : ""}${it.s === "視聴済み" && !upcoming(it) && eps.some(e => !done(e)) ? `<div class="wnn eptop"><p>視聴済みですが、チェックしていない話があります</p></div>` : ""}${fixBar}${arcBar}<div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
+    ${warnN ? `<button type="button" class="epwarn" id="epWarnGo">⚠ 要確認 ${warnN}話<span>押すと最初の話へ</span></button>` : ""}${it.s === "視聴済み" && !upcoming(it) && eps.some(e => !done(e)) ? `<div class="wnn eptop"><p>視聴済みですが、チェックしていない話があります</p></div>` : ""}${arcBar}<div class="eps${A ? "" : " nosub"}" role="list">${rowsHtml}</div>`;
 }
 /* 年なしの日付を入れたときに使う年：直前の話の日付（1話目は作品の開始日） */
 function epRef(it, list, i) {
