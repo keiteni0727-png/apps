@@ -64,7 +64,7 @@ function chkItems(it) {
   const md = mediaOf(it).media;
   const per = md === "movie" ? "公開" : md === "ova" ? "発売" : md === "sp" ? "放送日" : "放送期間";
   return [
-    it.k === "a" && { k: "al", lab: "AniListで確認", go: 'data-alcheck="1"', ks: [] },
+    { k: "al", lab: it.k === "a" ? "AniListで確認" : "TMDBで確認", go: 'data-alcheck="1"', ks: [] },
     { k: "per", lab: per, go: 'data-chkgo="onair"', ks: ["開始日", "公開日", "発売日", "放送日", "放送時間", "配信時間", "放送クール", "クールのずれ"] },
     { k: "url", lab: "公式サイト", go: 'data-chkgo="onair"', ks: ["公式サイト"] },
     { k: "vod", lab: "配信サイト・配信URL", go: 'data-chkgo="onair"', ks: ["配信サイト", "配信URL", "配信URLのずれ"] },
@@ -248,7 +248,7 @@ function renderDetail(it) {
     ${lnk ? `<div class="dtbtns">${lnk}</div>` : ""}</div></div>
     ${noEp ? "" : `<div class="dtabs" role="tablist"><button type="button" role="tab" data-dtab="info">番組情報</button><button type="button" role="tab" data-dtab="ep">話数${eps.length ? ` <small>${w}/${watchable(eps).length}</small>` : ""}${epMs ? `<span class="wnt" aria-label="要確認あり">!</span>` : ""}</button></div>`}</div>
     <div class="dpane dp-info">${infoCards(it, { md, ns, mv, stv, cs, songRows })}
-    <div class="links">${it.k === "a" && typeof alChkOpen === "function" ? `<button type="button" class="u-chip add dlb" data-alcheck="1">AniListで確認</button>` : ""}${noEp ? `<button type="button" class="u-chip add dlb" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
+    <div class="links">${typeof alChkOpen === "function" ? `<button type="button" class="u-chip add dlb" data-alcheck="1">${it.k === "a" ? "AniList" : "TMDB"}で確認</button>` : ""}${noEp ? `<button type="button" class="u-chip add dlb" id="epAddMv">＋ 話数を追加</button>` : ""}<button type="button" class="u-btn sm txt danger delsm" id="delItem">削除</button></div></div>
     <div class="dpane dp-ep"><h4><span class="h4l">話数</span> <small>${eps.length && !epEdit ? `${w} / ${watchable(eps).length}話${nx ? `<span class="nxt">次は ${esc(nx.n)}</span>` : ""}` : ""}</small></h4>
     <div id="epArea">${subPaste ? subPasteHtml(it) : epEdit ? epEditorHtml(it) : epListHtml(it, eps)}</div></div></div></div>`;
 }

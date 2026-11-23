@@ -2073,6 +2073,7 @@ html[data-gsz="l"] .ygrid{grid-template-columns:repeat(auto-fill,minmax(240px,1f
 .cht small{display:block;margin-top:1px;color:var(--u-warn);font-size:var(--fs-xs);text-decoration:none}
 .chgo{border:0;background:none;padding:0;color:var(--u-acct);font:inherit;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;cursor:pointer}
 .chsyo{grid-column:2/-1;margin-top:6px;padding:5px 8px;border:1px solid var(--u-line);border-radius:var(--r-s);background:var(--u-chip);color:var(--u-ink);font-size:var(--fs-xs);font-weight:700;text-align:center;text-decoration:none;overflow-wrap:anywhere}
+.setkey{margin-left:auto;width:min(52%,300px);height:34px;font-family:var(--u-num);font-size:var(--fs-m)!important}
 .setsm{display:block;font-size:var(--fs-xs);color:var(--u-sub);font-weight:500}
 
 /* スマホ幅：作品詳細の上の段（ジャンル・放送形態・視聴ステータス｜← → 編集 ✕）を必ず1行に収める（「バラエティ」など長いジャンルでも折り返さない） */

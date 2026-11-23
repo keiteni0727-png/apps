@@ -93,6 +93,7 @@ function masterListHtml() {
 let setPage = "",
   setEdit = false; // 「編集」を押したときだけ削除ボタンを出す
 const SET_IC = {
+  key: '<circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M15 8l2 2"/>',
   theme: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   series: '<path d="M12 3 3 7.5 12 12l9-4.5z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',
   stations: '<path d="M4 10a8 8 0 0 1 16 0M7.5 11a4.5 4.5 0 0 1 9 0"/><circle cx="12" cy="12" r="1.5"/><path d="M12 13.5V21"/>',
@@ -132,6 +133,8 @@ function settingsHtml() {
     <div class="setgrp">${MKEYS.map(([k, l]) => row(k, l, M(k).length)).join("")}</div>
     <div class="setsec">データ</div>
     <div class="setgrp">${row("bk", "バックアップ", "書き出す・戻す")}${row("trash", "ゴミ箱", tl ? `${tl}件` : "空")}<div class="setrow static">${setIc("chk")}<span class="setl">確認チェック<small class="setsm">PCの作品詳細</small></span><div class="u-seg hseg3 setthm3" role="radiogroup" aria-label="確認チェック">${[["0", "表示"], ["1", "消す"]].map(([v, l]) => `<button type="button" role="radio" data-chkoff="${v}" aria-selected="${!!master.chkOff === (v === "1")}" aria-checked="${!!master.chkOff === (v === "1")}">${l}</button>`).join("")}</div></div></div>
+    <div class="setsec">連携</div>
+    <div class="setgrp"><div class="setrow static">${setIc("key")}<span class="setl">TMDB APIキー<small class="setsm">ドラマ・映画の情報取得</small></span><input id="tmKey" class="u-input setkey" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="貼り付け" value="${esc(master.tmdbKey || "")}" aria-label="TMDB APIキー"></div></div>
     <div class="setsec">アカウント</div>
     <div class="setgrp"><div class="setrow static">${setIc("save")}<span class="setl">保存</span><span class="setv">${saveNoteHtml()}</span></div>${usageRows()}<button type="button" class="setrow danger" data-logout="1">${setIc("out")}<span class="setl">ログアウト</span></button></div>`;
 }
@@ -263,6 +266,13 @@ async function backupRestore() {
   }
 }
 document.addEventListener("change", e => {
+  if (e.target.id === "tmKey") {
+    const v = e.target.value.trim();
+    if (v === (master.tmdbKey || "")) return;
+    master.tmdbKey = v;
+    saveMaster();
+    toast(v ? "TMDBのAPIキーを保存しました" : "TMDBのAPIキーを消しました");
+  }
   if (e.target.id === "bkFile" && e.target.files[0]) backupRead(e.target.files[0]);
 });
 /* 設定の一覧：⠿を押さえたまま上下に動かして並び替え（しくみは core.js の GRIP） */

@@ -568,7 +568,7 @@ async function submitForm() {
   patch.added = Date.now();
   /* AniListから入れたとき：AniListの作品番号も持つ（続編のお知らせで使う）。話数と画像は追加したあとに保存 */
   const al = f.al;
-  if (al) patch.al = al.id;
+  if (al) patch[al.src === "tm" ? "tm" : "al"] = al.id;
   close();
   await saveTitle(id, patch, "追加しました");
   if (al && typeof alAfterAdd === "function") alAfterAdd(id, al);

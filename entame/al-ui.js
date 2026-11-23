@@ -1,6 +1,7 @@
 /* ===================== AniList の画面：作品の追加画面の「AniListから探す」・登録済みの作品の「AniListで確認」・番組表の「新作・続編のお知らせ」 =====================
    取り出しは anilist.js（AL）。ここは画面と、作品データへの当てはめだけ。
-   AniList から入れる項目：タイトル・放送形態・開始日・放送時間・放送クール・画像・公式サイト・配信サイト（Netflix とそのURLだけ）・シリーズ */
+   AniList から入れる項目：タイトル・放送形態・開始日・放送時間・放送クール・画像・公式サイト・配信サイト（Netflix とそのURLだけ）・シリーズ
+   ドラマ・映画・バラエティは同じ画面で TMDB（tmdb.js・TM）から。入れる項目は放送時間・NetflixのURLのかわりに放送局 */
 
 /* ---------- 共通：AniList の値 → アプリの値 ---------- */
 const AL_FMT = { TV: "TV", TV_SHORT: "TV（ショート）", MOVIE: "映画", SPECIAL: "TV SP", OVA: "OVA", ONA: "配信", MUSIC: "MV" };
@@ -91,15 +92,45 @@ const alResHtml = (res, attr) =>
     : `<p class="alx-msg">見つかりませんでした。別の書き方（ローマ字・略さない名前など）でお試しください</p>`;
 const AL_ERR = "AniListにつながりませんでした。少し時間をおいてお試しください";
 
+/* ---------- 取り出し元：アニメは AniList、ドラマ・映画・バラエティは TMDB（tmdb.js）。画面は同じものを使う ---------- */
+const TM_ERR = "TMDBにつながりませんでした。少し時間をおいてお試しください";
+const TM_NOKEY = "TMDBから探すには、設定の「TMDB APIキー」を入れてください";
+/* TMDB の放送局名（英語）→ 放送局の選択肢 */
+const TM_NET = { "Fuji TV": "フジテレビ", "Fuji Television": "フジテレビ", "Nippon TV": "日本テレビ", NTV: "日本テレビ", "TV Asahi": "テレビ朝日", TBS: "TBS", "TBS Television": "TBS", "TV Tokyo": "テレビ東京", "Tokyo MX": "TOKYO MX", "TOKYO MX": "TOKYO MX", NHK: "NHK", "NHK General": "NHK", "NHK G": "NHK", "NHK BS": "NHK", "NHK BS Premium": "NHK", "NHK BS4K": "NHK", "NHK E": "NHK" };
+function tmGuessSeries(m) {
+  const names = alNames(m);
+  return M("series").find(s => alNorm(s).length >= 2 && names.some(n => n.includes(alNorm(s)))) || "";
+}
+/* TMDB のくわしい情報 → アプリの値（alToForm と同じ形） */
+function tmToForm(m) {
+  const media = m.type === "movie" ? "movie" : "tv";
+  const from = alYmd(m.startDate);
+  const to = m.status === "FINISHED" ? alYmd(m.endDate) : "";
+  const st = M("stations");
+  const stations = [...new Set((m.networks || []).map(n => TM_NET[n] || n).filter(n => st.includes(n)))];
+  const netflix = (m.providers || []).includes("Netflix");
+  return { t: alTitle(m), media, from, time: "", cours: media === "tv" ? alCours(from, to) : [], url: m.homepage || "", netflix, vurl: "", stations, series: tmGuessSeries(m), cover: m.coverImage?.large || m.coverImage?.medium || "" };
+}
+const SRC = {
+  al: { name: "AniList", api: () => AL, toForm: m => alToForm(m), idKey: "al", err: AL_ERR, ph: "AniListでアニメを検索（例：フリーレン）" },
+  tm: { name: "TMDB", api: () => TM, toForm: m => tmToForm(m), idKey: "tm", err: TM_ERR, ph: "TMDBで作品を検索（例：アンナチュラル）" },
+};
+const srcOfK = k => (k === "a" ? "al" : "tm");
+const srcErr = (e, S) => (e && e.noKey ? e.message || TM_NOKEY : S.err);
+/* 検索結果の番号：AniList は数字、TMDB は「tv:123」 */
+const alPid = v => (/^\d+$/.test(v) ? +v : v);
+
 /* ---------- 作品の追加画面：AniList から探す ---------- */
 let alS = { q: "", busy: "", res: null, err: "", got: null };
 const alReset = () => (alS = { q: "", busy: "", res: null, err: "", got: null });
 function alBoxHtml() {
   if (!form || form.id || form.only) return "";
+  const S = SRC[srcOfK(form.k)];
   const g = alS.got;
   if (g)
-    return `<div class="alx done" id="alBox"><div class="alx-ok"><span class="alx-im">${g.cover ? `<img src="${esc(g.cover)}" alt="">` : ""}</span><span class="alx-tx"><b>AniListから入力しました</b><small>${esc(g.sum)}</small><small>違うところは下で直せます${form.al?.cover ? "。画像は「追加する」で一緒に保存します" : ""}</small></span><button type="button" class="u-btn sm txt" data-alclear>やめる</button></div></div>`;
-  return `<div class="alx" id="alBox"><div class="alx-row"><input id="alQ" class="u-input" type="search" enterkeyhint="search" autocomplete="off" placeholder="AniListでアニメを検索（例：フリーレン）" value="${esc(alS.q)}"><button type="button" class="u-btn sm pri" data-alsearch>${alS.busy === "q" ? "検索中…" : "検索"}</button></div>
+    return `<div class="alx done" id="alBox"><div class="alx-ok"><span class="alx-im">${g.cover ? `<img src="${esc(g.cover)}" alt="">` : ""}</span><span class="alx-tx"><b>${S.name}から入力しました</b><small>${esc(g.sum)}</small><small>違うところは下で直せます${form.al?.cover ? "。画像は「追加する」で一緒に保存します" : ""}</small></span><button type="button" class="u-btn sm txt" data-alclear>やめる</button></div></div>`;
+  if (S.idKey === "tm" && !TM.hasKey()) return `<div class="alx" id="alBox"><p class="alx-msg">${TM_NOKEY}</p></div>`;
+  return `<div class="alx" id="alBox"><div class="alx-row"><input id="alQ" class="u-input" type="search" enterkeyhint="search" autocomplete="off" placeholder="${S.ph}" value="${esc(alS.q)}"><button type="button" class="u-btn sm pri" data-alsearch>${alS.busy === "q" ? "検索中…" : "検索"}</button></div>
     ${alS.busy === "p" ? `<p class="alx-msg">作品の情報を取得しています…</p>` : ""}${alS.err ? `<p class="alx-msg err">${esc(alS.err)}</p>` : ""}${alS.busy || !alS.res ? "" : alResHtml(alS.res, "data-alpick")}</div>`;
 }
 function alRedrawBox() {
@@ -115,10 +146,11 @@ async function alSearch() {
   readForm();
   Object.assign(alS, { q, busy: "q", err: "", res: null });
   alRedrawBox();
+  const S = SRC[srcOfK(form.k)];
   try {
-    alS.res = await AL.search(q);
+    alS.res = await S.api().search(q);
   } catch (e) {
-    alS.err = AL_ERR;
+    alS.err = srcErr(e, S);
   }
   alS.busy = "";
   alRedrawBox();
@@ -129,14 +161,15 @@ async function alPick(id, extra = {}) {
   if (form) readForm();
   Object.assign(alS, { busy: "p", err: "" });
   alRedrawBox();
+  const S = SRC[srcOfK(form.k)];
   try {
-    const m = await AL.detail(id);
+    const m = await S.api().detail(id);
     if (!form) return;
-    const v = alToForm(m);
+    const v = S.toForm(m);
     const sites = v.netflix ? ["Netflix"] : [];
     Object.assign(form, {
       t: v.t,
-      k: "a",
+      k: S.idKey === "al" ? "a" : form.k,
       media: v.media,
       from: v.from,
       time: v.time,
@@ -146,25 +179,26 @@ async function alPick(id, extra = {}) {
       plat: v.media === "stream" ? sites : [],
       vurl: v.vurl,
       series: v.series || extra.series || form.series || "",
-      al: { id: m.id, cover: v.cover },
+      al: { id: m.id, cover: v.cover, src: S.idKey },
     });
+    if (v.stations && v.stations.length) form.stations = v.stations;
     form.noF = (form.noF || []).filter(k => !(k === "url" && v.url));
     alS.got = { cover: m.coverImage?.medium || "", sum: alGotSum(v) };
   } catch (e) {
-    alS.err = "作品の情報を取得できませんでした。少し時間をおいてお試しください";
+    alS.err = e && e.noKey ? srcErr(e, S) : "作品の情報を取得できませんでした。少し時間をおいてお試しください";
   }
   alS.busy = "";
   if (form) redrawForm();
 }
 const alGotSum = v =>
-  [v.from && "開始日", v.time && "放送時間", v.cours.length && "放送クール", v.url && "公式サイト", v.netflix && "Netflix", v.series && "シリーズ", v.cover && "画像"].filter(Boolean).join("・") || "タイトル・放送形態";
+  [v.from && "開始日", v.time && "放送時間", v.stations?.length && "放送局", v.cours.length && "放送クール", v.url && "公式サイト", v.netflix && "Netflix", v.series && "シリーズ", v.cover && "画像"].filter(Boolean).join("・") || "タイトル・放送形態";
 /* 追加したあと：画像を保存する */
 function alAfterAdd(id, al) {
   if (al.cover) alSaveCover(id, al.cover);
 }
 const AL_FORM_ACTIONS = [
   ["[data-alsearch]", () => alSearch()],
-  ["[data-alpick]", el => alPick(+el.dataset.alpick)],
+  ["[data-alpick]", el => alPick(alPid(el.dataset.alpick))],
   [
     "[data-alclear]",
     () => {
@@ -205,7 +239,7 @@ const alSites = (media, it) => {
   return media === "stream" ? m.plat : m.vods;
 };
 /* 比べる項目：[キー, 名前, 今の値（表示）, AniList の値（表示）, 「なし」のキー] */
-function alRowsOf(it, v) {
+function alRowsOf(it, v, S = SRC.al) {
   const nf = k => (it.noF || []).includes(k);
   const cm = mediaOf(it);
   const site = cm.media === "stream" ? "plat" : "vods";
@@ -215,12 +249,13 @@ function alRowsOf(it, v) {
     ["media", "放送形態", MEDIA_LAB[cm.media] || "", MEDIA_LAB[v.media] || ""],
     ["from", "開始日", alDay(it.from), alDay(v.from)],
     ["time", "放送時間", it.time || "", noSched(v.media) ? "" : v.time, "time"],
+    ["st", "放送局", (it.stations || []).join("・"), noSched(v.media) ? "" : (v.stations || []).join("・"), "st"],
     ["cours", "放送クール", coursOf(it).map(courLabel).join("・"), v.cours.map(courLabel).join("・"), "cours"],
     ["url", "公式サイト", it.url || "", v.url, "url"],
     ["vod", "配信サイト", has.join("・"), v.netflix ? (has.includes("Netflix") ? has.join("・") : [...has, "Netflix"].join("・")) : "", site],
     ["vurl", "NetflixのURL", it.vurl || "", v.vurl, "vurl"],
     ["series", "シリーズ", it.series || "", v.series, "ser"],
-    ["img", "画像", it.img ? "あり" : "", v.cover ? (it.img ? "AniListの画像に差し替え" : "AniListの画像") : ""],
+    ["img", "画像", it.img ? "あり" : "", v.cover ? (it.img ? `${S.name}の画像に差し替え` : `${S.name}の画像`) : ""],
   ];
   return rows
     .filter(([, , , nv]) => nv)
@@ -237,43 +272,46 @@ const alShow = (r, v) => (alIsUrl(r) && v !== "なし" ? String(v || "").replace
 function alChkHtml() {
   const it = items.find(x => x.id === alC.id);
   if (!it) return "";
+  const S = SRC[alC.src],
+    N = S.name;
   let body = "";
-  if (alC.step === "busy") body = `<p class="alx-msg">${esc(alC.msg || "AniListで探しています…")}</p>`;
+  if (alC.step === "busy") body = `<p class="alx-msg">${esc(alC.msg || `${N}で探しています…`)}</p>`;
   else if (alC.step === "pick")
-    body = `<p class="aln-note">AniListの作品を選んでください</p>
-      <div class="alx-row"><input id="alCQ" class="u-input" type="search" enterkeyhint="search" autocomplete="off" value="${esc(alC.q)}" aria-label="AniListで探す"><button type="button" class="u-btn sm pri" data-alc="search">検索</button></div>
+    body = `<p class="aln-note">${N}の作品を選んでください</p>
+      <div class="alx-row"><input id="alCQ" class="u-input" type="search" enterkeyhint="search" autocomplete="off" value="${esc(alC.q)}" aria-label="${N}で探す"><button type="button" class="u-btn sm pri" data-alc="search">検索</button></div>
       ${alC.res ? alResHtml(alC.res, "data-alcpick") : ""}`;
   else if (alC.step === "cmp") {
     const diff = alC.rows.filter(r => !r.same),
       same = alC.rows.filter(r => r.same);
     const m = alC.m;
-    body = `<div class="alc-hit"><span class="alx-im">${m.coverImage?.medium ? `<img src="${esc(m.coverImage.medium)}" alt="" onerror="this.remove()">` : ""}</span><span class="alx-tx"><small>AniListの作品</small><b>${esc(alTitle(m))}</b><small class="alx-meta">${esc(alSub(m))}</small></span><button type="button" class="u-btn sm txt" data-alc="other">違う作品</button></div>
+    body = `<div class="alc-hit"><span class="alx-im">${m.coverImage?.medium ? `<img src="${esc(m.coverImage.medium)}" alt="" onerror="this.remove()">` : ""}</span><span class="alx-tx"><small>${N}の作品</small><b>${esc(alTitle(m))}</b><small class="alx-meta">${esc(alSub(m))}</small></span><button type="button" class="u-btn sm txt" data-alc="other">違う作品</button></div>
       ${
         diff.length
-          ? `<div class="alc-tbl"><div class="alc-hd"><span>項目</span><span>今</span><span>AniList</span><span>更新する</span></div>${diff
+          ? `<div class="alc-tbl"><div class="alc-hd"><span>項目</span><span>今</span><span>${N}</span><span>更新する</span></div>${diff
               .map(
                 r => `<label class="alc-r${r.skip ? " skip" : ""}"><span class="alc-k">${esc(r.lab)}</span><span class="alc-c${r.cur ? "" : " none"}${alIsUrl(r) ? " u" : ""}">${esc(alShow(r, r.cur) || "未入力")}</span><span class="alc-n${alIsUrl(r) ? " u" : ""}">${esc(alShow(r, r.nv))}</span><span class="alc-x"><input type="checkbox" data-alcskip="${r.k}" ${r.skip ? "" : "checked"} aria-label="${esc(r.lab)}を更新する"></span></label>`,
               )
               .join("")}</div>`
-          : `<p class="alx-msg">AniListと違う項目はありません</p>`
+          : `<p class="alx-msg">${N}と違う項目はありません</p>`
       }
       ${same.length ? `<p class="alc-same">同じ：${same.map(r => esc(r.lab)).join("・")}</p>` : ""}`;
   }
   const n = alC.step === "cmp" ? alC.rows.filter(r => !r.same && !r.skip).length : 0;
-  return `<div class="scrim" data-alc="back"></div><div class="sheet alchk" role="dialog" aria-modal="true" aria-label="AniListで確認"><div class="wrap">
-    <div class="hdrow"><h3><small>${esc(it.t)}</small>AniListで確認</h3><button class="u-btn icon sm soft close" type="button" data-alc="back" aria-label="戻る">✕</button></div>
+  return `<div class="scrim" data-alc="back"></div><div class="sheet alchk" role="dialog" aria-modal="true" aria-label="${N}で確認"><div class="wrap">
+    <div class="hdrow"><h3><small>${esc(it.t)}</small>${N}で確認</h3><button class="u-btn icon sm soft close" type="button" data-alc="back" aria-label="戻る">✕</button></div>
     ${alC.err ? `<p class="alx-msg err">${esc(alC.err)}</p>` : ""}${body}
-    ${alC.step === "cmp" ? `<div class="ffoot"><button type="button" class="u-btn" data-alc="back">キャンセル</button><button type="button" class="u-btn pri primary" data-alc="apply"${n || !it.al ? "" : " disabled"}>${n ? `${n}項目を更新する` : it.al ? "更新なし" : "つなぐだけ"}</button></div>` : ""}</div></div>`;
+    ${alC.step === "cmp" ? `<div class="ffoot"><button type="button" class="u-btn" data-alc="back">キャンセル</button><button type="button" class="u-btn pri primary" data-alc="apply"${n || !it[S.idKey] ? "" : " disabled"}>${n ? `${n}項目を更新する` : it[S.idKey] ? "更新なし" : "つなぐだけ"}</button></div>` : ""}</div></div>`;
 }
 const alChkDraw = () => alC && ($("#layer").innerHTML = alChkHtml());
 async function alChkOpen(id) {
   const it = items.find(x => x.id === id);
   if (!it) return;
-  alC = { id, step: "busy", q: it.t };
+  const S = SRC[srcOfK(it.k)];
+  alC = { id, step: "busy", q: it.t, src: S.idKey };
   alChkDraw();
-  if (it.al) return alChkLoad(it.al);
+  if (it[S.idKey]) return alChkLoad(it[S.idKey]);
   try {
-    const res = await AL.search(it.t);
+    const res = await S.api().search(it.t);
     /* 同じタイトル（括弧・記号の違いは無視）で、開始年も合うものが1つだけなら、それに決める */
     const n = alNorm(it.t),
       y = yearOf(it);
@@ -281,32 +319,34 @@ async function alChkOpen(id) {
     if (ok.length === 1) return alChkLoad(ok[0].id);
     Object.assign(alC, { step: "pick", res });
   } catch (e) {
-    Object.assign(alC, { step: "pick", res: null, err: AL_ERR });
+    Object.assign(alC, { step: "pick", res: null, err: srcErr(e, S) });
   }
   alChkDraw();
 }
 async function alChkLoad(alId) {
   Object.assign(alC, { step: "busy", msg: "作品の情報を取得しています…", err: "" });
   alChkDraw();
+  const S = SRC[alC.src];
   try {
-    const m = await AL.detail(alId);
+    const m = await S.api().detail(alId);
     const it = items.find(x => x.id === alC.id);
-    const v = alToForm(m);
-    Object.assign(alC, { step: "cmp", m, v, rows: alRowsOf(it, v) });
+    const v = S.toForm(m);
+    Object.assign(alC, { step: "cmp", m, v, rows: alRowsOf(it, v, S) });
   } catch (e) {
-    Object.assign(alC, { step: "pick", err: "作品の情報を取得できませんでした。少し時間をおいてお試しください" });
+    Object.assign(alC, { step: "pick", err: e && e.noKey ? srcErr(e, S) : "作品の情報を取得できませんでした。少し時間をおいてお試しください" });
   }
   alChkDraw();
 }
 async function alChkSearch() {
   const q = ($("#alCQ")?.value || "").trim();
   if (!q) return;
-  Object.assign(alC, { q, step: "busy", msg: "AniListで探しています…", err: "" });
+  const S = SRC[alC.src];
+  Object.assign(alC, { q, step: "busy", msg: `${S.name}で探しています…`, err: "" });
   alChkDraw();
   try {
-    alC.res = await AL.search(q);
+    alC.res = await S.api().search(q);
   } catch (e) {
-    alC.err = AL_ERR;
+    alC.err = srcErr(e, S);
   }
   alC.step = "pick";
   alChkDraw();
@@ -317,7 +357,8 @@ async function alChkApply() {
   if (!it) return;
   const v = alC.v,
     on = new Set(alC.rows.filter(r => !r.same && !r.skip).map(r => r.k));
-  const patch = { al: alC.m.id };
+  const S = SRC[alC.src];
+  const patch = { [S.idKey]: alC.m.id };
   const cm = mediaOf(it);
   const media = on.has("media") ? v.media : cm.media;
   if (on.has("t")) patch.t = v.t;
@@ -333,6 +374,7 @@ async function alChkApply() {
   }
   if (on.has("from")) patch.from = v.from;
   if (on.has("time")) patch.time = v.time;
+  if (on.has("st")) patch.stations = v.stations;
   if (on.has("cours")) patch.cours = v.cours;
   if (on.has("url")) patch.url = v.url;
   if (on.has("vurl")) patch.vurl = v.vurl;
@@ -355,13 +397,13 @@ async function alChkApply() {
     cover = on.has("img") ? v.cover : "";
   alC = null;
   close();
-  await saveTitle(id, patch, on.size ? `AniListから${on.size}項目を更新しました` : "AniListとつなぎました");
+  await saveTitle(id, patch, on.size ? `${S.name}から${on.size}項目を更新しました` : `${S.name}とつなぎました`);
   openDetail(id);
   if (cover) alSaveCover(id, cover);
 }
 const AL_CHK_ACTIONS = [
   ["[data-alcheck]", (el, ctx) => alChkOpen(openId)],
-  ["[data-alcpick]", el => alChkLoad(+el.dataset.alcpick)],
+  ["[data-alcpick]", el => alChkLoad(alPid(el.dataset.alcpick))],
   ['[data-alc="search"]', () => alChkSearch()],
   [
     '[data-alc="other"]',
