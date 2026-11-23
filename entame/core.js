@@ -427,6 +427,16 @@ function fixOldData() {
     mergeDoc("titles", id, { noF: over[id].noF }).catch(fail);
     if (loaded) rebuild();
   });
+  /* 配信URL：貼り付けたときと同じ形（プライムビデオ・TVer など）にそろえる */
+  if (typeof normVurl === "function")
+    Object.entries(over).forEach(([id, o]) => {
+      if (!o || typeof o.vurl !== "string" || !o.vurl) return;
+      const v = normVurl(o.vurl);
+      if (v === o.vurl) return;
+      over[id] = { ...o, vurl: v };
+      mergeDoc("titles", id, { vurl: v }).catch(fail);
+      if (loaded) rebuild();
+    });
 }
 /* 前の版で TV SP を追加したときに自動で作っていた話「SP」（1話だけ）を消す（番組表は放送日で出すので不要。最初に読み込んだとき1回だけ） */
 let spDropped = false;

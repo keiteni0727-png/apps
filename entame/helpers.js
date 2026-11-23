@@ -314,6 +314,12 @@ function normVurl(u) {
   /* U-NEXT：作品はSID番号。作品ページ（/title/SID…）・再生画面（/play/SID…/ED…）・後ろに ?… が付いた共有リンクを作品ページの形に */
   const un = /^(?:https?:\/\/)?video\.unext\.jp\/.*?\b(SID\d+)/i.exec(u);
   if (un) return `https://video.unext.jp/title/${un[1].toUpperCase()}`;
+  /* プライムビデオ：作品は gti（amzn1.dv.gti.…）か ASIN（B0…）。watch.amazon.co.jp・primevideo.com の形や ?ref_=… 付きも作品ページの形に */
+  const pv = /^(?:https?:\/\/)?(?:www\.|watch\.)?(?:amazon\.co\.jp|primevideo\.com).*?(amzn1\.dv\.gti\.[0-9a-f-]{36}|\/(?:dp|detail)\/(B0[0-9A-Z]{8}))/i.exec(u);
+  if (pv) return `https://www.amazon.co.jp/gp/video/detail/${pv[2] || pv[1].toLowerCase()}`;
+  /* TVer：番組（series/sr…）・各話（episodes/ep…）の後ろの ?utm_… などを外す */
+  const tv = /^(?:https?:\/\/)?tver\.jp\/(series\/sr[0-9a-z]+|episodes\/ep[0-9a-z]+)/i.exec(u);
+  if (tv) return `https://tver.jp/${tv[1]}`;
   return u;
 }
 document.addEventListener("input", e => {
