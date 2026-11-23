@@ -335,7 +335,13 @@ const viewTog = (cur, attr) =>
     })
     .join("")}</span>`;
 /* グリッドの1マス：縦長の画像（なければ灰色の枠）とタイトル。作品は画像の左上に放送形態（TV・映画など）のラベル */
-const gridMtag = (it, attr) => (attr === "data-id" ? (l => (l ? `<span class="mtag m-${l[1]}">${l[0]}</span>` : ""))(mediaLabOf(it)) : "");
+/* その右に視聴ステータスのラベル（未設定なら出さない） */
+const gridMtag = (it, attr) => {
+  if (attr !== "data-id") return "";
+  const l = mediaLabOf(it);
+  const t = (l ? `<span class="mtag m-${l[1]}">${l[0]}</span>` : "") + (it.s ? `<span class="pill gst s-${esc(it.s)}">${esc(stLabel(it.s))}</span>` : "");
+  return t ? `<span class="ptags">${t}</span>` : "";
+};
 const gridCell = (it, attr = "data-id", ik = it) =>
   `<button type="button" class="pcell${it.s === "視聴済み" ? " done" : ""}" ${attr}="${esc(it.id)}"><span class="pimg">${gridMtag(it, attr)}${posterTag(ik, "s", "pimgi") || `<span class="wc-noimg">${IMG_ICON}</span>`}</span><span class="pttl">${esc(it.t || "（タイトルなし）")}</span></button>`;
 document.addEventListener("click", e => {
