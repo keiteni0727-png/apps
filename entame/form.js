@@ -572,6 +572,8 @@ async function submitForm() {
   close();
   await saveTitle(id, patch, "追加しました");
   if (al && typeof alAfterAdd === "function") alAfterAdd(id, al);
+  /* 追加したら一覧に戻らず、その作品の詳細を開く */
+  openDetail(id);
 }
 /* ポップアップ表示中は背景を固定する（共通部品 U.lock） */
 const TOUCH = U.TOUCH;
